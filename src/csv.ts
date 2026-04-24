@@ -34,7 +34,7 @@ function n(v: number): string {
   return Number(v.toFixed(4)).toString();
 }
 
-function toolingToCsvCells(tooling: RfyToolingOp[]): string[] {
+function toolingToCsvCells(tooling: RfyToolingOp[], stickLength: number): string[] {
   const cells: string[] = [];
   for (const op of tooling) {
     const label = TOOL_TO_CSV[op.type];
@@ -43,13 +43,15 @@ function toolingToCsvCells(tooling: RfyToolingOp[]): string[] {
         cells.push(label, n(op.pos));
         break;
       case "spanned":
-        // Spanned operations emit two entries — one at each endpoint
         cells.push(label, n(op.startPos), label, n(op.endPos));
         break;
       case "start":
-      case "end":
-        // Start/end markers (chamfer etc.) — emit at 0 or length position
         cells.push(label, "0");
+        break;
+      case "end":
+        // End-tools (e.g. closing Chamfer) render at the component length.
+        // Use stickLength so round-trip preserves the position.
+        cells.push(label, n(stickLength));
         break;
     }
   }
@@ -73,15 +75,24 @@ interface ComponentRow {
 
 function stickToRow(frame: RfyFrame, stick: RfyStick): ComponentRow {
   // Role: map stick type + name conventions to CSV role labels.
+  // Walls use STUD/TOPPLATE/BOTTOMPLATE/NOG/BRACE/FILLER.
+  // Trusses use TOPCHORD/BOTTOMCHORD/WEB/FILLER.
   const name = stick.name.toUpperCase();
+  const frameName = frame.name.toUpperCase();
+  const isTruss = frameName.startsWith("T") && /TN|TRUSS|TR/.test(frameName);
   let role = "STUD";
-  if (stick.type === "plate") {
-    if (name.startsWith("T") || name.startsWith("B")) role = name.startsWith("T") ? "TOPPLATE" : "BOTTOMPLATE";
+  if (name.startsWith("FIL")) role = "FILLER";
+  else if (isTruss) {
+    if (name.startsWith("T")) role = "TOPCHORD";
+    else if (name.startsWith("B")) role = "BOTTOMCHORD";
+    else if (name.startsWith("W")) role = "WEB";
+    else role = "WEB";
+  } else if (stick.type === "plate") {
+    if (name.startsWith("B")) role = "BOTTOMPLATE";
     else role = "TOPPLATE";
   } else {
     if (name.startsWith("N")) role = "NOG";
     else if (name.startsWith("K")) role = "BRACE";
-    else if (name.startsWith("FIL")) role = "FILLER";
     else role = "STUD";
   }
 
@@ -119,7 +130,7 @@ export function planToCsv(project: { jobNum: string }, plan: RfyPlan): string {
         String(r.qty),
         "",
         n(r.lengthA), n(r.widthA), n(r.heightA), n(r.widthB), n(r.heightB), n(r.pitch),
-        ...toolingToCsvCells(r.tooling),
+        ...toolingToCsvCells(r.tooling, r.lengthA),
       ];
       lines.push(row.join(","));
     }

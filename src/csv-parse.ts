@@ -99,7 +99,7 @@ function parseComponent(cols: string[]): CsvComponent {
   const qty = parseInt(cols[5] ?? "1", 10);
   // cols[6] is always blank
   const dims = cols.slice(7, 13).map(parseFloatSafe);
-  const tooling = parseTooling(cols.slice(13));
+  const tooling = parseTooling(cols.slice(13), dims[0]);
   return {
     frameId, frameName, stickName,
     profileCode, metricLabel, gauge,
@@ -140,10 +140,15 @@ function parseFloatSafe(s: string | undefined): number {
 /**
  * The CSV stores tooling as flat `<type>,<pos>` pairs. Spanned operations
  * (start+end) are stored as two entries in sequence with matching type.
- * Point operations are one entry. We re-group them into RfyToolingOp[].
+ * Point operations are one entry. Chamfer can appear as edge tools
+ * (start/end) or — rarely — at other positions.
+ *
+ * Chamfer resolution (matches Detailer's own CSV export):
+ *  - When exactly 1 Chamfer entry: treat as start-tool
+ *  - When 2 Chamfer entries: first = start, second = end
+ *  - When Chamfer pos is clearly beyond stick start: treat as end
  */
-function parseTooling(cells: string[]): RfyToolingOp[] {
-  const ops: RfyToolingOp[] = [];
+function parseTooling(cells: string[], stickLength?: number): RfyToolingOp[] {
   const pairs: Array<{ csvType: string; pos: number }> = [];
   for (let i = 0; i + 1 < cells.length; i += 2) {
     const csvType = cells[i]?.trim();
@@ -153,19 +158,31 @@ function parseTooling(cells: string[]): RfyToolingOp[] {
     pairs.push({ csvType, pos });
   }
 
-  // Heuristic: Chamfer at pos 0 = start/end tool.
-  // For spanned ops (Swage, notches), adjacent pairs with same type form a span.
-  // For point ops (Dimple, Service, Bolt), each entry is its own point.
   const spannedTypes = new Set<ToolType>(["Swage", "InnerNotch", "LipNotch", "LeftFlange", "RightFlange", "Web"]);
+  const chamferIndexes = pairs.reduce<number[]>((idxs, p, i) => {
+    if (CSV_TO_TOOL[p.csvType] === "Chamfer") idxs.push(i);
+    return idxs;
+  }, []);
+
+  const ops: RfyToolingOp[] = [];
   let i = 0;
   while (i < pairs.length) {
     const p = pairs[i]!;
     const toolType = CSV_TO_TOOL[p.csvType]!;
+
     if (toolType === "Chamfer") {
-      ops.push({ kind: "start", type: toolType });
+      const posInChamferList = chamferIndexes.indexOf(i);
+      const totalChamfers = chamferIndexes.length;
+      // Last-in-sequence chamfer becomes end-tool; all others become start.
+      // Also: if the chamfer position is clearly past the component origin
+      // (pos > stickLength/2 when known), treat as end-tool.
+      const isLast = posInChamferList === totalChamfers - 1 && totalChamfers > 1;
+      const isAtEnd = stickLength !== undefined && stickLength > 0 && p.pos > stickLength * 0.5;
+      ops.push({ kind: (isLast || isAtEnd) ? "end" : "start", type: toolType });
       i++;
       continue;
     }
+
     if (spannedTypes.has(toolType) && i + 1 < pairs.length && pairs[i + 1]!.csvType === p.csvType) {
       ops.push({ kind: "spanned", type: toolType, startPos: p.pos, endPos: pairs[i + 1]!.pos });
       i += 2;

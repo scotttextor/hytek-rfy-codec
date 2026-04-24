@@ -42,6 +42,10 @@ export function applyCsvToRfy(seedRfy: Buffer, csv: string, iv?: Buffer): ApplyR
     }
     const planChildren = childArray(planNode, "plan");
     for (const csvComp of csvPlan.components) {
+      // FILLER rows are synthesised by Detailer's CSV exporter — they
+      // don't correspond to a <stick> in the RFY XML. Skip silently.
+      if (csvComp.role === "FILLER" || csvComp.stickName.toUpperCase().startsWith("FIL")) continue;
+
       const frameNode = findChildByNameAttr(planChildren, "frame", csvComp.frameName);
       if (!frameNode) {
         unmatchedComponents.push(`${csvPlan.packId}:${csvComp.frameName}:${csvComp.stickName}`);

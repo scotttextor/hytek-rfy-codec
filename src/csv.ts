@@ -112,12 +112,23 @@ function stickToRow(frame: RfyFrame, stick: RfyStick): ComponentRow {
   };
 }
 
+/**
+ * Choose the DETAILS header value. Detailer uses `<jobnum>#1-1` when the
+ * project has a real job number (e.g. "HG260001#1-1"), and falls back to
+ * the project name when jobnum is blank or a placeholder (e.g. `" "`
+ * or empty string).
+ */
+function detailsHeader(project: { name: string; jobNum: string }): string {
+  const j = project.jobNum?.replace(/^"\s*|\s*"$/g, "").trim() ?? "";
+  if (j && j.length > 0 && !/^\s+$/.test(j)) return `${j}#1-1`;
+  return project.name;
+}
+
 /** Emit one plan's CSV text. Format mirrors Detailer's Rollforming CSV. */
-export function planToCsv(project: { jobNum: string }, plan: RfyPlan): string {
+export function planToCsv(project: { name: string; jobNum: string }, plan: RfyPlan): string {
   const lines: string[] = [];
   const packId = plan.name;
-  const jobHeader = `${project.jobNum}#1-1`;
-  lines.push(`DETAILS,${jobHeader},${packId}`);
+  lines.push(`DETAILS,${detailsHeader(project)},${packId}`);
   for (const frame of plan.frames) {
     for (const stick of frame.sticks) {
       const r = stickToRow(frame, stick);

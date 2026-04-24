@@ -72,9 +72,13 @@ function expandSpan(start: number, end: number, type: ToolType): number[] {
   if (!rule) return [start, end];
   const first = start + rule.offset;
   const last = end - rule.offset;
-  // When the span is shorter than 2 * offset, the interior first/last
-  // positions would overlap — Detailer collapses to the span midpoint.
-  if (first >= last) return [(start + end) / 2];
+  // When the span is shorter than 2 * offset:
+  //   - Swage: still emits at start+offset (observed: span 0..39 -> 27.5)
+  //   - Others (LipNotch, etc.): collapse to span midpoint (observed)
+  if (first >= last) {
+    if (type === "Swage" || type === "Web") return [first];
+    return [(start + end) / 2];
+  }
   const positions: number[] = [];
   let cursor = first;
   while (cursor < last - 0.001) {
@@ -134,24 +138,18 @@ interface ComponentRow {
 }
 
 /**
- * Detailer's CSV uses two dimension modes depending on the stick's role:
+ * Detailer's CSV dimension columns ALWAYS describe the stick's midline
+ * in elevation coordinates (not profile dimensions):
  *
- * - **profile mode** (walls, HG260001 / HALIL): 6 columns are
- *   `[length, lFlange, 4, rFlange, length+4, web]`.
+ *   [length, startX, startY, endX, endY, flangeThickness]
  *
- * - **midline mode** (trusses, CHRIS / PRAKASHAN): 6 columns are
- *   `[length, startX, startY, endX, endY, flangeThickness]` where
- *   start/end are midpoints of the two short edges of the stick's
- *   elevation outline polygon.
+ * start/end are midpoints of the two short edges of the stick's
+ * elevation outline polygon. For vertical sticks start=(midX, minY) and
+ * end=(midX, maxY); for horizontal sticks start=(minX, midY) and
+ * end=(maxX, midY); for diagonals it's the midline of the parallelogram.
  *
- * Heuristic: any frame whose name starts with "TN" (truss network) or
- * any plan name containing "-TIN-" (truss inset) uses midline mode.
+ * Ordering convention: start = midpoint with lower Y; ties broken by lower X.
  */
-function isTrussContext(planName: string, frameName: string): boolean {
-  if (/-TIN-/.test(planName)) return true;
-  if (/^TN/i.test(frameName)) return true;
-  return false;
-}
 
 /** Compute midline endpoints from the 4 outline corners. */
 function midlineFromCorners(corners: RfyPoint[]): { start: RfyPoint; end: RfyPoint; thickness: number } | null {
@@ -174,17 +172,18 @@ function midlineFromCorners(corners: RfyPoint[]): { start: RfyPoint; end: RfyPoi
 }
 
 function computeDims(
-  plan: { name: string },
-  frame: RfyFrame,
+  _plan: { name: string },
+  _frame: RfyFrame,
   stick: RfyStick,
 ): [number, number, number, number, number, number] {
-  if (isTrussContext(plan.name, frame.name) && stick.outlineCorners) {
+  if (stick.outlineCorners) {
     const m = midlineFromCorners(stick.outlineCorners);
     if (m) {
       return [stick.length, m.start.x, m.start.y, m.end.x, m.end.y, Math.round(m.thickness)];
     }
   }
-  // Profile mode (walls)
+  // Fallback: if no outline corners are available (shouldn't happen in
+  // practice, but keeps the codec safe), use profile dims.
   return [stick.length, stick.profile.lFlange, 4, stick.profile.rFlange, stick.length + 4, stick.profile.web];
 }
 
@@ -194,16 +193,20 @@ function stickToRow(plan: { name: string }, frame: RfyFrame, stick: RfyStick): C
   // Trusses use TOPCHORD/BOTTOMCHORD/WEB/FILLER.
   const name = stick.name.toUpperCase();
   const frameName = frame.name.toUpperCase();
-  const isTruss = frameName.startsWith("T") && /TN|TRUSS|TR/.test(frameName);
+  const isTruss = /^TN/i.test(frameName) || /TRUSS/.test(frameName);
   let role = "STUD";
   if (name.startsWith("FIL")) role = "FILLER";
   else if (isTruss) {
     if (name.startsWith("T")) role = "TOPCHORD";
     else if (name.startsWith("B")) role = "BOTTOMCHORD";
     else if (name.startsWith("W")) role = "WEB";
+    else if (name.startsWith("R")) role = "TOPCHORD";  // 'R' is another topchord convention
     else role = "WEB";
   } else if (stick.type === "plate") {
-    if (name.startsWith("B")) role = "BOTTOMPLATE";
+    // Plate-type sticks: name prefix decides final role
+    if (name.startsWith("N")) role = "NOG";
+    else if (name.startsWith("B")) role = "BOTTOMPLATE";
+    else if (name.startsWith("T")) role = "TOPPLATE";
     else role = "TOPPLATE";
   } else {
     if (name.startsWith("N")) role = "NOG";

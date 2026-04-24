@@ -2,7 +2,7 @@ import { XMLParser } from "fast-xml-parser";
 import { decryptRfy } from "./crypto.js";
 import type {
   RfyDocument, RfyProject, RfyPlan, RfyFrame, RfyStick,
-  RfyProfile, RfyToolingOp, ToolType, StickType,
+  RfyProfile, RfyToolingOp, ToolType, StickType, RfyPoint,
 } from "./format.js";
 import { TOOL_TYPES, STICK_TYPES } from "./format.js";
 
@@ -80,6 +80,15 @@ function parseProfile(raw: ProfileRaw): RfyProfile {
   };
 }
 
+interface PolyRaw {
+  pt?: Array<{ "@_x": string; "@_y": string }> | { "@_x": string; "@_y": string };
+  "@_closed"?: string;
+}
+
+interface ElevationGraphicsRaw {
+  poly?: PolyRaw[] | PolyRaw;
+}
+
 interface StickRaw {
   "@_name": string;
   "@_length": string;
@@ -88,6 +97,17 @@ interface StickRaw {
   "@_design_hash"?: string;
   profile: ProfileRaw;
   tooling?: ToolingRaw;
+  "elevation-graphics"?: ElevationGraphicsRaw;
+}
+
+function parseFirstClosedPolyCorners(eg: ElevationGraphicsRaw | undefined): RfyPoint[] | undefined {
+  if (!eg) return undefined;
+  const polys = asArray(eg.poly);
+  const firstClosed = polys.find(p => p["@_closed"] === "1");
+  if (!firstClosed) return undefined;
+  const pts = asArray(firstClosed.pt);
+  if (pts.length < 4) return undefined;
+  return pts.slice(0, 4).map(p => ({ x: num(p["@_x"]), y: num(p["@_y"]) }));
 }
 
 function parseStick(raw: StickRaw): RfyStick {
@@ -99,6 +119,7 @@ function parseStick(raw: StickRaw): RfyStick {
     designHash: raw["@_design_hash"],
     profile: parseProfile(raw.profile),
     tooling: parseTooling(raw.tooling),
+    outlineCorners: parseFirstClosedPolyCorners(raw["elevation-graphics"]),
   };
 }
 

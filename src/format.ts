@@ -66,6 +66,12 @@ export interface RfyProfile {
   lip: number;              // mm
 }
 
+/** 2D point in an elevation drawing. */
+export interface RfyPoint {
+  x: number;
+  y: number;
+}
+
 /** A single component (stud, plate, nog, brace). */
 export interface RfyStick {
   name: string;             // e.g. "S1", "Kb1"
@@ -75,6 +81,13 @@ export interface RfyStick {
   designHash?: string;
   profile: RfyProfile;
   tooling: RfyToolingOp[];
+  /**
+   * The 4 corners of the stick's outline polygon in elevation-graphics
+   * (first closed <poly>). Used to reproduce Detailer's CSV dimension
+   * columns for truss components (which use midline coords rather than
+   * profile dims).
+   */
+  outlineCorners?: RfyPoint[];
 }
 
 /** A frame is a group of sticks forming one panel in a plan. */

@@ -29,39 +29,93 @@ function profileCode(metricLabel: string, gauge: string): string {
 
 /**
  * Format a number for CSV output matching Detailer's conventions:
- * round to 2 decimal places, then drop trailing zeros / decimal point
- * if the value is a whole integer after rounding.
- *   2717 -> "2717"
- *   7599.999 -> "7600"
- *   3827.1518 -> "3827.15"
- *   16.5 -> "16.5"
+ * Detailer stores positions internally as Float32 (Delphi's Single),
+ * then rounds to 2 decimal places. Replicate the Float32 cast then
+ * round so e.g. 6777.8351 -> 6777.8349609375 (Float32) -> 6777.83.
  */
+const f32 = new Float32Array(1);
+function toFloat32(v: number): number {
+  f32[0] = v;
+  return f32[0]!;
+}
+
 function n(v: number): string {
-  const rounded = Math.round(v * 100) / 100;
+  const v32 = toFloat32(v);
+  const rounded = Math.round(v32 * 100) / 100;
   if (Number.isInteger(rounded)) return rounded.toString();
   return rounded.toFixed(2).replace(/\.?0+$/, "");
 }
 
+/**
+ * Expansion rules for <spanned-tool> declarations in Detailer's XML when
+ * rendered as flat per-position cells in the CSV. Reverse-engineered from
+ * HG260001, HALIL, CHRIS and PRAKASHAN fixtures on 2026-04-24.
+ *
+ *   offset = distance from each end-point to the first/last emitted position
+ *   stride = step between interior positions
+ *
+ * If neither is defined for a tool type, the span falls back to two cells
+ * at the raw start/end positions.
+ */
+interface SpanRule { offset: number; stride: number; }
+const SPAN_RULES: Partial<Record<ToolType, SpanRule>> = {
+  Swage:       { offset: 27.5, stride: 55 },
+  LipNotch:    { offset: 24,   stride: 48 },
+  InnerNotch:  { offset: 24,   stride: 48 },
+  LeftFlange:  { offset: 24,   stride: 48 },
+  RightFlange: { offset: 24,   stride: 48 },
+  Web:         { offset: 27.5, stride: 55 },
+};
+
+function expandSpan(start: number, end: number, type: ToolType): number[] {
+  const rule = SPAN_RULES[type];
+  if (!rule) return [start, end];
+  const first = start + rule.offset;
+  const last = end - rule.offset;
+  // When the span is shorter than 2 * offset, the interior first/last
+  // positions would overlap — Detailer collapses to the span midpoint.
+  if (first >= last) return [(start + end) / 2];
+  const positions: number[] = [];
+  let cursor = first;
+  while (cursor < last - 0.001) {
+    positions.push(cursor);
+    cursor += rule.stride;
+  }
+  if (positions.length === 0 || Math.abs(positions[positions.length - 1]! - last) > 0.001) {
+    positions.push(last);
+  }
+  return positions;
+}
+
+/**
+ * Flatten a stick's tooling list into per-position cells, sorted by position
+ * in ascending order (matches Detailer's CSV emission order).
+ */
 function toolingToCsvCells(tooling: RfyToolingOp[], stickLength: number): string[] {
-  const cells: string[] = [];
+  const flat: Array<{ type: ToolType; pos: number; priority: number }> = [];
   for (const op of tooling) {
-    const label = TOOL_TO_CSV[op.type];
     switch (op.kind) {
       case "point":
-        cells.push(label, n(op.pos));
-        break;
-      case "spanned":
-        cells.push(label, n(op.startPos), label, n(op.endPos));
+        flat.push({ type: op.type, pos: op.pos, priority: 1 });
         break;
       case "start":
-        cells.push(label, "0");
+        flat.push({ type: op.type, pos: 0, priority: 0 });
         break;
       case "end":
-        // End-tools (e.g. closing Chamfer) render at the component length.
-        // Use stickLength so round-trip preserves the position.
-        cells.push(label, n(stickLength));
+        flat.push({ type: op.type, pos: stickLength, priority: 2 });
         break;
+      case "spanned": {
+        const positions = expandSpan(op.startPos, op.endPos, op.type);
+        for (const pos of positions) flat.push({ type: op.type, pos, priority: 1 });
+        break;
+      }
     }
+  }
+  // Stable sort by (pos ascending, priority ascending for same pos).
+  flat.sort((a, b) => a.pos - b.pos || a.priority - b.priority);
+  const cells: string[] = [];
+  for (const op of flat) {
+    cells.push(TOOL_TO_CSV[op.type], n(op.pos));
   }
   return cells;
 }

@@ -41,9 +41,11 @@ function toFloat32(v: number): number {
 
 function n(v: number): string {
   const v32 = toFloat32(v);
-  const rounded = Math.round(v32 * 100) / 100;
+  // Detailer uses 1 decimal place (observed 2026-04-24 across HG260004,
+  // HG260023, HG260032 fixtures — e.g. 1876.0934 -> 1876.1, not 1876.09).
+  const rounded = Math.round(v32 * 10) / 10;
   if (Number.isInteger(rounded)) return rounded.toString();
-  return rounded.toFixed(2).replace(/\.?0+$/, "");
+  return rounded.toFixed(1).replace(/\.?0+$/, "");
 }
 
 /**

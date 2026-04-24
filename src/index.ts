@@ -4,6 +4,7 @@ export { planToCsv, documentToCsvs } from "./csv.js";
 export { parseCsv, validateCsv, type CsvPlan, type CsvComponent } from "./csv-parse.js";
 export { parseXmlTree, buildXml, encodeXml, encodeTree, type XmlNode } from "./encode.js";
 export { applyCsvToRfy, type ApplyResult } from "./apply.js";
+export { synthesizeRfyFromCsv, type SynthesizeOptions, type SynthesizeResult } from "./synthesize.js";
 export {
   STICK_TYPES,
   TOOL_TYPES,

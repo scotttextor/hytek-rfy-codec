@@ -124,16 +124,73 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
 
 function buildStickNode(c: CsvComponent): XmlNode {
   const stickType = inferStickType(c.role);
+  const elevationGraphics = buildElevationGraphics(c);
   const profile = buildProfileNode(c);
   const tooling = buildToolingNode(c.tooling);
   return {
-    stick: [profile, tooling],
+    stick: [elevationGraphics, profile, tooling],
     ":@": {
       "@_name": c.stickName,
       "@_length": String(c.lengthA),
       "@_type": stickType,
       "@_flipped": c.orientation === "RIGHT" ? "1" : "0",
     },
+  } as XmlNode;
+}
+
+/**
+ * Reconstruct the stick's elevation outline polygon from the CSV's 6
+ * dimension columns — (length, startX, startY, endX, endY, thickness) —
+ * which describe the midline and cross-section thickness. We compute
+ * the 4 corner points by offsetting start and end perpendicularly by
+ * thickness/2.
+ *
+ * This gives the decoded RfyStick.outlineCorners a shape consistent
+ * with the original Detailer RFY, so round-trip through this codec
+ * produces byte-correct dimension columns.
+ */
+function buildElevationGraphics(c: CsvComponent): XmlNode {
+  // CsvComponent's 6 dim columns:
+  //   widthA = startX, heightA = startY, widthB = endX, heightB = endY, pitch = thickness
+  const startX = c.widthA;
+  const startY = c.heightA;
+  const endX = c.widthB;
+  const endY = c.heightB;
+  const thickness = c.pitch;
+
+  // Direction vector along the midline
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const len = Math.hypot(dx, dy) || 1;
+  // Perpendicular unit vector (rotated 90° CCW), scaled to thickness/2
+  const px = (-dy / len) * (thickness / 2);
+  const py = (dx / len) * (thickness / 2);
+
+  const corners = [
+    { x: startX + px, y: startY + py },
+    { x: endX + px, y: endY + py },
+    { x: endX - px, y: endY - py },
+    { x: startX - px, y: startY - py },
+  ];
+
+  const pts: XmlNode[] = corners.map(c => ({
+    pt: [],
+    ":@": { "@_x": c.x.toFixed(4), "@_y": c.y.toFixed(4) },
+  } as XmlNode));
+
+  return {
+    "elevation-graphics": [
+      {
+        poly: pts,
+        ":@": {
+          "@_closed": "1",
+          "@_pencolor": "00000000",
+          "@_brushcolor": "00FFFFFF",
+          "@_penstyle": "psSolid",
+          "@_brushstyle": "bsClear",
+        },
+      } as XmlNode,
+    ],
   } as XmlNode;
 }
 

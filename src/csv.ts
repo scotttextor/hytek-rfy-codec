@@ -22,9 +22,15 @@ const TOOL_TO_CSV: Record<ToolType, string> = {
 /**
  * The CSV format is: `PROFILE_CODE_GAUGE` where profile label has spaces
  * removed. e.g. metric-label "70 S 41" + gauge "0.75" -> "70S41_0.75".
+ *
+ * Defensive against missing fields — some XML profiles have metric-label
+ * as nested <metric-label> text rather than the usual attribute, which
+ * parseProfile can leave undefined.
  */
-function profileCode(metricLabel: string, gauge: string): string {
-  return `${metricLabel.replace(/\s+/g, "")}_${gauge}`;
+function profileCode(metricLabel: string | undefined, gauge: string | undefined): string {
+  const lbl = String(metricLabel ?? "").replace(/\s+/g, "").trim();
+  const g = String(gauge ?? "").trim();
+  return `${lbl}_${g}`;
 }
 
 /**
@@ -197,22 +203,37 @@ function stickToRow(plan: { name: string }, frame: RfyFrame, stick: RfyStick): C
   const frameName = frame.name.toUpperCase();
   const isTruss = /^TN/i.test(frameName) || /TRUSS/.test(frameName);
   let role = "STUD";
+
+  // Name-prefix dictionary (observed in Detailer CSVs on Y: drive):
+  //   S*=STUD (or TRIMSTUD if with trim)   T*=TOPPLATE / TOPCHORD
+  //   B*=BOTTOMPLATE / BOTTOMCHORD         N*=NOG
+  //   K*=BRACE (Kb1)                        W*=WEB (truss)
+  //   H*=HEADPLATE (door/window header)    SI*=SILL (window sill)
+  //   R*=RAIL / TOPCHORD                    FIL=FILLER
+  //   TS*=TRIMSTUD (trim around openings)
+
   if (name.startsWith("FIL")) role = "FILLER";
+  else if (name.startsWith("TS")) role = "TRIMSTUD";
+  else if (name.startsWith("SI")) role = "SILL";
   else if (isTruss) {
     if (name.startsWith("T")) role = "TOPCHORD";
     else if (name.startsWith("B")) role = "BOTTOMCHORD";
     else if (name.startsWith("W")) role = "WEB";
-    else if (name.startsWith("R")) role = "TOPCHORD";  // 'R' is another topchord convention
+    else if (name.startsWith("R")) role = "TOPCHORD";
     else role = "WEB";
   } else if (stick.type === "plate") {
-    // Plate-type sticks: name prefix decides final role
-    if (name.startsWith("N")) role = "NOG";
+    if (name.startsWith("H")) role = "HEADPLATE";
+    else if (name.startsWith("N")) role = "NOG";
     else if (name.startsWith("B")) role = "BOTTOMPLATE";
     else if (name.startsWith("T")) role = "TOPPLATE";
+    else if (name.startsWith("R")) role = "RAIL";
     else role = "TOPPLATE";
   } else {
     if (name.startsWith("N")) role = "NOG";
     else if (name.startsWith("K")) role = "BRACE";
+    else if (name.startsWith("W")) role = "WEB";
+    else if (name.startsWith("H")) role = "HEADPLATE";
+    else if (name.startsWith("R")) role = "RAIL";
     else role = "STUD";
   }
 

@@ -21,7 +21,7 @@ from pathlib import Path
 from datetime import datetime
 
 # OpenSSL 3.x EVP functions we want to intercept.
-# Covers symmetric encryption + PBKDF/HMAC paths.
+# Covers symmetric encryption + PBKDF/HMAC paths + low-level AES.
 HOOK_FUNCS = [
     "EVP_CIPHER_CTX_new",
     "EVP_CIPHER_CTX_free",
@@ -33,6 +33,7 @@ HOOK_FUNCS = [
     "EVP_CipherUpdate",
     "EVP_EncryptFinal_ex",
     "EVP_CipherFinal_ex",
+    "EVP_Cipher",
     "EVP_MD_CTX_new",
     "EVP_DigestInit_ex",
     "EVP_DigestInit_ex2",
@@ -46,20 +47,53 @@ HOOK_FUNCS = [
     "EVP_PBE_scrypt",
     "EVP_CIPHER_CTX_get0_cipher",
     "EVP_CIPHER_get0_name",
+    "AES_encrypt",
+    "AES_decrypt",
+    "AES_ecb_encrypt",
+    "AES_cbc_encrypt",
+    "AES_ctr128_encrypt",
+    "AES_set_encrypt_key",
+    "AES_set_decrypt_key",
+    "CRYPTO_ctr128_encrypt",
+    "CRYPTO_cbc128_encrypt",
 ]
 
 JS_TEMPLATE = r"""
 function bufHex(ptr, len) {
     if (ptr.isNull() || len === 0) return "";
-    try { return Memory.readByteArray(ptr, len); }
-    catch (e) { return "<READ_ERROR:" + e.message + ">"; }
+    try {
+        const buf = ptr.readByteArray(len);
+        const bytes = new Uint8Array(buf);
+        let hex = "";
+        for (let i = 0; i < bytes.length; i++) {
+            hex += bytes[i].toString(16).padStart(2, "0");
+        }
+        return hex;
+    } catch (e) { return "<READ_ERROR:" + e.message + ">"; }
+}
+
+// Frida 17 removed Module.findExportByName static. Use module instance.
+let libcrypto = null;
+try {
+    libcrypto = Process.getModuleByName("libcrypto-3.dll");
+    send({ info: "libcrypto_loaded", base: libcrypto.base.toString(), size: libcrypto.size });
+} catch (e) {
+    send({ error: "libcrypto-3.dll not loaded", details: e.message });
+}
+
+function findExport(name) {
+    if (!libcrypto) return null;
+    try {
+        const addr = libcrypto.findExportByName(name);
+        return (addr && !addr.isNull()) ? addr : null;
+    } catch (e) { return null; }
 }
 
 function cipherName(ctx) {
     if (ctx.isNull()) return null;
     try {
-        const cipher = Module.findExportByName("libcrypto-3.dll", "EVP_CIPHER_CTX_get0_cipher");
-        const getName = Module.findExportByName("libcrypto-3.dll", "EVP_CIPHER_get0_name");
+        const cipher = findExport("EVP_CIPHER_CTX_get0_cipher");
+        const getName = findExport("EVP_CIPHER_get0_name");
         if (!cipher || !getName) return null;
         const c = new NativeFunction(cipher, "pointer", ["pointer"])(ctx);
         if (c.isNull()) return null;
@@ -70,7 +104,7 @@ function cipherName(ctx) {
 
 const targets = __TARGETS__;
 for (const fn of targets) {
-    const addr = Module.findExportByName("libcrypto-3.dll", fn);
+    const addr = findExport(fn);
     if (!addr) { send({ warn: "not_found", fn: fn }); continue; }
 
     Interceptor.attach(addr, {
@@ -121,6 +155,49 @@ for (const fn of targets) {
                 this.inPtr = args[1];
                 this.inLen = args[2].toInt32();
                 this.dataBytes = bufHex(this.inPtr, Math.min(this.inLen, 65536));
+            } else if (fn === "EVP_Cipher") {
+                // ctx, out, in, inlen — single-shot cipher
+                this.ctx = args[0];
+                this.outPtr = args[1];
+                this.inPtr = args[2];
+                this.inLen = args[3].toInt32();
+                this.plaintext = bufHex(this.inPtr, Math.min(this.inLen, 262144));
+            } else if (fn === "AES_encrypt" || fn === "AES_decrypt") {
+                // in, out, key — fixed 16 bytes
+                this.inPtr = args[0];
+                this.outPtr = args[1];
+                this.keyPtr = args[2];
+                this.plaintext = bufHex(this.inPtr, 16);
+            } else if (fn === "AES_ecb_encrypt") {
+                // in, out, key, enc (enc is int direction)
+                this.inPtr = args[0];
+                this.outPtr = args[1];
+                this.keyPtr = args[2];
+                this.plaintext = bufHex(this.inPtr, 16);
+            } else if (fn === "AES_cbc_encrypt" || fn === "AES_ctr128_encrypt") {
+                // in, out, length, key, ivec, [direction]
+                this.inPtr = args[0];
+                this.outPtr = args[1];
+                this.inLen = args[2].toInt32();
+                this.keyPtr = args[3];
+                this.ivPtr = args[4];
+                this.plaintext = bufHex(this.inPtr, Math.min(this.inLen, 262144));
+                this.ivBytes = bufHex(this.ivPtr, 16);
+                this.keyBytes = bufHex(this.keyPtr, 240);
+            } else if (fn === "AES_set_encrypt_key" || fn === "AES_set_decrypt_key") {
+                // userKey, bits, key
+                this.userKeyPtr = args[0];
+                this.bits = args[1].toInt32();
+                this.keyBytes = bufHex(this.userKeyPtr, this.bits / 8);
+            } else if (fn === "CRYPTO_ctr128_encrypt" || fn === "CRYPTO_cbc128_encrypt") {
+                // in, out, length, key, ivec, ecount_buf/*, num/* , block
+                this.inPtr = args[0];
+                this.outPtr = args[1];
+                this.inLen = args[2].toInt32();
+                this.keyPtr = args[3];
+                this.ivPtr = args[4];
+                this.plaintext = bufHex(this.inPtr, Math.min(this.inLen, 262144));
+                this.ivBytes = bufHex(this.ivPtr, 16);
             }
         },
         onLeave: function(retval) {
@@ -157,6 +234,24 @@ for (const fn of targets) {
             } else if (this.fn === "HMAC_Update") {
                 ev.data_len = this.inLen;
                 ev.data = this.dataBytes;
+            } else if (this.fn === "EVP_Cipher") {
+                ev.ctx = this.ctx.toString();
+                ev.in_len = this.inLen;
+                ev.plaintext = this.plaintext;
+                ev.ciphertext = bufHex(this.outPtr, this.inLen);
+            } else if (this.fn === "AES_encrypt" || this.fn === "AES_decrypt" || this.fn === "AES_ecb_encrypt") {
+                ev.plaintext = this.plaintext;
+                ev.ciphertext = bufHex(this.outPtr, 16);
+                ev.key_ptr = this.keyPtr.toString();
+            } else if (this.fn === "AES_cbc_encrypt" || this.fn === "AES_ctr128_encrypt" || this.fn === "CRYPTO_ctr128_encrypt" || this.fn === "CRYPTO_cbc128_encrypt") {
+                ev.in_len = this.inLen;
+                ev.plaintext = this.plaintext;
+                ev.ciphertext = bufHex(this.outPtr, Math.min(this.inLen, 262144));
+                ev.iv = this.ivBytes;
+                if (this.keyBytes) ev.key_bytes = this.keyBytes;
+            } else if (this.fn === "AES_set_encrypt_key" || this.fn === "AES_set_decrypt_key") {
+                ev.bits = this.bits;
+                ev.key = this.keyBytes;
             }
             send(ev);
         }

@@ -21,10 +21,13 @@ export const TOOL_TYPES = [
   "InnerNotch",
   "InnerService",
   "LeftFlange",
+  "LeftPartialFlange",
   "LipNotch",
   "RightFlange",
+  "RightPartialFlange",
   "ScrewHoles",
   "Swage",
+  "TrussChamfer",
   "Web",
 ] as const;
 export type ToolType = typeof TOOL_TYPES[number];

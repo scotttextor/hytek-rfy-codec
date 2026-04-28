@@ -22,5 +22,8 @@ export const TOOL_TYPES = [
     "RightFlange",
     "ScrewHoles",
     "Swage",
+    "TrussChamfer",
+    "LeftPartialFlange",
+    "RightPartialFlange",
     "Web",
 ];

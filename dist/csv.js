@@ -14,6 +14,9 @@ const TOOL_TO_CSV = {
     RightFlange: "LIP NOTCH",
     ScrewHoles: "ANCHOR",
     Swage: "SWAGE",
+    TrussChamfer: "FULL CHAMFER",
+    LeftPartialFlange: "LIP NOTCH",
+    RightPartialFlange: "LIP NOTCH",
     Web: "WEB NOTCH",
 };
 /**

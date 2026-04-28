@@ -12,10 +12,13 @@ const TOOL_TO_CSV: Record<ToolType, string> = {
   InnerNotch: "WEB NOTCH",
   InnerService: "SERVICE HOLE",
   LeftFlange: "LIP NOTCH",
+  LeftPartialFlange: "LIP NOTCH",
   LipNotch: "LIP NOTCH",
   RightFlange: "LIP NOTCH",
+  RightPartialFlange: "LIP NOTCH",
   ScrewHoles: "ANCHOR",
   Swage: "SWAGE",
+  TrussChamfer: "FULL CHAMFER",
   Web: "WEB NOTCH",
 };
 

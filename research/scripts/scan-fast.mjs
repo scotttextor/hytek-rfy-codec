@@ -152,14 +152,29 @@ async function main() {
   log(`\nTotal: ${all.length} RFY files to analyse\n`);
   if (all.length === 0) { log("No RFYs found — aborting."); return; }
 
-  // Step 2: decode + collect rows
+  // Step 2: decode + collect rows (with incremental output every 25 RFYs)
   const rows = [];
   let ok = 0, fail = 0;
   const failReasons = {};
+  const writeIncremental = () => {
+    const cols = ["jobName", "sourceRfy", "planName", "frameName", "stickName",
+                  "type", "role", "profile", "profileFamily", "length", "lengthBucket",
+                  "flipped", "totalOps", "opIndex", "opType", "opRawType", "opKind",
+                  "opPosition", "opPositionFromEnd", "opEndPosition", "frameLength", "frameHeight"];
+    const dbCsv = [cols.join(",")];
+    for (const row of rows) dbCsv.push(cols.map(c => JSON.stringify(row[c] ?? "")).join(","));
+    writeFileSync(join(OUTPUT, "stick-database.csv"), dbCsv.join("\n"));
+  };
+
   for (let i = 0; i < all.length; i++) {
     if (shouldStop) { log(`!! Stopping at ${i}/${all.length} — preparing partial output.`); break; }
     const { path } = all[i];
-    if (i % 25 === 0) log(`[${i}/${all.length}] ${ok} ok / ${fail} fail / ${rows.length} ops so far`);
+    if (i % 25 === 0 && i > 0) {
+      log(`[${i}/${all.length}] ${ok} ok / ${fail} fail / ${rows.length} ops so far  (writing incremental DB...)`);
+      writeIncremental();
+    } else if (i % 5 === 0) {
+      log(`[${i}/${all.length}] ${ok} ok / ${fail} fail / ${rows.length} ops`);
+    }
     try {
       const buf = readFileSync(path);
       const doc = decode(buf);

@@ -37,6 +37,31 @@ export interface SynthesizeResult {
   stickCount: number;
 }
 
+/** Generate a stable v4-style GUID from a seed string (deterministic so same
+ *  input always produces same RFY — important for rollformer caching). */
+function deterministicGuid(seed: string): string {
+  // Hash seed into 16 bytes (deterministic FNV-1a + variant)
+  const bytes = new Uint8Array(16);
+  let h1 = 0x811c9dc5, h2 = 0xdeadbeef, h3 = 0x9e3779b1, h4 = 0x85ebca6b;
+  for (const ch of seed) {
+    const c = ch.charCodeAt(0);
+    h1 = ((h1 ^ c) * 0x01000193) >>> 0;
+    h2 = ((h2 ^ c) * 0xa3ffd6ad) >>> 0;
+    h3 = ((h3 ^ c) * 0x9e3779b1) >>> 0;
+    h4 = ((h4 ^ c) * 0xc2b2ae35) >>> 0;
+  }
+  const u32 = [h1, h2, h3, h4];
+  for (let i = 0; i < 4; i++) {
+    bytes[i*4]   = (u32[i]! >>> 24) & 0xff;
+    bytes[i*4+1] = (u32[i]! >>> 16) & 0xff;
+    bytes[i*4+2] = (u32[i]! >>> 8)  & 0xff;
+    bytes[i*4+3] = (u32[i]!)        & 0xff;
+  }
+  // Format as 8-4-4-4-12 GUID
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, "0").toUpperCase()).join("");
+  return `{${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}}`;
+}
+
 export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {}): SynthesizeResult {
   const csvPlans = parseCsv(csv);
   if (csvPlans.length === 0) throw new Error("No DETAILS/plan rows found in CSV");
@@ -45,6 +70,7 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
   const jobNum = options.jobNum ?? projectName;
   const client = options.client ?? "";
   const date = options.date ?? new Date().toISOString().slice(0, 10);
+  const projectGuid = deterministicGuid(`project:${projectName}:${jobNum}`);
 
   const byPack = new Map<string, CsvPlan[]>();
   for (const p of csvPlans) {
@@ -78,23 +104,37 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
           stickCount++;
           sticks.push(buildStickNode(c));
         }
+        const frameGuid = deterministicGuid(`frame:${packId}:${frameName}`);
+        const frameLength = Math.max(...comps.map(c => c.lengthA), 0);
+        // Heuristic frame height: max stick length when no explicit value
+        const frameHeight = Math.max(...comps.map(c => c.lengthA), 0);
         frameNodes.push({
-          frame: sticks,
+          frame: [
+            // Empty plan-graphics (Detailer always emits this; some parsers require it)
+            { "plan-graphics": [] },
+            ...sticks,
+          ],
           ":@": {
             "@_name": frameName,
+            "@_design_id": frameGuid,
             "@_weight": "0",
-            "@_length": String(Math.max(...comps.map(c => c.lengthA), 0)),
-            "@_height": "0",
+            "@_length": String(frameLength),
+            "@_height": String(frameHeight),
           },
         } as XmlNode);
       }
     }
+    const planGuid = deterministicGuid(`plan:${packId}`);
     planNodes.push({
       plan: [
         { elevation: [{ "#text": "0" }] },
+        { "plan-graphics": [] },
         ...frameNodes,
       ],
-      ":@": { "@_name": packId },
+      ":@": {
+        "@_name": packId,
+        "@_design_id": planGuid,
+      },
     } as XmlNode);
   }
 
@@ -105,8 +145,9 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
           project: planNodes,
           ":@": {
             "@_name": projectName,
-            "@_jobnum": jobNum,
+            "@_design_id": projectGuid,
             "@_client": client,
+            "@_jobnum": jobNum,
             "@_date": date,
           },
         } as XmlNode,
@@ -204,6 +245,11 @@ function buildProfileNode(c: CsvComponent): XmlNode {
   const shape = c.metricLabel.match(/[A-Z]+/)?.[0] ?? "S";
   const webVal = parseWebFromMetricLabel(c.metricLabel);
   const lFlangeVal = parseLFlangeFromMetricLabel(c.metricLabel);
+  // Imperial label is computed by FrameCAD as roughly: width(in 1/100 in) + ' S ' + flange (1/100 in)
+  // 70mm web ≈ 275 (1/100 in), 41mm flange ≈ 161 — matches Detailer's "275 S 161".
+  const imperialWeb = Math.round(webVal * 3.937);  // mm → 1/100 in
+  const imperialFlange = Math.round(lFlangeVal * 3.937);
+  const imperialLabel = `${imperialWeb} ${shape} ${imperialFlange}`;
   return {
     profile: [
       { shape: [{ "#text": shape }] },
@@ -214,7 +260,10 @@ function buildProfileNode(c: CsvComponent): XmlNode {
     ],
     ":@": {
       "@_metric-label": c.metricLabel,
+      "@_imperial-label": imperialLabel,
       "@_gauge": c.gauge,
+      "@_yield": "550",            // Standard high-tensile galvanised steel
+      "@_machine-series": "F300i", // HYTEK's rollformer expects this
     },
   } as XmlNode;
 }

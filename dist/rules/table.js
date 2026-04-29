@@ -1,0 +1,201 @@
+const STUD_ROLES = /^(S|J)$/; // S=full stud, J=jack stud (door/window jamb)
+const CRIPPLE_ROLES = /^(Kb|H)$/; // Kb=king brace/cripple stud, H=header/headplate
+const PLATE_ROLES = /^(T|B|Tp|Bp)$/; // T/Tp=top plate, B/Bp=bottom plate
+const NOG_ROLES = /^(N|Nog)$/;
+const BRACE_ROLES = /^(Br|W|R|L)$/; // W=web brace, R=ribbon, L=lintel — sticks-as-bracing
+// 70S41 profile constants (most common — derived empirically from fixture)
+const SPAN_70 = 39; // start/end spanned-tool length
+const DIMPLE_OFFSET_70 = 16.5; // INNER DIMPLE offset from each end
+const BOLT_OFFSET_70 = 62; // BOLT HOLE offset on bottom plates from each end
+// 89S41 profile constants (derived from fixture's PK3 plan; need wider corpus)
+const SPAN_89 = 44; // approximate — need refinement
+const DIMPLE_OFFSET_89 = 20.5;
+export const RULE_TABLE = [
+    // ----------- STUDS on 70S41 (any length) -----------
+    {
+        rolePattern: STUD_ROLES,
+        profilePattern: /^70S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            {
+                toolType: "Swage", kind: "spanned",
+                anchor: { kind: "startAnchored", offset: 0 },
+                spanLength: SPAN_70,
+                confidence: "high",
+                notes: "100% of S sticks; fixture: 521/523 in S|70S41|1500-3000",
+            },
+            {
+                toolType: "InnerDimple", kind: "point",
+                anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 },
+                confidence: "high",
+                notes: "100% of S sticks; pos hotspot 17mm × 492",
+            },
+            {
+                toolType: "Swage", kind: "spanned",
+                anchor: { kind: "endAnchored", offset: SPAN_70 },
+                spanLength: SPAN_70,
+                confidence: "high",
+                notes: "End swage span [length-39 .. length]",
+            },
+            {
+                toolType: "InnerDimple", kind: "point",
+                anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 },
+                confidence: "high",
+                notes: "End dimple at length-16.5",
+            },
+            // Service holes — only on wall studs (LBW or NLBW plans) with length >= ~500
+            {
+                toolType: "InnerService", kind: "point",
+                anchor: { kind: "startAnchored", offset: 296 },
+                confidence: "medium",
+                predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 296 + 200,
+                notes: "Electrical service hole at ~300mm from start (outlet height)",
+            },
+            {
+                toolType: "InnerService", kind: "point",
+                anchor: { kind: "startAnchored", offset: 446 },
+                confidence: "medium",
+                predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
+                notes: "Electrical service hole at ~450mm from start (paired with 296mm)",
+            },
+        ],
+    },
+    // ----------- STUDS on 89S41 -----------
+    {
+        rolePattern: STUD_ROLES,
+        profilePattern: /^89S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium", notes: "Pending 89-profile corpus refinement" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+        ],
+    },
+    // ----------- CRIPPLE STUDS / HEADERS (Kb / H) on 70S41 -----------
+    // Different terminal pattern: Chamfer-start (not Swage), 10mm dimple offset (not 16.5).
+    {
+        rolePattern: CRIPPLE_ROLES,
+        profilePattern: /^70S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at start (not Swage)" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "high", notes: "Kb dimple at 10mm (not 16.5mm)" },
+            { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high" },
+        ],
+    },
+    // ----------- CRIPPLE STUDS on 89S41 -----------
+    {
+        rolePattern: CRIPPLE_ROLES,
+        profilePattern: /^89S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "medium" },
+            { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "medium" },
+        ],
+    },
+    // ----------- TOP PLATES on 70S41 -----------
+    {
+        rolePattern: /^(T|Tp)$/,
+        profilePattern: /^70S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "100% of T plates have lip notch span at start" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            // Service holes for power-feed drops, spaced ~600mm starting from 306mm
+            // (only on wall plans of sufficient length — short top plates above
+            // doors/windows don't get these).
+            {
+                toolType: "InnerService", kind: "point",
+                anchor: { kind: "spaced", firstOffset: 306, spacing: 600, lastOffset: 306 },
+                confidence: "medium",
+                predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 1500,
+                notes: "T plates: power-feed drops at ~600mm intervals from offset 306mm",
+            },
+        ],
+    },
+    // ----------- BOTTOM PLATES on 70S41 -----------
+    // Same as top plates PLUS anchor bolts at 62mm offsets for slab attachment
+    // PLUS Web notch point at 8mm (web access slot for sub-floor wiring).
+    {
+        rolePattern: /^(B|Bp)$/,
+        profilePattern: /^70S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", notes: "100% of B plates have Web point at 8mm" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", notes: "Anchor bolt at 62mm from start (slab attachment)" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", notes: "Anchor bolt at length-62mm (slab attachment)" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+        ],
+    },
+    // ----------- TOP/BOTTOM PLATES on 89S41 -----------
+    {
+        rolePattern: PLATE_ROLES,
+        profilePattern: /^89S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+        ],
+    },
+    // ----------- NOGS on 70S41 -----------
+    {
+        rolePattern: NOG_ROLES,
+        profilePattern: /^70S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+        ],
+    },
+    // ----------- NOGS on 89S41 -----------
+    {
+        rolePattern: NOG_ROLES,
+        profilePattern: /^89S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+        ],
+    },
+    // ----------- BRACE / Web / Ribbon / Lintel sticks on 70S41 -----------
+    {
+        rolePattern: BRACE_ROLES,
+        profilePattern: /^70S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "medium", notes: "Web sticks: dimple at 10mm" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "medium" },
+        ],
+    },
+];
+/** Wall plans contain studs that need electrical service holes. */
+export function isWallPlan(ctx) {
+    if (!ctx.planName)
+        return false;
+    return /(LBW|NLBW|LOAD-BEARING|NON-LOAD)/i.test(ctx.planName);
+}
+/** Look up profile-specific span/dimple offsets. */
+export function profileOffsets(profileFamily) {
+    if (/^89/.test(profileFamily))
+        return { span: SPAN_89, dimpleOffset: DIMPLE_OFFSET_89, boltOffset: 62 };
+    if (/^150/.test(profileFamily))
+        return { span: 50, dimpleOffset: 25, boltOffset: 62 }; // best guess
+    return { span: SPAN_70, dimpleOffset: DIMPLE_OFFSET_70, boltOffset: BOLT_OFFSET_70 };
+}

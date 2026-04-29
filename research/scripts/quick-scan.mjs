@@ -71,19 +71,28 @@ for (let i = 0; i < all.length; i++) {
   try {
     const buf = readFileSync(all[i]);
     const doc = decode(buf);
-    for (const plan of doc.plans ?? []) {
+    for (const plan of doc.project?.plans ?? []) {
       for (const frame of plan.frames ?? []) {
         for (const stick of frame.sticks ?? []) {
           const profile = stick.profile?.metricLabel
             ? `${stick.profile.metricLabel.replace(/\s/g, "")}_${stick.profile.gauge}`
             : "?";
           const family = profile.replace(/_[0-9.]+$/, "");
+          // Stick role lives in name (Tp1, Bp1, St1, Nog1, Br1, …), not type
+          const role = (stick.name ?? "").replace(/[0-9_]+.*$/, "") || stick.type;
           const ops = (stick.tooling ?? []).filter(o => TOOL_TO_CSV[o.type]);
           for (const op of ops) {
+            // pos depends on kind: point=pos, spanned=startPos, start=0, end=length
+            let pos;
+            if (op.kind === "point") pos = op.pos;
+            else if (op.kind === "spanned") pos = op.startPos;
+            else if (op.kind === "start") pos = 0;
+            else if (op.kind === "end") pos = stick.length;
+            else pos = 0;
             rows.push({
-              type: stick.type, profile: family, length: stick.length,
+              type: role, profile: family, length: stick.length,
               opType: TOOL_TO_CSV[op.type],
-              pos: op.pos, fromEnd: stick.length - op.pos,
+              pos, fromEnd: stick.length - pos,
             });
           }
         }

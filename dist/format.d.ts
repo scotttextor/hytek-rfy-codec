@@ -12,7 +12,7 @@
 export declare const STICK_TYPES: readonly ["stud", "plate"];
 export type StickType = typeof STICK_TYPES[number];
 /** All tool types observed in FrameCAD XML output. */
-export declare const TOOL_TYPES: readonly ["Bolt", "Chamfer", "InnerDimple", "InnerNotch", "InnerService", "LeftFlange", "LipNotch", "RightFlange", "ScrewHoles", "Swage", "Web"];
+export declare const TOOL_TYPES: readonly ["Bolt", "Chamfer", "InnerDimple", "InnerNotch", "InnerService", "LeftFlange", "LeftPartialFlange", "LipNotch", "RightFlange", "RightPartialFlange", "ScrewHoles", "Swage", "TrussChamfer", "Web"];
 export type ToolType = typeof TOOL_TYPES[number];
 /** A point operation (single position) on a stick. */
 export interface RfyPointTool {

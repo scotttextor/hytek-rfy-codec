@@ -1,9 +1,9 @@
-// Walk Y:\(17) 2026 HYTEK PROJECTS\ (and older years), find every .rfy
-// file Detailer has produced, decode it, and feed the per-stick op data
-// into the rules-draft pipeline.
+// Faster Y: drive scan — targets the known RFY path pattern
+//   <year-root>/<customer>/<job>/06 MANUFACTURING/04 ROLLFORMER FILES/Split_*/*.rfy
+// instead of recursing into every subdirectory of every customer.
 //
-// Yields a much larger corpus than copying pairs by hand — we get every job
-// HYTEK has ever processed.
+// On a slow network drive, this avoids walking the dozens of unrelated
+// folders (DESIGN, DRAWINGS, etc.) inside every job.
 
 import { readdirSync, statSync, writeFileSync, mkdirSync, existsSync, readFileSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
@@ -14,27 +14,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT = join(__dirname, "..", "output");
 if (!existsSync(OUTPUT)) mkdirSync(OUTPUT, { recursive: true });
 
-const Y_ROOTS = [
+const log = (msg) => process.stdout.write(msg + "\n");
+
+const YEAR_ROOTS = [
   "Y:\\(17) 2026 HYTEK PROJECTS",
   "Y:\\(14) 2025 HYTEK PROJECTS",
   "Y:\\(13) 2024 HYTEK PROJECTS",
 ];
 
 const TOOL_TO_CSV = {
-  Bolt: "BOLT HOLES",
-  Chamfer: "FULL CHAMFER",
-  InnerDimple: "INNER DIMPLE",
-  InnerNotch: "WEB NOTCH",
-  InnerService: "SERVICE HOLE",
-  LeftFlange: "LIP NOTCH",
-  LeftPartialFlange: "LIP NOTCH",
-  LipNotch: "LIP NOTCH",
-  RightFlange: "LIP NOTCH",
-  RightPartialFlange: "LIP NOTCH",
-  ScrewHoles: "ANCHOR",
-  Swage: "SWAGE",
-  TrussChamfer: "FULL CHAMFER",
-  Web: "WEB NOTCH",
+  Bolt: "BOLT HOLES", Chamfer: "FULL CHAMFER", InnerDimple: "INNER DIMPLE",
+  InnerNotch: "WEB NOTCH", InnerService: "SERVICE HOLE", LeftFlange: "LIP NOTCH",
+  LeftPartialFlange: "LIP NOTCH", LipNotch: "LIP NOTCH", RightFlange: "LIP NOTCH",
+  RightPartialFlange: "LIP NOTCH", ScrewHoles: "ANCHOR", Swage: "SWAGE",
+  TrussChamfer: "FULL CHAMFER", Web: "WEB NOTCH",
 };
 
 function lengthBucket(mm) {
@@ -44,35 +37,72 @@ function lengthBucket(mm) {
   if (mm <= 6000) return "3000-6000";
   return ">6000";
 }
-
 function profileFamily(profile) {
   return profile.replace(/_[0-9.]+$/, "");
 }
 
-function* walkRfys(root, depth = 0, maxDepth = 8) {
+// Best-effort listing — silently skip access-denied / missing folders
+function lsSafe(p) {
+  try { return readdirSync(p); } catch { return []; }
+}
+function isDir(p) {
+  try { return statSync(p).isDirectory(); } catch { return false; }
+}
+function isFile(p) {
+  try { return statSync(p).isFile(); } catch { return false; }
+}
+
+// Find all RFYs in a single job folder using the well-known pattern.
+function* rfyInJob(jobPath) {
+  // Look for 06 MANUFACTURING/04 ROLLFORMER FILES/Split_*/*.rfy
+  // But also fall back to any *.rfy under the job (max depth 6)
+  const knownPath = join(jobPath, "06 MANUFACTURING", "04 ROLLFORMER FILES");
+  if (isDir(knownPath)) {
+    for (const split of lsSafe(knownPath)) {
+      const splitPath = join(knownPath, split);
+      if (!isDir(splitPath)) continue;
+      for (const f of lsSafe(splitPath)) {
+        if (f.toLowerCase().endsWith(".rfy")) yield join(splitPath, f);
+      }
+    }
+    return; // skip generic walk if we used the known path
+  }
+  // Fallback — generic walk capped at depth 6
+  yield* walkRfys(jobPath, 0, 6);
+}
+
+function* walkRfys(root, depth = 0, maxDepth = 6) {
   if (depth > maxDepth) return;
-  let entries;
-  try { entries = readdirSync(root); } catch { return; }
-  for (const name of entries) {
-    const path = join(root, name);
-    let st;
-    try { st = statSync(path); } catch { continue; }
-    if (st.isDirectory()) {
-      // Skip OneDrive metadata, .git, etc.
-      if (name.startsWith(".") || name.startsWith("$") || name.toLowerCase() === "node_modules") continue;
-      yield* walkRfys(path, depth + 1, maxDepth);
-    } else if (st.isFile() && name.toLowerCase().endsWith(".rfy")) {
-      yield { path, size: st.size };
+  for (const name of lsSafe(root)) {
+    if (name.startsWith(".") || name.startsWith("$")) continue;
+    const p = join(root, name);
+    if (isFile(p) && name.toLowerCase().endsWith(".rfy")) yield p;
+    else if (isDir(p)) yield* walkRfys(p, depth + 1, maxDepth);
+  }
+}
+
+// year-root → customer folders → job folders → known RFY path
+function* enumerateRfys(yearRoot, log) {
+  for (const customer of lsSafe(yearRoot)) {
+    if (customer.startsWith(".") || customer.startsWith("$")) continue;
+    const customerPath = join(yearRoot, customer);
+    if (!isDir(customerPath)) continue;
+    log(`    customer: ${customer}`);
+    for (const job of lsSafe(customerPath)) {
+      if (job.startsWith(".") || job.startsWith("$")) continue;
+      const jobPath = join(customerPath, job);
+      if (!isDir(jobPath)) continue;
+      let jobCount = 0;
+      for (const rfy of rfyInJob(jobPath)) {
+        yield { path: rfy, customer, job };
+        jobCount++;
+      }
     }
   }
 }
 
 function jobNameFromPath(p) {
-  // Find the project folder — usually the third level under the year root
   const parts = p.split(/[\\/]/);
-  // Heuristic: take the segment that looks like a job folder (contains a number prefix or job name)
-  // Path: Y:\(17) 2026 HYTEK PROJECTS\<CLIENT>\<JOB>\...
-  // We want <JOB>
   for (let i = 0; i < parts.length; i++) {
     if (/HYTEK PROJECTS$/i.test(parts[i]) && i + 2 < parts.length) {
       return `${parts[i + 1]}/${parts[i + 2]}`;
@@ -82,48 +112,54 @@ function jobNameFromPath(p) {
 }
 
 async function main() {
-  // Force unbuffered stdout — important when piped or run in background
-  const log = (msg) => process.stdout.write(msg + "\n");
-  log("=== Y: drive scanner ===\n");
-  const limit = Number(process.env.LIMIT ?? 1000);
-  log(`Limit: ${limit} RFY files (set env LIMIT to change)`);
+  log("=== Fast Y: drive scanner (targets known RFY pattern) ===");
+  const limit = Number(process.env.LIMIT ?? 5000);
+  const minOps = Number(process.env.MIN_OPS ?? 0);
+  log(`Limit: ${limit} RFY files; will stop early when reached`);
   log(`Started at ${new Date().toISOString()}\n`);
 
-  // Step 1: enumerate
+  // SIGINT/SIGTERM handler — flush partial state so Ctrl-C is safe
+  let shouldStop = false;
+  const stopHandler = (sig) => {
+    log(`\n!! ${sig} received — finishing current decode, then writing partial output.`);
+    shouldStop = true;
+  };
+  process.on("SIGINT", () => stopHandler("SIGINT"));
+  process.on("SIGTERM", () => stopHandler("SIGTERM"));
+
+  // Step 1: enumerate (with progress)
   const all = [];
-  let lastWalkLog = Date.now();
-  for (const root of Y_ROOTS) {
+  let lastLog = Date.now();
+  for (const root of YEAR_ROOTS) {
     if (!existsSync(root)) {
-      log(`Skipping ${root} (not present)`);
+      log(`  Skipping ${root} (not present)`);
       continue;
     }
     log(`Scanning ${root}…`);
-    let count = 0;
-    for (const entry of walkRfys(root)) {
+    for (const entry of enumerateRfys(root, log)) {
       all.push(entry);
-      count++;
-      // Periodic progress every 2s so background scans aren't silent
-      if (Date.now() - lastWalkLog > 2000) {
-        log(`  …found ${count} files in this root, ${all.length} total`);
-        lastWalkLog = Date.now();
+      if (Date.now() - lastLog > 5000) {
+        log(`    [${all.length}] latest: ${entry.customer}/${entry.job}/${basename(entry.path)}`);
+        lastLog = Date.now();
       }
       if (all.length >= limit) break;
+      if (shouldStop) break;
     }
-    log(`  found ${count} .rfy files in this root`);
+    log(`  total so far: ${all.length}`);
     if (all.length >= limit) break;
+    if (shouldStop) break;
   }
   log(`\nTotal: ${all.length} RFY files to analyse\n`);
+  if (all.length === 0) { log("No RFYs found — aborting."); return; }
 
-  if (all.length === 0) return;
-
-  // Step 2: decode and collect per-stick data
+  // Step 2: decode + collect rows
   const rows = [];
   let ok = 0, fail = 0;
   const failReasons = {};
-  const flushLog = (msg) => { process.stdout.write(msg + "\n"); };
   for (let i = 0; i < all.length; i++) {
+    if (shouldStop) { log(`!! Stopping at ${i}/${all.length} — preparing partial output.`); break; }
     const { path } = all[i];
-    if (i % 25 === 0) flushLog(`[${i}/${all.length}] ${ok} ok / ${fail} fail / ${rows.length} ops so far`);
+    if (i % 25 === 0) log(`[${i}/${all.length}] ${ok} ok / ${fail} fail / ${rows.length} ops so far`);
     try {
       const buf = readFileSync(path);
       const doc = decode(buf);
@@ -135,23 +171,23 @@ async function main() {
             const profile = stick.profile?.metricLabel
               ? `${stick.profile.metricLabel.replace(/\s/g, "")}_${stick.profile.gauge}`
               : "unknown";
-            // Stick role from name prefix (Tp, Bp, S, N, B, Kb, …) — type is just stud/plate
-            const namePrefix = (stick.name ?? "").replace(/[0-9_].*$/, "") || stick.type;
+            const role = (stick.name ?? "").replace(/[0-9_].*$/, "") || stick.type;
             const ops = (stick.tooling ?? []).filter(o => TOOL_TO_CSV[o.type]);
             const total = ops.length;
+            if (total < minOps) continue;
             const base = {
               jobName: job, sourceRfy,
               planName: plan.name, frameName: frame.name, stickName: stick.name,
-              type: stick.type, role: namePrefix,
+              type: stick.type, role,
               profile, profileFamily: profileFamily(profile),
               length: stick.length, lengthBucket: lengthBucket(stick.length),
               flipped: stick.flipped ?? false, totalOps: total,
+              frameLength: frame.length, frameHeight: frame.height,
             };
             if (total === 0) {
-              rows.push({ ...base, opIndex: 0, opType: "(none)", opKind: "", opPosition: 0, opPositionFromEnd: 0, opEndPosition: 0 });
+              rows.push({ ...base, opIndex: 0, opType: "(none)", opRawType: "", opKind: "", opPosition: 0, opPositionFromEnd: 0, opEndPosition: 0 });
             } else {
               ops.forEach((op, idx) => {
-                // Position depends on tool kind
                 let pos = 0, endPos = 0;
                 if (op.kind === "point") { pos = op.pos; endPos = op.pos; }
                 else if (op.kind === "spanned") { pos = op.startPos; endPos = op.endPos; }
@@ -179,26 +215,26 @@ async function main() {
       failReasons[k] = (failReasons[k] || 0) + 1;
     }
   }
-  flushLog(`\nDecoded ${ok}/${all.length} RFYs (${fail} failures)`);
+  log(`\nDecoded ${ok}/${all.length} RFYs (${fail} failures)`);
   if (Object.keys(failReasons).length) {
-    flushLog("Top failure reasons:");
+    log("Top failure reasons:");
     for (const [r, c] of Object.entries(failReasons).sort((a,b)=>b[1]-a[1]).slice(0,5)) {
-      flushLog(`  [${c}] ${r}`);
+      log(`  [${c}] ${r}`);
     }
   }
-  flushLog(`Op observations: ${rows.length}\n`);
+  log(`Op observations: ${rows.length}\n`);
 
   // Step 3: write the flat database
   const cols = ["jobName", "sourceRfy", "planName", "frameName", "stickName",
                 "type", "role", "profile", "profileFamily", "length", "lengthBucket",
                 "flipped", "totalOps", "opIndex", "opType", "opRawType", "opKind",
-                "opPosition", "opPositionFromEnd", "opEndPosition"];
+                "opPosition", "opPositionFromEnd", "opEndPosition", "frameLength", "frameHeight"];
   const dbCsv = [cols.join(",")];
   for (const row of rows) dbCsv.push(cols.map(c => JSON.stringify(row[c] ?? "")).join(","));
   writeFileSync(join(OUTPUT, "stick-database.csv"), dbCsv.join("\n"));
-  flushLog(`✓ stick-database.csv: ${rows.length} rows`);
+  log(`✓ stick-database.csv: ${rows.length} rows`);
 
-  // Step 4: aggregate into rules draft — group by role (from stick name) × profileFamily × lengthBucket
+  // Step 4: aggregate into rules draft
   const groups = new Map();
   for (const row of rows) {
     if (row.opType === "(none)") continue;
@@ -208,7 +244,7 @@ async function main() {
   }
 
   const stickKeys = new Set(rows.map(r => `${r.jobName}|${r.sourceRfy}|${r.planName}|${r.frameName}|${r.stickName}`));
-  console.log(`Unique sticks: ${stickKeys.size}`);
+  log(`Unique sticks: ${stickKeys.size}`);
 
   const rulesDraft = {};
   for (const [key, groupRows] of groups) {
@@ -229,24 +265,35 @@ async function main() {
       if (frequency >= 0.9) confidence = "high";
       else if (frequency >= 0.5) confidence = "medium";
       else if (frequency >= 0.1) confidence = "low";
-      // Tally raw types to preserve LeftFlange/RightFlange/etc distinction
       const rawTypes = {};
       for (const r of opRows) rawTypes[r.opRawType] = (rawTypes[r.opRawType] || 0) + 1;
       const kindTally = {};
       for (const r of opRows) kindTally[r.opKind] = (kindTally[r.opKind] || 0) + 1;
+      // Per-stick op counts (how many of this op type per stick)
+      const perStickCounts = {};
+      for (const r of opRows) {
+        const k = `${r.jobName}|${r.sourceRfy}|${r.planName}|${r.frameName}|${r.stickName}`;
+        perStickCounts[k] = (perStickCounts[k] || 0) + 1;
+      }
+      const counts = Object.values(perStickCounts).sort((a,b)=>a-b);
       opPatterns[opType] = {
         sticksWithOp, groupSticks,
         frequency: Math.round(frequency * 100) / 100,
         confidence,
         rawTypes, kindTally,
         avgCountPerStick: Math.round((opRows.length / sticksWithOp) * 10) / 10,
+        countDistribution: { min: counts[0] ?? 0, median: counts[Math.floor(counts.length/2)] ?? 0, max: counts[counts.length-1] ?? 0 },
         positionStats: positions.length > 0 ? {
           min: positions[0], max: positions[positions.length - 1],
           median: positions[Math.floor(positions.length / 2)],
+          p25: positions[Math.floor(positions.length / 4)],
+          p75: positions[Math.floor(positions.length * 3 / 4)],
         } : null,
         positionFromEndStats: fromEnd.length > 0 ? {
           min: fromEnd[0], max: fromEnd[fromEnd.length - 1],
           median: fromEnd[Math.floor(fromEnd.length / 2)],
+          p25: fromEnd[Math.floor(fromEnd.length / 4)],
+          p75: fromEnd[Math.floor(fromEnd.length * 3 / 4)],
         } : null,
       };
     }
@@ -254,11 +301,12 @@ async function main() {
   }
 
   writeFileSync(join(OUTPUT, "rules-draft.json"), JSON.stringify(rulesDraft, null, 2));
-  flushLog(`✓ rules-draft.json: ${Object.keys(rulesDraft).length} stick groups`);
+  log(`✓ rules-draft.json: ${Object.keys(rulesDraft).length} stick groups`);
 
   // Step 5: human-readable summary
   const summary = [];
-  summary.push(`# Detailer rules coverage — derived from ${ok} jobs / ${stickKeys.size} sticks`);
+  summary.push(`# Detailer rules coverage — derived from ${ok} jobs / ${stickKeys.size} sticks / ${rows.length} ops`);
+  summary.push(`# Generated: ${new Date().toISOString()}`);
   summary.push("");
   const sortedGroups = Object.entries(rulesDraft).sort((a, b) => b[1].sticksObserved - a[1].sticksObserved);
   for (const [, group] of sortedGroups) {
@@ -268,14 +316,15 @@ async function main() {
       const rawList = Object.entries(p.rawTypes).map(([k,v]) => `${k}:${v}`).join(",");
       summary.push(`  ${p.confidence.padEnd(6)} ${opType.padEnd(15)} ${(p.frequency * 100).toFixed(0).padStart(3)}% (${p.sticksWithOp}/${p.groupSticks}), avg ${p.avgCountPerStick}/stick  [${rawList}]`);
       if (p.positionStats) {
-        summary.push(`         pos median ${p.positionStats.median.toFixed(0)}mm, from-end median ${p.positionFromEndStats.median.toFixed(0)}mm`);
+        summary.push(`         pos median ${p.positionStats.median.toFixed(0)}mm, p25 ${p.positionStats.p25.toFixed(0)}mm, p75 ${p.positionStats.p75.toFixed(0)}mm`);
+        summary.push(`         from-end median ${p.positionFromEndStats.median.toFixed(0)}mm, p25 ${p.positionFromEndStats.p25.toFixed(0)}mm, p75 ${p.positionFromEndStats.p75.toFixed(0)}mm`);
       }
     }
     summary.push("");
   }
   writeFileSync(join(OUTPUT, "coverage-summary.txt"), summary.join("\n"));
-  flushLog(`✓ coverage-summary.txt`);
-  flushLog(`\nNext: open coverage-summary.txt — that's the rules engine starting point.`);
+  log(`✓ coverage-summary.txt`);
+  log(`\nNext: open coverage-summary.txt — that's the rules engine starting point.`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

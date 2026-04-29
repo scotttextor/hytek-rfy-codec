@@ -5,5 +5,6 @@ export { parseCsv, validateCsv, type CsvPlan, type CsvComponent } from "./csv-pa
 export { parseXmlTree, buildXml, encodeXml, encodeTree, type XmlNode } from "./encode.js";
 export { applyCsvToRfy, type ApplyResult } from "./apply.js";
 export { synthesizeRfyFromCsv, type SynthesizeOptions, type SynthesizeResult } from "./synthesize.js";
+export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findGroup, RULE_TABLE, profileOffsets, generateFrameContextOps, layoutFrame, computeBox, roleFromName, type StickContext, type Anchor, type OpRule, type RuleGroup, type RuleApplicationResult, } from "./rules/index.js";
 export { STICK_TYPES, TOOL_TYPES, type StickType, type ToolType, type RfyPointTool, type RfySpannedTool, type RfyEdgeTool, type RfyToolingOp, type RfyProfile, type RfyStick, type RfyFrame, type RfyPlan, type RfyProject, type RfyDocument, } from "./format.js";
 export declare const VERSION = "0.1.0";

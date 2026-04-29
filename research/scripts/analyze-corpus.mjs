@@ -45,9 +45,9 @@ for (const folder of jobFolders) {
 
 // 1. Write the flat database (every op row)
 const cols = ["jobName", "sourceRfy", "planName", "frameName", "stickName",
-              "type", "profile", "profileFamily", "length", "lengthBucket",
-              "flipped", "totalOps", "opIndex", "opType", "opRawType",
-              "opPosition", "opPositionFromEnd"];
+              "type", "role", "profile", "profileFamily", "length", "lengthBucket",
+              "flipped", "totalOps", "opIndex", "opType", "opRawType", "opKind",
+              "opPosition", "opPositionFromEnd", "opEndPosition"];
 const csv = [cols.join(",")];
 for (const row of allRows) {
   csv.push(cols.map(c => JSON.stringify(row[c] ?? "")).join(","));
@@ -61,7 +61,7 @@ console.log(`\n✓ stick-database.csv: ${allRows.length} rows`);
 const groups = new Map();
 for (const row of allRows) {
   if (row.opType === "(none)") continue;
-  const key = `${row.type}|${row.profileFamily}|${row.lengthBucket}`;
+  const key = `${row.role}|${row.profileFamily}|${row.lengthBucket}`;
   if (!groups.has(key)) groups.set(key, []);
   groups.get(key).push(row);
 }
@@ -72,7 +72,7 @@ console.log(`Total unique sticks: ${stickCount}`);
 
 const rulesDraft = {};
 for (const [key, rows] of groups) {
-  const [type, profileFamily, lengthBucket] = key.split("|");
+  const [role, profileFamily, lengthBucket] = key.split("|");
   // Count this group's stick count (unique sticks contributing to the group)
   const groupSticks = new Set(rows.map(r => `${r.jobName}|${r.sourceRfy}|${r.planName}|${r.frameName}|${r.stickName}`)).size;
 
@@ -111,7 +111,7 @@ for (const [key, rows] of groups) {
       } : null,
     };
   }
-  rulesDraft[key] = { type, profileFamily, lengthBucket, sticksObserved: groupSticks, opPatterns };
+  rulesDraft[key] = { role, profileFamily, lengthBucket, sticksObserved: groupSticks, opPatterns };
 }
 
 writeFileSync(join(OUTPUT, "rules-draft.json"), JSON.stringify(rulesDraft, null, 2));
@@ -125,7 +125,7 @@ summary.push("");
 const sortedGroups = Object.entries(rulesDraft)
   .sort((a, b) => b[1].sticksObserved - a[1].sticksObserved);
 for (const [, group] of sortedGroups) {
-  summary.push(`## ${group.type} on ${group.profileFamily} — ${group.lengthBucket} (${group.sticksObserved} sticks)`);
+  summary.push(`## ${group.role} on ${group.profileFamily} — ${group.lengthBucket} (${group.sticksObserved} sticks)`);
   const sortedOps = Object.entries(group.opPatterns)
     .sort((a, b) => b[1].frequency - a[1].frequency);
   for (const [opType, p] of sortedOps) {

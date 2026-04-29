@@ -45,36 +45,47 @@ function profileFamily(profile) {
 function analyzeRfy(rfyBuf, jobName) {
   const doc = decode(rfyBuf);
   const rows = [];
-  for (const plan of doc.plans ?? []) {
+  for (const plan of doc.project?.plans ?? []) {
     for (const frame of plan.frames ?? []) {
       for (const stick of frame.sticks ?? []) {
         const profile = stick.profile?.metricLabel
           ? `${stick.profile.metricLabel.replace(/\s/g, "")}_${stick.profile.gauge}`
           : "unknown";
+        // Stick role lives in the name (Tp1, Bp1, S1, N1, B1, Kb1) — type is just stud/plate
+        const role = (stick.name ?? "").replace(/[0-9_].*$/, "") || stick.type;
         const ops = (stick.tooling ?? []).filter(o => TOOL_TO_CSV[o.type]);
         const total = ops.length;
+        const base = {
+          jobName, planName: plan.name, frameName: frame.name, stickName: stick.name,
+          type: stick.type, role, profile, profileFamily: profileFamily(profile),
+          length: stick.length, lengthBucket: lengthBucket(stick.length),
+          flipped: stick.flipped ?? false,
+        };
         if (total === 0) {
-          // Stick with no ops — record as a single "no-ops" marker
           rows.push({
-            jobName, planName: plan.name, frameName: frame.name, stickName: stick.name,
-            type: stick.type, profile, profileFamily: profileFamily(profile),
-            length: stick.length, lengthBucket: lengthBucket(stick.length),
-            flipped: stick.flipped ?? false,
-            opType: "(none)", opPosition: 0, opPositionFromEnd: 0, opIndex: 0, totalOps: 0,
+            ...base,
+            opType: "(none)", opRawType: "", opKind: "", opPosition: 0,
+            opPositionFromEnd: 0, opEndPosition: 0, opIndex: 0, totalOps: 0,
           });
           continue;
         }
         ops.forEach((op, i) => {
+          // Tool position depends on kind: point=pos, spanned=startPos/endPos, start=0, end=length
+          let pos = 0, endPos = 0;
+          if (op.kind === "point") { pos = op.pos; endPos = op.pos; }
+          else if (op.kind === "spanned") { pos = op.startPos; endPos = op.endPos; }
+          else if (op.kind === "start") { pos = 0; endPos = 0; }
+          else if (op.kind === "end") { pos = stick.length; endPos = stick.length; }
           rows.push({
-            jobName, planName: plan.name, frameName: frame.name, stickName: stick.name,
-            type: stick.type, profile, profileFamily: profileFamily(profile),
-            length: stick.length, lengthBucket: lengthBucket(stick.length),
-            flipped: stick.flipped ?? false,
+            ...base,
             opType: TOOL_TO_CSV[op.type] ?? op.type,
             opRawType: op.type,
-            opPosition: op.pos,
-            opPositionFromEnd: stick.length - op.pos,
-            opIndex: i, totalOps: total,
+            opKind: op.kind,
+            opPosition: pos,
+            opPositionFromEnd: stick.length - pos,
+            opEndPosition: endPos,
+            opIndex: i,
+            totalOps: total,
           });
         });
       }

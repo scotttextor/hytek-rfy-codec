@@ -1,0 +1,45 @@
+/**
+ * Detailer-replacement rules table — derived from corpus analysis of real
+ * Detailer outputs (see research/output/rules-fixture.txt and sample-sticks-*.txt).
+ *
+ * The table covers UNIVERSAL per-stick patterns: end-anchored ops on every
+ * stud/plate/nog/brace/etc. Frame-context-dependent ops (LIP notches at stud
+ * crossings on top/bottom plates, WEB+LIP notches at stud crossings on nogs)
+ * are computed separately by src/rules/frame-context.ts.
+ *
+ * The patterns observed are remarkably consistent:
+ *
+ *   STUDS (S):
+ *     start: SWAGE [0..39] + INNER DIMPLE @16.5
+ *     end:   SWAGE [length-39..length] + INNER DIMPLE @length-16.5
+ *
+ *   TOP PLATES (T) and BOTTOM PLATES (B) (asymmetric ends — same TYPE):
+ *     start: LIP NOTCH [0..39] + INNER DIMPLE @16.5
+ *     end:   LIP NOTCH [length-39..length] + INNER DIMPLE @length-16.5
+ *
+ *   NOGS (N):
+ *     start: SWAGE [0..39] + INNER DIMPLE @16.5
+ *     end:   SWAGE [length-39..length] + INNER DIMPLE @length-16.5
+ *
+ *   BOTTOM PLATES additionally have BOLT HOLES at start+62 and end-62 for
+ *   anchoring to the slab.
+ *
+ *   HEAD plates (H), KING-/J(amb)-studs (Kb), and similar variant studs
+ *   share the same structure with different terminal ops; pending more data.
+ *
+ * The 39mm span and 16.5mm dimple offset are tied to the 70S41 profile
+ * (web=70mm, flange=41mm). For other profiles (89S41, 150S41, etc.) the
+ * offsets scale with profile width (≈ flange/2 + small fixed offset).
+ */
+import type { RuleGroup } from "./types.js";
+export declare const RULE_TABLE: RuleGroup[];
+/** Wall plans contain studs that need electrical service holes. */
+export declare function isWallPlan(ctx: {
+    planName?: string;
+}): boolean;
+/** Look up profile-specific span/dimple offsets. */
+export declare function profileOffsets(profileFamily: string): {
+    span: number;
+    dimpleOffset: number;
+    boltOffset: number;
+};

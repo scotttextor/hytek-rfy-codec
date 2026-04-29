@@ -154,14 +154,15 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      // Service holes for power-feed drops, spaced ~600mm starting from 306mm
-      // (only on wall plans of sufficient length — short top plates above
-      // doors/windows don't get these).
+      // Service holes for power-feed drops, spaced ~600mm starting from 306mm.
+      // Fires on T plates in WALL plans (LBW/NLBW) regardless of length —
+      // even short top plates above doors get them. Truss/roof/TB2B plans
+      // never get service holes on T plates.
       {
         toolType: "InnerService", kind: "point",
         anchor: { kind: "spaced", firstOffset: 306, spacing: 600, lastOffset: 306 },
         confidence: "medium",
-        predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 1500,
+        predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 600,
         notes: "T plates: power-feed drops at ~600mm intervals from offset 306mm",
       },
     ],

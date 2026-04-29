@@ -114,13 +114,15 @@ export function generateFrameContextOps(frame) {
             });
         }
     }
-    // Studs: nogs cross them — Detailer uses SWAGE + DIMPLE at the crossing
-    // (not LipNotch — confirmed from fixture data: S2/S3 in N28 had Swage at 1303..1348).
+    // Studs: nogs cross them — SWAGE + DIMPLE at the crossing.
+    // Other horizontal members (headers H, lintels L, ribbons R, etc.) also
+    // cross studs but produce LIP NOTCH + DIMPLE instead.
     const nogs = layout.filter(sb => NOG_ROLES.has(sb.role));
+    const otherHorizontal = layout.filter(sb => !NOG_ROLES.has(sb.role) && !STUD_ROLES.has(sb.role) && !ALL_PLATE_ROLES.has(sb.role) && sb.horizontal);
     for (const stud of studs) {
         const stickOps = result.get(stud.stick.name);
+        // Nogs → SWAGE
         for (const nog of nogs) {
-            // Does nog's X range cross stud's X range?
             const xOverlap = nog.box.xMax >= stud.box.xMin && nog.box.xMin <= stud.box.xMax;
             if (!xOverlap)
                 continue;
@@ -136,14 +138,28 @@ export function generateFrameContextOps(frame) {
             const swageSpan = Math.max(45, nogWidth + 4);
             const startPos = localPos - swageSpan / 2;
             const endPos = startPos + swageSpan;
-            stickOps.push({
-                kind: "spanned", type: "Swage",
-                startPos: round(startPos), endPos: round(endPos),
-            });
-            stickOps.push({
-                kind: "point", type: "InnerDimple",
-                pos: round(startPos + 22.5),
-            });
+            stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
+            stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+        }
+        // Other horizontal members → LIP NOTCH
+        for (const h of otherHorizontal) {
+            const xOverlap = h.box.xMax >= stud.box.xMin && h.box.xMin <= stud.box.xMax;
+            if (!xOverlap)
+                continue;
+            const crossingY = h.box.cy;
+            if (crossingY < stud.box.yMin - 1 || crossingY > stud.box.yMax + 1)
+                continue;
+            const localPos = studLocalPosition(stud, crossingY);
+            if (localPos < 50)
+                continue;
+            if (localPos > stud.stick.length - 50)
+                continue;
+            const memberWidth = h.box.yMax - h.box.yMin;
+            const lipSpan = Math.max(45, memberWidth + 4);
+            const startPos = localPos - lipSpan / 2;
+            const endPos = startPos + lipSpan;
+            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
+            stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
         }
     }
     // Nogs: studs cross them; emit WEB+LIP NOTCH + DIMPLE

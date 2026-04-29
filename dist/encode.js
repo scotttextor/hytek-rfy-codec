@@ -14,7 +14,8 @@ const preserveOrderBuilderOpts = {
     preserveOrder: true,
     ignoreAttributes: false,
     attributeNamePrefix: "@_",
-    format: false,
+    format: true, // pretty-print (Detailer style: indented, multi-line)
+    indentBy: "  ", // 2-space indent (matches Detailer)
     suppressEmptyNode: false,
     suppressBooleanAttributes: false,
 };
@@ -31,7 +32,10 @@ export function buildXml(tree) {
     // builder produces <tag></tag>. Some legacy XML parsers (including the one
     // inside HYTEK rollformer firmware) reject the verbose form, so we
     // post-process empty elements into the self-closing form.
-    xml = xml.replace(/<([A-Za-z][\w\-]*)((?:\s+[\w\-:]+="[^"]*")*)\s*><\/\1>/g, "<$1$2/>");
+    xml = xml.replace(/<([A-Za-z][\w\-]*)((?:\s+[\w\-:]+="[^"]*")*)\s*>(\s*)<\/\1>/g, "<$1$2/>");
+    // Detailer uses CRLF line endings — match for byte-equivalent output.
+    if (!xml.includes("\r\n"))
+        xml = xml.replace(/\n/g, "\r\n");
     return xml;
 }
 /** Encode an XML string to RFY bytes (deflate + encrypt with optional IV). */

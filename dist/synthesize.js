@@ -138,7 +138,8 @@ export function synthesizeRfyFromCsv(csv, options = {}) {
     ];
     // Detailer emits a UTF-8 BOM + <?xml?> prolog; we prepend the prolog manually
     // since fast-xml-parser's builder doesn't round-trip PI nodes cleanly here.
-    const xml = `<?xml version="1.0" encoding="utf-8"?>\r\n` + buildXml(xmlTree);
+    const body = buildXml(xmlTree).replace(/^\s+/, ""); // strip leading whitespace (builder adds newline)
+    const xml = `<?xml version="1.0" encoding="utf-8"?>\r\n` + body;
     const rfy = encryptRfy(xml);
     return { rfy, xml, planCount, frameCount, stickCount };
 }

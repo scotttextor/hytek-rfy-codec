@@ -34,11 +34,13 @@ export function layoutFrame(frame) {
     }
     return out;
 }
-const STUD_ROLES = new Set(["S", "Kb", "J", "H"]);
+const STUD_ROLES = new Set(["S", "J"]); // narrow vertical members only
+const CRIPPLE_ROLES = new Set(["Kb", "H"]); // wide horizontal+vertical hybrids — handled separately
 const TOP_PLATE_ROLES = new Set(["T", "Tp"]);
 const BOT_PLATE_ROLES = new Set(["B", "Bp"]);
 const NOG_ROLES = new Set(["N", "Nog"]);
 const ALL_PLATE_ROLES = new Set([...TOP_PLATE_ROLES, ...BOT_PLATE_ROLES, ...NOG_ROLES]);
+const STUD_MAX_WIDTH = 100; // real studs are ~40mm wide; Kb/H outlines can be 500mm+
 /** Convert a frame-X-coord crossing into a position along the plate's length. */
 function plateLocalPosition(plate, crossingX) {
     // Plates run horizontally; the position along the plate is the crossing X
@@ -65,19 +67,40 @@ export function generateFrameContextOps(frame) {
     const result = new Map();
     for (const sb of layout)
         result.set(sb.stick.name, []);
-    // Studs: vertical members
-    const studs = layout.filter(sb => STUD_ROLES.has(sb.role));
+    // Studs: narrow vertical members (S, J). Filter out wide outlines (Kb/H).
+    const studs = layout.filter(sb => STUD_ROLES.has(sb.role) && (sb.box.xMax - sb.box.xMin) <= STUD_MAX_WIDTH);
+    // Cripple studs: also vertical, but their outlines are too wide to be useful for crossing detection.
+    // Their connection point is at one of their X edges (which we treat as a virtual stud).
+    const cripples = layout.filter(sb => CRIPPLE_ROLES.has(sb.role));
     // Plates+nogs: horizontal members
     const plates = layout.filter(sb => ALL_PLATE_ROLES.has(sb.role));
+    // Build virtual stud crossings from cripple sticks: each cripple's
+    // narrow column is approximately at its xMin (or xMax — we add both
+    // and rely on the localPos uniqueness/skip).
+    // For NLBW frames, cripples typically attach to plates at one of their
+    // edges, not the centerline. We emit two virtual crossings per cripple.
+    const virtualStudCrossings = [];
+    for (const cr of cripples) {
+        // Each cripple may correspond to studs on its left edge OR right edge
+        // (at the door/window jamb). Emit both as virtual stud-crossings.
+        virtualStudCrossings.push({
+            role: "Kb-edge-left", box: { ...cr.box, xMin: cr.box.xMin, xMax: cr.box.xMin + 41, cx: cr.box.xMin + 20 },
+            stick: cr.stick, horizontal: false,
+        });
+        virtualStudCrossings.push({
+            role: "Kb-edge-right", box: { ...cr.box, xMin: cr.box.xMax - 41, xMax: cr.box.xMax, cx: cr.box.xMax - 20 },
+            stick: cr.stick, horizontal: false,
+        });
+    }
+    const allCrossingStuds = [...studs, ...virtualStudCrossings];
     for (const plate of plates) {
         const offsets = profileOffsets(plate.stick.profile.metricLabel.replace(/\s/g, ""));
         const span = offsets.span;
         const internalSpan = 45; // width of internal lip notches (vs 39 at edges)
         const internalDimpleOffset = 22.5; // internal lip notch midpoint offset
-        const isTop = TOP_PLATE_ROLES.has(plate.role);
-        const isBot = BOT_PLATE_ROLES.has(plate.role);
         const stickOps = result.get(plate.stick.name);
-        for (const stud of studs) {
+        const seenPositions = new Set(); // dedupe crossings at same localPos
+        for (const stud of allCrossingStuds) {
             // Does this stud's bounding box overlap the plate's bounding box?
             // Plate spans the full frame horizontally; stud spans some Y range.
             // The crossing happens if stud's Y range overlaps plate's Y range.
@@ -98,9 +121,14 @@ export function generateFrameContextOps(frame) {
                 continue;
             if (localPos > plate.stick.length - span - 5)
                 continue;
+            // Dedupe: if we've already emitted a crossing within 30mm of this localPos, skip
+            const quantizedPos = Math.round(localPos / 30) * 30;
+            if (seenPositions.has(quantizedPos))
+                continue;
+            seenPositions.add(quantizedPos);
             // Internal lip notch: spanned, centred on stud, span 45mm typically
             const studWidth = stud.box.xMax - stud.box.xMin;
-            const lipSpan = Math.max(internalSpan, studWidth + 4);
+            const lipSpan = Math.max(internalSpan, Math.min(studWidth + 4, 80)); // cap at 80 to avoid huge spans
             const startPos = localPos - lipSpan / 2;
             const endPos = startPos + lipSpan;
             stickOps.push({

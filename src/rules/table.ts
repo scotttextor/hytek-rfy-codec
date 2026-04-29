@@ -113,15 +113,20 @@ export const RULE_TABLE: RuleGroup[] = [
   },
 
   // ----------- CRIPPLE STUDS / HEADERS (Kb / H) on 70S41 -----------
-  // Different terminal pattern: Chamfer-start (not Swage), 10mm dimple offset (not 16.5).
+  // Observed pattern (fixture HG260001):
+  //   START: Chamfer-start  (no Chamfer-end)
+  //   START: Swage spanned with VARIABLE span ~115-125mm (skipped — can't predict)
+  //   START: InnerDimple @ 10mm
+  //   END:   Swage spanned (length-43)..length
+  //   END:   InnerDimple @ length-10
   {
     rolePattern: CRIPPLE_ROLES,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at start (not Swage)" },
+      { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START only (no Chamfer-end observed)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "high", notes: "Kb dimple at 10mm (not 16.5mm)" },
-      { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "medium" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 43 }, spanLength: 43, confidence: "medium", notes: "End swage span 43mm (slightly different from S stud 39mm)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high" },
     ],
   },
@@ -134,7 +139,7 @@ export const RULE_TABLE: RuleGroup[] = [
     rules: [
       { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "medium" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "medium" },
-      { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "medium" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 50 }, spanLength: 50, confidence: "low" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "medium" },
     ],
   },
@@ -220,15 +225,17 @@ export const RULE_TABLE: RuleGroup[] = [
   },
 
   // ----------- BRACE / Web / Ribbon / Lintel sticks on 70S41 -----------
+  // Brace dimple offset 11mm (vs 16.5 for studs); span 41mm (vs 39 for studs).
+  // Pulled from W|70S41|500-1500 sample data.
   {
     rolePattern: BRACE_ROLES,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "medium" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "medium", notes: "Web sticks: dimple at 10mm" },
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "medium" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "medium" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 41, confidence: "medium" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 11 }, confidence: "medium", notes: "Brace dimple at 11mm" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 41 }, spanLength: 41, confidence: "medium" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 11 }, confidence: "medium" },
     ],
   },
 ];

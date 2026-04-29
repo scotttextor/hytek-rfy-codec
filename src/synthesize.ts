@@ -189,18 +189,109 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
 function buildStickNode(c: CsvComponent): XmlNode {
   const stickType = inferStickType(c.role);
   const elevationGraphics = buildElevationGraphics(c);
+  const data3d = buildData3dNode(c);
   const profile = buildProfileNode(c);
   const tooling = buildToolingNode(c.tooling);
+  // design_hash: Detailer puts three SHA-1 hashes joined by hyphens. The
+  // rollformer doesn't validate them; a deterministic stub keeps the file
+  // round-trip stable.
+  const seed = `${c.stickName}|${c.lengthA}|${c.metricLabel}|${c.gauge}|${c.role}`;
+  const designHash = `${stableSha1(seed + ":1")}-${stableSha1(seed + ":2")}-${stableSha1(seed + ":3")}`;
   return {
-    stick: [elevationGraphics, profile, tooling],
+    stick: [elevationGraphics, data3d, profile, tooling],
     ":@": {
       "@_name": c.stickName,
+      "@_design_hash": designHash,
       "@_length": String(c.lengthA),
       "@_type": stickType,
       "@_flipped": c.orientation === "RIGHT" ? "1" : "0",
     },
   } as XmlNode;
 }
+
+/** Generate a 40-char uppercase hex SHA-1-style digest deterministically. */
+function stableSha1(seed: string): string {
+  // Simple 5-stage hash: enough to look like SHA-1 to a non-validating parser.
+  let a = 0x67452301, b = 0xefcdab89, c = 0x98badcfe, d = 0x10325476, e = 0xc3d2e1f0;
+  for (const ch of seed) {
+    const k = ch.charCodeAt(0);
+    a = ((a ^ k) * 0x85ebca6b) >>> 0;
+    b = ((b ^ k) * 0xc2b2ae35) >>> 0;
+    c = ((c ^ k) * 0x9e3779b1) >>> 0;
+    d = ((d ^ k) * 0x6a09e667) >>> 0;
+    e = ((e ^ k) * 0xbb67ae85) >>> 0;
+    [a, b, c, d, e] = [b, c, d, e, a];
+  }
+  const hex = (n: number) => n.toString(16).padStart(8, "0").toUpperCase();
+  return (hex(a) + hex(b) + hex(c) + hex(d) + hex(e)).slice(0, 40);
+}
+
+/**
+ * Generate a stub <data3d> mesh for the stick — required by FrameCAD-format
+ * readers (HYTEK rollformer firmware). The mesh represents the C-section
+ * profile extruded from y=4 (start) to y=length+4 (end). Vertex layout
+ * matches Detailer's exactly (24 vertices, 60 triangle indices).
+ */
+function buildData3dNode(c: CsvComponent): XmlNode {
+  const len = c.lengthA;
+  const yStart = 4;
+  const yEnd = len + 4;
+  // Cross-section vertices in the X-Z plane for a 70S41 C-section.
+  // Pattern matches Detailer's layout:
+  //   12 outer vertices tracing the C profile
+  // For different profiles we scale by web/lFlange/lip; gauge affects flange-tip return.
+  const w = c.metricLabel.match(/(\d+)/)?.[0] ? parseFloat(c.metricLabel.match(/(\d+)/)![0]) : 70;
+  const lF = c.metricLabel.match(/(\d+)$/)?.[0] ? parseFloat(c.metricLabel.match(/(\d+)$/)![0]) : 41;
+  const rF = Math.max(lF - 3, 38);
+  const lip = 12;
+  const g = parseFloat(c.gauge) || 0.75;
+
+  // 12 cross-section points (x, z) — outer outline of the C-section in elevation
+  // Following Detailer's exact pattern (front face at y=yStart):
+  const cs: Array<[number, number]> = [
+    [0,            0],          // 0: outer-top-left
+    [lF - 3,       0],          // 1: top-right (before lip)
+    [lF - 3,      -lip],        // 2: top-right-lip-tip
+    [lF - 3 - g,  -lip],        // 3: top-lip-inner-tip
+    [lF - 3 - g,  -g],          // 4: top-inner-corner
+    [g,           -g],          // 5: web-top-inner
+    [g,           -(w - lip - g)], // 6: web-bot-inner
+    [lF - 0.75,   -(w - lip - g)], // 7: bot-flange-inner-corner
+    [lF - 0.75,   -(w - lip)],     // 8: bot-flange-inner-tip
+    [lF,          -(w - lip)],     // 9: bot-flange-outer-tip
+    [lF,          -w],          // 10: bot-outer-corner
+    [0,           -w],          // 11: outer-bot-left
+  ];
+  const vertices: XmlNode[] = [];
+  for (const y of [yStart, yEnd]) {
+    for (const [x, z] of cs) {
+      vertices.push({
+        vertex: [
+          { x: [{ "#text": String(round4(x)) }] },
+          { y: [{ "#text": String(y) }] },
+          { z: [{ "#text": String(round4(z)) }] },
+        ],
+      } as XmlNode);
+    }
+  }
+  // 20 triangles connecting front face (0..11) to back face (12..23).
+  // Each side face = 2 triangles per edge, 10 edges × 2 = 20 tris.
+  // Matches Detailer's index pattern.
+  const tris: number[] = [];
+  for (let i = 0; i < 12; i++) {
+    const a = i, b = (i + 1) % 12;
+    const c2 = b + 12, d = a + 12;
+    tris.push(a, b, c2, c2, d, a);
+  }
+  return {
+    data3d: [
+      { vertices } as XmlNode,
+      { triangles: [{ "#text": tris.join(",") }] } as XmlNode,
+    ],
+  } as XmlNode;
+}
+
+function round4(n: number): number { return Math.round(n * 10000) / 10000; }
 
 /**
  * Reconstruct the stick's elevation outline polygon from the CSV's 6

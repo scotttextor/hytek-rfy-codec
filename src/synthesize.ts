@@ -149,7 +149,12 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
         } as XmlNode);
       }
     }
-    const planGuid = deterministicGuid(`plan:${packId}`);
+    // Detailer always prefixes plans with "PK<n>-" when splitting a job into
+    // packs. The HYTEK rollformer parses this prefix to identify the pack.
+    // If the input plan name doesn't have a PKn- prefix, add PK1- (we don't
+    // split into multiple files yet).
+    const planName = /^PK\d+-/i.test(packId) ? packId : `PK1-${packId}`;
+    const planGuid = deterministicGuid(`plan:${planName}`);
     planNodes.push({
       plan: [
         { elevation: [{ "#text": "0" }] },
@@ -157,7 +162,7 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
         ...frameNodes,
       ],
       ":@": {
-        "@_name": packId,
+        "@_name": planName,
         "@_design_id": planGuid,
       },
     } as XmlNode);

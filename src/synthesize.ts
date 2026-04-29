@@ -132,8 +132,11 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
             // Identity transformation matrix (3D placement) — required by
             // FrameCAD-format parsers including the HYTEK rollformer firmware.
             { transformationmatrix: [{ "#text": "((1.00000,0.00000,0.00000,0.00000),(0.00000,1.00000,0.00000,0.00000),(0.00000,0.00000,1.00000,0.00000),(0.00000,0.00000,0.00000,1.00000))" }] },
-            // Empty plan-graphics — Detailer always emits this on frames.
-            { "plan-graphics": [] },
+            // Frame-level plan-graphics: outline poly + frame name text.
+            // Detailer's parser inside the rollformer requires non-empty content.
+            buildFramePlanGraphics(frameName, frameLength, frameHeight),
+            // Frame-level elevation-graphics: required by rollformer UI.
+            buildFrameElevationGraphics(frameName, frameLength, frameHeight),
             ...sticks,
           ],
           ":@": {
@@ -293,6 +296,83 @@ function buildData3dNode(c: CsvComponent): XmlNode {
 
 function round4(n: number): number { return Math.round(n * 10000) / 10000; }
 
+/** Build a frame-level <plan-graphics> with outline rectangle + name text.
+ *  Detailer emits this on every frame; the rollformer firmware requires it. */
+function buildFramePlanGraphics(name: string, length: number, height: number): XmlNode {
+  return {
+    "plan-graphics": [
+      {
+        poly: [
+          { pt: [], ":@": { "@_x": "0.0000", "@_y": "0.0000" } },
+          { pt: [], ":@": { "@_x": String(length.toFixed(4)), "@_y": "0.0000" } },
+          { pt: [], ":@": { "@_x": String(length.toFixed(4)), "@_y": String(height.toFixed(4)) } },
+          { pt: [], ":@": { "@_x": "0.0000", "@_y": String(height.toFixed(4)) } },
+        ],
+        ":@": {
+          "@_closed": "1",
+          "@_pencolor": "00000000",
+          "@_brushcolor": "00C0C0C0",
+          "@_penstyle": "psSolid",
+          "@_brushstyle": "bsSolid",
+        },
+      } as XmlNode,
+      {
+        text: [
+          { pt: [], ":@": { "@_x": String((length / 2).toFixed(4)), "@_y": String((height / 2).toFixed(4)) } },
+        ],
+        ":@": {
+          "@_string": name,
+          "@_angle": "0",
+          "@_size": "200",
+          "@_fillbg": "0",
+          "@_pencolor": "00000000",
+          "@_brushcolor": "00FFFFFF",
+          "@_penstyle": "psSolid",
+          "@_brushstyle": "bsClear",
+        },
+      } as XmlNode,
+    ],
+  } as XmlNode;
+}
+
+/** Build a frame-level <elevation-graphics> — outline rectangle of the elevation. */
+function buildFrameElevationGraphics(name: string, length: number, height: number): XmlNode {
+  return {
+    "elevation-graphics": [
+      {
+        poly: [
+          { pt: [], ":@": { "@_x": "0.0000", "@_y": "0.0000" } },
+          { pt: [], ":@": { "@_x": String(length.toFixed(4)), "@_y": "0.0000" } },
+          { pt: [], ":@": { "@_x": String(length.toFixed(4)), "@_y": String(height.toFixed(4)) } },
+          { pt: [], ":@": { "@_x": "0.0000", "@_y": String(height.toFixed(4)) } },
+        ],
+        ":@": {
+          "@_closed": "1",
+          "@_pencolor": "00000000",
+          "@_brushcolor": "00FFFFFF",
+          "@_penstyle": "psSolid",
+          "@_brushstyle": "bsClear",
+        },
+      } as XmlNode,
+      {
+        text: [
+          { pt: [], ":@": { "@_x": String((length / 2).toFixed(4)), "@_y": String((height / 2).toFixed(4)) } },
+        ],
+        ":@": {
+          "@_string": name,
+          "@_angle": "0",
+          "@_size": "200",
+          "@_fillbg": "0",
+          "@_pencolor": "00000000",
+          "@_brushcolor": "00FFFFFF",
+          "@_penstyle": "psSolid",
+          "@_brushstyle": "bsClear",
+        },
+      } as XmlNode,
+    ],
+  } as XmlNode;
+}
+
 /**
  * Reconstruct the stick's elevation outline polygon from the CSV's 6
  * dimension columns — (length, startX, startY, endX, endY, thickness) —
@@ -333,12 +413,50 @@ function buildElevationGraphics(c: CsvComponent): XmlNode {
     ":@": { "@_x": c.x.toFixed(4), "@_y": c.y.toFixed(4) },
   } as XmlNode));
 
+  // Mid-stick text label (stick name) and end circles (anchor markers) —
+  // Detailer always emits these. The rollformer's UI uses them for display.
+  const midX = (startX + endX) / 2;
+  const midY = (startY + endY) / 2;
   return {
     "elevation-graphics": [
       {
         poly: pts,
         ":@": {
           "@_closed": "1",
+          "@_pencolor": "00000000",
+          "@_brushcolor": "00FFFFFF",
+          "@_penstyle": "psSolid",
+          "@_brushstyle": "bsClear",
+        },
+      } as XmlNode,
+      {
+        text: [{ pt: [], ":@": { "@_x": midX.toFixed(4), "@_y": midY.toFixed(4) } }],
+        ":@": {
+          "@_string": c.stickName,
+          "@_angle": "0",
+          "@_size": "60",
+          "@_fillbg": "1",
+          "@_pencolor": "00000000",
+          "@_brushcolor": "00FFFFFF",
+          "@_penstyle": "psSolid",
+          "@_brushstyle": "bsSolid",
+        },
+      } as XmlNode,
+      // End anchor circles (start + end of stick)
+      {
+        circle: [{ pt: [], ":@": { "@_x": startX.toFixed(4), "@_y": startY.toFixed(4) } }],
+        ":@": {
+          "@_radius": "5",
+          "@_pencolor": "00000000",
+          "@_brushcolor": "00FFFFFF",
+          "@_penstyle": "psSolid",
+          "@_brushstyle": "bsClear",
+        },
+      } as XmlNode,
+      {
+        circle: [{ pt: [], ":@": { "@_x": endX.toFixed(4), "@_y": endY.toFixed(4) } }],
+        ":@": {
+          "@_radius": "5",
           "@_pencolor": "00000000",
           "@_brushcolor": "00FFFFFF",
           "@_penstyle": "psSolid",

@@ -38,7 +38,13 @@ export function parseXmlTree(xml: string): XmlNode[] {
 
 /** Serialise the preserve-order tree back to an XML string. */
 export function buildXml(tree: XmlNode[]): string {
-  return xmlBuilder.build(tree) as string;
+  let xml = xmlBuilder.build(tree) as string;
+  // Detailer collapses empty elements to self-closing <tag/>. The fast-xml-parser
+  // builder produces <tag></tag>. Some legacy XML parsers (including the one
+  // inside HYTEK rollformer firmware) reject the verbose form, so we
+  // post-process empty elements into the self-closing form.
+  xml = xml.replace(/<([A-Za-z][\w\-]*)((?:\s+[\w\-:]+="[^"]*")*)\s*><\/\1>/g, "<$1$2/>");
+  return xml;
 }
 
 /** Encode an XML string to RFY bytes (deflate + encrypt with optional IV). */

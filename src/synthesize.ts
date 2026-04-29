@@ -105,19 +105,41 @@ export function synthesizeRfyFromCsv(csv: string, options: SynthesizeOptions = {
           sticks.push(buildStickNode(c));
         }
         const frameGuid = deterministicGuid(`frame:${packId}:${frameName}`);
-        const frameLength = Math.max(...comps.map(c => c.lengthA), 0);
-        // Heuristic frame height: max stick length when no explicit value
-        const frameHeight = Math.max(...comps.map(c => c.lengthA), 0);
+        // Frame length: span of any horizontal member (top plate)
+        // Frame height: length of any vertical member (stud) — wall height
+        const studLengths = comps.filter(c => /STUD/i.test(c.role)).map(c => c.lengthA);
+        const plateLengths = comps.filter(c => /PLATE/i.test(c.role)).map(c => c.lengthA);
+        const frameLength = plateLengths.length > 0
+          ? Math.max(...plateLengths)
+          : Math.max(...comps.map(c => c.lengthA), 0);
+        const frameHeight = studLengths.length > 0
+          ? Math.max(...studLengths)
+          : Math.max(...comps.map(c => c.lengthA), 0);
+        // Approximate frame weight: total stick mass.
+        // Steel density 7850 kg/m³; profile area ≈ (web + 2×flange + 2×lip) × gauge_mm × 1mm depth
+        // For 70 S 41, gauge 0.75: area ≈ (70+82+24) × 0.75 = 132mm² per mm of length
+        const frameWeight = comps.reduce((sum, c) => {
+          const gauge = parseFloat(c.gauge) || 0.75;
+          const profileLine = parseFloat(c.metricLabel.match(/\d+/g)?.[0] ?? "70") || 70;
+          const flange = parseFloat(c.metricLabel.match(/\d+/g)?.[1] ?? "41") || 41;
+          const perimeter = profileLine + 2 * flange + 2 * 12; // approx
+          const massPerMm = perimeter * gauge * 7.85e-6;       // kg per mm
+          return sum + (c.lengthA * massPerMm);
+        }, 0);
+
         frameNodes.push({
           frame: [
-            // Empty plan-graphics (Detailer always emits this; some parsers require it)
+            // Identity transformation matrix (3D placement) — required by
+            // FrameCAD-format parsers including the HYTEK rollformer firmware.
+            { transformationmatrix: [{ "#text": "((1.00000,0.00000,0.00000,0.00000),(0.00000,1.00000,0.00000,0.00000),(0.00000,0.00000,1.00000,0.00000),(0.00000,0.00000,0.00000,1.00000))" }] },
+            // Empty plan-graphics — Detailer always emits this on frames.
             { "plan-graphics": [] },
             ...sticks,
           ],
           ":@": {
             "@_name": frameName,
             "@_design_id": frameGuid,
-            "@_weight": "0",
+            "@_weight": String(Math.round(frameWeight * 1e10) / 1e10),
             "@_length": String(frameLength),
             "@_height": String(frameHeight),
           },

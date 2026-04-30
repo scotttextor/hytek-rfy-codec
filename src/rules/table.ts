@@ -162,6 +162,9 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      // InnerNotch on T plates is SELECTIVE (some short T sub-plates have it,
+      // some don't — pattern not yet derivable from sample). Skipping to avoid
+      // over-emission (100 extras vs 12 matches when emitted unconditionally).
       // Service holes for power-feed drops, spaced ~600mm starting from 306mm.
       // Fires on T plates in WALL plans (LBW/NLBW) regardless of length —
       // even short top plates above doors get them. Truss/roof/TB2B plans
@@ -191,6 +194,8 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", notes: "Anchor bolt at length-62mm (slab attachment)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      // InnerNotch on B plates is SELECTIVE — same as T (some sticks have it,
+      // some don't). Skipping to avoid over-emission (96 extras vs 12 matches).
     ],
   },
 
@@ -249,12 +254,14 @@ export const RULE_TABLE: RuleGroup[] = [
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "H header: InnerNotch span 39 at start (verified HG260044 L6/H1)" },
       { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high", notes: "Header dimple #1 at 16.5 (matches stud pattern)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high", notes: "Header paired dimple at 58.5 (= 16.5 + 42mm)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "H header: InnerNotch span 39 at end" },
     ],
   },
 
@@ -281,12 +288,34 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- BRACE / Ribbon / Lintel sticks on 70S41 (NOT truss webs) -----------
+  // ----------- LINTELS (L) on 70S41 -----------
+  // Lintels are horizontal members above doors/windows (similar role to
+  // headers H, but distinct in Detailer's classification). They get
+  // end-anchored InnerNotch + stud-pattern Swage + Dimples at each end.
+  //
+  // Verified 2026-05-01 against HG260044 LBW reference: L sticks have
+  // InnerNotch span 39 at both start and end (32 missing on LBW with 0
+  // extras when emitted from /^L$/ pattern alone).
+  {
+    rolePattern: /^L$/,
+    profilePattern: /^70S41$/,
+    lengthRange: [0, Infinity],
+    rules: [
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+    ],
+  },
+
+  // ----------- BRACE / Ribbon sticks on 70S41 (NOT truss webs, NOT lintels) -----------
   // Brace dimple offset 11mm (vs 16.5 for studs); span 41mm (vs 39 for studs).
   // Pulled from W|70S41|500-1500 sample data — note this is for wall braces,
-  // truss webs (W) are handled in the dedicated rule above.
+  // truss webs (W) and lintels (L) are handled in dedicated rules above.
   {
-    rolePattern: /^(Br|R|L)$/,
+    rolePattern: /^(Br|R)$/,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [

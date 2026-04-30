@@ -112,8 +112,14 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
   // Cripple studs: also vertical, but their outlines are too wide to be useful for crossing detection.
   // Their connection point is at one of their X edges (which we treat as a virtual stud).
   const cripples = layout.filter(sb => CRIPPLE_ROLES.has(sb.role));
-  // Plates+nogs: horizontal members
-  const plates = layout.filter(sb => ALL_PLATE_ROLES.has(sb.role));
+  // Plates: top + bottom plates only (NOT nogs — nogs are handled in their
+  // own loop below with InnerNotch + LipNotch ops at each stud crossing.
+  // Including nogs here would double-emit LipNotch + InnerDimple at each
+  // crossing — verified 2026-04-30 against HG260044 reference where the
+  // duplicate emissions accounted for ~660 over-emissions of LipNotch).
+  const plates = layout.filter(sb =>
+    ALL_PLATE_ROLES.has(sb.role) && !NOG_ROLES.has(sb.role)
+  );
 
   // Build virtual stud crossings from cripple sticks: each cripple's
   // narrow column is approximately at its xMin (or xMax — we add both

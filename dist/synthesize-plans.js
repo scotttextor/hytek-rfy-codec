@@ -25,6 +25,7 @@
  */
 import { encryptRfy } from "./crypto.js";
 import { buildXml } from "./encode.js";
+import { getMachineSetupForProfile, getDefaultMachineSetup, } from "./machine-setups.js";
 const COPLANARITY_TOLERANCE_MM = 1.0;
 const ORTHOGONALITY_TOLERANCE = 1e-6;
 const STICK_PLANAR_TOLERANCE_MM = 1.0;
@@ -142,6 +143,13 @@ export function synthesizeRfyFromPlans(project, options = {}) {
     const client = options.client ?? project.client ?? "";
     const date = options.date ?? project.date ?? new Date().toISOString().slice(0, 10);
     const projectGuid = deterministicGuid(`project:${projectName}:${jobNum}`);
+    // Resolve machine setup. Auto-pick from first stick's profile web if not
+    // explicitly provided. This drives every tooling tolerance: ChamferTolerance,
+    // EndClearance, DimpleToEnd, BraceToDimple, etc.
+    const firstStickWeb = project.plans?.[0]?.frames?.[0]?.sticks?.[0]?.profile?.web;
+    const setup = options.machineSetup ??
+        (firstStickWeb !== undefined ? getMachineSetupForProfile(firstStickWeb) : undefined) ??
+        getDefaultMachineSetup();
     let planCount = 0;
     let frameCount = 0;
     let stickCount = 0;

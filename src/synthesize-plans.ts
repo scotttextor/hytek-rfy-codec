@@ -26,6 +26,11 @@
 import { encryptRfy } from "./crypto.js";
 import { buildXml, type XmlNode } from "./encode.js";
 import type { RfyToolingOp } from "./format.js";
+import {
+  type MachineSetup,
+  getMachineSetupForProfile,
+  getDefaultMachineSetup,
+} from "./machine-setups.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -74,6 +79,12 @@ export interface ParsedProject {
 }
 
 export interface SynthesizePlansOptions {
+  /**
+   * HYTEK machine setup to use for tooling rules (Chamfer Tolerance,
+   * EndClearance, BraceToDimple, etc.). If not provided, auto-resolved
+   * from the first stick's profile web. See `machine-setups.ts`.
+   */
+  machineSetup?: MachineSetup;
   /** Override project name. Defaults to project.name. */
   projectName?: string;
   /** Override jobnum. Defaults to project.jobNum. */
@@ -236,6 +247,15 @@ export function synthesizeRfyFromPlans(
   const client = options.client ?? project.client ?? "";
   const date = options.date ?? project.date ?? new Date().toISOString().slice(0, 10);
   const projectGuid = deterministicGuid(`project:${projectName}:${jobNum}`);
+
+  // Resolve machine setup. Auto-pick from first stick's profile web if not
+  // explicitly provided. This drives every tooling tolerance: ChamferTolerance,
+  // EndClearance, DimpleToEnd, BraceToDimple, etc.
+  const firstStickWeb = project.plans?.[0]?.frames?.[0]?.sticks?.[0]?.profile?.web;
+  const setup =
+    options.machineSetup ??
+    (firstStickWeb !== undefined ? getMachineSetupForProfile(firstStickWeb) : undefined) ??
+    getDefaultMachineSetup();
 
   let planCount = 0;
   let frameCount = 0;

@@ -15,6 +15,14 @@ export {
   type SynthesizePlansOptions, type SynthesizePlansResult,
 } from "./synthesize-plans.js";
 export {
+  MACHINE_SETUPS,
+  SETUP_BY_PROFILE_WEB,
+  getMachineSetupForProfile,
+  getDefaultMachineSetup,
+  type MachineSetup,
+  type ChamferPoint,
+} from "./machine-setups.js";
+export {
   generateTooling, generateToolingWithTrace,
   applyRule, applyRules, findGroup,
   RULE_TABLE, profileOffsets,

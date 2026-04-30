@@ -1,4 +1,5 @@
 import type { RfyToolingOp } from "./format.js";
+import { type MachineSetup } from "./machine-setups.js";
 export interface Vec3 {
     x: number;
     y: number;
@@ -43,6 +44,12 @@ export interface ParsedProject {
     plans: ParsedPlan[];
 }
 export interface SynthesizePlansOptions {
+    /**
+     * HYTEK machine setup to use for tooling rules (Chamfer Tolerance,
+     * EndClearance, BraceToDimple, etc.). If not provided, auto-resolved
+     * from the first stick's profile web. See `machine-setups.ts`.
+     */
+    machineSetup?: MachineSetup;
     /** Override project name. Defaults to project.name. */
     projectName?: string;
     /** Override jobnum. Defaults to project.jobNum. */

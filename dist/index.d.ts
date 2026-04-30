@@ -6,6 +6,7 @@ export { parseXmlTree, buildXml, encodeXml, encodeTree, type XmlNode } from "./e
 export { applyCsvToRfy, type ApplyResult } from "./apply.js";
 export { synthesizeRfyFromCsv, type SynthesizeOptions, type SynthesizeResult } from "./synthesize.js";
 export { synthesizeRfyFromPlans, deriveFrameBasis, projectToFrameLocal, transformationMatrixString, type ParsedProject, type ParsedPlan, type ParsedFrame, type ParsedStick, type ParsedStickProfile, type FrameBasis, type Vec2, type Vec3, type SynthesizePlansOptions, type SynthesizePlansResult, } from "./synthesize-plans.js";
+export { MACHINE_SETUPS, SETUP_BY_PROFILE_WEB, getMachineSetupForProfile, getDefaultMachineSetup, type MachineSetup, type ChamferPoint, } from "./machine-setups.js";
 export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findGroup, RULE_TABLE, profileOffsets, generateFrameContextOps, layoutFrame, computeBox, roleFromName, type StickContext, type Anchor, type OpRule, type RuleGroup, type RuleApplicationResult, } from "./rules/index.js";
 export { STICK_TYPES, TOOL_TYPES, type StickType, type ToolType, type RfyPointTool, type RfySpannedTool, type RfyEdgeTool, type RfyToolingOp, type RfyProfile, type RfyStick, type RfyFrame, type RfyPlan, type RfyProject, type RfyDocument, } from "./format.js";
 export declare const VERSION = "0.1.0";

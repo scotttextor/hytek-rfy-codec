@@ -112,6 +112,8 @@ function parseInputXml(xmlText) {
         envelope: envelopeRaw,
         sticks: [],
       };
+      const frameZmin = Math.min(...envelopeRaw.map(v => v.z));
+      const frameZmax = Math.max(...envelopeRaw.map(v => v.z));
       for (const stickNode of frameNode.stick ?? []) {
         const profile = {
           web: Number(stickNode.profile?.["@_web"] ?? 0),
@@ -126,10 +128,25 @@ function parseInputXml(xmlText) {
         const inputFlipped = String(stickNode.flipped ?? "").trim().toLowerCase() === "true";
         // Detailer rule: Kb/W diagonal-brace sticks always have flipped=false.
         const isDiagonalBrace = /^(Kb|W)\d/.test(stickName);
+        let start = parseTriple(String(stickNode.start ?? "0,0,0"));
+        let end = parseTriple(String(stickNode.end ?? "0,0,0"));
+        // Kb stud-end trim: 2mm along diagonal at the end farther from frame Z boundaries.
+        if (/^Kb\d/.test(stickName)) {
+          const startBoundary = Math.min(start.z - frameZmin, frameZmax - start.z);
+          const endBoundary = Math.min(end.z - frameZmin, frameZmax - end.z);
+          const dx = end.x - start.x, dy = end.y - start.y, dz = end.z - start.z;
+          const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          if (len > 4) {
+            const ux = dx/len, uy = dy/len, uz = dz/len;
+            const T = 2.0;
+            if (startBoundary > endBoundary) start = { x: start.x + ux*T, y: start.y + uy*T, z: start.z + uz*T };
+            else end = { x: end.x - ux*T, y: end.y - uy*T, z: end.z - uz*T };
+          }
+        }
         const stick = {
           name: stickName,
-          start: parseTriple(String(stickNode.start ?? "0,0,0")),
-          end: parseTriple(String(stickNode.end ?? "0,0,0")),
+          start,
+          end,
           flipped: isDiagonalBrace ? false : inputFlipped,
           profile,
           usage: String(stickNode["@_usage"] ?? ""),

@@ -221,6 +221,19 @@ export function generateFrameContextOps(frame) {
                 pos: round(startPos + internalDimpleOffset),
             });
         }
+        // Detailer JOINS adjacent LipNotches into single wider notches — verified
+        // 2026-05-01 against HG260044 GF-TIN PC7-1/B1: 6 W crossings emit ONE
+        // wide LipNotch (513..629, span 116) instead of multiple 45mm notches.
+        // Threshold: notches whose endPos is within JOIN_GAP_MM of the next
+        // notch's startPos get merged. Dimples preserved (they live at the
+        // original crossing positions, not at notch endpoints).
+        //
+        // For trusses (top/bottom chord), the join distance is LARGER because
+        // truss panel-points are spaced wider. For walls, join only very-close
+        // notches (e.g. virtual-stud-crossings on the same Kb).
+        const isTrussChord = trussWebs.length > 0 && stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch");
+        const JOIN_GAP_MM = isTrussChord ? 80 : 30;
+        joinAdjacentLipNotches(stickOps, JOIN_GAP_MM);
     }
     // Studs: nogs cross them — LIP NOTCH + DIMPLE at the crossing.
     // (Verified 2026-04-30 against PK5-DETAILER-RAW.xml: Detailer emits
@@ -301,3 +314,52 @@ export function generateFrameContextOps(frame) {
     return result;
 }
 function round(n) { return Math.round(n * 10000) / 10000; }
+/**
+ * Mutates `stickOps` in-place: merges any LipNotch ops whose endPos is within
+ * `gap` mm of the next LipNotch's startPos into a single wider notch.
+ *
+ * Detailer's behaviour (verified 2026-05-01 against HG260044 GF-TIN PC7-1/B1):
+ * adjacent W crossings on a chord get joined into one continuous notch rather
+ * than multiple narrow notches. E.g. 3 webs at x=70, 130, 190 with 45mm
+ * individual spans → one 156mm-wide notch from 47..213 instead of 3 separate.
+ *
+ * Other op types (Dimple, Swage, etc.) are untouched.
+ */
+function joinAdjacentLipNotches(stickOps, gap) {
+    // Pull out LipNotches, sort by startPos, merge runs.
+    const lipNotches = [];
+    for (let i = 0; i < stickOps.length; i++) {
+        const op = stickOps[i];
+        if (op && op.kind === "spanned" && op.type === "LipNotch") {
+            lipNotches.push({ idx: i, startPos: op.startPos, endPos: op.endPos });
+        }
+    }
+    if (lipNotches.length < 2)
+        return;
+    lipNotches.sort((a, b) => a.startPos - b.startPos);
+    // Build merged ranges
+    const merged = [];
+    for (const ln of lipNotches) {
+        const last = merged[merged.length - 1];
+        if (last && ln.startPos <= last.endPos + gap) {
+            last.endPos = Math.max(last.endPos, ln.endPos);
+        }
+        else {
+            merged.push({ startPos: ln.startPos, endPos: ln.endPos });
+        }
+    }
+    // If no actual merging happened (every notch separate), bail
+    if (merged.length === lipNotches.length)
+        return;
+    // Remove all original LipNotches (highest index first to preserve lower indices)
+    const indices = lipNotches.map(ln => ln.idx).sort((a, b) => b - a);
+    for (const i of indices)
+        stickOps.splice(i, 1);
+    // Append merged notches
+    for (const m of merged) {
+        stickOps.push({
+            kind: "spanned", type: "LipNotch",
+            startPos: round(m.startPos), endPos: round(m.endPos),
+        });
+    }
+}

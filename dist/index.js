@@ -5,6 +5,7 @@ export { parseCsv, validateCsv } from "./csv-parse.js";
 export { parseXmlTree, buildXml, encodeXml, encodeTree } from "./encode.js";
 export { applyCsvToRfy } from "./apply.js";
 export { synthesizeRfyFromCsv } from "./synthesize.js";
+export { synthesizeRfyFromPlans, deriveFrameBasis, projectToFrameLocal, transformationMatrixString, } from "./synthesize-plans.js";
 export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findGroup, RULE_TABLE, profileOffsets, generateFrameContextOps, layoutFrame, computeBox, roleFromName, } from "./rules/index.js";
 export { STICK_TYPES, TOOL_TYPES, } from "./format.js";
 export const VERSION = "0.1.0";

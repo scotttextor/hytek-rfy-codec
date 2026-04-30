@@ -6,6 +6,15 @@ export { parseXmlTree, buildXml, encodeXml, encodeTree, type XmlNode } from "./e
 export { applyCsvToRfy, type ApplyResult } from "./apply.js";
 export { synthesizeRfyFromCsv, type SynthesizeOptions, type SynthesizeResult } from "./synthesize.js";
 export {
+  synthesizeRfyFromPlans,
+  deriveFrameBasis,
+  projectToFrameLocal,
+  transformationMatrixString,
+  type ParsedProject, type ParsedPlan, type ParsedFrame, type ParsedStick, type ParsedStickProfile,
+  type FrameBasis, type Vec2, type Vec3,
+  type SynthesizePlansOptions, type SynthesizePlansResult,
+} from "./synthesize-plans.js";
+export {
   generateTooling, generateToolingWithTrace,
   applyRule, applyRules, findGroup,
   RULE_TABLE, profileOffsets,

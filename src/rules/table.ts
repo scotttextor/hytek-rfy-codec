@@ -165,17 +165,11 @@ export const RULE_TABLE: RuleGroup[] = [
       // InnerNotch on T plates is SELECTIVE (some short T sub-plates have it,
       // some don't — pattern not yet derivable from sample). Skipping to avoid
       // over-emission (100 extras vs 12 matches when emitted unconditionally).
-      // Service holes for power-feed drops, spaced ~600mm starting from 306mm.
-      // Fires on T plates in WALL plans (LBW/NLBW) regardless of length —
-      // even short top plates above doors get them. Truss/roof/TB2B plans
-      // never get service holes on T plates.
-      {
-        toolType: "InnerService", kind: "point",
-        anchor: { kind: "spaced", firstOffset: 306, spacing: 600, lastOffset: 306 },
-        confidence: "medium",
-        predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 600,
-        notes: "T plates: power-feed drops at ~600mm intervals from offset 306mm",
-      },
+      // Service holes for power-feed drops moved to frame-context.ts —
+      // they belong at midpoints between adjacent studs (panel-point grid),
+      // not on a fixed every-600 schedule. Verified 2026-05-01 against
+      // HG260044 LBW: positions 285.8, 780.5, 1286.5, 1726, 2186, 2751 are
+      // all stud-pair midpoints derived from the plate's stud crossings.
     ],
   },
 

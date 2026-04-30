@@ -137,6 +137,10 @@ export function generateFrameContextOps(frame) {
         });
     }
     const allCrossingStuds = [...studs, ...virtualStudCrossings];
+    // Determine if this is a wall plan (LBW/NLBW): there are nogs in the layout.
+    // Trusses (TIN, TB2B) and truss-roof (CP, RP, MH) frames don't have nogs and
+    // shouldn't get service holes on T plates.
+    const isWallFrame = layout.some(sb => NOG_ROLES.has(sb.role));
     for (const plate of plates) {
         const offsets = profileOffsets(plate.stick.profile.metricLabel.replace(/\s/g, ""));
         const span = offsets.span;
@@ -144,6 +148,9 @@ export function generateFrameContextOps(frame) {
         const internalDimpleOffset = 22.5; // internal lip notch midpoint offset
         const stickOps = result.get(plate.stick.name);
         const seenPositions = new Set(); // dedupe crossings at same localPos
+        // Track stud crossing positions on this plate so we can emit InnerService
+        // at midpoints between adjacent studs (panel-point grid).
+        const studCrossingsOnPlate = [];
         // Plate centerline y for diagonal-W intersection calc
         const plateCenterY = (plate.box.yMin + plate.box.yMax) / 2;
         for (const stud of allCrossingStuds) {
@@ -172,6 +179,7 @@ export function generateFrameContextOps(frame) {
             if (seenPositions.has(quantizedPos))
                 continue;
             seenPositions.add(quantizedPos);
+            studCrossingsOnPlate.push(localPos);
             // Internal lip notch: spanned, centred on stud, span 45mm typically
             const studWidth = stud.box.xMax - stud.box.xMin;
             const lipSpan = Math.max(internalSpan, Math.min(studWidth + 4, 80)); // cap at 80 to avoid huge spans
@@ -234,6 +242,31 @@ export function generateFrameContextOps(frame) {
         const isTrussChord = trussWebs.length > 0 && stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch");
         const JOIN_GAP_MM = isTrussChord ? 80 : 30;
         joinAdjacentLipNotches(stickOps, JOIN_GAP_MM);
+        // InnerService at stud-pair midpoints, T plates only, walls only.
+        // Detailer's actual positions are at panel-point service-hole locations
+        // which we can't fully derive without the architectural drawing data.
+        // Best approximation: midpoint between adjacent studs where gap >= 400mm
+        // (skips back-to-back stud pairs and tight cripple groups).
+        const isTopPlate = TOP_PLATE_ROLES.has(plate.role);
+        if (isWallFrame && isTopPlate && studCrossingsOnPlate.length >= 2) {
+            const sortedCrossings = [...studCrossingsOnPlate].sort((a, b) => a - b);
+            for (let i = 0; i + 1 < sortedCrossings.length; i++) {
+                const a = sortedCrossings[i];
+                const b = sortedCrossings[i + 1];
+                const gap = b - a;
+                if (gap < 400)
+                    continue; // skip back-to-back / tight cripples
+                const midpoint = (a + b) / 2;
+                if (midpoint < span + 50)
+                    continue;
+                if (midpoint > plate.stick.length - span - 50)
+                    continue;
+                stickOps.push({
+                    kind: "point", type: "InnerService",
+                    pos: round(midpoint),
+                });
+            }
+        }
     }
     // Studs: nogs cross them — LIP NOTCH + DIMPLE at the crossing.
     // (Verified 2026-04-30 against PK5-DETAILER-RAW.xml: Detailer emits
@@ -295,9 +328,10 @@ export function generateFrameContextOps(frame) {
             stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
         }
     }
-    // Nogs: studs cross them; emit WEB+LIP NOTCH + DIMPLE
+    // Nogs: studs cross them; emit WEB+LIP NOTCH + DIMPLE + service holes at midpoints
     for (const nog of nogs) {
         const stickOps = result.get(nog.stick.name);
+        const studCrossingsOnNog = [];
         for (const stud of studs) {
             const yOverlap = stud.box.yMax >= nog.box.yMin && stud.box.yMin <= nog.box.yMax;
             if (!yOverlap)
@@ -317,6 +351,25 @@ export function generateFrameContextOps(frame) {
             stickOps.push({ kind: "spanned", type: "InnerNotch", startPos: round(startPos), endPos: round(endPos) });
             stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
             stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+            studCrossingsOnNog.push(localPos);
+        }
+        // InnerService at stud-pair midpoints on nogs (matches T plate pattern)
+        // Skip back-to-back stud pairs (gap < 400mm) for cleaner approximation.
+        if (studCrossingsOnNog.length >= 2) {
+            const sortedCrossings = [...studCrossingsOnNog].sort((a, b) => a - b);
+            for (let i = 0; i + 1 < sortedCrossings.length; i++) {
+                const a = sortedCrossings[i];
+                const b = sortedCrossings[i + 1];
+                const gap = b - a;
+                if (gap < 400)
+                    continue;
+                const midpoint = (a + b) / 2;
+                if (midpoint < 50)
+                    continue;
+                if (midpoint > nog.stick.length - 50)
+                    continue;
+                stickOps.push({ kind: "point", type: "InnerService", pos: round(midpoint) });
+            }
         }
     }
     return result;

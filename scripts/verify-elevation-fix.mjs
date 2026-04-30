@@ -122,11 +122,15 @@ function parseInputXml(xmlText) {
           shape: String(stickNode.profile?.["@_shape"] ?? "C"),
           gauge: String(Number(stickNode["@_gauge"] ?? 0)),
         };
+        const stickName = String(stickNode["@_name"] ?? "");
+        const inputFlipped = String(stickNode.flipped ?? "").trim().toLowerCase() === "true";
+        // Detailer rule: Kb/W diagonal-brace sticks always have flipped=false.
+        const isDiagonalBrace = /^(Kb|W)\d/.test(stickName);
         const stick = {
-          name: String(stickNode["@_name"] ?? ""),
+          name: stickName,
           start: parseTriple(String(stickNode.start ?? "0,0,0")),
           end: parseTriple(String(stickNode.end ?? "0,0,0")),
-          flipped: String(stickNode.flipped ?? "").trim().toLowerCase() === "true",
+          flipped: isDiagonalBrace ? false : inputFlipped,
           profile,
           usage: String(stickNode["@_usage"] ?? ""),
           type: String(stickNode["@_type"] ?? ""),

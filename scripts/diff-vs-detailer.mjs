@@ -28,6 +28,8 @@ import {
   generateTooling,
   decode,
   getMachineSetupForProfile,
+  deriveFrameBasis,
+  projectToFrameLocal,
 } from "../dist/index.js";
 
 const [, , inputXmlPath, referenceRfyPath, outPrefix = "/tmp/diff"] = process.argv;
@@ -75,6 +77,8 @@ function buildOurProject(xmlText) {
       if (env.length !== 4) continue;
       const fzMin = Math.min(...env.map(v=>v.z));
       const fzMax = Math.max(...env.map(v=>v.z));
+      let frameBasis = null;
+      try { frameBasis = deriveFrameBasis(env, true); } catch {}
       const sticks = [];
       for (const s of f.stick ?? []) {
         const profile = {
@@ -141,6 +145,17 @@ function buildOurProject(xmlText) {
         if (/^Kb\d/.test(stickName) && length > 100) {
           stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round((length/2)*10)/10 });
         }
+        // Truss W angle-conditional chamfer (vertical posts get none, diagonals get both)
+        if (/^W\d/.test(stickName) && frameBasis) {
+          const startL = projectToFrameLocal(stick.start, frameBasis);
+          const endL = projectToFrameLocal(stick.end, frameBasis);
+          const dxL = Math.abs(endL.x - startL.x);
+          if (dxL > 1.0) {
+            stick.tooling.push({ kind: "start", type: "Chamfer" });
+            stick.tooling.push({ kind: "end", type: "Chamfer" });
+          }
+        }
+        // Web@pt rule: predicate not yet derived (Detailer is selective per stud) — skip.
         sticks.push(stick);
       }
       plan.frames.push({ name: String(f["@_name"]), envelope: env, sticks });

@@ -96,6 +96,9 @@ export const RULE_TABLE: RuleGroup[] = [
         predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
         notes: "Electrical service hole at ~450mm from start (paired with 296mm)",
       },
+      // Web holes are emitted in framecad-import.ts as a post-processing step
+      // (the rules engine emits one op per rule entry, but we need N evenly-
+      // spaced holes per stud which can't be expressed as fixed offsets).
     ],
   },
 
@@ -225,11 +228,35 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- BRACE / Web / Ribbon / Lintel sticks on 70S41 -----------
-  // Brace dimple offset 11mm (vs 16.5 for studs); span 41mm (vs 39 for studs).
-  // Pulled from W|70S41|500-1500 sample data.
+  // ----------- TRUSS WEBS (W) on 70S41 -----------
+  // Truss web members get the SAME end-anchored pattern as full studs:
+  // Swage span 39mm + Dimple at 16.5 from each end.
+  //
+  // Chamfer is added in framecad-import.ts post-processing (NOT here),
+  // because Detailer's rule is angle-dependent: vertical webs (angle=0
+  // from vertical) get NO chamfer, diagonal webs (angle > 0) get BOTH
+  // start AND end chamfer. Verified 2026-04-30 against HG260044 GF-TIN
+  // reference: 100% correlation between non-zero angle and chamfer-both-ends.
+  //
+  // Sample W3 (length 617): Swage 0..39, Dimple @16.5, Swage 578..617, Dimple @600.5
   {
-    rolePattern: BRACE_ROLES,
+    rolePattern: /^W$/,
+    profilePattern: /^70S41$/,
+    lengthRange: [0, Infinity],
+    rules: [
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+    ],
+  },
+
+  // ----------- BRACE / Ribbon / Lintel sticks on 70S41 (NOT truss webs) -----------
+  // Brace dimple offset 11mm (vs 16.5 for studs); span 41mm (vs 39 for studs).
+  // Pulled from W|70S41|500-1500 sample data — note this is for wall braces,
+  // truss webs (W) are handled in the dedicated rule above.
+  {
+    rolePattern: /^(Br|R|L)$/,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [

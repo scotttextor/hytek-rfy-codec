@@ -78,6 +78,21 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+            // Service holes — same as 70mm pattern (electrical outlet/switch heights).
+            {
+                toolType: "InnerService", kind: "point",
+                anchor: { kind: "startAnchored", offset: 296 },
+                confidence: "medium",
+                predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 296 + 200,
+                notes: "89mm stud: electrical outlet hole at 296mm",
+            },
+            {
+                toolType: "InnerService", kind: "point",
+                anchor: { kind: "startAnchored", offset: 446 },
+                confidence: "medium",
+                predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
+                notes: "89mm stud: paired service hole at 446mm",
+            },
         ],
     },
     // ----------- CRIPPLE STUDS / HEADERS (Kb / H) on 70S41 -----------
@@ -149,14 +164,33 @@ export const RULE_TABLE = [
             // some don't). Skipping to avoid over-emission (96 extras vs 12 matches).
         ],
     },
-    // ----------- TOP/BOTTOM PLATES on 89S41 -----------
+    // ----------- TOP PLATES on 89S41 -----------
     {
-        rolePattern: PLATE_ROLES,
+        rolePattern: /^(T|Tp)$/,
         profilePattern: /^89S41$/,
         lengthRange: [0, Infinity],
         rules: [
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+        ],
+    },
+    // ----------- BOTTOM PLATES on 89S41 -----------
+    // Same as top plates PLUS Web@8 + Bolt@~50mm for slab attachment.
+    // Verified 2026-05-01 against HG260044 GF-NLBW-89.075: B1 has
+    // BOLT HOLES @8, ANCHOR @53.7. B3 has ANCHOR @48.
+    // Wall B plates only — truss BottomChord doesn't get these.
+    {
+        rolePattern: /^(B|Bp)$/,
+        profilePattern: /^89S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm wall B plates: Web access slot for sub-floor wiring" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm anchor bolt at ~51mm (between observed 48 and 53.7)" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm anchor bolt at length-51mm" },
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
         ],
@@ -209,6 +243,25 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
             { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "H header: InnerNotch span 39 at end" },
+        ],
+    },
+    // ----------- HEADERS (H) on 89S41 -----------
+    // Same pattern as 70mm headers but with 89mm dimensions.
+    // Verified 2026-05-01 against HG260044 GF-NLBW-89.075: H1 has 12 InnerDimples
+    // at panel-point spacings.
+    {
+        rolePattern: HEADER_ROLES,
+        profilePattern: /^89S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium", notes: "89mm header dimple #1 at 16.5" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "medium", notes: "89mm header paired dimple at 58.5" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "medium" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
         ],
     },
     // ----------- TRUSS WEBS (W) on 70S41 -----------

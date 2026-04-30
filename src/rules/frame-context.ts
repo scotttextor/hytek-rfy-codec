@@ -319,8 +319,52 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
   const otherHorizontal = layout.filter(sb =>
     !NOG_ROLES.has(sb.role) && !STUD_ROLES.has(sb.role) && !ALL_PLATE_ROLES.has(sb.role) && sb.horizontal
   );
+  // Detect back-to-back (B2B) stud pairs: two studs with centerlines within
+  // ~50mm of each other. Verified 2026-05-01 against HG260044 GF-LBW: S3+S4
+  // at x=969 and x=1011 (42mm apart) both get Web@38, Web@485, Web@932,
+  // Web@1379, Web@1826, Web@2273, Web@2719 (spaced ~447mm, anchored 38mm
+  // from each end). Single (non-paired) studs do NOT get these Web ops.
+  const b2bStudNames = new Set<string>();
+  for (let i = 0; i < studs.length; i++) {
+    for (let j = i + 1; j < studs.length; j++) {
+      const a = studs[i]!;
+      const b = studs[j]!;
+      const xDelta = Math.abs(a.box.cx - b.box.cx);
+      // Y range similarity: both studs must span essentially the same Y range
+      // (indicating they're full-height paired studs at the same column).
+      const yMinDelta = Math.abs(a.box.yMin - b.box.yMin);
+      const yMaxDelta = Math.abs(a.box.yMax - b.box.yMax);
+      // Length similarity: paired studs are identical sticks
+      const lenDelta = Math.abs(a.stick.length - b.stick.length);
+      // Tight criteria: < 45mm X-apart, < 5mm Y-range diff, identical length
+      if (xDelta < 45 && yMinDelta < 5 && yMaxDelta < 5 && lenDelta < 5) {
+        b2bStudNames.add(a.stick.name);
+        b2bStudNames.add(b.stick.name);
+      }
+    }
+  }
+
   for (const stud of studs) {
     const stickOps = result.get(stud.stick.name)!;
+
+    // B2B stud pair: emit Web ops at 38mm-from-each-end + intermediate
+    // positions spaced ~447mm. Detailer pattern derived from HG260044 LBW
+    // GF-LBW-70.075 reference.
+    if (b2bStudNames.has(stud.stick.name)) {
+      const len = stud.stick.length;
+      const startOffset = 38;
+      const endOffset = 38;
+      const targetSpacing = 447;
+      const span = len - startOffset - endOffset;
+      if (span > 0) {
+        const count = Math.max(2, Math.round(span / targetSpacing) + 1);
+        for (let i = 0; i < count; i++) {
+          const pos = startOffset + (span * i) / (count - 1);
+          stickOps.push({ kind: "point", type: "Web", pos: round(pos) });
+        }
+      }
+    }
+
     // Nog crossing rule (verified 2026-05-01 against HG260044 LBW CSV):
     //   - If nog passes THROUGH stud (nog.xMin < stud.xMin AND nog.xMax > stud.xMax)
     //     → SWAGE (stiffening rib, no cut). Interior wall crossings.

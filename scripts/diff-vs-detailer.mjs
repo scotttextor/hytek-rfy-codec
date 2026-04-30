@@ -222,6 +222,14 @@ function matchOps(a, b) {
       extras.push(ours);
       continue;
     }
+    // For start/end kind ops, position is meaningless — match the first
+    // available candidate by type+kind (they're singletons per stick anyway).
+    if (ours.kind === "start" || ours.kind === "end") {
+      const first = candidates[0];
+      matched.push({ ours, ref: first.r, drift: 0 });
+      refUsed.add(first.i);
+      continue;
+    }
     const op = ours;
     const dist = (r) => Math.abs(opPos(r) - opPos(op));
     candidates.sort((x, y) => dist(x.r) - dist(y.r));

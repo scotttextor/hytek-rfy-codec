@@ -108,12 +108,13 @@ function buildOurProject(xmlText) {
             end = { x: end.x-ux*ec, y: end.y-uy*ec, z: end.z-uz*ec };
           }
         }
-        // Stud 2mm end-trim (verified Detailer convention)
+        // Stud (2mm/end) + Header (1mm/end) end-trim
         const isFullStud = usage === "stud" || usage === "endstud" || usage === "jackstud" || usage === "trimstud";
-        if (isFullStud) {
+        const isHeader = /^H\d/.test(stickName);
+        const T = isFullStud ? 2.0 : isHeader ? 1.0 : 0;
+        if (T > 0) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
-          const T = 2.0;
           if (len > T*2+1) {
             const ux=dx/len,uy=dy/len,uz=dz/len;
             start = { x: start.x+ux*T, y: start.y+uy*T, z: start.z+uz*T };
@@ -145,12 +146,24 @@ function buildOurProject(xmlText) {
         if (/^Kb\d/.test(stickName) && length > 100) {
           stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round((length/2)*10)/10 });
         }
-        // Truss W angle-conditional chamfer (vertical posts get none, diagonals get both)
+        // Nog InnerService: position-dependent on stick context — skipping
+        // Truss W angle-dependent: vertical=stud-style (16.5+39), diagonal=Kb-style (10+variable+chamfers)
         if (/^W\d/.test(stickName) && frameBasis) {
           const startL = projectToFrameLocal(stick.start, frameBasis);
           const endL = projectToFrameLocal(stick.end, frameBasis);
           const dxL = Math.abs(endL.x - startL.x);
           if (dxL > 1.0) {
+            // Swap stud-style dimples (16.5) → Kb-style (10)
+            const dStart = 16.5, dEnd = length - 16.5, tol = 0.5;
+            for (let i = stick.tooling.length - 1; i >= 0; i--) {
+              const op = stick.tooling[i];
+              if (op.kind === "point" && op.type === "InnerDimple" &&
+                  (Math.abs(op.pos - dStart) < tol || Math.abs(op.pos - dEnd) < tol)) {
+                stick.tooling.splice(i, 1);
+              }
+            }
+            stick.tooling.push({ kind: "point", type: "InnerDimple", pos: 10 });
+            stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round((length-10)*10)/10 });
             stick.tooling.push({ kind: "start", type: "Chamfer" });
             stick.tooling.push({ kind: "end", type: "Chamfer" });
           }

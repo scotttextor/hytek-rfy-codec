@@ -240,7 +240,14 @@ export function generateFrameContextOps(frame) {
         // truss panel-points are spaced wider. For walls, join only very-close
         // notches (e.g. virtual-stud-crossings on the same Kb).
         const isTrussChord = trussWebs.length > 0 && stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch");
-        const JOIN_GAP_MM = isTrussChord ? 80 : 30;
+        // 2026-05-02: dropped truss JOIN_GAP from 80 → 15. Detailer treats
+        // panel-point web pairs (vertical + diagonal at same node) as separate
+        // LipNotches that should NOT join — the ~30mm gap between them is
+        // intentional. Joining produced wide compound notches that didn't match
+        // Detailer's ops at all, hurting LipNotch coverage. 15mm is permissive
+        // enough to merge truly-adjacent notches (e.g. parallel diagonals at
+        // the same node) without merging vertical+diagonal pairs.
+        const JOIN_GAP_MM = isTrussChord ? 15 : 30;
         joinAdjacentLipNotches(stickOps, JOIN_GAP_MM);
         // InnerService at stud-pair midpoints, T plates only, walls only.
         // Detailer's actual positions are at panel-point service-hole locations

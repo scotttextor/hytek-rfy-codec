@@ -97,8 +97,8 @@ function buildOurProject(xmlText) {
         let start = parseTriple(String(s.start ?? "0,0,0"));
         let end = parseTriple(String(s.end ?? "0,0,0"));
         const usage = String(s["@_usage"] ?? "").toLowerCase();
-        // EndClearance plate trim
-        if (usage === "topplate" || usage === "bottomplate") {
+        // EndClearance plate/chord trim
+        if (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord") {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
           const ec = setup?.endClearance ?? 4;

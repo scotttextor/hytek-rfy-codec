@@ -35,12 +35,47 @@ export function layoutFrame(frame) {
     return out;
 }
 const STUD_ROLES = new Set(["S", "J"]); // narrow vertical members only
+const TRUSS_WEB_ROLES = new Set(["W"]); // truss web members (verticals + diagonals)
 const CRIPPLE_ROLES = new Set(["Kb", "H"]); // wide horizontal+vertical hybrids — handled separately
 const TOP_PLATE_ROLES = new Set(["T", "Tp"]);
 const BOT_PLATE_ROLES = new Set(["B", "Bp"]);
 const NOG_ROLES = new Set(["N", "Nog"]);
 const ALL_PLATE_ROLES = new Set([...TOP_PLATE_ROLES, ...BOT_PLATE_ROLES, ...NOG_ROLES]);
 const STUD_MAX_WIDTH = 100; // real studs are ~40mm wide; Kb/H outlines can be 500mm+
+/** Get the stick's 2D centerline midpoints at start and end, derived from
+ *  outlineCorners. The corners are the 4-point CCW rectangle around the
+ *  diagonal axis, so:
+ *    start_centerline = midpoint of corners[0] + corners[3]
+ *    end_centerline   = midpoint of corners[1] + corners[2]
+ */
+function getCenterlineEndpoints(stick) {
+    const c = stick.outlineCorners;
+    if (!c || c.length < 4)
+        return null;
+    return {
+        startL: { x: (c[0].x + c[3].x) / 2, y: (c[0].y + c[3].y) / 2 },
+        endL: { x: (c[1].x + c[2].x) / 2, y: (c[1].y + c[2].y) / 2 },
+    };
+}
+/** Compute the x-position where the stick's centerline intersects y = atY.
+ *  Works for both axis-aligned and diagonal sticks. Returns null if the
+ *  stick's centerline doesn't span atY or is purely horizontal. */
+function getCrossingX(stick, atY) {
+    const c = getCenterlineEndpoints(stick);
+    if (!c)
+        return null;
+    const dy = c.endL.y - c.startL.y;
+    if (Math.abs(dy) < 1e-6)
+        return null; // horizontal stick — doesn't cross horizontal chord
+    // Allow small tolerance outside the strict y-range so chord-level crossings near
+    // the stick's endpoints still register.
+    const yMin = Math.min(c.startL.y, c.endL.y) - 5;
+    const yMax = Math.max(c.startL.y, c.endL.y) + 5;
+    if (atY < yMin || atY > yMax)
+        return null;
+    const t = (atY - c.startL.y) / dy;
+    return c.startL.x + t * (c.endL.x - c.startL.x);
+}
 /** Convert a frame-X-coord crossing into a position along the plate's length. */
 function plateLocalPosition(plate, crossingX) {
     // Plates run horizontally; the position along the plate is the crossing X
@@ -69,6 +104,11 @@ export function generateFrameContextOps(frame) {
         result.set(sb.stick.name, []);
     // Studs: narrow vertical members (S, J). Filter out wide outlines (Kb/H).
     const studs = layout.filter(sb => STUD_ROLES.has(sb.role) && (sb.box.xMax - sb.box.xMin) <= STUD_MAX_WIDTH);
+    // Truss webs (W): vertical posts AND diagonal members in trusses. They
+    // cross top/bottom chords like studs but for diagonals the bbox.cx isn't
+    // meaningful — we use line-intersection geometry to find the actual
+    // crossing X at the chord's y-level.
+    const trussWebs = layout.filter(sb => TRUSS_WEB_ROLES.has(sb.role));
     // Cripple studs: also vertical, but their outlines are too wide to be useful for crossing detection.
     // Their connection point is at one of their X edges (which we treat as a virtual stud).
     const cripples = layout.filter(sb => CRIPPLE_ROLES.has(sb.role));
@@ -104,6 +144,8 @@ export function generateFrameContextOps(frame) {
         const internalDimpleOffset = 22.5; // internal lip notch midpoint offset
         const stickOps = result.get(plate.stick.name);
         const seenPositions = new Set(); // dedupe crossings at same localPos
+        // Plate centerline y for diagonal-W intersection calc
+        const plateCenterY = (plate.box.yMin + plate.box.yMax) / 2;
         for (const stud of allCrossingStuds) {
             // Does this stud's bounding box overlap the plate's bounding box?
             // Plate spans the full frame horizontally; stud spans some Y range.
@@ -140,6 +182,40 @@ export function generateFrameContextOps(frame) {
                 startPos: round(startPos), endPos: round(endPos),
             });
             // Dimple inside the lip notch
+            stickOps.push({
+                kind: "point", type: "InnerDimple",
+                pos: round(startPos + internalDimpleOffset),
+            });
+        }
+        // Truss W members crossing this chord: use line-intersection geometry
+        // (bbox.cx is wrong for diagonals — would give the bbox midpoint, not
+        // the actual crossing-x at the chord's y-level).
+        for (const web of trussWebs) {
+            const crossingX = getCrossingX(web.stick, plateCenterY);
+            if (crossingX === null)
+                continue;
+            // Skip if crossing is outside plate's X range
+            if (crossingX < plate.box.xMin + 50)
+                continue;
+            if (crossingX > plate.box.xMax - 50)
+                continue;
+            const localPos = plateLocalPosition(plate, crossingX);
+            if (localPos < span + 5)
+                continue;
+            if (localPos > plate.stick.length - span - 5)
+                continue;
+            const quantizedPos = Math.round(localPos / 30) * 30;
+            if (seenPositions.has(quantizedPos))
+                continue;
+            seenPositions.add(quantizedPos);
+            // Truss web on chord: same LipNotch + Dimple pattern as a stud crossing.
+            const lipSpan = internalSpan; // 45mm — webs are 41mm wide
+            const startPos = localPos - lipSpan / 2;
+            const endPos = startPos + lipSpan;
+            stickOps.push({
+                kind: "spanned", type: "LipNotch",
+                startPos: round(startPos), endPos: round(endPos),
+            });
             stickOps.push({
                 kind: "point", type: "InnerDimple",
                 pos: round(startPos + internalDimpleOffset),

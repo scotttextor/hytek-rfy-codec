@@ -133,6 +133,20 @@ function buildOurProject(xmlText) {
             start = { x: start.x+ux*T, y: start.y+uy*T, z: start.z+uz*T };
           }
         }
+        // Vertical W extension: extend by lip depth (~11mm) into chord cavity.
+        // See framecad-import.ts comment for full derivation.
+        if (/^W\d/.test(stickName)) {
+          const dx = end.x - start.x, dy = end.y - start.y;
+          const horizDelta = Math.sqrt(dx*dx + dy*dy);
+          if (horizDelta < 1.0) {
+            const lipDepth = profile.rLip > 0 ? profile.rLip : 11;
+            const dz = end.z - start.z;
+            if (Math.abs(dz) > 0.1) {
+              const sign = dz > 0 ? 1 : -1;
+              end = { x: end.x, y: end.y, z: end.z + sign * lipDepth };
+            }
+          }
+        }
         const stick = { name: stickName, start, end, flipped, profile, usage: String(s["@_usage"] ?? ""), tooling: [] };
         const length = Math.round(distance3D(stick.start, stick.end) * 10) / 10;
         const role = roleForUsage(stick.usage, String(s["@_type"] ?? ""), stick.name);

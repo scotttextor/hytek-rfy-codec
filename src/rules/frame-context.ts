@@ -289,7 +289,12 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
   );
   for (const stud of studs) {
     const stickOps = result.get(stud.stick.name)!;
-    // Nogs → LIP NOTCH (not Swage as the old comment claimed)
+    // Nog crossing rule (verified 2026-05-01 against HG260044 LBW CSV):
+    //   - If nog passes THROUGH stud (nog.xMin < stud.xMin AND nog.xMax > stud.xMax)
+    //     → SWAGE (stiffening rib, no cut). Interior wall crossings.
+    //   - If nog TERMINATES at this stud (nog.xMin or xMax falls inside stud's
+    //     X footprint) → LIP NOTCH. Edge studs where nog butts into stud.
+    // Both cases also emit InnerDimple inside the cut.
     for (const nog of nogs) {
       const xOverlap = nog.box.xMax >= stud.box.xMin && nog.box.xMin <= stud.box.xMax;
       if (!xOverlap) continue;
@@ -303,7 +308,12 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       const lipSpan = Math.max(45, nogWidth + 4);
       const startPos = localPos - lipSpan / 2;
       const endPos = startPos + lipSpan;
-      stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
+
+      // Decide Swage vs LipNotch by termination geometry
+      const nogPassesThrough = nog.box.xMin < stud.box.xMin - 1 && nog.box.xMax > stud.box.xMax + 1;
+      const opType: "Swage" | "LipNotch" = nogPassesThrough ? "Swage" : "LipNotch";
+
+      stickOps.push({ kind: "spanned", type: opType, startPos: round(startPos), endPos: round(endPos) });
       stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
     }
     // Other horizontal members → LIP NOTCH

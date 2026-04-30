@@ -45,9 +45,13 @@ const SPAN_70 = 39;     // start/end spanned-tool length
 const DIMPLE_OFFSET_70 = 16.5;  // INNER DIMPLE offset from each end
 const BOLT_OFFSET_70 = 62;       // BOLT HOLE offset on bottom plates from each end
 
-// 89S41 profile constants (derived from fixture's PK3 plan; need wider corpus)
-const SPAN_89 = 44;       // approximate — need refinement
-const DIMPLE_OFFSET_89 = 20.5;
+// 89S41 profile constants. Values verified 2026-05-01 against HG260044
+// GF-NLBW-89.075 reference: Detailer uses the SAME end-anchored offsets
+// for 89mm sticks as 70mm sticks (Dimple @16.5, Swage span 39). The
+// previous values (20.5, 44) were wrong — they came from a tentative
+// fixture with limited samples.
+const SPAN_89 = 39;
+const DIMPLE_OFFSET_89 = 16.5;
 
 export const RULE_TABLE: RuleGroup[] = [
   // ----------- STUDS on 70S41 (any length) -----------

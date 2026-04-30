@@ -1,5 +1,6 @@
 const STUD_ROLES = /^(S|J)$/; // S=full stud, J=jack stud (door/window jamb)
-const CRIPPLE_ROLES = /^(Kb|H)$/; // Kb=king brace/cripple stud, H=header/headplate
+const CRIPPLE_ROLES = /^Kb$/; // Kb=king brace/cripple stud
+const HEADER_ROLES = /^H$/; // H=header/headplate (separate rules — paired dimples)
 const PLATE_ROLES = /^(T|B|Tp|Bp)$/; // T/Tp=top plate, B/Bp=bottom plate
 const NOG_ROLES = /^(N|Nog)$/;
 const BRACE_ROLES = /^(Br|W|R|L)$/; // W=web brace, R=ribbon, L=lintel — sticks-as-bracing
@@ -179,6 +180,30 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+        ],
+    },
+    // ----------- HEADERS (H) on 70S41 -----------
+    // Headers are horizontal members above doors/windows. Detailer's pattern:
+    //   - Swage 0..39 + Dimple @16.5 + Dimple @58.5 at start
+    //   - Each stud crossing: LipNotch + 2 paired Dimples (at notch endpoints)
+    //   - Dimple @length-58.5 + Dimple @length-16.5 + Swage end at end
+    //
+    // Paired dimples (16.5 + 58.5 = 42mm spacing) at each end is the
+    // distinctive header pattern (vs 1 dimple for studs).
+    //
+    // Verified 2026-04-30 against HG260044 LBW reference: L6/H2, L6/H3,
+    // L35/H1 all show this pattern.
+    {
+        rolePattern: HEADER_ROLES,
+        profilePattern: /^70S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high", notes: "Header dimple #1 at 16.5 (matches stud pattern)" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high", notes: "Header paired dimple at 58.5 (= 16.5 + 42mm)" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
         ],
     },
     // ----------- TRUSS WEBS (W) on 70S41 -----------

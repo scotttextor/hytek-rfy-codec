@@ -37,6 +37,15 @@ export declare const RULE_TABLE: RuleGroup[];
 export declare function isWallPlan(ctx: {
     planName?: string;
 }): boolean;
+/**
+ * Primary B plate detection: B1 OR any other B plate >= 1500mm long.
+ * Detailer emits anchor bolts (slab attachment) only on the slab-resting
+ * plate. Short B2/B3 plates above doors/windows don't get anchor bolts.
+ */
+export declare function isPrimaryBPlate(ctx: {
+    stickName?: string;
+    length: number;
+}): boolean;
 /** Look up profile-specific span/dimple offsets. */
 export declare function profileOffsets(profileFamily: string): {
     span: number;

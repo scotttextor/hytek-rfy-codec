@@ -197,10 +197,10 @@ export const RULE_TABLE: RuleGroup[] = [
     lengthRange: [0, Infinity],
     rules: [
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
-      { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Wall B plates only; truss BottomChord doesn't get Web@8" },
+      { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "Primary B plate (B1 or long > 1500mm); not truss bottomchord, not partial B above doors" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Anchor bolt for slab attachment — wall B plates only" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Anchor bolt for slab attachment — wall B plates only" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "Anchor bolt — primary slab plate only" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "Anchor bolt — primary slab plate only" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       // InnerNotch on B plates is SELECTIVE — same as T (some sticks have it,
@@ -232,10 +232,10 @@ export const RULE_TABLE: RuleGroup[] = [
     lengthRange: [0, Infinity],
     rules: [
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
-      { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm wall B plates: Web access slot for sub-floor wiring" },
+      { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "89mm primary B plate only" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm anchor bolt at ~51mm (between observed 48 and 53.7)" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm anchor bolt at length-51mm" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "89mm anchor — primary B only" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "89mm anchor — primary B only" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
     ],
@@ -380,6 +380,17 @@ export const RULE_TABLE: RuleGroup[] = [
 export function isWallPlan(ctx: { planName?: string }): boolean {
   if (!ctx.planName) return false;
   return /(LBW|NLBW|LOAD-BEARING|NON-LOAD)/i.test(ctx.planName);
+}
+
+/**
+ * Primary B plate detection: B1 OR any other B plate >= 1500mm long.
+ * Detailer emits anchor bolts (slab attachment) only on the slab-resting
+ * plate. Short B2/B3 plates above doors/windows don't get anchor bolts.
+ */
+export function isPrimaryBPlate(ctx: { stickName?: string; length: number }): boolean {
+  if (ctx.stickName === "B1" || ctx.stickName === "Bp1") return true;
+  if (ctx.length >= 1500) return true;
+  return false;
 }
 
 /** Look up profile-specific span/dimple offsets. */

@@ -30,6 +30,9 @@ export interface StickContext {
     usage?: string;
     /** Optional: pack/plan name (e.g. "PK1-GF-NLBW-70.075") — useful for plan-type-specific rules. */
     planName?: string;
+    /** Optional: full stick name (e.g. "B1", "B2", "Kb1"). Lets predicates
+     *  distinguish primary plates (B1) from secondary plates (B2/B3). */
+    stickName?: string;
 }
 /**
  * A position generator. Yields op positions for a given context.

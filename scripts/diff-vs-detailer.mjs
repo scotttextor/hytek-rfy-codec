@@ -168,6 +168,7 @@ function buildOurProject(xmlText) {
           gauge: profile.gauge, flipped,
           planName: plan.name, frameName: String(f["@_name"]),
           usage: stick.usage,
+          stickName: stick.name,
         });
         if (/^Kb\d/.test(stickName) && length > 100) {
           stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round((length/2)*10)/10 });

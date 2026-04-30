@@ -142,14 +142,18 @@ export function generateFrameContextOps(frame) {
             });
         }
     }
-    // Studs: nogs cross them — SWAGE + DIMPLE at the crossing.
+    // Studs: nogs cross them — LIP NOTCH + DIMPLE at the crossing.
+    // (Verified 2026-04-30 against PK5-DETAILER-RAW.xml: Detailer emits
+    // LipNotch at nog crossings on studs, NOT Swage. Swage is reserved for
+    // end-anchored stiffening cuts only. The previous rule table comment
+    // had this backwards.)
     // Other horizontal members (headers H, lintels L, ribbons R, etc.) also
-    // cross studs but produce LIP NOTCH + DIMPLE instead.
+    // cross studs and produce LIP NOTCH + DIMPLE.
     const nogs = layout.filter(sb => NOG_ROLES.has(sb.role));
     const otherHorizontal = layout.filter(sb => !NOG_ROLES.has(sb.role) && !STUD_ROLES.has(sb.role) && !ALL_PLATE_ROLES.has(sb.role) && sb.horizontal);
     for (const stud of studs) {
         const stickOps = result.get(stud.stick.name);
-        // Nogs → SWAGE
+        // Nogs → LIP NOTCH (not Swage as the old comment claimed)
         for (const nog of nogs) {
             const xOverlap = nog.box.xMax >= stud.box.xMin && nog.box.xMin <= stud.box.xMax;
             if (!xOverlap)
@@ -163,10 +167,10 @@ export function generateFrameContextOps(frame) {
             if (localPos > stud.stick.length - 50)
                 continue;
             const nogWidth = nog.box.yMax - nog.box.yMin;
-            const swageSpan = Math.max(45, nogWidth + 4);
-            const startPos = localPos - swageSpan / 2;
-            const endPos = startPos + swageSpan;
-            stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
+            const lipSpan = Math.max(45, nogWidth + 4);
+            const startPos = localPos - lipSpan / 2;
+            const endPos = startPos + lipSpan;
+            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
             stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
         }
         // Other horizontal members → LIP NOTCH

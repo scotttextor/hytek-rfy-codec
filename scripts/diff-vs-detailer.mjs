@@ -133,17 +133,29 @@ function buildOurProject(xmlText) {
             start = { x: start.x+ux*T, y: start.y+uy*T, z: start.z+uz*T };
           }
         }
-        // Vertical W extension: extend by lip depth (~11mm) into chord cavity.
-        // See framecad-import.ts comment for full derivation.
-        if (/^W\d/.test(stickName)) {
+        // W truss-web length adjustment: vertical extends, diagonal trims.
+        // ONLY for actual truss webs (usage="Web") — LBW walls have W-named
+        // sticks too but those are B2B partner studs (usage="Stud").
+        // See framecad-import.ts for full derivation.
+        if (/^W\d/.test(stickName) && usage === "web") {
           const dx = end.x - start.x, dy = end.y - start.y;
           const horizDelta = Math.sqrt(dx*dx + dy*dy);
           if (horizDelta < 1.0) {
+            // VERTICAL W → extend by lip depth
             const lipDepth = profile.rLip > 0 ? profile.rLip : 11;
             const dz = end.z - start.z;
             if (Math.abs(dz) > 0.1) {
               const sign = dz > 0 ? 1 : -1;
               end = { x: end.x, y: end.y, z: end.z + sign * lipDepth };
+            }
+          } else {
+            // DIAGONAL W → trim 2mm at end (Kb-style)
+            const T = 2.0;
+            const dz = end.z - start.z;
+            const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            if (len > T * 2) {
+              const ux = dx / len, uy = dy / len, uz = dz / len;
+              end = { x: end.x - ux*T, y: end.y - uy*T, z: end.z - uz*T };
             }
           }
         }

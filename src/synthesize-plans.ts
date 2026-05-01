@@ -429,6 +429,7 @@ function computeFrameContextOps(
       flipped: stick.flipped,
       profile,
       tooling: [],
+      usage: stick.usage.toLowerCase(),
       outlineCorners,
     });
   }

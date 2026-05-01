@@ -177,24 +177,27 @@ function buildOurProject(xmlText) {
         }
         // Nog InnerService: position-dependent on stick context — skipping
         // Truss W angle-dependent: vertical=stud-style (16.5+39), diagonal=Kb-style (10+variable+chamfers)
+        // 2026-05-02 — gated dimple swap by usage="web". LBW W sticks have
+        // usage="Stud" (B2B partners) and Detailer keeps stud-style dimples.
         if (/^W\d/.test(stickName) && frameBasis) {
           const startL = projectToFrameLocal(stick.start, frameBasis);
           const endL = projectToFrameLocal(stick.end, frameBasis);
           const dxL = Math.abs(endL.x - startL.x);
           if (dxL > 1.0) {
-            // Swap stud-style dimples (16.5) → Kb-style (10)
-            const dStart = 16.5, dEnd = length - 16.5, tol = 0.5;
-            for (let i = stick.tooling.length - 1; i >= 0; i--) {
-              const op = stick.tooling[i];
-              if (op.kind === "point" && op.type === "InnerDimple" &&
-                  (Math.abs(op.pos - dStart) < tol || Math.abs(op.pos - dEnd) < tol)) {
-                stick.tooling.splice(i, 1);
-              }
-            }
-            stick.tooling.push({ kind: "point", type: "InnerDimple", pos: 10 });
-            stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round((length-10)*10)/10 });
             stick.tooling.push({ kind: "start", type: "Chamfer" });
             stick.tooling.push({ kind: "end", type: "Chamfer" });
+            if (usage === "web") {
+              const dStart = 16.5, dEnd = length - 16.5, tol = 0.5;
+              for (let i = stick.tooling.length - 1; i >= 0; i--) {
+                const op = stick.tooling[i];
+                if (op.kind === "point" && op.type === "InnerDimple" &&
+                    (Math.abs(op.pos - dStart) < tol || Math.abs(op.pos - dEnd) < tol)) {
+                  stick.tooling.splice(i, 1);
+                }
+              }
+              stick.tooling.push({ kind: "point", type: "InnerDimple", pos: 10 });
+              stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round((length-10)*10)/10 });
+            }
           }
         }
         // Web@pt rule: predicate not yet derived (Detailer is selective per stud) — skip.

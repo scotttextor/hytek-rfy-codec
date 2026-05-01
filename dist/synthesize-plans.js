@@ -303,6 +303,7 @@ function computeFrameContextOps(frame, basis) {
             flipped: stick.flipped,
             profile,
             tooling: [],
+            usage: stick.usage.toLowerCase(),
             outlineCorners,
         });
     }

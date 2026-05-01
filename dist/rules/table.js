@@ -138,11 +138,18 @@ export const RULE_TABLE = [
             // InnerNotch on T plates is SELECTIVE (some short T sub-plates have it,
             // some don't — pattern not yet derivable from sample). Skipping to avoid
             // over-emission (100 extras vs 12 matches when emitted unconditionally).
-            // Service holes for power-feed drops moved to frame-context.ts —
-            // they belong at midpoints between adjacent studs (panel-point grid),
-            // not on a fixed every-600 schedule. Verified 2026-05-01 against
-            // HG260044 LBW: positions 285.8, 780.5, 1286.5, 1726, 2186, 2751 are
-            // all stud-pair midpoints derived from the plate's stud crossings.
+            // T-plate Service holes — every 600mm starting at 306mm.
+            // 2026-05-02: REVERTED to fixed schedule. The frame-context midpoint
+            // approach matched HG260044 better but FAILED for HG260001 (which is
+            // the actual factory corpus). HG260001 reference uses fixed positions
+            // @306, @906, @1506, @2106, @2706, @3306 etc. — every 600mm.
+            {
+                toolType: "InnerService", kind: "point",
+                anchor: { kind: "spaced", firstOffset: 306, spacing: 600, lastOffset: 306 },
+                confidence: "high",
+                predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 600,
+                notes: "T plates: power-feed drops at 600mm intervals from offset 306mm",
+            },
         ],
     },
     // ----------- BOTTOM PLATES on 70S41 -----------
@@ -154,10 +161,10 @@ export const RULE_TABLE = [
         lengthRange: [0, Infinity],
         rules: [
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
-            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "Primary B plate (B1 or long > 1500mm); not truss bottomchord, not partial B above doors" },
+            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Wall B plates: Web access slot for sub-floor wiring (HG260001 has it on B1, B2, B3 alike)" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "Anchor bolt — primary slab plate only" },
-            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "Anchor bolt — primary slab plate only" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Anchor bolt for slab attachment — wall B plates only" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Anchor bolt for slab attachment — wall B plates only" },
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
             // InnerNotch on B plates is SELECTIVE — same as T (some sticks have it,
@@ -187,10 +194,10 @@ export const RULE_TABLE = [
         lengthRange: [0, Infinity],
         rules: [
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
-            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "89mm primary B plate only" },
+            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm wall B plates" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
-            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "89mm anchor — primary B only" },
-            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isPrimaryBPlate(ctx), notes: "89mm anchor — primary B only" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm anchor bolt" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 51 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm anchor bolt" },
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
         ],

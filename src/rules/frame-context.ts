@@ -146,7 +146,13 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
   // cross top/bottom chords like studs but for diagonals the bbox.cx isn't
   // meaningful — we use line-intersection geometry to find the actual
   // crossing X at the chord's y-level.
-  const trussWebs = layout.filter(sb => TRUSS_WEB_ROLES.has(sb.role));
+  // ONLY actual truss webs (usage="web") — LBW walls have W-named sticks
+  // with usage="Stud" (B2B partner studs); those are NOT truss webs and
+  // shouldn't trigger truss-chord behavior on plates.
+  const trussWebs = layout.filter(sb =>
+    TRUSS_WEB_ROLES.has(sb.role) &&
+    String(sb.stick.usage ?? "").toLowerCase() === "web"
+  );
   // Cripple studs: also vertical, but their outlines are too wide to be useful for crossing detection.
   // Their connection point is at one of their X edges (which we treat as a virtual stud).
   const cripples = layout.filter(sb => CRIPPLE_ROLES.has(sb.role));
@@ -217,8 +223,10 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       if (localPos < span + 5) continue;
       if (localPos > plate.stick.length - span - 5) continue;
 
-      // Dedupe: if we've already emitted a crossing within 30mm of this localPos, skip
-      const quantizedPos = Math.round(localPos / 30) * 30;
+      // Dedupe: skip ONLY exact duplicates (same crossing emitted twice — can
+      // happen for virtualStudCrossings on cripples). Overlapping-but-distinct
+      // stud crossings (B2B partner pairs) MUST stay separate per Detailer.
+      const quantizedPos = Math.round(localPos * 10) / 10;
       if (seenPositions.has(quantizedPos)) continue;
       seenPositions.add(quantizedPos);
       studCrossingsOnPlate.push(localPos);
@@ -281,35 +289,21 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
     // truss panel-points are spaced wider. For walls, join only very-close
     // notches (e.g. virtual-stud-crossings on the same Kb).
     const isTrussChord = trussWebs.length > 0 && stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch");
-    // 2026-05-02 — tightened both gaps after rollformer test cut showed wide
-    // compound notches at panel points. HG260001 LBW B1 reference keeps 3
-    // separate 45mm notches at adjacent stud crossings (gaps 14mm); we were
-    // joining them into one 145mm wide notch. Walls 30→8, trusses 15→8.
-    const JOIN_GAP_MM = isTrussChord ? 8 : 8;
-    joinAdjacentLipNotches(stickOps, JOIN_GAP_MM);
-
-    // InnerService at stud-pair midpoints, T plates only, walls only.
-    // Detailer's actual positions are at panel-point service-hole locations
-    // which we can't fully derive without the architectural drawing data.
-    // Best approximation: midpoint between adjacent studs where gap >= 400mm
-    // (skips back-to-back stud pairs and tight cripple groups).
-    const isTopPlate = TOP_PLATE_ROLES.has(plate.role);
-    if (isWallFrame && isTopPlate && studCrossingsOnPlate.length >= 2) {
-      const sortedCrossings = [...studCrossingsOnPlate].sort((a, b) => a - b);
-      for (let i = 0; i + 1 < sortedCrossings.length; i++) {
-        const a = sortedCrossings[i]!;
-        const b = sortedCrossings[i + 1]!;
-        const gap = b - a;
-        if (gap < 400) continue;  // skip back-to-back / tight cripples
-        const midpoint = (a + b) / 2;
-        if (midpoint < span + 50) continue;
-        if (midpoint > plate.stick.length - span - 50) continue;
-        stickOps.push({
-          kind: "point", type: "InnerService",
-          pos: round(midpoint),
-        });
-      }
+    // 2026-05-02 — wall LipNotches are NEVER joined. Detailer keeps every
+    // stud crossing as its own 45mm notch even when they overlap. Verified
+    // vs HG260001 LBW L2/T1: triple stud cluster at x=505/547/589 produces
+    // 3 OVERLAPPING LipNotches [441..486]+[483..528]+[525..570]. Joining any
+    // pair was wrong.
+    // Trusses still join (HG260044 TIN PC7-1-B1: 4-web cluster joins to one
+    // 102mm-wide notch).
+    if (isTrussChord) {
+      joinAdjacentLipNotches(stickOps, 8);
     }
+
+    // InnerService — handled by per-stick rule in table.ts (fixed @306, @906,
+    // @1506... every 600mm). The frame-context midpoint approach was reverted
+    // 2026-05-02 — it matched HG260044 but produced wrong positions on HG260001.
+    void studCrossingsOnPlate;
   }
 
   // Studs: nogs cross them — LIP NOTCH + DIMPLE at the crossing.
@@ -432,21 +426,11 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
       studCrossingsOnNog.push(localPos);
     }
-    // InnerService at stud-pair midpoints on nogs (matches T plate pattern)
-    // Skip back-to-back stud pairs (gap < 400mm) for cleaner approximation.
-    if (studCrossingsOnNog.length >= 2) {
-      const sortedCrossings = [...studCrossingsOnNog].sort((a, b) => a - b);
-      for (let i = 0; i + 1 < sortedCrossings.length; i++) {
-        const a = sortedCrossings[i]!;
-        const b = sortedCrossings[i + 1]!;
-        const gap = b - a;
-        if (gap < 400) continue;
-        const midpoint = (a + b) / 2;
-        if (midpoint < 50) continue;
-        if (midpoint > nog.stick.length - 50) continue;
-        stickOps.push({ kind: "point", type: "InnerService", pos: round(midpoint) });
-      }
-    }
+    // InnerService on nogs — disabled 2026-05-02. Was emitting at stud-pair
+    // midpoints but Detailer's nog ops match the T-plate pattern (every 600mm
+    // from start). For now skip nogs entirely; the rule's per-stick emission
+    // doesn't fire for NOG_ROLES and Detailer's exact rule is still TBD.
+    void studCrossingsOnNog;
   }
 
   return result;

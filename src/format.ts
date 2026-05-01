@@ -84,6 +84,11 @@ export interface RfyStick {
   designHash?: string;
   profile: RfyProfile;
   tooling: RfyToolingOp[];
+  /** Usage attribute from the input XML (e.g. "stud", "web", "bottomplate",
+   *  "topchord"). Lower-cased. Carries the role distinction the rules
+   *  engine needs (e.g. LBW W-prefix sticks have usage="stud" while truss
+   *  webs have usage="web"). */
+  usage?: string;
   /**
    * The 4 corners of the stick's outline polygon in elevation-graphics
    * (first closed <poly>). Used to reproduce Detailer's CSV dimension

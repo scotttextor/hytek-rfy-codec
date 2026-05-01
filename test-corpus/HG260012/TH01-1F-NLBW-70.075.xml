@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<framecad_import name="HG260012 [Akam] 23 Springwood Street -TH01-02">
+ <jobnum> "HG260012" </jobnum>
+ <client> "HG260012 23 Springwood Street Townhouse" </client>
+
+ <drawing_info units="Metric" envelope_ref="Centre" stick_ref="Centre">
+  <datedrawn> "13-04-2026" </datedrawn>
+ </drawing_info>
+
+<plan name="TH01-1F-NLBW-70.075">
+<elevation> 0.0 </elevation>
+
+<frame name="N1113" type="InternalWall">
+<elevation>54710.000</elevation>
+
+ <envelope>
+   <vertex>19855.286,15602.433,54710.000 </vertex>
+   <vertex>19593.286,15602.433,54710.000 </vertex>
+   <vertex>19593.286,15602.433,57330.000 </vertex>
+   <vertex>19855.286,15602.433,57330.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>19855.286,15602.433,57299.500 </start>
+   <end>19635.286,15602.433,57299.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="T2" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>19855.286,15602.433,57257.500 </start>
+   <end>19593.286,15602.433,57257.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>19855.286,15602.433,54730.500 </start>
+   <end>19593.286,15602.433,54730.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="N1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Nog">
+   <start>19852.286,15602.433,55899.500 </start>
+   <end>19596.286,15602.433,55899.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>19834.786,15602.433,54712.000 </start>
+   <end>19834.786,15602.433,57320.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>19655.786,15602.433,57237.000 </start>
+   <end>19655.786,15602.433,57318.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S3" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>19613.786,15602.433,54712.000 </start>
+   <end>19613.786,15602.433,57278.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>19613.786,15602.433,55899.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19834.786,15602.433,57309.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19834.786,15602.433,54731.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19834.786,15602.433,55899.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19834.786,15602.433,57267.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19655.786,15602.433,57309.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19655.786,15602.433,57267.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19613.786,15602.433,54731.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19613.786,15602.433,57267.000 </point>
+ </fastener>
+<tool_action name="Service">
+   <start>19724.286,15602.433,55868.750 </start>
+   <end>19724.286,15602.433,57340.250 </end>
+</tool_action>
+</frame>
+<frame name="N1114" type="ExternalWall">
+<elevation>54710.000</elevation>
+
+ <envelope>
+   <vertex>19820.286,15401.433,54710.000 </vertex>
+   <vertex>19820.286,15567.433,54710.000 </vertex>
+   <vertex>19820.286,15567.433,57330.000 </vertex>
+   <vertex>19820.286,15401.433,57330.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>19820.286,15401.433,57299.500 </start>
+   <end>19820.286,15567.433,57299.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>19820.286,15401.433,54730.500 </start>
+   <end>19820.286,15567.433,54730.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="N1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Nog">
+   <start>19820.286,15404.433,55899.500 </start>
+   <end>19820.286,15564.433,55899.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>19820.286,15421.933,54712.000 </start>
+   <end>19820.286,15421.933,57320.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>19820.286,15546.933,54712.000 </start>
+   <end>19820.286,15546.933,57320.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>19820.286,15421.933,57309.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19820.286,15546.933,57309.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19820.286,15421.933,55899.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19820.286,15546.933,54731.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19820.286,15546.933,55899.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>19820.286,15421.933,54731.000 </point>
+ </fastener>
+</frame>
+<frame name="N1117" type="InternalWall">
+<elevation>54710.000</elevation>
+
+ <envelope>
+   <vertex>30630.286,15637.433,54710.000 </vertex>
+   <vertex>30630.286,15401.433,54710.000 </vertex>
+   <vertex>30630.286,15401.433,57330.000 </vertex>
+   <vertex>30630.286,15637.433,57330.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>30630.286,15637.433,57299.500 </start>
+   <end>30630.286,15401.433,57299.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>30630.286,15637.433,54730.500 </start>
+   <end>30630.286,15401.433,54730.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="N1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Nog">
+   <start>30630.286,15634.433,55899.500 </start>
+   <end>30630.286,15404.433,55899.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>30630.286,15616.933,54712.000 </start>
+   <end>30630.286,15616.933,57320.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>30630.286,15421.933,54712.000 </start>
+   <end>30630.286,15421.933,57320.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>30630.286,15616.933,57309.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30630.286,15616.933,55899.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30630.286,15421.933,54731.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30630.286,15421.933,57309.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30630.286,15421.933,55899.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30630.286,15616.933,54731.000 </point>
+ </fastener>
+<tool_action name="Service">
+   <start>30630.286,15519.433,55868.750 </start>
+   <end>30630.286,15519.433,57340.250 </end>
+</tool_action>
+</frame>
+<frame name="N1118" type="InternalWall">
+<elevation>54710.000</elevation>
+
+ <envelope>
+   <vertex>30835.286,15602.433,54710.000 </vertex>
+   <vertex>30665.286,15602.433,54710.000 </vertex>
+   <vertex>30665.286,15602.433,57330.000 </vertex>
+   <vertex>30835.286,15602.433,57330.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>30835.286,15602.433,57299.500 </start>
+   <end>30665.286,15602.433,57299.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>30835.286,15602.433,54730.500 </start>
+   <end>30665.286,15602.433,54730.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="N1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Nog">
+   <start>30832.286,15602.433,55899.500 </start>
+   <end>30668.286,15602.433,55899.500 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>30814.786,15602.433,54712.000 </start>
+   <end>30814.786,15602.433,57320.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>30685.786,15602.433,54712.000 </start>
+   <end>30685.786,15602.433,57320.000 </end>
+   <profile web="70" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>30814.786,15602.433,55899.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30685.786,15602.433,54731.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30685.786,15602.433,55899.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30814.786,15602.433,57309.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30685.786,15602.433,57309.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>30814.786,15602.433,54731.000 </point>
+ </fastener>
+</frame>
+</plan>
+</framecad_import>

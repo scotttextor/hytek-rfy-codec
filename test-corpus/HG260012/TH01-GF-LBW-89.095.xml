@@ -1,0 +1,897 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<framecad_import name="HG260012 [Akam] 23 Springwood Street -TH01-02">
+ <jobnum> "HG260012" </jobnum>
+ <client> "HG260012 23 Springwood Street Townhouse" </client>
+
+ <drawing_info units="Metric" envelope_ref="Centre" stick_ref="Centre">
+  <datedrawn> "13-04-2026" </datedrawn>
+ </drawing_info>
+
+<plan name="TH01-GF-LBW-89.095">
+<elevation> 0.0 </elevation>
+
+<frame name="L1003" type="InternalWall">
+<elevation>51800.000</elevation>
+
+ <envelope>
+   <vertex>29435.286,16502.433,51800.000 </vertex>
+   <vertex>26430.286,16502.433,51800.000 </vertex>
+   <vertex>26430.286,16502.433,54310.000 </vertex>
+   <vertex>29435.286,16502.433,54310.000 </vertex>
+ </envelope>
+
+<label text="2x200x32x1.15 Lintel" size="71.665" angle="0.000" layer="Text">
+   <location>28741.396,16502.433,54358.879</location>
+</label>
+<label text="Angle Plate" size="71.665" angle="0.000" layer="Text">
+   <location>28533.818,16502.433,54478.273</location>
+</label>
+<line layer="0">
+   <start>29308.286,16502.433,54311.150 </start>
+   <end>27242.286,16502.433,54311.150 </end>
+</line>
+<line layer="0">
+   <start>27242.286,16502.433,54311.150 </start>
+   <end>27242.286,16502.433,54111.150 </end>
+</line>
+<line layer="0">
+   <start>27242.286,16502.433,54111.150 </start>
+   <end>29308.286,16502.433,54111.150 </end>
+</line>
+<line layer="0">
+   <start>29308.286,16502.433,54111.150 </start>
+   <end>29308.286,16502.433,54311.150 </end>
+</line>
+<line layer="0">
+   <start>29308.286,16502.433,54311.150 </start>
+   <end>27242.286,16502.433,54111.150 </end>
+</line>
+<line layer="0">
+   <start>27242.286,16502.433,54311.150 </start>
+   <end>29308.286,16502.433,54111.150 </end>
+</line>
+<line layer="0">
+   <start>29308.286,16502.433,54311.150 </start>
+   <end>27242.286,16502.433,54311.150 </end>
+</line>
+<line layer="0">
+   <start>27242.286,16502.433,54311.150 </start>
+   <end>27242.286,16502.433,54111.150 </end>
+</line>
+<line layer="0">
+   <start>27242.286,16502.433,54111.150 </start>
+   <end>29308.286,16502.433,54111.150 </end>
+</line>
+<line layer="0">
+   <start>29308.286,16502.433,54111.150 </start>
+   <end>29308.286,16502.433,54311.150 </end>
+</line>
+<line layer="0">
+   <start>29308.286,16502.433,54311.150 </start>
+   <end>27242.286,16502.433,54111.150 </end>
+</line>
+<line layer="0">
+   <start>27242.286,16502.433,54311.150 </start>
+   <end>29308.286,16502.433,54111.150 </end>
+</line>
+ <stick name="T1" type="Plate" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>29435.286,16502.433,54289.500 </start>
+   <end>26430.286,16502.433,54289.500 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>29435.286,16502.433,51820.500 </start>
+   <end>29225.286,16502.433,51820.500 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="B2" type="Plate" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>29263.286,16502.433,51861.500 </start>
+   <end>27287.286,16502.433,51861.500 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="B3" type="Plate" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>27325.286,16502.433,51820.500 </start>
+   <end>26430.286,16502.433,51820.500 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="H1" type="Plate" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="HeadPlate">
+   <start>29263.286,16502.433,53940.500 </start>
+   <end>27287.286,16502.433,53940.500 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="N1" type="Plate" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Nog">
+   <start>29432.286,16502.433,53054.500 </start>
+   <end>29228.286,16502.433,53054.500 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="N2" type="Plate" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Nog">
+   <start>27322.286,16502.433,53054.500 </start>
+   <end>26433.286,16502.433,53054.500 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="W1" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Web">
+   <start>29154.657,16502.433,53929.189 </start>
+   <end>29087.915,16502.433,54300.811 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="W2" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Web">
+   <start>28844.085,16502.433,53929.856 </start>
+   <end>28991.987,16502.433,54300.144 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="W3" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Web">
+   <start>28751.415,16502.433,53930.273 </start>
+   <end>28566.157,16502.433,54299.727 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="W4" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Web">
+   <start>28202.363,16502.433,53931.380 </start>
+   <end>28476.210,16502.433,54298.620 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="W5" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Web">
+   <start>28114.315,16502.433,53931.460 </start>
+   <end>27834.258,16502.433,54298.540 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="W6" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Web">
+   <start>27557.620,16502.433,53930.292 </start>
+   <end>27744.452,16502.433,54299.708 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="W7" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Web">
+   <start>27462.657,16502.433,53929.189 </start>
+   <end>27395.915,16502.433,54300.811 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>29414.786,16502.433,51802.000 </start>
+   <end>29414.786,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>29287.786,16502.433,51802.000 </start>
+   <end>29287.786,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S3" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="TrimStud">
+   <start>29245.786,16502.433,51802.000 </start>
+   <end>29245.786,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S4" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>29203.786,16502.433,53923.000 </start>
+   <end>29203.786,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S5" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>29038.786,16502.433,54307.000 </start>
+   <end>29038.786,16502.433,53923.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S6" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>28797.286,16502.433,54307.000 </start>
+   <end>28797.286,16502.433,53923.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S7" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>28520.286,16502.433,54307.000 </start>
+   <end>28520.286,16502.433,53923.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S8" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>28158.286,16502.433,54307.000 </start>
+   <end>28158.286,16502.433,53923.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S9" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>27790.286,16502.433,54307.000 </start>
+   <end>27790.286,16502.433,53923.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S10" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>27511.786,16502.433,54307.000 </start>
+   <end>27511.786,16502.433,53923.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S11" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>27346.786,16502.433,53923.000 </start>
+   <end>27346.786,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S12" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="TrimStud">
+   <start>27304.786,16502.433,51802.000 </start>
+   <end>27304.786,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S13" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>27262.786,16502.433,51802.000 </start>
+   <end>27262.786,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S14" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>26880.286,16502.433,51802.000 </start>
+   <end>26880.286,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S15" type="Stud" gauge="0.95" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>26450.786,16502.433,51802.000 </start>
+   <end>26450.786,16502.433,54308.000 </end>
+   <profile web="89" l_flange="38" r_flange="41" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>29224.286,16502.433,54228.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27326.286,16502.433,54228.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29245.786,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29245.786,16502.433,53054.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27304.786,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27304.786,16502.433,53054.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29414.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29414.786,16502.433,53054.000 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29258.286,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29258.286,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29258.286,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29258.286,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29117.858,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29117.858,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29117.858,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29117.858,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28977.429,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28977.429,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28977.429,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28977.429,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28837.000,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28837.000,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28837.000,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28837.000,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28696.572,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28696.572,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28696.572,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28696.572,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28556.143,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28556.143,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28556.143,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28556.143,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28415.715,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28415.715,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28415.715,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28415.715,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28275.286,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28275.286,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28275.286,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28275.286,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28134.857,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28134.857,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28134.857,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28134.857,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27994.429,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27994.429,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27994.429,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27994.429,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27854.000,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27854.000,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27854.000,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27854.000,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27713.571,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27713.571,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27713.571,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27713.571,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27573.143,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27573.143,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27573.143,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27573.143,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27432.714,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27432.714,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27432.714,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27432.714,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27292.286,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27292.286,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27292.286,16502.433,54311.150 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27292.286,16502.433,54290.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29245.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29245.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27304.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27304.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29287.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27262.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29203.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27346.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29038.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28797.286,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28520.286,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28158.286,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27790.286,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27511.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29090.036,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28987.536,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28571.536,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28469.036,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27841.536,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27739.036,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27398.036,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29287.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29287.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27262.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27262.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29203.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29203.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27346.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27346.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29038.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29038.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28797.286,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28797.286,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28520.286,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28520.286,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28158.286,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28158.286,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27790.286,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27790.286,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27511.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27511.786,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29118.296,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>29118.296,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28924.687,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28924.687,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28650.437,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28650.437,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28351.702,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>28351.702,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27961.583,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27961.583,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27659.457,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27659.457,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27426.296,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001539" count="1">
+   <point>27426.296,16502.433,54131.650 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29245.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27304.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29287.786,16502.433,53054.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27262.786,16502.433,53054.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29203.786,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27346.786,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29038.786,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28797.286,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28520.286,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28158.286,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27790.286,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27511.786,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29152.536,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28848.536,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28746.036,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28209.536,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>28107.036,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27563.036,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27460.536,16502.433,53941.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29224.286,16502.433,54003.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27326.286,16502.433,54003.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29287.786,16502.433,51821.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27262.786,16502.433,51821.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29245.786,16502.433,51821.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29245.786,16502.433,51862.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27304.786,16502.433,51821.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>27304.786,16502.433,51862.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>29414.786,16502.433,51821.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>26450.786,16502.433,51821.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>26880.286,16502.433,51821.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>26880.286,16502.433,53054.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>26450.786,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>26880.286,16502.433,54289.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>26450.786,16502.433,53054.000 </point>
+ </fastener>
+<tool_action name="WebNotch">
+   <start>29414.896,16502.433,54171.898 </start>
+   <end>29151.945,16502.433,54171.898 </end>
+</tool_action>
+<tool_action name="Lip">
+   <start>29414.896,16502.433,54171.898 </start>
+   <end>29151.945,16502.433,54171.898 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>29414.896,16502.433,54171.898 </start>
+   <end>29151.945,16502.433,54171.898 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>29203.786,16502.433,54228.000 </start>
+   <end>29244.786,16502.433,54228.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>29075.286,16502.433,54248.500 </start>
+   <end>29075.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="WebNotch">
+   <start>29419.005,16502.433,53855.534 </start>
+   <end>29098.533,16502.433,53855.534 </end>
+</tool_action>
+<tool_action name="Lip">
+   <start>29419.005,16502.433,53855.534 </start>
+   <end>29098.533,16502.433,53855.534 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>29419.005,16502.433,53855.534 </start>
+   <end>29098.533,16502.433,53855.534 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>29203.786,16502.433,54003.000 </start>
+   <end>29244.786,16502.433,54003.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>28797.286,16502.433,54248.500 </start>
+   <end>28797.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>28520.286,16502.433,54248.500 </start>
+   <end>28520.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>28158.286,16502.433,54248.500 </start>
+   <end>28158.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="WebNotch">
+   <start>29414.786,16502.433,53054.000 </start>
+   <end>29050.796,16502.433,53054.000 </end>
+</tool_action>
+<tool_action name="Lip">
+   <start>29414.786,16502.433,53054.000 </start>
+   <end>29050.796,16502.433,53054.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>29414.786,16502.433,53054.000 </start>
+   <end>29050.796,16502.433,53054.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>28020.286,16502.433,54248.500 </start>
+   <end>28020.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>27790.286,16502.433,54248.500 </start>
+   <end>27790.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>27480.286,16502.433,54248.500 </start>
+   <end>27480.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>29455.786,16502.433,52250.000 </start>
+   <end>29286.786,16502.433,52250.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>27305.786,16502.433,54228.000 </start>
+   <end>27346.786,16502.433,54228.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>29455.786,16502.433,52100.000 </start>
+   <end>29286.786,16502.433,52100.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>27180.286,16502.433,54248.500 </start>
+   <end>27180.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>27092.036,16502.433,53023.750 </start>
+   <end>27092.036,16502.433,54320.250 </end>
+</tool_action>
+<tool_action name="WebNotch">
+   <start>29417.266,16502.433,51950.000 </start>
+   <end>29064.445,16502.433,51950.000 </end>
+</tool_action>
+<tool_action name="Lip">
+   <start>29417.266,16502.433,51950.000 </start>
+   <end>29064.445,16502.433,51950.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>29417.266,16502.433,51950.000 </start>
+   <end>29064.445,16502.433,51950.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>27305.786,16502.433,54003.000 </start>
+   <end>27346.786,16502.433,54003.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>29423.286,16502.433,51861.500 </start>
+   <end>29423.286,16502.433,51779.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>29369.286,16502.433,51861.500 </start>
+   <end>29369.286,16502.433,51779.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>26880.286,16502.433,54248.500 </start>
+   <end>26880.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>26665.536,16502.433,53023.750 </start>
+   <end>26665.536,16502.433,54320.250 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>26430.286,16502.433,54248.500 </start>
+   <end>26430.286,16502.433,54330.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>27263.786,16502.433,52250.000 </start>
+   <end>26409.786,16502.433,52250.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>27263.786,16502.433,52100.000 </start>
+   <end>26409.786,16502.433,52100.000 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>27217.286,16502.433,51861.500 </start>
+   <end>27217.286,16502.433,51779.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>26496.286,16502.433,51861.500 </start>
+   <end>26496.286,16502.433,51779.500 </end>
+</tool_action>
+</frame>
+</plan>
+</framecad_import>

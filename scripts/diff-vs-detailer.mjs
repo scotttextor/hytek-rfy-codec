@@ -111,7 +111,9 @@ function buildOurProject(xmlText) {
         // Stud (2mm/end) + Header (1mm/end) end-trim
         const isFullStud = usage === "stud" || usage === "endstud" || usage === "jackstud" || usage === "trimstud";
         const isHeader = /^H\d/.test(stickName);
-        const T = isFullStud ? 2.0 : isHeader ? 1.0 : 0;
+        // 2026-05-02 — H header trim removed (was making cut steel 2mm short)
+        const T = isFullStud ? 2.0 : 0;
+        void isHeader;
         if (T > 0) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);

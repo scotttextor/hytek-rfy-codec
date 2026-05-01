@@ -220,29 +220,28 @@ export const RULE_TABLE = [
         ],
     },
     // ----------- HEADERS (H) on 70S41 -----------
-    // Headers are horizontal members above doors/windows. Detailer's pattern:
-    //   - Swage 0..39 + Dimple @16.5 + Dimple @58.5 at start
-    //   - Each stud crossing: LipNotch + 2 paired Dimples (at notch endpoints)
-    //   - Dimple @length-58.5 + Dimple @length-16.5 + Swage end at end
     //
+    // 2026-05-02 — InnerNotch ops REMOVED. Earlier note ("verified HG260044
+    // L6/H1") was incorrect — re-checking against HG260001 reference shows H
+    // headers have NO InnerNotch ops. The cut steel had spurious web-notches
+    // that didn't exist in Detailer's output. The header pattern is:
+    //   - Swage 0..39 at start
+    //   - Dimple @16.5 + paired Dimple @58.5 at start
+    //   - Dimple @length-58.5 + paired Dimple @length-16.5 at end
+    //   - Swage length-39..length at end
     // Paired dimples (16.5 + 58.5 = 42mm spacing) at each end is the
     // distinctive header pattern (vs 1 dimple for studs).
-    //
-    // Verified 2026-04-30 against HG260044 LBW reference: L6/H2, L6/H3,
-    // L35/H1 all show this pattern.
     {
         rolePattern: HEADER_ROLES,
         profilePattern: /^70S41$/,
         lengthRange: [0, Infinity],
         rules: [
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "H header: InnerNotch span 39 at start (verified HG260044 L6/H1)" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
-            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high", notes: "Header dimple #1 at 16.5 (matches stud pattern)" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high", notes: "Header dimple #1 at 16.5" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high", notes: "Header paired dimple at 58.5 (= 16.5 + 42mm)" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "H header: InnerNotch span 39 at end" },
         ],
     },
     // ----------- HEADERS (H) on 89S41 -----------
@@ -254,14 +253,12 @@ export const RULE_TABLE = [
         profilePattern: /^89S41$/,
         lengthRange: [0, Infinity],
         rules: [
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium", notes: "89mm header dimple #1 at 16.5" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "medium", notes: "89mm header paired dimple at 58.5" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
         ],
     },
     // ----------- TRUSS WEBS (W) on 70S41 -----------
@@ -287,24 +284,23 @@ export const RULE_TABLE = [
         ],
     },
     // ----------- LINTELS (L) on 70S41 -----------
-    // Lintels are horizontal members above doors/windows (similar role to
-    // headers H, but distinct in Detailer's classification). They get
-    // end-anchored InnerNotch + stud-pattern Swage + Dimples at each end.
     //
-    // Verified 2026-05-01 against HG260044 LBW reference: L sticks have
-    // InnerNotch span 39 at both start and end (32 missing on LBW with 0
-    // extras when emitted from /^L$/ pattern alone).
+    // 2026-05-02 — REWRITTEN. Earlier rule emitted InnerNotch + 16.5/39mm
+    // stud-style ops; the rollformer test cut had wrong web-notches and the
+    // Swage span was 2mm too narrow. HG260001 reference shows lintels use a
+    // diagonal-W-style pattern: 41mm Swage span (not 39), 11mm dimple offset
+    // (not 16.5), NO InnerNotch.
+    //
+    // Sample L1 (length 2266): Swage[0..41] + Dimple@11 + Swage[2225..2266] + Dimple@2255
     {
         rolePattern: /^L$/,
         profilePattern: /^70S41$/,
         lengthRange: [0, Infinity],
         rules: [
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
-            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
-            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 41, confidence: "high", notes: "Lintel: 41mm Swage span (not 39 like studs)" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 11 }, confidence: "high", notes: "Lintel: dimple at 11mm (not 16.5)" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 41 }, spanLength: 41, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 11 }, confidence: "high" },
         ],
     },
     // ----------- BRACE / Ribbon sticks on 70S41 (NOT truss webs, NOT lintels) -----------

@@ -240,14 +240,11 @@ export function generateFrameContextOps(frame) {
         // truss panel-points are spaced wider. For walls, join only very-close
         // notches (e.g. virtual-stud-crossings on the same Kb).
         const isTrussChord = trussWebs.length > 0 && stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch");
-        // 2026-05-02: dropped truss JOIN_GAP from 80 → 15. Detailer treats
-        // panel-point web pairs (vertical + diagonal at same node) as separate
-        // LipNotches that should NOT join — the ~30mm gap between them is
-        // intentional. Joining produced wide compound notches that didn't match
-        // Detailer's ops at all, hurting LipNotch coverage. 15mm is permissive
-        // enough to merge truly-adjacent notches (e.g. parallel diagonals at
-        // the same node) without merging vertical+diagonal pairs.
-        const JOIN_GAP_MM = isTrussChord ? 15 : 30;
+        // 2026-05-02 — tightened both gaps after rollformer test cut showed wide
+        // compound notches at panel points. HG260001 LBW B1 reference keeps 3
+        // separate 45mm notches at adjacent stud crossings (gaps 14mm); we were
+        // joining them into one 145mm wide notch. Walls 30→8, trusses 15→8.
+        const JOIN_GAP_MM = isTrussChord ? 8 : 8;
         joinAdjacentLipNotches(stickOps, JOIN_GAP_MM);
         // InnerService at stud-pair midpoints, T plates only, walls only.
         // Detailer's actual positions are at panel-point service-hole locations
@@ -310,29 +307,27 @@ export function generateFrameContextOps(frame) {
     }
     for (const stud of studs) {
         const stickOps = result.get(stud.stick.name);
-        // B2B stud pair: emit Web ops at 38mm-from-each-end + intermediate
-        // positions spaced ~447mm. Detailer pattern derived from HG260044 LBW
-        // GF-LBW-70.075 reference.
-        if (b2bStudNames.has(stud.stick.name)) {
-            const len = stud.stick.length;
-            const startOffset = 38;
-            const endOffset = 38;
-            const targetSpacing = 447;
-            const span = len - startOffset - endOffset;
-            if (span > 0) {
-                const count = Math.max(2, Math.round(span / targetSpacing) + 1);
-                for (let i = 0; i < count; i++) {
-                    const pos = startOffset + (span * i) / (count - 1);
-                    stickOps.push({ kind: "point", type: "Web", pos: round(pos) });
-                }
-            }
-        }
-        // Nog crossing rule (verified 2026-05-01 against HG260044 LBW CSV):
-        //   - If nog passes THROUGH stud (nog.xMin < stud.xMin AND nog.xMax > stud.xMax)
-        //     → SWAGE (stiffening rib, no cut). Interior wall crossings.
-        //   - If nog TERMINATES at this stud (nog.xMin or xMax falls inside stud's
-        //     X footprint) → LIP NOTCH. Edge studs where nog butts into stud.
-        // Both cases also emit InnerDimple inside the cut.
+        // B2B stud-pair Web emission DISABLED 2026-05-02:
+        //   The geometric detection (xDelta<45, identical Y range, identical length)
+        //   over-fires on HG260001 LBW — every adjacent S stud pair gets flagged,
+        //   producing 467 false-positive Web holes (S2-S7 all got Web@38, @485,
+        //   @932, etc.). Detailer reference shows NONE of these on those studs.
+        //   The pattern is real (HG260044 GF-LBW S3+S4 do have these Webs) but
+        //   Detailer's actual gating criterion is more specific than simple
+        //   geometric pairing — likely tied to a structural-attachment marker in
+        //   the XML we haven't identified. Until that's understood, emitting NO
+        //   Webs is safer than emitting wrong ones.
+        // if (b2bStudNames.has(stud.stick.name)) { ... }
+        // Nog crossing rule: ALWAYS emit LipNotch on the stud at the crossing.
+        //
+        // 2026-05-02 — reverted the "Swage if nog passes through" heuristic. It
+        // matched HG260044's continuous-nog walls but produced WRONG cuts on
+        // HG260001 (segmented nogs) where Detailer always emits LipNotch. The
+        // rollformer test cut showed Swage stiffening ribs where stud-receiving
+        // notches should have been — physically wrong steel. Until we can
+        // distinguish the two configurations from XML data, default to LipNotch
+        // (always safe — a notch won't break a stud, an unnecessary Swage might
+        // misalign a B2B partner).
         for (const nog of nogs) {
             const xOverlap = nog.box.xMax >= stud.box.xMin && nog.box.xMin <= stud.box.xMax;
             if (!xOverlap)
@@ -349,10 +344,7 @@ export function generateFrameContextOps(frame) {
             const lipSpan = Math.max(45, nogWidth + 4);
             const startPos = localPos - lipSpan / 2;
             const endPos = startPos + lipSpan;
-            // Decide Swage vs LipNotch by termination geometry
-            const nogPassesThrough = nog.box.xMin < stud.box.xMin - 1 && nog.box.xMax > stud.box.xMax + 1;
-            const opType = nogPassesThrough ? "Swage" : "LipNotch";
-            stickOps.push({ kind: "spanned", type: opType, startPos: round(startPos), endPos: round(endPos) });
+            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
             stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
         }
         // Other horizontal members → LIP NOTCH

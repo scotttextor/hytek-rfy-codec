@@ -89,6 +89,13 @@ export interface RfyStick {
    *  engine needs (e.g. LBW W-prefix sticks have usage="stud" while truss
    *  webs have usage="web"). */
   usage?: string;
+  /** Original world-coord start of the stick (before any projection). For
+   *  Kb sticks this is the MID-WALL endpoint after stud-end normalization.
+   *  Used by frame-context.ts to make world-space comparisons that
+   *  projected coords can't disambiguate (different walls have different
+   *  basis-vector orientations). */
+  worldStart?: { x: number; y: number; z: number };
+  worldEnd?: { x: number; y: number; z: number };
   /**
    * The 4 corners of the stick's outline polygon in elevation-graphics
    * (first closed <poly>). Used to reproduce Detailer's CSV dimension

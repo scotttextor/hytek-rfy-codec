@@ -304,6 +304,8 @@ function computeFrameContextOps(frame, basis) {
             profile,
             tooling: [],
             usage: stick.usage.toLowerCase(),
+            worldStart: { x: stick.start.x, y: stick.start.y, z: stick.start.z },
+            worldEnd: { x: stick.end.x, y: stick.end.y, z: stick.end.z },
             outlineCorners,
         });
     }

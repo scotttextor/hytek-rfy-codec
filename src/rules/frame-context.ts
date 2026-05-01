@@ -200,8 +200,22 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
     const plateCenterY = (plate.box.yMin + plate.box.yMax) / 2;
 
     // Process REAL studs first, then virtual Kb edges. Virtual Kb-edge
-    // crossings get suppressed if a real stud is within 30mm.
-    const realStudPositions: number[] = [];
+    // crossings get a SIDE-SPECIFIC suppression rule:
+    //
+    //   PLATE-CONNECTED side (where the Kb's high-Z or low-Z end actually
+    //     touches this plate): ALWAYS emit. Real connection point.
+    //   MID-WALL side (the OTHER endpoint, hovering between plates):
+    //     emit only if the Kb's mid-wall endpoint is at LOWER world X
+    //     than the nearest stud (i.e., on the LEFT side of the stud).
+    //
+    // 2026-05-02 — derived from HG260001 analysis across all 5 LBW frames
+    // with Kbs (L1, L18, L24, L28, L30). L28 is the only frame where the
+    // Kb's mid-wall endpoint is at LOWER world X than its closest stud,
+    // and L28 is the only frame Detailer emits the paired notch on.
+    // Hypothesised structural reason: the C-section Kb's lip orientation
+    // depends on its diagonal direction; lip facing one specific side
+    // requires an extra notch in the plate to clear it.
+    const realStudInfos: { localPos: number; cx: number; worldX: number }[] = [];
     for (const stud of allCrossingStuds) {
       const yOverlap = stud.box.yMax >= plate.box.yMin && stud.box.yMin <= plate.box.yMax;
       if (!yOverlap) continue;
@@ -215,10 +229,46 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
 
       const isVirtualKbCrossing = (stud as any).role?.startsWith?.("Kb-edge");
       if (isVirtualKbCrossing) {
-        const tooClose = realStudPositions.some(p => Math.abs(p - localPos) < 30);
-        if (tooClose) continue;
+        // Find nearest real stud (within 30mm)
+        let nearestWorldX: number | null = null;
+        let nearestDist = Infinity;
+        for (const real of realStudInfos) {
+          const d = Math.abs(real.localPos - localPos);
+          if (d < nearestDist) {
+            nearestDist = d;
+            nearestWorldX = real.worldX;
+          }
+        }
+        if (nearestDist < 30 && nearestWorldX !== null) {
+          // Determine if this virtualKb is on the MID-WALL side (close to
+          // Kb.start.x — which after normalization is the mid-wall endpoint)
+          // or the PLATE-CONNECTED side (close to Kb.end.x).
+          const kbStick = stud.stick;
+          const kbMidWallX = kbStick.worldStart?.x ?? 0;
+          const kbPlateX = kbStick.worldEnd?.x ?? 0;
+          // Identify if this virtualKb represents the MID-WALL side or
+          // the PLATE-CONNECTED side. Use Z (height) of the worldStart vs
+          // worldEnd: after normalization, worldStart is the mid-wall end.
+          // If Kb's two endpoints have nearly identical X (perpendicular
+          // wall), all virtualKb crossings count as "mid-wall side" for
+          // this rule (the suppression always applies — there's no
+          // meaningful left/right in that dimension).
+          const distMidWallToStud = Math.abs(kbMidWallX - nearestWorldX);
+          const distPlateToStud = Math.abs(kbPlateX - nearestWorldX);
+          const isMidWallSide = distMidWallToStud <= distPlateToStud;
+          if (isMidWallSide) {
+            // Mid-wall side: emit only if Kb's mid-wall is STRICTLY at lower
+            // world X than the stud (Kb on LEFT of stud in world coords).
+            // Suppress when greater-or-equal (covers perpendicular walls
+            // where all sticks share an X coord — there's no meaningful
+            // left/right relationship there, so default to suppress).
+            if (kbMidWallX >= nearestWorldX - 0.5) continue;  // suppress
+          }
+          // Plate-connected side: never suppress (real connection point).
+        }
       } else {
-        realStudPositions.push(localPos);
+        // Real stud — track its world X for virtualKb suppression check.
+        realStudInfos.push({ localPos, cx: crossingX, worldX: stud.stick.worldStart?.x ?? 0 });
       }
 
       // Dedupe: skip ONLY exact duplicates. Overlapping-but-distinct

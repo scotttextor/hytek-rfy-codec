@@ -165,15 +165,9 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
     ALL_PLATE_ROLES.has(sb.role) && !NOG_ROLES.has(sb.role)
   );
 
-  // Build virtual stud crossings from cripple sticks: each cripple's
-  // narrow column is approximately at its xMin (or xMax — we add both
-  // and rely on the localPos uniqueness/skip).
-  // For NLBW frames, cripples typically attach to plates at one of their
-  // edges, not the centerline. We emit two virtual crossings per cripple.
+  // Build virtual stud crossings from cripple sticks at each X edge of bbox.
   const virtualStudCrossings = [];
   for (const cr of cripples) {
-    // Each cripple may correspond to studs on its left edge OR right edge
-    // (at the door/window jamb). Emit both as virtual stud-crossings.
     virtualStudCrossings.push({
       role: "Kb-edge-left", box: { ...cr.box, xMin: cr.box.xMin, xMax: cr.box.xMin + 41, cx: cr.box.xMin + 20 },
       stick: cr.stick, horizontal: false,
@@ -205,27 +199,30 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
     // Plate centerline y for diagonal-W intersection calc
     const plateCenterY = (plate.box.yMin + plate.box.yMax) / 2;
 
+    // Process REAL studs first, then virtual Kb edges. Virtual Kb-edge
+    // crossings get suppressed if a real stud is within 30mm.
+    const realStudPositions: number[] = [];
     for (const stud of allCrossingStuds) {
-      // Does this stud's bounding box overlap the plate's bounding box?
-      // Plate spans the full frame horizontally; stud spans some Y range.
-      // The crossing happens if stud's Y range overlaps plate's Y range.
       const yOverlap = stud.box.yMax >= plate.box.yMin && stud.box.yMin <= plate.box.yMax;
       if (!yOverlap) continue;
-      // The crossing X is the stud's centerline (or X overlap with plate).
       const crossingX = stud.box.cx;
-      // Skip if crossing is outside plate's X range (with extra tolerance for studs
-      // at the very start/end — those are handled by per-stick edge rules).
       if (crossingX < plate.box.xMin + 50) continue;
       if (crossingX > plate.box.xMax - 50) continue;
 
       const localPos = plateLocalPosition(plate, crossingX);
-      // Skip if the crossing is at or near the plate's start/end (those are handled by per-stick rules)
       if (localPos < span + 5) continue;
       if (localPos > plate.stick.length - span - 5) continue;
 
-      // Dedupe: skip ONLY exact duplicates (same crossing emitted twice — can
-      // happen for virtualStudCrossings on cripples). Overlapping-but-distinct
-      // stud crossings (B2B partner pairs) MUST stay separate per Detailer.
+      const isVirtualKbCrossing = (stud as any).role?.startsWith?.("Kb-edge");
+      if (isVirtualKbCrossing) {
+        const tooClose = realStudPositions.some(p => Math.abs(p - localPos) < 30);
+        if (tooClose) continue;
+      } else {
+        realStudPositions.push(localPos);
+      }
+
+      // Dedupe: skip ONLY exact duplicates. Overlapping-but-distinct
+      // stud crossings (B2B partner pairs) MUST stay separate.
       const quantizedPos = Math.round(localPos * 10) / 10;
       if (seenPositions.has(quantizedPos)) continue;
       seenPositions.add(quantizedPos);

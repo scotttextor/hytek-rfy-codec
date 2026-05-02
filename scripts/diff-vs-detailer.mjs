@@ -148,8 +148,10 @@ function buildOurProject(xmlText) {
         const isHeader = /^H\d/.test(stickName);
         const isNog = usage === "nog" || usage === "noggin";
         const isJoistWeb = /^V\d/.test(stickName) && usage === "web";
-        const T = (isFullStud || isJoistWeb) ? 2.0 : (isNog ? 1.0 : 0);
-        void isHeader;
+        // H header: 1mm/end trim (verified 2026-05-02 vs HG260012 L1101/H1
+        // input 2782 → ref output 2780). The earlier "no trim" comment was
+        // wrong — H IS trimmed, but only 1mm/end vs studs' 2mm/end.
+        const T = (isFullStud || isJoistWeb) ? 2.0 : ((isNog || isHeader) ? 1.0 : 0);
         if (T > 0) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);

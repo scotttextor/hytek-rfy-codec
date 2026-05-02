@@ -76,11 +76,24 @@ function getCrossingX(stick, atY) {
     const t = (atY - c.startL.y) / dy;
     return c.startL.x + t * (c.endL.x - c.startL.x);
 }
-/** Convert a frame-X-coord crossing into a position along the plate's length. */
+/** Convert a frame-X-coord crossing into a position along the plate's length.
+ *
+ * The plate's local axis runs from worldStart → worldEnd. For sticks where
+ * worldStart.x > worldEnd.x (e.g. flipped plates oriented HIGH→LOW), the
+ * localPos must be `start.x - crossingX`, NOT `crossingX - xMin`. Using
+ * xMin always picks the LOW-X end as origin which mirrors ALL stud crossings
+ * on flipped plates — verified 2026-05-02 vs HG260012 LBW T1 (start.x=23732,
+ * end.x=19615 ⇒ S1 should be at localPos 20, not 4097).
+ */
 function plateLocalPosition(plate, crossingX) {
-    // Plates run horizontally; the position along the plate is the crossing X
-    // minus the plate's xMin. (The plate's "length" axis runs xMin → xMax.)
-    return crossingX - plate.box.xMin;
+    const start = plate.stick.worldStart;
+    const end = plate.stick.worldEnd;
+    if (!start || !end)
+        return crossingX - plate.box.xMin;
+    // Run-axis orientation: positive direction is start → end.
+    // If start.x < end.x, localPos increases as crossingX increases.
+    // If start.x > end.x, localPos increases as crossingX decreases.
+    return start.x <= end.x ? (crossingX - start.x) : (start.x - crossingX);
 }
 /** Convert a frame-Y-coord crossing into a position along the stud's length. */
 function studLocalPosition(stud, crossingY) {
@@ -445,9 +458,12 @@ export function generateFrameContextOps(frame) {
             if (crossingX > header.box.xMax - 50)
                 continue;
             const localPos = plateLocalPosition(header, crossingX);
-            if (localPos < 50)
+            // Skip king crossings within the cap region (~80mm) — Detailer absorbs
+            // them into the wide cap LipNotch instead of emitting a separate notch.
+            // Cap dimples at 16.5 + 58.5 (+optional 109.5) cover this range.
+            if (localPos < 80)
                 continue;
-            if (localPos > header.stick.length - 50)
+            if (localPos > header.stick.length - 80)
                 continue;
             // Skip exact duplicates
             const q = Math.round(localPos * 10) / 10;

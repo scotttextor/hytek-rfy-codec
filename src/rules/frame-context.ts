@@ -114,6 +114,8 @@ function getCrossingX(stick: RfyStick, atY: number): number | null {
 function plateLocalPosition(plate: StickWithBox, crossingX: number): number {
   // Plates run horizontally; the position along the plate is the crossing X
   // minus the plate's xMin. (The plate's "length" axis runs xMin → xMax.)
+  // NOTE: crossingX is in FRAME-LOCAL 2D coords (from outlineCorners),
+  // not world coords. Don't mix with worldStart/worldEnd.
   return crossingX - plate.box.xMin;
 }
 
@@ -488,8 +490,11 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       if (crossingX < header.box.xMin + 50) continue;
       if (crossingX > header.box.xMax - 50) continue;
       const localPos = plateLocalPosition(header, crossingX);
-      if (localPos < 50) continue;
-      if (localPos > header.stick.length - 50) continue;
+      // Skip king crossings within the cap region (~80mm) — Detailer absorbs
+      // them into the wide cap LipNotch instead of emitting a separate notch.
+      // Cap dimples at 16.5 + 58.5 (+optional 109.5) cover this range.
+      if (localPos < 80) continue;
+      if (localPos > header.stick.length - 80) continue;
       // Skip exact duplicates
       const q = Math.round(localPos * 10) / 10;
       if (seenPositions.has(q)) continue;

@@ -168,5 +168,46 @@ export function dedupApex(
   return { kept, merged };
 }
 
+// ---------- Validator: parallel-pair handler (back-to-back chords) ----------
+
+/** When `lineIntersectionXZ` returns null because the centrelines are parallel,
+ *  check whether they're actually co-linear-within-tolerance (= a back-to-back
+ *  paired box member). If yes, emit a synthetic intersection at the midpoint
+ *  of the overlap. If no overlap or truly distinct parallel sticks, returns null. */
+export function handleParallelPair(
+  a: Segment3,
+  b: Segment3,
+  coincidenceMm: number
+): { posOnA: number; posOnB: number } | null {
+  // Direction vectors in XZ
+  const ax = a.end[0] - a.start[0], az = a.end[2] - a.start[2];
+  const bx = b.end[0] - b.start[0], bz = b.end[2] - b.start[2];
+  const lenA = Math.hypot(ax, az);
+  const lenB = Math.hypot(bx, bz);
+  if (lenA === 0 || lenB === 0) return null;
+  // Cross-product magnitude / lenA = perpendicular distance from B's start to A's line.
+  const cross = ax * bz - az * bx;
+  if (Math.abs(cross) > 1e-6 * lenA * lenB) return null; // not parallel
+  // Project B's endpoints onto A's centreline and measure perpendicular distance
+  const ux = ax / lenA, uz = az / lenA; // A unit
+  const dStartX = b.start[0] - a.start[0], dStartZ = b.start[2] - a.start[2];
+  // Perpendicular distance = |dStart × u| in 2D
+  const perpDist = Math.abs(dStartX * uz - dStartZ * ux);
+  if (perpDist > coincidenceMm) return null;
+  // Project B's endpoints onto A's axis (parametric tA along A in mm)
+  const tA_bStart = dStartX * ux + dStartZ * uz;
+  const tA_bEnd   = (b.end[0] - a.start[0]) * ux + (b.end[2] - a.start[2]) * uz;
+  const overlapMin = Math.max(0, Math.min(tA_bStart, tA_bEnd));
+  const overlapMax = Math.min(lenA, Math.max(tA_bStart, tA_bEnd));
+  if (overlapMax <= overlapMin) return null; // no overlap
+  const posOnA = (overlapMin + overlapMax) / 2;
+  // Convert posOnA back to a point in world XZ, then project onto B's axis to get posOnB
+  const ptX = a.start[0] + posOnA * ux;
+  const ptZ = a.start[2] + posOnA * uz;
+  const vbx = bx / lenB, vbz = bz / lenB;
+  const posOnB = (ptX - b.start[0]) * vbx + (ptZ - b.start[2]) * vbz;
+  return { posOnA, posOnB };
+}
+
 // Re-export ParsedStick for convenience
 export type { ParsedStick };

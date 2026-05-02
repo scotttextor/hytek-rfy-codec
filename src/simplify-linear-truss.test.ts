@@ -241,3 +241,39 @@ describe("dedupApex", () => {
     expect(r.merged).toEqual([110, 115]);
   });
 });
+
+import { handleParallelPair } from "./simplify-linear-truss.js";
+import type { Segment3 } from "./simplify-linear-truss.js";
+
+describe("handleParallelPair", () => {
+  it("returns null when sticks are not parallel (denom != 0)", () => {
+    // Different directions → not parallel
+    const a: Segment3 = { start: [0, 0, 0], end: [100, 0, 100] };
+    const b: Segment3 = { start: [0, 0, 100], end: [100, 0, 0] };
+    expect(handleParallelPair(a, b, 5)).toBeNull();
+  });
+
+  it("returns null when sticks are parallel but centrelines >coincidenceMm apart", () => {
+    // Two horizontal sticks, 50mm apart in Z — not co-linear
+    const a: Segment3 = { start: [0, 0, 0], end: [1000, 0, 0] };
+    const b: Segment3 = { start: [0, 0, 50], end: [1000, 0, 50] };
+    expect(handleParallelPair(a, b, 5)).toBeNull();
+  });
+
+  it("returns midpoint of overlap when sticks are co-linear within tolerance (back-to-back chord)", () => {
+    // Two horizontal sticks at z=0 and z=2 (within 5mm tolerance) — co-linear
+    const a: Segment3 = { start: [0, 0, 0], end: [1000, 0, 0] };
+    const b: Segment3 = { start: [200, 0, 2], end: [800, 0, 2] };
+    const r = handleParallelPair(a, b, 5);
+    expect(r).not.toBeNull();
+    // Overlap is X=200..800; midpoint = 500. posOnA = 500, posOnB = 300 (500-200).
+    expect(r!.posOnA).toBeCloseTo(500, 5);
+    expect(r!.posOnB).toBeCloseTo(300, 5);
+  });
+
+  it("returns null when co-linear but no overlap on the length axis", () => {
+    const a: Segment3 = { start: [0, 0, 0], end: [100, 0, 0] };
+    const b: Segment3 = { start: [200, 0, 2], end: [300, 0, 2] };
+    expect(handleParallelPair(a, b, 5)).toBeNull();
+  });
+});

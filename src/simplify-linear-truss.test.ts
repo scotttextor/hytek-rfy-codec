@@ -178,3 +178,36 @@ describe("guardZeroLength", () => {
     expect((r as { reason: string }).reason).toMatch(/zero-length stick W2/i);
   });
 });
+
+import { assertEndZone } from "./simplify-linear-truss.js";
+
+describe("assertEndZone (INV-4)", () => {
+  it("passes for positions safely inside the stick", () => {
+    const r = assertEndZone([100, 500, 900], 1000, 30);
+    expect(r.violations).toEqual([]);
+    expect(r.safe).toEqual([100, 500, 900]);
+  });
+
+  it("flags positions within endZoneMm of the start", () => {
+    const r = assertEndZone([5, 25, 50], 1000, 30);
+    expect(r.violations).toEqual([5, 25]);
+    expect(r.safe).toEqual([50]);
+  });
+
+  it("flags positions within endZoneMm of the end", () => {
+    const r = assertEndZone([950, 985, 1000], 1000, 30);
+    expect(r.violations).toEqual([985, 1000]);
+    expect(r.safe).toEqual([950]);
+  });
+
+  it("flags both ends together", () => {
+    const r = assertEndZone([5, 50, 950, 999], 1000, 30);
+    expect(r.violations).toEqual([5, 999]);
+    expect(r.safe).toEqual([50, 950]);
+  });
+
+  it("treats positions exactly at the zone boundary as safe (>= and <=)", () => {
+    const r = assertEndZone([30, 970], 1000, 30);
+    expect(r.violations).toEqual([]);
+  });
+});

@@ -130,5 +130,23 @@ export function guardZeroLength(sticks: readonly ParsedStick[]): GateResult {
   return { ok: true };
 }
 
+// ---------- Validator: end-zone exclusion (INV-4) ----------
+
+export function assertEndZone(
+  positions: readonly number[],
+  stickLength: number,
+  endZoneMm: number
+): { safe: number[]; violations: number[] } {
+  const safe: number[] = [];
+  const violations: number[] = [];
+  const minPos = endZoneMm;
+  const maxPos = stickLength - endZoneMm;
+  for (const p of positions) {
+    if (p < minPos || p > maxPos) violations.push(p);
+    else safe.push(p);
+  }
+  return { safe, violations };
+}
+
 // Re-export ParsedStick for convenience
 export type { ParsedStick };

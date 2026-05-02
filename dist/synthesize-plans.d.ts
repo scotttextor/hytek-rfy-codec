@@ -26,11 +26,31 @@ export interface ParsedStick {
     profile: ParsedStickProfile;
     usage: string;
     tooling: RfyToolingOp[];
+    /** XML <stick type="..."> attribute, e.g. "Stud", "Plate". Optional — used by simplify-linear-truss gate. */
+    type?: string;
+    /** Sheet gauge as XML string, e.g. "0.75" / "0.95". Optional — used by simplify-linear-truss profile gate. */
+    gauge?: string;
 }
 export interface ParsedFrame {
     name: string;
     envelope: [Vec3, Vec3, Vec3, Vec3];
     sticks: ParsedStick[];
+    /** XML <frame type="..."> attribute, e.g. "Truss", "InternalWall". Optional — used by simplify-linear-truss gate. */
+    type?: string;
+    /** Optional fastener list — populated when frame is a downstream-augmented copy. */
+    fasteners?: unknown[];
+    /** Optional fastener count — populated when frame is a downstream-augmented copy. */
+    fastenerCount?: number;
+    /** Optional pre-computed tool actions — populated when frame is a downstream-augmented copy. */
+    toolActions?: unknown[];
+    /** Optional frame length (mm). */
+    length?: number;
+    /** Optional frame built height (mm). */
+    builtHeight?: number;
+    /** Plan profile label, e.g. "GF-LIN-89.075". Optional — used downstream when carrying plan context with the frame. */
+    profileLabel?: string;
+    /** Truss web-pitch (mm). */
+    pitchMm?: number;
 }
 export interface ParsedPlan {
     name: string;

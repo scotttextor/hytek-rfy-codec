@@ -46,5 +46,16 @@ export {
   type RfyProject,
   type RfyDocument,
 } from "./format.js";
+export {
+  simplifyLinearTrussRfy,
+  isLinearTruss,
+  assertRfyVersion,
+  RfyVersionMismatch,
+  DEFAULT_PROFILE_GATE,
+  type SimplifyLinearTrussOptions,
+  type SimplifyDecision,
+  type SimplifyResult,
+  type ProfileGate,
+} from "./simplify-linear-truss.js";
 
 export const VERSION = "0.1.0";

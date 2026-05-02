@@ -9,4 +9,5 @@ export { synthesizeRfyFromPlans, deriveFrameBasis, coerceEnvelopeToRect, project
 export { MACHINE_SETUPS, SETUP_BY_PROFILE_WEB, getMachineSetupForProfile, getDefaultMachineSetup, } from "./machine-setups.js";
 export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findGroup, RULE_TABLE, profileOffsets, generateFrameContextOps, layoutFrame, computeBox, roleFromName, } from "./rules/index.js";
 export { STICK_TYPES, TOOL_TYPES, } from "./format.js";
+export { simplifyLinearTrussRfy, isLinearTruss, assertRfyVersion, RfyVersionMismatch, DEFAULT_PROFILE_GATE, } from "./simplify-linear-truss.js";
 export const VERSION = "0.1.0";

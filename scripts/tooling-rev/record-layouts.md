@@ -263,7 +263,197 @@ plus one or two record-tweak retries. No more major surprises expected.
 
 ---
 
-## Update: rc=8 root cause is `0x585f90`, NOT `IsZeroDouble`
+## 2026-05-02 RESOLUTION — rc=8 cleared, frames_list.Count=1 reached
+
+The previous notes about "rc=8 from section ctor" were partially wrong. The
+true picture (verified live with the 32-bit Python driver before the local
+FRAMECAD install was removed mid-session):
+
+### Finding 1 — IsZeroDouble polarity is INVERTED in earlier notes
+
+`0x42eeec` is `IsZeroDouble`. Disassembly at the call site `0x586491..0x58649c`:
+
+```
+test al, al
+je  0x58649c       ; AL==0 → CONTINUE (the engine WANTS this branch)
+mov al, 8 ; jmp fail
+```
+
+`IsZeroDouble(d)` returns AL=1 when `|d| ≤ epsilon` (i.e. "is zero"), AL=0
+otherwise. So the gate is "distance is non-zero → continue". A stick with
+both endpoints at the origin has distance=0 → AL=1 → rc=8. Earlier records
+that used "endpoint1 = endpoint2 = (0,0,0,0)" intentionally to "make distance
+zero" were doing the OPPOSITE of what the engine wants.
+
+**Fix**: set `endpoint1` and `endpoint2` to two distinct points.
+Empirically `endpoint1 = (2616.0, 0.0)`, `endpoint2 = (0.0, 0.0)` passes.
+Distance = 2616, IsZeroDouble → AL=0, gate falls through.
+
+### Finding 2 — `SectionLookupRecord +0x9f` is NOT an AnsiString
+
+The previous note said `+0x9f` was a Delphi AnsiString reference. **It is
+not.** Disassembly of `0x585f90` reveals it's a **pointer to an array of
+14-byte SectionRule records**, with `+0xa3` as the **count** (not the
+AnsiString length).
+
+Per-rule layout (read at `[+0x9f][i*14 + …]` inside `0x585f90`):
+
+| Offset | Type  | Notes |
+|--------|-------|-------|
+| +0x00  | int32 | `push [esi+0]` — passed as 1st arg to `0x52be38` |
+| +0x04  | int32 | `push [esi+4]` — passed as 2nd arg |
+| +0x08  | int32 | range gate: must be ≥ 0 (else section_ctor returns AL=6 → rc=6) |
+| +0x0c  | byte  | `push [esi+0xc]` — passed as 3rd arg |
+| +0x0d  | byte  | range gate: must be ≤ 0xfc (else AL=7 → rc=7); also dispatches: if value == 0x17, calls setter twice (cl=4 then cl=6); else single call (cl=value) |
+
+The section ctor body also reads three OTHER pointer/count pairs from the
+SectionLookupRecord, each pointing at a separate 16-byte-record array:
+
+| Ptr offset | Count offset | Each record stride | Iterations per stick |
+|-----------:|-------------:|-------------------:|----------------------|
+| +0x19      | +0x1d        | 16 bytes           | only if count > 1    |
+| +0x21      | +0x25        | 16 bytes           | only if count > 1    |
+| +0x29      | +0x2d        | 16 bytes           | only if count > 1    |
+| +0x9f      | +0xa3        | 14 bytes           | always (the SectionRule array) |
+
+These arrays are TPoint-flavoured (each iteration calls `tpoint_ctor_42f5a0`
+on `[esi+0..0xf]` then a Delphi list `Add` via `0x4f4cd0`) — they're how the
+engine consumes geometric/parametric tooling data per stick.
+
+### Finding 3 — `add_frameobject` reaches `rc=0` with the right inputs
+
+With the records:
+
+- **FrameRecord (50B)**: zeroed except `flag_a=1`, `vmethod_result=1`,
+  `frame_id=1`, `endpoint1` doubles at `+0x22..+0x31` = `(2616.0, 0.0)`,
+  `endpoint2` doubles at `+0x01..+0x10` = `(0.0, 0.0)`, length double at
+  `+0x17..+0x1e` = `2616.0`.
+- **SectionLookupRecord (185B)**: ALL zero (every count field=0 → all four
+  loops in section_ctor run zero iterations).
+- **FrameDefRecord (75B)**: ALL zero.
+
+→ **`add_frameobject` returns 0**.
+→ **`g_engine.frames_list.Count` increments to 1**.
+→ `g_engine.sections_list.Count` stays at 0 (TSection is allocated but never
+  attached to the engine list — it lives only on the new TFrameObject).
+→ `generate_operations(0)` returns 0 (no error).
+→ `get_operations_for(1, &arr, &len)` returns 0 with `len=0, arr=NULL`.
+
+So the engine **accepts** the stick, but the per-frame "compute ops" virtual
+method `[vtable+8]` on `[0x5482fc]` (TFrameObject) doesn't produce any ops —
+because we fed it an empty rule set. The ops array lives at
+`[frame_obj + 0x84]` (decoded from `get_operations_for`).
+
+### Finding 4 — `generate_operations` is per-frame, not single-frame
+
+Despite the name and its 16-bit `frame_id` arg, `generate_operations` calls
+the virtual method `[vtable+8]` on **every** TFrameObject in
+`engine.frames_list`. The 16-bit arg is stashed in a local but I never saw
+it read again in the visible disasm window — it might be picked up by the
+virtual method itself.
+
+`get_operations_for(frame_id, **arr, *len)`:
+- iterates `engine.frames_list`
+- for each frame_obj where `[frame_obj + 0x70] == frame_id`:
+    - `*arr = [frame_obj + 0x84]` (Delphi dynamic-array pointer)
+    - `*len = [arr - 4]` (length-prefix word)
+- returns 4 if not found, 0 if found.
+
+### Finding 5 — No global section catalog is needed
+
+The prior hypothesis that `0x52f824` does a registry-lookup is wrong. It is
+just Delphi's stock `TObject.Create` — `mov dl, 1` (alloc flag), `mov eax,
+[0x52f158]` (class vmt), `call 0x52f824`. The "catalog" the engine consumes
+is **the per-stick rule arrays passed inside the SectionLookupRecord
+itself** (offsets +0x19/+0x21/+0x29/+0x9f).
+
+This is great news: **no `.sct` file pre-loading is required**. We just
+need to provide the right per-stick rule data alongside the FrameRecord.
+
+### REMAINING WORK
+
+To get actual tooling ops out of `get_operations_for`, the
+SectionLookupRecord and FrameDefRecord must be populated with valid:
+
+1. **The SectionRule array** at `+0x9f / +0xa3` — these 14-byte records
+   tell the engine what physical-fit rules apply (which set of
+   Swage/InnerDimple/TrussChamfer/etc. entries to compute).
+   - Rule selectors observed: byte at `+0xd == 0x17` triggers a
+     "double-call" pattern (two separate role keys 4 and 6); anything else
+     calls once with `cl = byte_value`.
+   - Need to harvest a known-good rule array for the
+     `89S41_0.75 / 89mm Stud / lipped` profile from Detailer.exe's
+     marshaller (the function at `0x016bad44` in `Detailer.exe` that
+     populates the SectionLookupRecord).
+2. **The three TPoint-array fields** at +0x19/+0x21/+0x29 — these likely
+   correspond to "intersections", "centerlines", or "constraint geometry"
+   per-stick. Inspect via the same Detailer.exe marshaller.
+3. **FrameDefRecord** fields, especially the pointer/count at `+0x3b/+0x3f`
+   that `add_frameobject` itself iterates (the fourth marshalling loop,
+   line 0x586507..0x58652f) — also must be populated.
+
+### THE TWO PATHS FORWARD
+
+#### Path A (RECOMMENDED) — finish RE'ing the Detailer marshaller
+
+The Detailer.exe marshaller at `0x016ba118` was previously located but only
+partially decoded. Specifically:
+
+- `0x016bad44` (helper that builds SectionLookupRecord) — needs full disasm
+  to map every field assignment.
+- `0x016bb1c4` (helper that builds FrameDefRecord) — same.
+- Trace `TFrame.GetCatalog()` (`call 0x1c5f0ac`) — its return value is the
+  per-stick catalog row. The catalog itself is loaded from disk by
+  Detailer.exe at startup (probably `sections.xmlx` decryption). For our
+  purposes we don't need the loader — we just need to know what bytes
+  Detailer pushes through `add_frameobject` for one well-known stick, then
+  replay them.
+
+Best approach: **dynamic capture, not static RE.** Attach a debugger (or a
+DLL with hooks via `MinHook`) to a running Detailer.exe at the import-thunk
+of `Tooling.dll!add_frameobject` (`0x016b9ba4` → `[0x1e35454]`), capture
+the three records to disk, then replay from Python. This gives ground-truth
+records for the most common HYTEK profiles in minutes.
+
+This requires:
+- Re-installing FRAMECAD Detailer (the local install is currently gone —
+  installer is in `C:\Users\Scott\Downloads\FRAMECAD Detailer 5.3.4.0.exe`).
+- A Detailer license OR the auth-bypass also working in-process (it does —
+  same byte flip at `0x18fb80`).
+- Frida or a small custom hook DLL to log records.
+
+#### Path B — synthesise the SectionRule array from Excel/HYTEK data
+
+The HYTEK_MACHINE_TYPES.json + HYTEK_FRAME_TYPES.json files at
+`memory/reference_data/` already encode the per-profile tooling rules in
+human-readable form. With one captured 14-byte-record-array example from
+Detailer (path A above) we can reverse-engineer the byte encoding and
+synthesise the rule array directly from these JSONs.
+
+This is the path to **100% Detailer parity without Detailer at runtime** —
+the original goal. It still requires step (1) of Path A (one capture).
+
+### TL;DR for the next agent
+
+1. Re-install FRAMECAD Detailer 5.3.4.0 from Downloads.
+2. Build the 32-bit driver (already done — see `tooling-driver.py` and
+   `probe-real-stick.py`) — the auth bypass, FrameRecord, SectionLookup
+   skeleton are all working.
+3. Hook `Tooling.dll!add_frameobject` from inside Detailer.exe (Frida or
+   custom DLL) and capture the bytes of (FrameRecord, SectionLookupRecord,
+   FrameDefRecord) for ONE known-good stick (e.g. a 2616mm 89S41-0.75 stud).
+4. Save those bytes to `memory/reference_data/known-good-stick.bin`.
+5. Replay them from `tooling-driver.py` — should yield non-empty
+   `get_operations_for` output. Decode the ops record format from there.
+6. Once the format of one rule array is known, a JSON→record translator
+   gives 100% Detailer parity.
+
+### Earlier (now-superseded) hypothesis: rc=8 root cause is `0x585f90`
+
+[Kept for history — see git blame for context.] Disassembly of section ctor
+0x585f90 (full body) shows AL output `[ebp-1]` is only ever set to 0/6/7 —
+NEVER to 8. So rc=8 cannot originate inside 0x585f90; it always comes from
+the `0x586495 mov al,8` on the IsZeroDouble path.
 
 After tracing more carefully: there are TWO fail paths that both produce
 rc=8-ish:

@@ -417,10 +417,19 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       }
     }
 
-    // InnerService — handled by per-stick rule in table.ts (fixed @306, @906,
-    // @1506... every 600mm). The frame-context midpoint approach was reverted
-    // 2026-05-02 — it matched HG260044 but produced wrong positions on HG260001.
+    // InnerService — handled by per-stick rule in table.ts.
     void studCrossingsOnPlate;
+
+    // Merge adjacent LipNotches on this plate. Studs+webs may emit
+    // overlapping 45mm notches (B2B partner pairs at 42mm centers,
+    // trim-stud trios) — Detailer joins them into single wider spans.
+    // Verified vs HG260012 LBW T1: S4+S5+S6 at 848+890+932 → [825..954].
+    if (stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch")) {
+      // Conservative join threshold (8mm): merges only overlapping or
+      // touching notches. Higher thresholds over-merge wall-stud-pairs
+      // that should stay separate.
+      joinAdjacentLipNotches(stickOps, 8);
+    }
   }
 
   // Studs: nogs cross them — LIP NOTCH + DIMPLE at the crossing.

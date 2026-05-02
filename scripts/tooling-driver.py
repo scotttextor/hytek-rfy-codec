@@ -154,7 +154,10 @@ get_intersections_for.restype = ctypes.c_int
 
 add_frameobject = tooling.add_frameobject
 add_frameobject.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
-add_frameobject.restype = ctypes.c_int
+# The fn returns AL (0 = ok, 3 = duplicate frame_id, 8 = section lookup fail,
+# 9 = unauthenticated). Mask to a single byte; high 24 bits of EAX may be
+# uninitialised stack noise.
+add_frameobject.restype = ctypes.c_uint32
 
 add_explicit_route = tooling.add_explicit_route
 add_explicit_route.argtypes = [ctypes.c_void_p]
@@ -286,6 +289,239 @@ if g_engine_ptr:
     if frames_list:
         flist_count = ctypes.c_int32.from_address(frames_list + 8).value
         print(f"[+] engine.frames_list.Count = {flist_count}")
+
+
+# ---------------------------------------------------------------------------
+# Phase 3 — record layouts (see scripts/tooling-rev/record-layouts.md).
+#
+# Re-derived from Detailer.exe's marshaller @ 0x016ba118:
+#   FrameRecord         50 bytes  ([ebp-0x46])
+#   SectionLookupRecord 185 bytes ([ebp-0xff])  -- contains Delphi AnsiString ptrs!
+#   FrameDefRecord      75 bytes  ([ebp-0x14a])
+# ---------------------------------------------------------------------------
+
+class FrameRecord(ctypes.Structure):
+    """50-byte POD describing one stick member.
+
+    REVISED layout — Tooling.dll's own add_frameobject (RVA 0x186410) reads
+    offsets +1, +5, +9, +0xd, +0x11, +0x12, +0x16, +0x17, +0x1b, +0x1f,
+    +0x20, +0x21, +0x22, +0x26, +0x2a, +0x2e (all dword reads except the
+    bytes flagged 'B'). So the two ShortString[16]s are actually packed as
+    8 dwords (two TPoint-like structs).
+
+    Engine usage:
+        TPoint p1 = (esi[+0x22], esi[+0x26], esi[+0x2a], esi[+0x2e]) -- 4 dwords
+        TPoint p2 = (esi[+0x01], esi[+0x05], esi[+0x09], esi[+0x0d]) -- 4 dwords
+        frame_id  = esi[+0x12] (int32)
+        ... esi[+0x17] and esi[+0x1b] are TWO separate dwords (not a double)
+    """
+    _pack_ = 1
+    _fields_ = [
+        ("flag_a",          ctypes.c_uint8),                # +0x00
+        # +0x01..+0x10: 4 dwords = TPoint p2 (start of stick? x1,y1,x2,y2?)
+        ("p2_x1",           ctypes.c_int32),                # +0x01
+        ("p2_y1",           ctypes.c_int32),                # +0x05
+        ("p2_x2",           ctypes.c_int32),                # +0x09
+        ("p2_y2",           ctypes.c_int32),                # +0x0d
+        ("vmethod_result",  ctypes.c_uint8),                # +0x11
+        ("frame_id",        ctypes.c_int32),                # +0x12
+        ("flag_b",          ctypes.c_uint8),                # +0x16
+        ("dword_17",        ctypes.c_int32),                # +0x17
+        ("dword_1b",        ctypes.c_int32),                # +0x1b
+        ("lipped_flag",     ctypes.c_uint8),                # +0x1f
+        ("flag_d",          ctypes.c_uint8),                # +0x20
+        ("flag_e",          ctypes.c_uint8),                # +0x21
+        # +0x22..+0x31: 4 dwords = TPoint p1 (other endpoint?)
+        ("p1_x1",           ctypes.c_int32),                # +0x22
+        ("p1_y1",           ctypes.c_int32),                # +0x26
+        ("p1_x2",           ctypes.c_int32),                # +0x2a
+        ("p1_y2",           ctypes.c_int32),                # +0x2e
+    ]
+assert ctypes.sizeof(FrameRecord) == 0x32, ctypes.sizeof(FrameRecord)
+
+
+class SectionLookupRecord(ctypes.Structure):
+    """185-byte record. Mostly POD section-catalog data, with TWO Delphi
+    AnsiString refs at +0x9f / +0x9f+4 (length). Leave them NULL/0 — the
+    builder itself handles NIL via test/je at 0x16baf81."""
+    _pack_ = 1
+    _fields_ = [
+        ("shape_byte",      ctypes.c_uint8),                # +0x00
+        ("dwords_42_5e",    ctypes.c_int32 * 6),            # +0x01..+0x18 (6 dwords from catalog +0x42..+0x5e)
+        ("six_role_keys",   ctypes.c_int32 * 6),            # +0x19..+0x30 (6 dwords from scratch buffer)
+        ("dword_73",        ctypes.c_int32),                # +0x31
+        ("dword_77",        ctypes.c_int32),                # +0x35
+        ("byte_a3",         ctypes.c_uint8),                # +0x39
+        ("dword_a4",        ctypes.c_int32),                # +0x3a
+        ("dword_a8",        ctypes.c_int32),                # +0x3e
+        ("byte_ac",         ctypes.c_uint8),                # +0x42
+        ("byte_ad",         ctypes.c_uint8),                # +0x43
+        ("dword_ae",        ctypes.c_int32),                # +0x44
+        ("dword_b2",        ctypes.c_int32),                # +0x48
+        ("dword_b6",        ctypes.c_int32),                # +0x4c
+        ("dword_ba",        ctypes.c_int32),                # +0x50
+        ("byte_be",         ctypes.c_uint8),                # +0x54
+        ("dbl_helper",      ctypes.c_double),               # +0x55  (1 wt-helper double)
+        ("byte_d7",         ctypes.c_uint8),                # +0x5d
+        ("dword_d8",        ctypes.c_int32),                # +0x5e
+        ("dword_dc",        ctypes.c_int32),                # +0x62
+        ("dword_e0",        ctypes.c_int32),                # +0x66
+        ("dword_e4",        ctypes.c_int32),                # +0x6a
+        ("dword_ec",        ctypes.c_int32),                # +0x6e
+        ("dword_f0",        ctypes.c_int32),                # +0x72
+        ("dword_f4",        ctypes.c_int32),                # +0x76
+        ("dword_f8",        ctypes.c_int32),                # +0x7a
+        ("dword_fc",        ctypes.c_int32),                # +0x7e
+        ("dword_100",       ctypes.c_int32),                # +0x82
+        ("byte_104",        ctypes.c_uint8),                # +0x86
+        ("dword_117",       ctypes.c_int32),                # +0x87
+        ("dword_11b",       ctypes.c_int32),                # +0x8b
+        ("dword_129",       ctypes.c_int32),                # +0x8f
+        ("dword_12d",       ctypes.c_int32),                # +0x93
+        ("dword_135",       ctypes.c_int32),                # +0x97
+        ("dword_139",       ctypes.c_int32),                # +0x9b
+        ("ansistr_ptr",     ctypes.c_void_p),               # +0x9f  (Delphi-managed; NULL=empty is OK)
+        ("ansistr_length",  ctypes.c_int32),                # +0xa3  (AnsiString len header)
+        ("byte_a7",         ctypes.c_uint8),                # +0xa7  (TFrame.+0x5d -> 0x1c7934c)
+        ("byte_13e",        ctypes.c_uint8),                # +0xa8
+        ("dword_13f",       ctypes.c_int32),                # +0xa9
+        ("dword_143",       ctypes.c_int32),                # +0xad
+        ("dword_b1_cond",   ctypes.c_int32),                # +0xb1 (only set if name starts "TC*")
+        ("dword_b5_cond",   ctypes.c_int32),                # +0xb5
+    ]
+assert ctypes.sizeof(SectionLookupRecord) == 0xb9, ctypes.sizeof(SectionLookupRecord)
+
+
+class FrameDefRecord(ctypes.Structure):
+    """75-byte POD frame-definition record."""
+    _pack_ = 1
+    _fields_ = [
+        ("byte_settings_4",  ctypes.c_uint8),               # +0x00
+        ("dword_29_4",       ctypes.c_int32),               # +0x01
+        ("dword_29_8",       ctypes.c_int32),               # +0x05
+        ("byte_settings_6",  ctypes.c_uint8),               # +0x09
+        ("dword_settings_f", ctypes.c_int32),               # +0x0a
+        ("dword_settings_13",ctypes.c_int32),               # +0x0e
+        ("scratch_5c",       ctypes.c_int32),               # +0x12
+        ("scratch_58",       ctypes.c_int32),               # +0x16
+        ("scratch_54",       ctypes.c_int32),               # +0x1a
+        ("scratch_50",       ctypes.c_int32),               # +0x1e
+        ("scratch_4c",       ctypes.c_int32),               # +0x22
+        ("scratch_48",       ctypes.c_int32),               # +0x26
+        ("scratch_44",       ctypes.c_int32),               # +0x2a
+        ("scratch_40",       ctypes.c_int32),               # +0x2e
+        ("byte_resolved",    ctypes.c_uint8),               # +0x32 (result of 0x16bb478())
+        ("ansistr_len_pass1",ctypes.c_int32),               # +0x33
+        ("ansistr_len_pass2",ctypes.c_int32),               # +0x37
+        ("padding_3b_42",    ctypes.c_uint8 * 8),           # +0x3b..+0x42 (unused 8 bytes)
+        ("dword_settings_48",ctypes.c_int32),               # +0x43
+        ("dword_settings_4c",ctypes.c_int32),               # +0x47
+    ]
+assert ctypes.sizeof(FrameDefRecord) == 0x4b, ctypes.sizeof(FrameDefRecord)
+
+
+# ---------------------------------------------------------------------------
+# 6. Build a minimal "S1 stud, 89mm profile, length 2616" stick.
+#    For the SectionLookupRecord: leave the AnsiString ptr NULL (the engine's
+#    own marshaller has a NIL-tolerant path) and zero everything else. We
+#    write the profile-name into FrameRecord.section_name_a (where the engine
+#    reads "89S41-1.15" / "89S41-0.75" style keys).
+# ---------------------------------------------------------------------------
+fr = FrameRecord()
+ctypes.memset(ctypes.byref(fr), 0, ctypes.sizeof(fr))
+fr.frame_id        = 1                            # int32 frame id (linkage)
+# Two TPoint endpoints: stick from (0,0,0,0) to (2616,0,0,0).
+# The engine uses [esi+0x22..0x2e] and [esi+0x01..0x0d] to compute distance:
+fr.p1_x1 = 0;     fr.p1_y1 = 0;     fr.p1_x2 = 0;    fr.p1_y2 = 0
+fr.p2_x1 = 2616;  fr.p2_y1 = 0;     fr.p2_x2 = 0;    fr.p2_y2 = 0
+fr.dword_17        = 0
+fr.dword_1b        = 0
+fr.lipped_flag     = 0
+fr.flag_a          = 1
+fr.flag_b          = 0
+fr.flag_d          = 0
+fr.flag_e          = 0
+fr.vmethod_result  = 1
+
+sl = SectionLookupRecord()
+ctypes.memset(ctypes.byref(sl), 0, ctypes.sizeof(sl))
+
+# The engine builds a TSection from this record (constructor at 0x585f90).
+# At line 0x58648c it calls 0x42eeec which compares the AnsiString at +0x9f
+# against a known list — empty/NIL fails the check, returning rc=8.
+# Build a Delphi-compatible AnsiString in heap memory:
+#   header (12 bytes): codepage(2)+pad(2)+refcount(4)+length(4)
+#   followed by the chars and a trailing NUL.
+SECTION_NAME = b"89S41-1.15"
+buf_size = 12 + len(SECTION_NAME) + 1
+ansistr_buf = (ctypes.c_uint8 * buf_size)()
+# Codepage: 0xFDE9 (UTF-8) — actually 1252 for Delphi 32-bit.
+ctypes.c_uint16.from_buffer(ansistr_buf, 0).value = 1252
+ctypes.c_uint16.from_buffer(ansistr_buf, 2).value = 1            # element size
+ctypes.c_int32.from_buffer(ansistr_buf, 4).value = -1            # refcount = -1 (constant string, never freed)
+ctypes.c_int32.from_buffer(ansistr_buf, 8).value = len(SECTION_NAME)
+ctypes.memmove(ctypes.addressof(ansistr_buf) + 12, SECTION_NAME, len(SECTION_NAME))
+# Pointer-to-char (Delphi AnsiString points AT the data, not the header):
+sl.ansistr_ptr    = ctypes.addressof(ansistr_buf) + 12
+sl.ansistr_length = len(SECTION_NAME)
+
+fd = FrameDefRecord()
+ctypes.memset(ctypes.byref(fd), 0, ctypes.sizeof(fd))
+
+print()
+print(f"[+] FrameRecord size:         0x{ctypes.sizeof(FrameRecord):x} ({ctypes.sizeof(FrameRecord)} bytes)")
+print(f"[+] SectionLookupRecord size: 0x{ctypes.sizeof(SectionLookupRecord):x} ({ctypes.sizeof(SectionLookupRecord)} bytes)")
+print(f"[+] FrameDefRecord size:      0x{ctypes.sizeof(FrameDefRecord):x} ({ctypes.sizeof(FrameDefRecord)} bytes)")
+print(f"[+] Calling add_frameobject(stick_S1, 89S41-1.15, len=2616)...")
+
+# Wrap in SEH-ish guard — capture access violations gracefully.
+import traceback
+try:
+    rc_full = add_frameobject(ctypes.byref(fr), ctypes.byref(sl), ctypes.byref(fd))
+    rc = rc_full & 0xFF
+    print(f"[+] add_frameobject -> rc=0x{rc:02x} ({rc}) [full eax=0x{rc_full:08x}]")
+    rc_meanings = {0: "ok", 3: "duplicate frame_id", 8: "section lookup fail",
+                   9: "unauthenticated"}
+    if rc in rc_meanings:
+        print(f"    => {rc_meanings[rc]}")
+except OSError as e:
+    print(f"[!] add_frameobject crashed: {e}")
+    rc = -1
+
+if rc == 0:
+    # Now ask the engine to compute operations.
+    print(f"[+] Calling generate_operations(0)...")
+    rc = generate_operations(0)
+    print(f"[+] generate_operations -> rc={rc}")
+
+    # And fetch the result for our frame_id.
+    out_arr = ctypes.c_void_p(0)
+    out_len = ctypes.c_int32(0)
+    rc = get_operations_for(1, ctypes.byref(out_arr), ctypes.byref(out_len))
+    print(f"[+] get_operations_for(1) -> rc={rc}, ops_len={out_len.value}, ops_ptr=0x{out_arr.value or 0:08x}")
+
+    if out_arr.value and out_len.value > 0:
+        # Decode the dynamic array. Each entry size is unknown — sample first
+        # 64 bytes to start working out the layout.
+        dump = ctypes.string_at(out_arr.value, min(64 * out_len.value, 4096))
+        print(f"[+] First 256 bytes of ops array (hex):")
+        for i in range(0, min(256, len(dump)), 16):
+            chunk = dump[i:i+16]
+            hex_str = " ".join(f"{b:02x}" for b in chunk)
+            ascii_str = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
+            print(f"    {i:04x}  {hex_str:48}  {ascii_str}")
+
+# Inspect engine state after the call attempt
+g_engine_ptr = ctypes.c_uint32.from_address(G_ENGINE_VA).value
+if g_engine_ptr:
+    sections_list = ctypes.c_uint32.from_address(g_engine_ptr + 4).value
+    frames_list   = ctypes.c_uint32.from_address(g_engine_ptr + 8).value
+    if frames_list:
+        flist_count = ctypes.c_int32.from_address(frames_list + 8).value
+        print(f"[+] engine.frames_list.Count after add: {flist_count}")
+    if sections_list:
+        slist_count = ctypes.c_int32.from_address(sections_list + 8).value
+        print(f"[+] engine.sections_list.Count after add: {slist_count}")
 
 # Tear down cleanly — frees g_engine.
 cleanup()

@@ -36,11 +36,12 @@ for plan_match in re.finditer(r'<plan name="([^"]+)">(.*?)</plan>', xml_text, re
                 m = re.search(rf'\b{k}="([^"]*)"', s)
                 return m.group(1) if m else ''
             name = get(attrs, 'name')
+            usage = get(attrs, 'usage')
             sx, sy, sz = [float(v) for v in st.strip().split(',')]
             ex, ey, ez = [float(v) for v in en.strip().split(',')]
             idx = name_seen.get(name, 0)
             name_seen[name] = idx + 1
-            sticks.append({'name': name, 'idx': idx, 'start': (sx, sy, sz), 'end': (ex, ey, ez)})
+            sticks.append({'name': name, 'idx': idx, 'usage': usage, 'start': (sx, sy, sz), 'end': (ex, ey, ez)})
         frames[frame_name] = {'plan': plan_name, 'type': frame_type, 'sticks': sticks}
 
 # ---------- parse CSVs ----------
@@ -107,6 +108,13 @@ for frame_name, frame in frames.items():
     expected = defaultdict(list)
     for i in range(len(sticks)):
         for j in range(i+1, len(sticks)):
+            # Skip web-to-web intersections. HYTEK Linear trusses fasten webs
+            # only to chords (never web-to-web) — FrameCAD does not punch
+            # BOLT HOLES at W<->W mathematical crossings, and neither does
+            # the simplifier, so the verifier must skip them too.
+            if (sticks[i].get('usage', '').lower() == 'web' and
+                    sticks[j].get('usage', '').lower() == 'web'):
+                continue
             r = line_int(sticks[i], sticks[j])
             if not r: continue
             t, u = r

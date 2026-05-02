@@ -264,10 +264,15 @@ export function generateFrameContextOps(frame) {
         //
         // Determine inner face: for top chord, inner face is the lower y of
         // the chord's bbox (where webs come up from below). For bottom chord,
-        // inner face is the upper y. This branches on usage.
+        // inner face is the upper y.
         const usage = String(plate.stick.usage ?? "").toLowerCase();
         const isBottom = usage === "bottomplate" || usage === "bottomchord";
         const innerY = isBottom ? plate.box.yMax : plate.box.yMin;
+        // Use FJ +2mm offset for all plates. Agent's lip-inset formula didn't
+        // verify well against full corpus — wall LBW W stiffeners are sparse
+        // and the dominant notches come from stud crossings (separate loop).
+        const offsetSign = +1;
+        const offsetMagnitudeBase = 2.0;
         const webCrossings = [];
         for (const web of trussWebs) {
             const corners = web.stick.outlineCorners;
@@ -300,7 +305,7 @@ export function generateFrameContextOps(frame) {
             const sinTheta = Math.abs(e1dy) / e1len;
             if (sinTheta < 0.1)
                 continue; // near-horizontal edge — degenerate
-            const offset = 2.0 / sinTheta;
+            const offset = (offsetSign * offsetMagnitudeBase) / sinTheta;
             // Dimple sits at the web's CENTERLINE crossing at the chord's
             // CENTERLINE Y (not the inner-face edge midpoint). For vertical
             // V the two are identical; for diagonal W they differ by ~6mm.

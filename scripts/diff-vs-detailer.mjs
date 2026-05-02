@@ -230,6 +230,11 @@ function buildOurProject(xmlText) {
         if (/^Kb\d/.test(stickName) && length > 100) {
           stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round((length/2)*10)/10 });
         }
+
+        // V-prefix cap rule — DEFERRED. Some V sticks need InnerNotch+LipNotch
+        // start cap, others don't. Need geometric detection (which end touches
+        // chord) before applying broadly. Empirically reverted 2026-05-02:
+        // applying universally regresses overall match.
         // Nog InnerService: position-dependent on stick context — skipping
         // Truss W angle-dependent: vertical=stud-style (16.5+39), diagonal=Kb-style (10+variable+chamfers)
         // 2026-05-02 — gated dimple swap by usage="web". LBW W sticks have
@@ -238,12 +243,12 @@ function buildOurProject(xmlText) {
           const startL = projectToFrameLocal(stick.start, frameBasis);
           const endL = projectToFrameLocal(stick.end, frameBasis);
           const dxL = Math.abs(endL.x - startL.x);
-          // Threshold raised 1.0 → 5.0mm: near-vertical W sticks in some
-          // walls (e.g. UPPER-GF-LBW-89.115) project with tiny dxL but are
-          // structurally vertical — they should NOT get Chamfers (verified
-          // 2026-05-02: 70 spurious Chamfer extras eliminated by raising
-          // the threshold).
-          if (dxL > 5.0) {
+          // Chamfer ONLY for actual truss webs (usage="web"). LBW walls have
+          // W-named B2B partner studs (usage="Stud") that look slightly
+          // diagonal in projection but are structurally vertical — Detailer
+          // doesn't chamfer them. Verified 2026-05-02: 70 spurious Chamfer
+          // extras on UPPER-GF-LBW-89.115 eliminated by gating on usage.
+          if (dxL > 1.0 && usage === "web") {
             stick.tooling.push({ kind: "start", type: "Chamfer" });
             stick.tooling.push({ kind: "end", type: "Chamfer" });
             if (usage === "web") {
@@ -257,6 +262,31 @@ function buildOurProject(xmlText) {
               }
               stick.tooling.push({ kind: "point", type: "InnerDimple", pos: 10 });
               stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round((length-10)*10)/10 });
+
+              // Variable-span Swage for diagonal W: span = profile_width / sin(θ).
+              // For 89mm web with profile flange 41mm: cap span ≈ 41/sin(θ).
+              // Agent verified vs HG260012 FJ: spans 49.97, 57.72, 58.63mm
+              // for different W angles. Default rule emits 39mm — wrong.
+              const dyL = Math.abs(endL.y - startL.y);
+              const lenL = Math.sqrt(dxL * dxL + dyL * dyL);
+              const sinTheta = lenL > 1 ? (dyL / lenL) : 1;
+              if (sinTheta > 0.1 && sinTheta < 0.99) {
+                const variableSpan = Math.min(80, Math.max(39, 41 / sinTheta));
+                // Replace existing Swage[0..39] and Swage[length-39..length]
+                const tol2 = 1.0;
+                for (let i = stick.tooling.length - 1; i >= 0; i--) {
+                  const op = stick.tooling[i];
+                  if (op.kind === "spanned" && op.type === "Swage") {
+                    if (op.startPos < 1 && Math.abs(op.endPos - 39) < tol2) {
+                      stick.tooling.splice(i, 1);  // remove old start cap
+                    } else if (Math.abs(op.endPos - length) < tol2 && Math.abs(op.startPos - (length - 39)) < tol2) {
+                      stick.tooling.splice(i, 1);  // remove old end cap
+                    }
+                  }
+                }
+                stick.tooling.push({ kind: "spanned", type: "Swage", startPos: 0, endPos: Math.round(variableSpan * 100) / 100 });
+                stick.tooling.push({ kind: "spanned", type: "Swage", startPos: Math.round((length - variableSpan) * 100) / 100, endPos: length });
+              }
             }
           }
         }

@@ -407,8 +407,10 @@ export function isWallPlan(ctx) {
 export function isGroundFloor(ctx) {
     if (!ctx.planName)
         return true; // Default: emit (matches single-storey HG260001/HG260044)
-    // Match -GF- or G-F or GROUND in plan name. Reject 1F/2F/UF.
-    if (/-(1F|2F|3F|UF|U-F|UPPER)-/i.test(ctx.planName))
+    // Reject upper-floor plan names ONLY when they have a clear floor marker.
+    // "UPPER-GF" means "Upper Ground Floor" not "Upper floor" — still ground.
+    // Match -1F-, -2F-, -3F-, etc. (with surrounding hyphens to avoid false matches).
+    if (/-(1F|2F|3F)-/i.test(ctx.planName))
         return false;
     return true;
 }

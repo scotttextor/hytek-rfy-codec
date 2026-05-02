@@ -464,8 +464,8 @@ export function isGroundFloor(ctx: { planName?: string }): boolean {
   if (!ctx.planName) return true;  // Default: emit (matches single-storey HG260001/HG260044)
   // Only LBW + NLBW plans get slab anchor bolts. RP/TIN/FJ/CP/LIN/TB2B don't.
   if (!/-(LBW|NLBW)-/i.test(ctx.planName)) return false;
-  // Reject upper-floor plan names ONLY when they have a clear floor marker.
-  // "UPPER-GF" means "Upper Ground Floor" not "Upper floor" — still ground.
+  // Reject explicit upper-floor plan names. "UPPER-GF" is ambiguous —
+  // some refs treat it as ground (.075), some don't (.115). Don't filter.
   if (/-(1F|2F|3F)-/i.test(ctx.planName)) return false;
   return true;
 }

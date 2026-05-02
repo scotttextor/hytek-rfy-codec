@@ -638,10 +638,14 @@ for (const plan of ourDoc.project.plans) {
         }
       }
       if (isRPPlan) {
-        // RP frames: remove all Chamfer ops (ref has 0 chamfers on RP)
-        stick.tooling = stick.tooling.filter(op =>
-          !(op.kind === "start" || op.kind === "end") || op.type !== "Chamfer"
-        );
+        // RP frames: remove Chamfer on S/Stud sticks only. Chords (T/B) keep
+        // their Chamfers — ref has Chamfer@end on rafter chord ends meeting
+        // a hip/ridge (12 such ops on U1-GF-RP-70.075 ref).
+        if (/^S\d/.test(stick.name)) {
+          stick.tooling = stick.tooling.filter(op =>
+            !(op.kind === "start" || op.kind === "end") || op.type !== "Chamfer"
+          );
+        }
         // RP edge studs (S1, S11 etc — at chord ymin or ymax): caps are
         // LipNotch instead of Swage. Verified vs HG260012 RP TH01-2F: S1 and
         // S11 at y=5663-5704 and y=0-41 (panel edges) emit LipNotch caps;

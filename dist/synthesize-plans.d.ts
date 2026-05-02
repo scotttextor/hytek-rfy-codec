@@ -108,4 +108,30 @@ export declare function projectToFrameLocal(p: Vec3, basis: FrameBasis): Vec2;
  * → up is vertical (correct). Column form would give up=(-1,0,0) (wrong).
  */
 export declare function transformationMatrixString(basis: FrameBasis): string;
+/**
+ * Coerce an arbitrary polygon envelope (3+ vertices, possibly non-planar) into
+ * a 4-vertex parallelogram suitable for `deriveFrameBasis`.
+ *
+ * Used by Roof Panel (RP) frames whose envelopes can be 5/6-vertex hip/gable
+ * polygons or 4-vertex trapezoids in 3D, neither of which satisfies the
+ * V2 ≈ V1 + (V3-V0) parallelogram invariant.
+ *
+ * Strategy:
+ *   1. Pick V0 = first input vertex (preserves Detailer's local origin choice).
+ *   2. Pick the dominant horizontal direction in the polygon as `right`:
+ *        right = (V[1] - V[0]) normalised
+ *   3. Determine `up` by Gram-Schmidt against the diagonal V[N-1] - V[0]
+ *      (last vertex relative to first — typically the "top" edge in CCW order).
+ *   4. Compute axis-aligned bounding box in the (right, up) basis over ALL
+ *      input vertices, then emit the rectangle's 4 corners as V0..V3.
+ *
+ * The resulting rectangle envelope encloses every original vertex, so any
+ * stick that lies inside the original polygon also lies inside the rectangle.
+ * Stick projection still uses the same `right`/`up` axes, so 2D positions
+ * are preserved up to a translation by `(uMin, vMin)`.
+ *
+ * Returns null if the polygon is degenerate (<3 vertices, or all vertices
+ * coincident along one axis).
+ */
+export declare function coerceEnvelopeToRect(vertices: Vec3[]): [Vec3, Vec3, Vec3, Vec3] | null;
 export declare function synthesizeRfyFromPlans(project: ParsedProject, options?: SynthesizePlansOptions): SynthesizePlansResult;

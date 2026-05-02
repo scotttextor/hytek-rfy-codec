@@ -8,6 +8,7 @@ export { synthesizeRfyFromCsv, type SynthesizeOptions, type SynthesizeResult } f
 export {
   synthesizeRfyFromPlans,
   deriveFrameBasis,
+  coerceEnvelopeToRect,
   projectToFrameLocal,
   transformationMatrixString,
   type ParsedProject, type ParsedPlan, type ParsedFrame, type ParsedStick, type ParsedStickProfile,

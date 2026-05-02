@@ -347,8 +347,30 @@ export function generateFrameContextOps(frame) {
             }
         }
     }
+    // Per-stud lip-side neighbor detection. At any horizontal-member crossing
+    // on a stud, Detailer emits Swage if another stud's web is within ~45mm on
+    // the lip-facing side (lip flange pinned by partner web), else LipNotch.
+    // Verified 2026-05-02 vs HG260012 L1101–L1112 corpus (87 stud crossings).
+    // flipped=false: lip points to −x. flipped=true: lip points to +x.
+    // The stud-bbox half-width is 20.5mm (89S41 web width 41mm), so search
+    // range is [cx + sign*5, cx + sign*45] (skip self via 5mm gap).
+    function studHasLipNeighbor(stud) {
+        const sign = stud.stick.flipped ? +1 : -1;
+        const cx = stud.box.cx;
+        for (const other of studs) {
+            if (other.stick.name === stud.stick.name)
+                continue;
+            const dx = other.box.cx - cx;
+            if (sign > 0 && dx >= 5 && dx <= 45)
+                return true;
+            if (sign < 0 && dx <= -5 && dx >= -45)
+                return true;
+        }
+        return false;
+    }
     for (const stud of studs) {
         const stickOps = result.get(stud.stick.name);
+        const lipNeighbor = studHasLipNeighbor(stud);
         // B2B stud-pair Web emission DISABLED 2026-05-02:
         //   The geometric detection (xDelta<45, identical Y range, identical length)
         //   over-fires on HG260001 LBW — every adjacent S stud pair gets flagged,
@@ -386,8 +408,16 @@ export function generateFrameContextOps(frame) {
             const lipSpan = Math.max(45, nogWidth + 4);
             const startPos = localPos - lipSpan / 2;
             const endPos = startPos + lipSpan;
-            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
-            stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+            // Lip-neighbor rule: if another stud's web is within 45mm on the
+            // lip-facing side, the lip can't open here — emit Swage (stiffening
+            // cut) instead of LipNotch (lip-clearance notch).
+            if (lipNeighbor) {
+                stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
+            }
+            else {
+                stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+            }
             // Iter 5: B2B partner studs ALSO get InnerNotch at nog crossings.
             // Verified vs HG260012 LBW-89 L1107/S7 + L1111/S19/S20: paired studs
             // get InnerNotch+LipNotch [z-24..z+24] (48mm wide) when a nog passes
@@ -400,7 +430,7 @@ export function generateFrameContextOps(frame) {
                 stickOps.push({ kind: "spanned", type: "InnerNotch", startPos: round(iStart), endPos: round(iEnd) });
             }
         }
-        // Other horizontal members → LIP NOTCH
+        // Other horizontal members → LipNotch (or Swage if lip is pinned)
         for (const h of otherHorizontal) {
             const xOverlap = h.box.xMax >= stud.box.xMin && h.box.xMin <= stud.box.xMax;
             if (!xOverlap)
@@ -417,8 +447,13 @@ export function generateFrameContextOps(frame) {
             const lipSpan = Math.max(45, memberWidth + 4);
             const startPos = localPos - lipSpan / 2;
             const endPos = startPos + lipSpan;
-            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
-            stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+            if (lipNeighbor) {
+                stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
+            }
+            else {
+                stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+            }
         }
     }
     // Headers (H): receive LipNotch + InnerDimple at every king-stud crossing
@@ -432,7 +467,9 @@ export function generateFrameContextOps(frame) {
     // Cat B "secondary" headers (no king studs underneath) emit nothing here.
     // Cat C "boxed" headers (flipped=false, Web@pt instead of notches) need
     // separate detection — TBD.
-    const headers = layout.filter(sb => sb.role === "H" && sb.horizontal);
+    // Headers (H) AND 89mm sills (L) are header-like receivers.
+    // 70mm L lintels also benefit from panel-point detection.
+    const headers = layout.filter(sb => (sb.role === "H" || sb.role === "L") && sb.horizontal);
     const HEADER_JOIN_GAP = 22; // Detailer's merge threshold for H stud crossings
     for (const header of headers) {
         const stickOps = result.get(header.stick.name);

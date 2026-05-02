@@ -29,6 +29,7 @@ import {
   decode,
   getMachineSetupForProfile,
   deriveFrameBasis,
+  coerceEnvelopeToRect,
   projectToFrameLocal,
 } from "../dist/index.js";
 
@@ -77,8 +78,20 @@ function buildOurProject(xmlText) {
   for (const p of root.plan ?? []) {
     const plan = { name: String(p["@_name"]), frames: [] };
     for (const f of p.frame ?? []) {
-      const env = (f.envelope?.vertex ?? []).map(v => parseTriple(typeof v==="string" ? v : v["#text"]));
-      if (env.length !== 4) continue;
+      const envRaw = (f.envelope?.vertex ?? []).map(v => parseTriple(typeof v==="string" ? v : v["#text"]));
+      let env;
+      if (envRaw.length === 4) {
+        env = envRaw;
+      } else if (envRaw.length >= 3) {
+        // Roof panels often have 5/6-vertex polygons (hips, gables). Coerce
+        // to a 4-vertex bounding rectangle so deriveFrameBasis succeeds.
+        const coerced = coerceEnvelopeToRect(envRaw);
+        if (!coerced) continue;
+        env = coerced;
+        console.warn(`Frame "${f["@_name"]}": ${envRaw.length}-vertex envelope coerced to bounding rectangle`);
+      } else {
+        continue;
+      }
       const fzMin = Math.min(...env.map(v=>v.z));
       const fzMax = Math.max(...env.map(v=>v.z));
       const elevText = (f.elevation && typeof f.elevation === "object" ? f.elevation["#text"] : f.elevation) ?? "";
@@ -335,6 +348,37 @@ function buildOurProject(xmlText) {
         }
         sticks.push(stick);
       }
+      // Raking-frame Chamfer@end rule (verified 2026-05-02 vs HG260012):
+      // A frame is "raking" if any TopPlate stick has |end.z - start.z| > 1mm
+      // (sloped top plate, e.g. gable wall with raked ceiling). In raking
+      // frames:
+      //   - Every Stud/TrimStud gets Chamfer@end (in addition to Chamfer@start
+      //     which Kb/W diagonals already get)
+      //   - Every TopPlate gets Chamfer@start OR @end on the HIGH end
+      //     (whichever side has end.z > start.z)
+      const isRaking = sticks.some(s => {
+        const u = String(s.usage ?? "").toLowerCase();
+        return u === "topplate" && Math.abs(s.end.z - s.start.z) > 1;
+      });
+      if (isRaking) {
+        for (const s of sticks) {
+          const u = String(s.usage ?? "").toLowerCase();
+          const isFullStud = u === "stud" || u === "trimstud";
+          if (isFullStud) {
+            // Only Chamfer@end (the high-end side meeting sloped top plate).
+            const hasEnd = s.tooling.some(t => t.kind === "end" && t.type === "Chamfer");
+            if (!hasEnd) s.tooling.push({ kind: "end", type: "Chamfer" });
+          } else if (u === "topplate") {
+            const dz = s.end.z - s.start.z;
+            if (Math.abs(dz) > 1) {
+              const hasStart = s.tooling.some(t => t.kind === "start" && t.type === "Chamfer");
+              const hasEnd = s.tooling.some(t => t.kind === "end" && t.type === "Chamfer");
+              if (dz > 0 && !hasEnd) s.tooling.push({ kind: "end", type: "Chamfer" });
+              if (dz < 0 && !hasStart) s.tooling.push({ kind: "start", type: "Chamfer" });
+            }
+          }
+        }
+      }
       plan.frames.push({ name: String(f["@_name"]), envelope: env, sticks });
     }
     plans.push(plan);
@@ -348,7 +392,7 @@ function buildOurProject(xmlText) {
 
 const xmlText = fs.readFileSync(inputXmlPath, "utf8");
 const { project: ourProject, setup } = buildOurProject(xmlText);
-const ourResult = synthesizeRfyFromPlans(ourProject, { machineSetup: setup });
+const ourResult = synthesizeRfyFromPlans(ourProject, { machineSetup: setup, lenient: true });
 const ourDoc = decode(ourResult.rfy);
 
 const refDoc = decode(fs.readFileSync(referenceRfyPath));

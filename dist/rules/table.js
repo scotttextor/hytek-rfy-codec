@@ -335,6 +335,27 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
         ],
     },
+    // ----------- 89mm SILLS (L) -----------
+    // Sills (L sticks, usage=Sill) on 89mm walls behave like H headers — paired
+    // InnerNotch+LipNotch at start/end caps + paired dimples at 16.5+58.5 from
+    // each end. Verified 2026-05-02 vs HG260012 L1101/L1 (length 2780):
+    // ref ops = InnerNotch[0..39], LipNotch[0..39], InnerNotch[2741..2780],
+    // LipNotch[2741..2780], InnerDimple at 16.5, 59, 2721, 2763.5 + panel-points.
+    {
+        rolePattern: /^L$/,
+        profilePattern: /^89S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
+        ],
+    },
     // ----------- LINTELS (L) on 70S41 -----------
     //
     // 2026-05-02 — REWRITTEN. Earlier rule emitted InnerNotch + 16.5/39mm

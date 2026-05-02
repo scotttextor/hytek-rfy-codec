@@ -136,6 +136,84 @@ function cross(a, b) {
     };
 }
 // ---------------------------------------------------------------------------
+// Envelope coercion — handle N-vertex / non-planar polygons gracefully
+// ---------------------------------------------------------------------------
+/**
+ * Coerce an arbitrary polygon envelope (3+ vertices, possibly non-planar) into
+ * a 4-vertex parallelogram suitable for `deriveFrameBasis`.
+ *
+ * Used by Roof Panel (RP) frames whose envelopes can be 5/6-vertex hip/gable
+ * polygons or 4-vertex trapezoids in 3D, neither of which satisfies the
+ * V2 ≈ V1 + (V3-V0) parallelogram invariant.
+ *
+ * Strategy:
+ *   1. Pick V0 = first input vertex (preserves Detailer's local origin choice).
+ *   2. Pick the dominant horizontal direction in the polygon as `right`:
+ *        right = (V[1] - V[0]) normalised
+ *   3. Determine `up` by Gram-Schmidt against the diagonal V[N-1] - V[0]
+ *      (last vertex relative to first — typically the "top" edge in CCW order).
+ *   4. Compute axis-aligned bounding box in the (right, up) basis over ALL
+ *      input vertices, then emit the rectangle's 4 corners as V0..V3.
+ *
+ * The resulting rectangle envelope encloses every original vertex, so any
+ * stick that lies inside the original polygon also lies inside the rectangle.
+ * Stick projection still uses the same `right`/`up` axes, so 2D positions
+ * are preserved up to a translation by `(uMin, vMin)`.
+ *
+ * Returns null if the polygon is degenerate (<3 vertices, or all vertices
+ * coincident along one axis).
+ */
+export function coerceEnvelopeToRect(vertices) {
+    if (vertices.length < 3)
+        return null;
+    const V0 = vertices[0];
+    // right axis: V1 - V0 (first edge)
+    const e1 = subtract(vertices[1], V0);
+    const e1len = magnitude(e1);
+    if (e1len < ORTHOGONALITY_TOLERANCE)
+        return null;
+    const right = scale(e1, 1 / e1len);
+    // up axis: pick a vertex non-collinear with right. Prefer the last vertex
+    // (in CCW polygon ordering this is the "top-left" corner).
+    let upRaw = null;
+    for (let i = vertices.length - 1; i >= 2; i--) {
+        const cand = subtract(vertices[i], V0);
+        const candAlongRight = scale(right, dot(cand, right));
+        const candOrth = subtract(cand, candAlongRight);
+        if (magnitude(candOrth) > ORTHOGONALITY_TOLERANCE) {
+            upRaw = candOrth;
+            break;
+        }
+    }
+    if (!upRaw)
+        return null;
+    const upLen = magnitude(upRaw);
+    const up = scale(upRaw, 1 / upLen);
+    // Project all vertices onto (right, up) → get 2D bounding box
+    let uMin = Infinity, uMax = -Infinity, vMin = Infinity, vMax = -Infinity;
+    for (const p of vertices) {
+        const d = subtract(p, V0);
+        const u = dot(d, right);
+        const v = dot(d, up);
+        if (u < uMin)
+            uMin = u;
+        if (u > uMax)
+            uMax = u;
+        if (v < vMin)
+            vMin = v;
+        if (v > vMax)
+            vMax = v;
+    }
+    // Build 4 rectangle corners in CCW order (BL, BR, TR, TL).
+    const corner = (u, v) => add(add(V0, scale(right, u)), scale(up, v));
+    return [
+        corner(uMin, vMin),
+        corner(uMax, vMin),
+        corner(uMax, vMax),
+        corner(uMin, vMax),
+    ];
+}
+// ---------------------------------------------------------------------------
 // Synthesize entry point
 // ---------------------------------------------------------------------------
 export function synthesizeRfyFromPlans(project, options = {}) {

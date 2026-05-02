@@ -1,0 +1,1232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<framecad_import name="LINEAR TRUSS TESTING">
+ <jobnum> "TEST" </jobnum>
+ <client> "LINEAR TRUSS TESTING" </client>
+
+ <drawing_info units="Metric" envelope_ref="Centre" stick_ref="Centre">
+  <datedrawn> "05-03-2020" </datedrawn>
+ </drawing_info>
+
+<plan name="GF-LBW-89.075">
+<elevation> 0.0 </elevation>
+
+<frame name="L1" type="ExternalWall">
+<elevation>0.000</elevation>
+
+ <envelope>
+   <vertex>11457.694,14523.137,0.000 </vertex>
+   <vertex>11457.694,10923.137,0.000 </vertex>
+   <vertex>11457.694,10923.137,900.000 </vertex>
+   <vertex>11457.694,14523.137,900.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>11457.694,14523.137,879.500 </start>
+   <end>11457.694,10923.137,879.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>11457.694,14523.137,20.500 </start>
+   <end>11457.694,10923.137,20.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11457.694,14502.637,2.000 </start>
+   <end>11457.694,14502.637,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11457.694,13923.137,2.000 </start>
+   <end>11457.694,13923.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S3" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11457.694,13323.137,2.000 </start>
+   <end>11457.694,13323.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S4" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11457.694,12723.137,2.000 </start>
+   <end>11457.694,12723.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S5" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11457.694,12123.137,2.000 </start>
+   <end>11457.694,12123.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S6" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11457.694,11523.137,2.000 </start>
+   <end>11457.694,11523.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S7" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11457.694,10943.637,2.000 </start>
+   <end>11457.694,10943.637,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="Kb1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Brace">
+   <start>11457.694,11466.763,10.401 </start>
+   <end>11457.694,11000.010,889.599 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>11457.694,13323.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,12723.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,12123.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,14502.637,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,13923.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,14502.637,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,13923.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,13323.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,12723.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,12123.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,11523.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,11523.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,11461.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,11005.637,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,10943.637,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11457.694,10943.637,879.000 </point>
+ </fastener>
+<tool_action name="Service">
+   <start>11457.694,14233.387,848.750 </start>
+   <end>11457.694,14233.387,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11457.694,14543.637,450.000 </start>
+   <end>11457.694,10902.637,450.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11457.694,14543.637,300.000 </start>
+   <end>11457.694,10902.637,300.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>11457.694,14511.137,61.500 </start>
+   <end>11457.694,14511.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11457.694,13643.637,848.750 </start>
+   <end>11457.694,13643.637,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>11457.694,14457.137,61.500 </start>
+   <end>11457.694,14457.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11457.694,13043.637,848.750 </start>
+   <end>11457.694,13043.637,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>11457.694,13494.337,61.500 </start>
+   <end>11457.694,13494.337,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11457.694,12443.637,848.750 </start>
+   <end>11457.694,12443.637,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11457.694,11843.637,848.750 </start>
+   <end>11457.694,11843.637,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>11457.694,12531.437,61.500 </start>
+   <end>11457.694,12531.437,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11457.694,11233.387,384.422 </start>
+   <end>11457.694,11233.387,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>11457.694,11568.637,61.500 </start>
+   <end>11457.694,11568.637,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>11457.694,10989.137,61.500 </start>
+   <end>11457.694,10989.137,-20.500 </end>
+</tool_action>
+</frame>
+<frame name="L2" type="ExternalWall">
+<elevation>0.000</elevation>
+
+ <envelope>
+   <vertex>17412.694,14478.137,0.000 </vertex>
+   <vertex>11502.694,14478.137,0.000 </vertex>
+   <vertex>11502.694,14478.137,900.000 </vertex>
+   <vertex>17412.694,14478.137,900.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>17412.694,14478.137,879.500 </start>
+   <end>11502.694,14478.137,879.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>17412.694,14478.137,20.500 </start>
+   <end>11502.694,14478.137,20.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17392.194,14478.137,2.000 </start>
+   <end>17392.194,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>16812.694,14478.137,2.000 </start>
+   <end>16812.694,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S3" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>16212.694,14478.137,2.000 </start>
+   <end>16212.694,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S4" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>15612.694,14478.137,2.000 </start>
+   <end>15612.694,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S5" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>15013.194,14478.137,2.000 </start>
+   <end>15013.194,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S6" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>14392.194,14478.137,2.000 </start>
+   <end>14392.194,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S7" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13792.194,14478.137,2.000 </start>
+   <end>13792.194,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S8" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13192.194,14478.137,2.000 </start>
+   <end>13192.194,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S9" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>12657.694,14478.137,2.000 </start>
+   <end>12657.694,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S10" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>12102.694,14478.137,2.000 </start>
+   <end>12102.694,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S11" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11523.194,14478.137,2.000 </start>
+   <end>11523.194,14478.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="Kb1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Brace">
+   <start>14448.179,14478.137,10.616 </start>
+   <end>14957.209,14478.137,889.384 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="Kb2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Brace">
+   <start>12046.321,14478.137,10.401 </start>
+   <end>11579.567,14478.137,889.599 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>16812.694,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>15612.694,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>15612.694,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17392.194,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17392.194,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>16812.694,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>16212.694,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>16212.694,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>15013.194,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>15013.194,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>14392.194,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>14392.194,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>14454.194,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>14951.194,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11585.194,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13792.194,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13792.194,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12102.694,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12102.694,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12657.694,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12657.694,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13192.194,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13192.194,14478.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12040.694,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11523.194,14478.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11523.194,14478.137,879.000 </point>
+ </fastener>
+<tool_action name="Service">
+   <start>17122.944,14478.137,848.750 </start>
+   <end>17122.944,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17433.194,14478.137,450.000 </start>
+   <end>11482.194,14478.137,450.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17433.194,14478.137,300.000 </start>
+   <end>11482.194,14478.137,300.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>17400.694,14478.137,61.500 </start>
+   <end>17400.694,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>16533.194,14478.137,848.750 </start>
+   <end>16533.194,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17346.694,14478.137,61.500 </start>
+   <end>17346.694,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>16212.694,14478.137,838.500 </start>
+   <end>16212.694,14478.137,920.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>15933.194,14478.137,848.750 </start>
+   <end>15933.194,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>15333.444,14478.137,848.750 </start>
+   <end>15333.444,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>16167.194,14478.137,61.500 </start>
+   <end>16167.194,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>15012.694,14478.137,838.500 </start>
+   <end>15012.694,14478.137,920.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>14702.694,14478.137,388.652 </start>
+   <end>14702.694,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>15160.394,14478.137,61.500 </start>
+   <end>15160.394,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>15058.694,14478.137,61.500 </start>
+   <end>15058.694,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>14092.194,14478.137,848.750 </start>
+   <end>14092.194,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>13791.694,14478.137,838.500 </start>
+   <end>13791.694,14478.137,920.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>13512.694,14478.137,848.750 </start>
+   <end>13512.694,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>14346.694,14478.137,61.500 </start>
+   <end>14346.694,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>14153.494,14478.137,61.500 </start>
+   <end>14153.494,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>12945.444,14478.137,848.750 </start>
+   <end>12945.444,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>12657.694,14478.137,838.500 </start>
+   <end>12657.694,14478.137,920.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>12400.694,14478.137,848.750 </start>
+   <end>12400.694,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>13146.694,14478.137,61.500 </start>
+   <end>13146.694,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11812.944,14478.137,384.422 </start>
+   <end>11812.944,14478.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>12148.194,14478.137,61.500 </start>
+   <end>12148.194,14478.137,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>11568.694,14478.137,61.500 </start>
+   <end>11568.694,14478.137,-20.500 </end>
+</tool_action>
+</frame>
+<frame name="L3" type="ExternalWall">
+<elevation>0.000</elevation>
+
+ <envelope>
+   <vertex>17367.694,9213.137,0.000 </vertex>
+   <vertex>17367.694,14433.137,0.000 </vertex>
+   <vertex>17367.694,14433.137,900.000 </vertex>
+   <vertex>17367.694,9213.137,900.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>17367.694,9213.137,879.500 </start>
+   <end>17367.694,14433.137,879.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>17367.694,9213.137,20.500 </start>
+   <end>17367.694,14433.137,20.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,9233.637,2.000 </start>
+   <end>17367.694,9233.637,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,9813.137,2.000 </start>
+   <end>17367.694,9813.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S3" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,10413.137,2.000 </start>
+   <end>17367.694,10413.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S4" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,11013.137,2.000 </start>
+   <end>17367.694,11013.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S5" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,11433.137,2.000 </start>
+   <end>17367.694,11433.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S6" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,12033.137,2.000 </start>
+   <end>17367.694,12033.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S7" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,12633.137,2.000 </start>
+   <end>17367.694,12633.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S8" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,13233.137,2.000 </start>
+   <end>17367.694,13233.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S9" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,13833.137,2.000 </start>
+   <end>17367.694,13833.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S10" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17367.694,14412.637,2.000 </start>
+   <end>17367.694,14412.637,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="Kb1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Brace">
+   <start>17367.694,11976.958,10.507 </start>
+   <end>17367.694,11489.315,889.493 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="Kb2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Brace">
+   <start>17367.694,13889.510,10.401 </start>
+   <end>17367.694,14356.263,889.599 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>17367.694,9233.637,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,9233.637,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,9813.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,9813.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,10413.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,10413.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,11013.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,11013.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,11433.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,11433.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,12033.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,12033.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,12633.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,12633.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,11971.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,11495.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,13233.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,13233.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,13895.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,14350.637,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,13833.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,13833.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,14412.637,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17367.694,14412.637,879.000 </point>
+ </fastener>
+<tool_action name="Service">
+   <start>17367.694,9502.887,848.750 </start>
+   <end>17367.694,9502.887,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,9192.637,450.000 </start>
+   <end>17367.694,14453.637,450.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,9192.637,300.000 </start>
+   <end>17367.694,14453.637,300.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>17367.694,9225.137,61.500 </start>
+   <end>17367.694,9225.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,10092.637,848.750 </start>
+   <end>17367.694,10092.637,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17367.694,9279.137,61.500 </start>
+   <end>17367.694,9279.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,10692.637,848.750 </start>
+   <end>17367.694,10692.637,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,11202.637,848.750 </start>
+   <end>17367.694,11202.637,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17367.694,10458.637,61.500 </start>
+   <end>17367.694,10458.637,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,11733.137,386.614 </start>
+   <end>17367.694,11733.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17367.694,11283.437,61.500 </start>
+   <end>17367.694,11283.437,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17367.694,11387.637,61.500 </start>
+   <end>17367.694,11387.637,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,12333.137,848.750 </start>
+   <end>17367.694,12333.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17367.694,12078.637,61.500 </start>
+   <end>17367.694,12078.637,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,12912.637,848.750 </start>
+   <end>17367.694,12912.637,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,13512.637,848.750 </start>
+   <end>17367.694,13512.637,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17367.694,12933.137,61.500 </start>
+   <end>17367.694,12933.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17367.694,14122.887,384.422 </start>
+   <end>17367.694,14122.887,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17367.694,13787.637,61.500 </start>
+   <end>17367.694,13787.637,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17367.694,14367.137,61.500 </start>
+   <end>17367.694,14367.137,-20.500 </end>
+</tool_action>
+</frame>
+<frame name="L4" type="ExternalWall">
+<elevation>0.000</elevation>
+
+ <envelope>
+   <vertex>13812.694,9168.137,0.000 </vertex>
+   <vertex>17412.694,9168.137,0.000 </vertex>
+   <vertex>17412.694,9168.137,900.000 </vertex>
+   <vertex>13812.694,9168.137,900.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>13812.694,9168.137,879.500 </start>
+   <end>17412.694,9168.137,879.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>13812.694,9168.137,20.500 </start>
+   <end>17412.694,9168.137,20.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13833.194,9168.137,2.000 </start>
+   <end>13833.194,9168.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>14412.694,9168.137,2.000 </start>
+   <end>14412.694,9168.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S3" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>15013.194,9168.137,2.000 </start>
+   <end>15013.194,9168.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S4" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>15613.194,9168.137,2.000 </start>
+   <end>15613.194,9168.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S5" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>16212.694,9168.137,2.000 </start>
+   <end>16212.694,9168.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S6" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>16812.694,9168.137,2.000 </start>
+   <end>16812.694,9168.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S7" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>17392.194,9168.137,2.000 </start>
+   <end>17392.194,9168.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="Kb1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Brace">
+   <start>16869.067,9168.137,10.401 </start>
+   <end>17335.821,9168.137,889.599 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>13833.194,9168.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13833.194,9168.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>15013.194,9168.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>15013.194,9168.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>14412.694,9168.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>14412.694,9168.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>15613.194,9168.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>15613.194,9168.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>16212.694,9168.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>16212.694,9168.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>16874.694,9168.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17330.194,9168.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>16812.694,9168.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>16812.694,9168.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17392.194,9168.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>17392.194,9168.137,879.000 </point>
+ </fastener>
+<tool_action name="Service">
+   <start>14102.444,9168.137,848.750 </start>
+   <end>14102.444,9168.137,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>13792.194,9168.137,450.000 </start>
+   <end>17433.194,9168.137,450.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>13792.194,9168.137,300.000 </start>
+   <end>17433.194,9168.137,300.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>13824.694,9168.137,61.500 </start>
+   <end>13824.694,9168.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>14692.444,9168.137,848.750 </start>
+   <end>14692.444,9168.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>13878.694,9168.137,61.500 </start>
+   <end>13878.694,9168.137,-20.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>15012.694,9168.137,838.500 </start>
+   <end>15012.694,9168.137,920.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>15292.694,9168.137,848.750 </start>
+   <end>15292.694,9168.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>14841.494,9168.137,61.500 </start>
+   <end>14841.494,9168.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>15892.444,9168.137,848.750 </start>
+   <end>15892.444,9168.137,910.250 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>16212.694,9168.137,838.500 </start>
+   <end>16212.694,9168.137,920.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>16492.194,9168.137,848.750 </start>
+   <end>16492.194,9168.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>15804.394,9168.137,61.500 </start>
+   <end>15804.394,9168.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>17102.444,9168.137,384.422 </start>
+   <end>17102.444,9168.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>16767.194,9168.137,61.500 </start>
+   <end>16767.194,9168.137,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>17346.694,9168.137,61.500 </start>
+   <end>17346.694,9168.137,-20.500 </end>
+</tool_action>
+</frame>
+<frame name="L5" type="ExternalWall">
+<elevation>0.000</elevation>
+
+ <envelope>
+   <vertex>13857.694,11013.137,0.000 </vertex>
+   <vertex>13857.694,9213.137,0.000 </vertex>
+   <vertex>13857.694,9213.137,900.000 </vertex>
+   <vertex>13857.694,11013.137,900.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>13857.694,11013.137,879.500 </start>
+   <end>13857.694,9213.137,879.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>13857.694,11013.137,20.500 </start>
+   <end>13857.694,9213.137,20.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13857.694,10992.637,2.000 </start>
+   <end>13857.694,10992.637,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13857.694,10413.137,2.000 </start>
+   <end>13857.694,10413.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S3" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13857.694,9813.137,2.000 </start>
+   <end>13857.694,9813.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S4" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13857.694,9233.637,2.000 </start>
+   <end>13857.694,9233.637,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="Kb1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Brace">
+   <start>13857.694,9756.763,10.401 </start>
+   <end>13857.694,9290.010,889.599 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>13857.694,10992.637,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,10413.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,9233.637,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,9813.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,9295.637,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,10992.637,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,10413.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,9233.637,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,9813.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13857.694,9751.137,21.000 </point>
+ </fastener>
+<tool_action name="Service">
+   <start>13857.694,10723.387,848.750 </start>
+   <end>13857.694,10723.387,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>13857.694,11033.637,450.000 </start>
+   <end>13857.694,9192.637,450.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>13857.694,11033.637,300.000 </start>
+   <end>13857.694,9192.637,300.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>13857.694,11001.137,61.500 </start>
+   <end>13857.694,11001.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>13857.694,10133.637,848.750 </start>
+   <end>13857.694,10133.637,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>13857.694,10947.137,61.500 </start>
+   <end>13857.694,10947.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>13857.694,9523.387,384.422 </start>
+   <end>13857.694,9523.387,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>13857.694,9858.637,61.500 </start>
+   <end>13857.694,9858.637,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>13857.694,9279.137,61.500 </start>
+   <end>13857.694,9279.137,-20.500 </end>
+</tool_action>
+</frame>
+<frame name="L6" type="ExternalWall">
+<elevation>0.000</elevation>
+
+ <envelope>
+   <vertex>11502.694,10968.137,0.000 </vertex>
+   <vertex>13812.694,10968.137,0.000 </vertex>
+   <vertex>13812.694,10968.137,900.000 </vertex>
+   <vertex>11502.694,10968.137,900.000 </vertex>
+ </envelope>
+
+ <stick name="T1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="TopPlate">
+   <start>11502.694,10968.137,879.500 </start>
+   <end>13812.694,10968.137,879.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="B1" type="Plate" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="BottomPlate">
+   <start>11502.694,10968.137,20.500 </start>
+   <end>13812.694,10968.137,20.500 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="S1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>11523.194,10968.137,2.000 </start>
+   <end>11523.194,10968.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S2" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>12102.694,10968.137,2.000 </start>
+   <end>12102.694,10968.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S3" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>12657.694,10968.137,2.000 </start>
+   <end>12657.694,10968.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S4" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13257.694,10968.137,2.000 </start>
+   <end>13257.694,10968.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <stick name="S5" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Stud">
+   <start>13792.194,10968.137,2.000 </start>
+   <end>13792.194,10968.137,898.000 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> true </flipped>
+ </stick>
+
+ <stick name="Kb1" type="Stud" gauge="0.75" yield="550" tensile="550" coating="AZ150" usage="Brace">
+   <start>13314.515,10968.137,10.175 </start>
+   <end>13735.373,10968.137,889.825 </end>
+   <profile web="89" l_flange="41" r_flange="38" l_lip="11.0" r_lip="11.0" shape="C" />
+   <flipped> false </flipped>
+ </stick>
+
+ <fastener name="001792" count="2">
+   <point>11523.194,10968.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12102.694,10968.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>11523.194,10968.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12102.694,10968.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12657.694,10968.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>12657.694,10968.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13257.694,10968.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13319.694,10968.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13257.694,10968.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13730.194,10968.137,879.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13792.194,10968.137,21.000 </point>
+ </fastener>
+ <fastener name="001792" count="2">
+   <point>13792.194,10968.137,879.000 </point>
+ </fastener>
+<tool_action name="Service">
+   <start>11792.444,10968.137,848.750 </start>
+   <end>11792.444,10968.137,910.250 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11482.194,10968.137,450.000 </start>
+   <end>13833.194,10968.137,450.000 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>11482.194,10968.137,300.000 </start>
+   <end>13833.194,10968.137,300.000 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>11514.694,10968.137,61.500 </start>
+   <end>11514.694,10968.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>12359.694,10968.137,848.750 </start>
+   <end>12359.694,10968.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>11568.694,10968.137,61.500 </start>
+   <end>11568.694,10968.137,-20.500 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>12657.694,10968.137,838.500 </start>
+   <end>12657.694,10968.137,920.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>12937.194,10968.137,848.750 </start>
+   <end>12937.194,10968.137,910.250 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>12390.494,10968.137,61.500 </start>
+   <end>12390.494,10968.137,-20.500 </end>
+</tool_action>
+<tool_action name="Service">
+   <start>13524.944,10968.137,378.751 </start>
+   <end>13524.944,10968.137,910.250 </end>
+</tool_action>
+<tool_action name="Web">
+   <start>13792.694,10968.137,838.500 </start>
+   <end>13792.694,10968.137,920.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>13212.194,10968.137,61.500 </start>
+   <end>13212.194,10968.137,-20.500 </end>
+</tool_action>
+<tool_action name="Bolt">
+   <start>13746.694,10968.137,61.500 </start>
+   <end>13746.694,10968.137,-20.500 </end>
+</tool_action>
+</frame>
+</plan>
+</framecad_import>

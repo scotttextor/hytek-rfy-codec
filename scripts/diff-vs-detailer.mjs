@@ -238,7 +238,12 @@ function buildOurProject(xmlText) {
           const startL = projectToFrameLocal(stick.start, frameBasis);
           const endL = projectToFrameLocal(stick.end, frameBasis);
           const dxL = Math.abs(endL.x - startL.x);
-          if (dxL > 1.0) {
+          // Threshold raised 1.0 → 5.0mm: near-vertical W sticks in some
+          // walls (e.g. UPPER-GF-LBW-89.115) project with tiny dxL but are
+          // structurally vertical — they should NOT get Chamfers (verified
+          // 2026-05-02: 70 spurious Chamfer extras eliminated by raising
+          // the threshold).
+          if (dxL > 5.0) {
             stick.tooling.push({ kind: "start", type: "Chamfer" });
             stick.tooling.push({ kind: "end", type: "Chamfer" });
             if (usage === "web") {

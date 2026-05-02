@@ -409,3 +409,85 @@ function parsePlanXml(xml: string): {
   }
   return { frames, planNameByFrame };
 }
+
+// =============================================================================
+// Task 10: Property-based test — 100 synthetic LIN trusses respect INV-4
+// =============================================================================
+
+describe("simplifyLinearTrussRfy — property: emitted positions are inside the end-zone", () => {
+  it("∀ 100 synthetic LIN trusses: every kept position satisfies 30 ≤ pos ≤ length−30", () => {
+    const seed = 42;
+    let s = seed;
+    const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+
+    const SLACK = 20;        // intersectionSlackMm — matches DEFAULTS
+    const APEX = 17;         // apexCollisionMm
+    const END_ZONE = 30;     // endZoneMm
+
+    let totalKept = 0;
+    let totalRuns = 0;
+
+    for (let run = 0; run < 100; run++) {
+      const span = 4000 + Math.floor(rand() * 6000);   // 4..10 m
+      const height = 600 + Math.floor(rand() * 1200);  // 600..1800 mm
+      const nWebs = 3 + Math.floor(rand() * 5);        // 3..7 webs
+
+      // Synthetic Linear truss — chord (T1, B1) + N webs
+      const sticks: { name: string; seg: Segment3 }[] = [
+        { name: "T1", seg: { start: [0, 0, height], end: [span, 0, height] } },
+        { name: "B1", seg: { start: [0, 0, 0], end: [span, 0, 0] } },
+      ];
+      for (let i = 0; i < nWebs; i++) {
+        const x = (span * (i + 1)) / (nWebs + 1);
+        const tilt = (rand() - 0.5) * 200;
+        sticks.push({
+          name: `W${i + 1}`,
+          seg: { start: [x - tilt / 2, 0, 0], end: [x + tilt / 2, 0, height] },
+        });
+      }
+
+      // Compute pairwise intersections using the same primitives as the walker
+      const positionsByStick = new Map<string, number[]>();
+      for (let i = 0; i < sticks.length; i++) {
+        for (let j = i + 1; j < sticks.length; j++) {
+          const A = sticks[i], B = sticks[j];
+          const lenA = stickLength3D(A.seg);
+          const lenB = stickLength3D(B.seg);
+          const inter = lineIntersectionXZ(A.seg, B.seg, SLACK);
+          let posA: number, posB: number;
+          if (inter !== null) {
+            posA = Math.max(0, Math.min(lenA, inter.t * lenA));
+            posB = Math.max(0, Math.min(lenB, inter.u * lenB));
+          } else {
+            const par = handleParallelPair(A.seg, B.seg, 5);
+            if (par === null) continue;
+            posA = par.posOnA;
+            posB = par.posOnB;
+          }
+          (positionsByStick.get(A.name) ?? positionsByStick.set(A.name, []).get(A.name)!).push(posA);
+          (positionsByStick.get(B.name) ?? positionsByStick.set(B.name, []).get(B.name)!).push(posB);
+        }
+      }
+
+      // Apply dedupApex + assertEndZone — the same pipeline the walker uses
+      for (const [name, raw] of positionsByStick) {
+        const stick = sticks.find(s => s.name === name)!;
+        const len = stickLength3D(stick.seg);
+        const dedup = dedupApex(raw, APEX);
+        const ez = assertEndZone(dedup.kept, len, END_ZONE);
+        for (const p of ez.safe) {
+          // The invariant: emitted positions sit in [30, length-30].
+          expect(p).toBeGreaterThanOrEqual(END_ZONE);
+          expect(p).toBeLessThanOrEqual(len - END_ZONE);
+          totalKept++;
+        }
+      }
+      totalRuns++;
+    }
+
+    // Sanity: we exercised the property non-trivially. If the synthetic
+    // geometry produces zero kept positions, the test is vacuous.
+    expect(totalRuns).toBe(100);
+    expect(totalKept).toBeGreaterThan(0);
+  });
+});

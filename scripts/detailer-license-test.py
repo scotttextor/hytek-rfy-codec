@@ -1,107 +1,127 @@
 """
-Click 'Check for Hasp' on the license dialog and observe what happens.
-Save before/after screenshots.
+Probe the license dialog: click 'Check for Hasp' and 'Show License Information'
+to determine WHY there's no valid license, and whether we can resolve it.
 """
+import subprocess
 import time
+import os
 import psutil
 import pyautogui
 from pywinauto import Application
 
-BEFORE_PNG = r"C:\Users\Scott\CLAUDE CODE\hytek-rfy-codec\scripts\detailer-license-before.png"
-AFTER_PNG = r"C:\Users\Scott\CLAUDE CODE\hytek-rfy-codec\scripts\detailer-license-after.png"
+EXE = r"C:\Program Files (x86)\FRAMECAD\Detailer\Version 5\FRAMECAD Detailer.exe"
+SHOT_DIR = r"C:\Users\Scott\CLAUDE CODE\hytek-rfy-codec\scripts"
 
 
-def find_detailer_pid():
-    for proc in psutil.process_iter(["pid", "name"]):
-        try:
-            if "Detailer" in (proc.info["name"] or ""):
-                return proc.info["pid"]
-        except Exception:
-            pass
+def shot(name):
+    p = os.path.join(SHOT_DIR, f"detailer-license-{name}.png")
+    pyautogui.screenshot().save(p)
+    print(f"  shot: {p}")
+    return p
+
+
+def find_pid():
+    for p in psutil.process_iter(["pid", "name"]):
+        if "Detailer" in (p.info["name"] or ""):
+            return p.info["pid"]
     return None
 
 
+def kill_existing():
+    for p in psutil.process_iter(["pid", "name"]):
+        if "Detailer" in (p.info["name"] or ""):
+            try:
+                psutil.Process(p.info["pid"]).kill()
+            except Exception:
+                pass
+
+
 def main():
-    pid = find_detailer_pid()
-    if pid is None:
-        print("Detailer not running.")
+    kill_existing()
+    time.sleep(1)
+    print("Launching Detailer...")
+    subprocess.Popen([EXE], cwd=os.path.dirname(EXE))
+
+    # Wait for dialog
+    pid = None
+    for i in range(30):
+        time.sleep(0.5)
+        pid = find_pid()
+        if pid is None:
+            continue
+        try:
+            app = Application(backend="win32").connect(process=pid, timeout=1)
+            for w in app.windows():
+                if w.is_visible() and w.class_name() == "TfrmLicenseNotice":
+                    break
+            else:
+                continue
+            break
+        except Exception:
+            continue
+    else:
+        print("License dialog never appeared.")
         return
 
+    print(f"Connected to PID {pid}")
     app = Application(backend="win32").connect(process=pid)
+    lic = app.window(class_name="TfrmLicenseNotice")
+    lic.wait("visible", timeout=5)
 
-    pyautogui.screenshot().save(BEFORE_PNG)
-    print(f"Saved before: {BEFORE_PNG}")
+    # Re-find via process windows to get a real WindowSpecification
+    main_w = None
+    for w in app.windows():
+        if w.is_visible() and w.class_name() == "TfrmLicenseNotice":
+            main_w = w
+            break
 
-    try:
-        lic = app.window(class_name="TfrmLicenseNotice")
-        if not lic.exists(timeout=2):
-            print("No license dialog visible.")
-            return
+    print(f"License window handle: {main_w.handle}")
 
-        # Bring to foreground so screenshot captures it
-        lic.set_focus()
-        time.sleep(0.5)
+    shot("01-initial")
 
-        # Read the message
+    # Read message via TMemo child
+    children = main_w.children()
+    for c in children:
         try:
-            memo = lic.child_window(class_name="TMemo")
-            print(f"License message: {memo.window_text()!r}")
+            print(f"  child: class={c.class_name()!r}  text={c.window_text()!r}")
         except Exception as e:
-            print(f"memo err: {e}")
+            print(f"  child err: {e}")
 
-        # Click Check for Hasp
-        print("Clicking 'Check for Hasp'...")
-        btn = lic.child_window(title="Check for Hasp", class_name="TButton")
-        btn.click()
-        time.sleep(3)
+    print("\n--- Click 'Show License Information' ---")
+    try:
+        # use the WindowSpecification via app.window
+        spec = app.window(class_name="TfrmLicenseNotice")
+        spec.child_window(title="Show License Information", class_name="TButton").click()
+        time.sleep(2)
+        shot("02-after-show-license-info")
 
-        # See what windows now exist
-        print("\nAll top-level windows after Check for Hasp:")
+        # See what new windows appeared
+        print("Top-level windows now:")
         for w in app.windows():
             try:
-                t = w.window_text()
-                c = w.class_name()
-                v = w.is_visible()
-                if v:
-                    print(f"  - {t!r}  class={c!r}")
+                if w.is_visible():
+                    print(f"  - {w.window_text()!r}  class={w.class_name()!r}")
             except Exception:
                 pass
 
-        pyautogui.screenshot().save(AFTER_PNG)
-        print(f"\nSaved after: {AFTER_PNG}")
-
-        # Check if license dialog still exists
-        time.sleep(1)
-        if lic.exists():
+        # Try to find a license info window
+        for w in app.windows():
             try:
-                memo2 = lic.child_window(class_name="TMemo")
-                print(f"\nLicense message AFTER click: {memo2.window_text()!r}")
+                if w.is_visible() and w.class_name() != "TfrmLicenseNotice" and w.class_name().startswith("Tfrm"):
+                    print(f"\nFound new dialog: {w.class_name()}")
+                    for c in w.children():
+                        try:
+                            print(f"  child: class={c.class_name()!r}  text={c.window_text()!r}")
+                        except Exception:
+                            pass
             except Exception:
                 pass
-            # also read any error/popup dialog
-            for w in app.windows():
-                try:
-                    if w.is_visible() and w.class_name() != lic.class_name():
-                        cls = w.class_name()
-                        if cls.startswith("Tfrm") or cls == "#32770":
-                            print(f"\nNew dialog: {w.window_text()!r}  class={cls!r}")
-                            try:
-                                import io, sys
-                                buf = io.StringIO()
-                                old = sys.stdout
-                                sys.stdout = buf
-                                w.print_control_identifiers(depth=3)
-                                sys.stdout = old
-                                print(buf.getvalue())
-                            except Exception as e:
-                                print(f"  enum err: {e}")
-                except Exception:
-                    pass
-
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"err: {e}")
         import traceback
         traceback.print_exc()
+
+    print("\nDONE — leaving Detailer running so you can inspect.")
 
 
 if __name__ == "__main__":

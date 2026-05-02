@@ -26,7 +26,10 @@ for plan_match in re.finditer(r'<plan name="([^"]+)">(.*?)</plan>', xml_text, re
     plan_body = plan_match.group(2)
     for fm in re.finditer(r'<frame name="([^"]+)" type="([^"]+)"[^>]*>(.*?)</frame>', plan_body, re.DOTALL):
         frame_name, frame_type, frame_body = fm.groups()
-        sticks = {}
+        # Use a LIST so duplicate stick names (girder doublings) are preserved.
+        # Sticks get unique IDs (name#0, name#1, ...) but keep their real name too.
+        sticks = []
+        name_seen = {}
         for sm in re.finditer(r'<stick\s+([^>]*?)>\s*<start>([^<]+)</start>\s*<end>([^<]+)</end>', frame_body):
             attrs, st, en = sm.groups()
             def get(s, k):
@@ -35,17 +38,22 @@ for plan_match in re.finditer(r'<plan name="([^"]+)">(.*?)</plan>', xml_text, re
             name = get(attrs, 'name')
             sx, sy, sz = [float(v) for v in st.strip().split(',')]
             ex, ey, ez = [float(v) for v in en.strip().split(',')]
-            sticks[name] = {'name': name, 'start': (sx, sy, sz), 'end': (ex, ey, ez)}
+            idx = name_seen.get(name, 0)
+            name_seen[name] = idx + 1
+            sticks.append({'name': name, 'idx': idx, 'start': (sx, sy, sz), 'end': (ex, ey, ez)})
         frames[frame_name] = {'plan': plan_name, 'type': frame_type, 'sticks': sticks}
 
 # ---------- parse CSVs ----------
 def parse_csv(path):
+    """Returns dict: name → {ops: [...], length: float}"""
     out = {}
     with open(path) as f:
         for line in f:
             parts = [p.strip() for p in line.strip().split(',')]
             if len(parts) < 14 or parts[0] != 'COMPONENT': continue
             name = parts[1]
+            try: length = float(parts[7])
+            except: length = 0
             ops = []
             i = 13
             while i+1 < len(parts):
@@ -54,7 +62,7 @@ def parse_csv(path):
                 except: i += 1; continue
                 ops.append((tool, pos))
                 i += 2
-            out[name] = ops
+            out[name] = {'ops': ops, 'length': length}
     return out
 
 orig = parse_csv(args.orig_csv)
@@ -93,9 +101,9 @@ for frame_name, frame in frames.items():
         skipped_frames.append((frame_name, f'plan={frame["plan"]} (not Linear)'))
         continue
 
-    sticks = list(frame['sticks'].values())
+    sticks = frame['sticks']  # list
 
-    # compute expected bolt positions per stick
+    # compute expected bolt positions per stick (keyed by name; duplicates aggregated)
     expected = defaultdict(list)
     for i in range(len(sticks)):
         for j in range(i+1, len(sticks)):
@@ -117,11 +125,35 @@ for frame_name, frame in frames.items():
                 out.append(p)
         return out
 
-    # compare against simplified CSV per stick
-    for stick_name in frame['sticks']:
-        full_name = f'{frame_name}-{stick_name}'
+    # Find CSV components in this frame (handles "B1 (Box1)" splice naming)
+    prefix = f'{frame_name}-'
+    csv_in_frame = {n: d for n, d in simp.items() if n.startswith(prefix)}
+
+    # Verify uniquely-named XML sticks against the corresponding CSV components.
+    # For duplicate-named sticks (girder W6×4 etc.), the simplifier rolls them
+    # into one bolt-list per name, then each CSV component instance gets the
+    # same dedupe'd list — verify against ANY one CSV component of that name.
+    seen_names = set()
+    for stick_data in frame['sticks']:
+        stick_name = stick_data['name']
+        if stick_name in seen_names: continue   # only check each name once
+        seen_names.add(stick_name)
         total_sticks += 1
-        simp_ops = simp.get(full_name, [])
+        # Find the matching CSV component by name+length
+        slen = math.hypot(stick_data['end'][0]-stick_data['start'][0],
+                          stick_data['end'][2]-stick_data['start'][2])
+        csv_name = None
+        target = f'{prefix}{stick_name}'
+        if target in csv_in_frame and abs(csv_in_frame[target]['length'] - slen) < 1.0:
+            csv_name = target
+        else:
+            # Length-only match for splice sticks (B1 (Box1) → XML B2)
+            best = None; best_diff = 5.0
+            for cname, cdata in csv_in_frame.items():
+                d = abs(cdata['length'] - slen)
+                if d < best_diff: best_diff = d; best = cname
+            csv_name = best
+        simp_ops = simp.get(csv_name, {}).get('ops', []) if csv_name else []
         simp_bolts = dedupe([round(p, 2) for t, p in simp_ops if t == 'BOLT HOLES'])
         expected_bolts = dedupe([round(p, 2) for p in expected.get(stick_name, [])])
 

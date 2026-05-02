@@ -1,0 +1,433 @@
+==============================================================================
+=== Detailer.exe ===
+==============================================================================
+image_base = 0x00400000
+
+  [utf16:.msup] — 1 string occurrence(s)
+    no xrefs found anywhere in .text (tried VA, VA-4, VA-8, VA-c, VA-10)
+
+  [utf16:Machine Setups] — 3 string occurrence(s)
+    no xrefs found anywhere in .text (tried VA, VA-4, VA-8, VA-c, VA-10)
+
+  [utf16:msup] — 1 string occurrence(s)
+    no xrefs found anywhere in .text (tried VA, VA-4, VA-8, VA-c, VA-10)
+
+  [ascii:MachineSetup] — 1521 string occurrence(s)
+    665 xref(s) (using offset variants):
+      ref @ 0x00c19420  -> string VA 0x00c19424 (hdr-8)
+  00c1941f  002494          add byte ptr [esp + edx*4], ah
+  00c19422  c1000e          rol dword ptr [eax], 0xe
+  00c19425  7654            jbe 0xc1947b
+  00c19427  50              push eax
+  00c19428  61              popal 
+  00c19429  69723c4d616368  imul esi, dword ptr [edx + 0x3c], 0x6863614d
+  00c19430  696e6553657475  imul ebp, dword ptr [esi + 0x65], 0x75746553
+
+      ref @ 0x00c195b8  -> string VA 0x00c19420 (hdr-c)
+  00c195b7  ff20            jmp dword ptr [eax]
+  00c195b9  94              xchg esp, eax
+  00c195ba  c10006          rol dword ptr [eax], 6
+  00c195bd  53              push ebx
+  00c195be  7973            jns 0xc19633
+  00c195c0  7465            je 0xc19627
+  00c195c2  6d              insd dword ptr es:[edi], dx
+  00c195c3  2094c100020000  and byte ptr [ecx + eax*8 + 0x200], dl
+  00c195ca  0000            add byte ptr [eax], al
+
+      ref @ 0x00c195c3  -> string VA 0x00c19420 (hdr-c)
+  00c195c2  6d              insd dword ptr es:[edi], dx
+  00c195c3  2094c100020000  and byte ptr [ecx + eax*8 + 0x200], dl
+  00c195ca  0000            add byte ptr [eax], al
+  00c195cc  2496            and al, 0x96
+  00c195ce  c10000          rol dword ptr [eax], 0
+  00c195d1  0000            add byte ptr [eax], al
+  00c195d3  0000            add byte ptr [eax], al
+  00c195d5  0000            add byte ptr [eax], al
+  00c195d7  0000            add byte ptr [eax], al
+
+      ref @ 0x00c197de  -> string VA 0x00c19420 (hdr-c)
+  00c197dd  0020            add byte ptr [eax], ah
+  00c197df  94              xchg esp, eax
+  00c197e0  c10000          rol dword ptr [eax], 0
+  00c197e3  0000            add byte ptr [eax], al
+  00c197e5  fe00            inc byte ptr [eax]
+  00c197e7  0000            add byte ptr [eax], al
+  00c197e9  0001            add byte ptr [ecx], al
+  00c197eb  0000            add byte ptr [eax], al
+  00c197ed  0000            add byte ptr [eax], al
+
+      ref @ 0x00c1b277  -> string VA 0x00c19420 (hdr-c)
+  00c1b276  0020            add byte ptr [eax], ah
+  00c1b278  94              xchg esp, eax
+  00c1b279  c1002c          rol dword ptr [eax], 0x2c
+  00c1b27c  d7              xlatb 
+  00c1b27d  c10000          rol dword ptr [eax], 0
+  00c1b280  0000            add byte ptr [eax], al
+  00c1b282  0001            add byte ptr [ecx], al
+  00c1b284  0000            add byte ptr [eax], al
+  00c1b286  0000            add byte ptr [eax], al
+      [enclosing fn likely starts at 0x00c1b041]
+
+      ref @ 0x00c1b724  -> string VA 0x00c19420 (hdr-c)
+  00c1b723  0020            add byte ptr [eax], ah
+  00c1b725  94              xchg esp, eax
+  00c1b726  c10008          rol dword ptr [eax], 8
+  00c1b729  0003            add byte ptr [ebx], al
+  00c1b72b  08c0            or al, al
+  00c1b72d  b9c1000000      mov ecx, 0xc1
+  00c1b732  0453            add al, 0x53
+  00c1b734  656c            insb byte ptr es:[edi], dx
+  00c1b736  660200          add al, byte ptr [eax]
+      [enclosing fn likely starts at 0x00c1b713]
+
+      ref @ 0x00c1b747  -> string VA 0x00c19420 (hdr-c)
+  00c1b746  50              push eax
+  00c1b747  2094c100020001  and byte ptr [ecx + eax*8 + 0x1000200], dl
+  00c1b74e  0102            add dword ptr [edx], eax
+  00c1b750  0002            add byte ptr [edx], al
+  00c1b752  00250044cec1    add byte ptr [0xc1ce4400], ah
+  00c1b758  0005436c6561    add byte ptr [0x61656c43], al
+      [enclosing fn likely starts at 0x00c1b713]
+
+      ref @ 0x00c1facd  -> string VA 0x00c19420 (hdr-c)
+  00c1facc  152094c100      adc eax, 0xc19420
+  00c1fad1  33c0            xor eax, eax
+  00c1fad3  e8bc7988ff      call 0x4a7494
+  00c1fad8  8bd0            mov edx, eax
+  00c1fada  8bc3            mov eax, ebx
+  00c1fadc  e8fb237fff      call 0x411edc
+  00c1fae1  5b              pop ebx
+  00c1fae2  5d              pop ebp
+  00c1fae3  c3              ret 
+
+      ref @ 0x00c20548  -> string VA 0x00c19420 (hdr-c)
+  00c20547  ff20            jmp dword ptr [eax]
+  00c20549  94              xchg esp, eax
+  00c2054a  c1001b          rol dword ptr [eax], 0x1b
+  00c2054d  53              push ebx
+  00c2054e  7973            jns 0xc205c3
+  00c20550  7465            je 0xc205b7
+  00c20552  6d              insd dword ptr es:[edi], dx
+  00c20553  2e47            inc edi
+  00c20555  656e            outsb dx, byte ptr gs:[esi]
+
+      ref @ 0x00c20568  -> string VA 0x00c19420 (hdr-c)
+  00c20567  7320            jae 0xc20589
+  00c20569  94              xchg esp, eax
+  00c2056a  c10002          rol dword ptr [eax], 2
+  00c2056d  0000            add byte ptr [eax], al
+  00c2056f  007405c2        add byte ptr [ebp + eax - 0x3e], dh
+  00c20573  000f            add byte ptr [edi], cl
+  00c20575  9d              popfd 
+  00c20576  49              dec ecx
+  00c20577  43              inc ebx
+
+      ref @ 0x00c207ac  -> string VA 0x00c19420 (hdr-c)
+  00c207ab  0020            add byte ptr [eax], ah
+  00c207ad  94              xchg esp, eax
+  00c207ae  c100bc          rol dword ptr [eax], 0xbc
+  00c207b1  114500          adc dword ptr [ebp], eax
+  00c207b4  ba07c20002      mov edx, 0x200c207
+  00c207b9  0000            add byte ptr [eax], al
+  00c207bb  0000            add byte ptr [eax], al
+  00c207bd  0000            add byte ptr [eax], al
+  00c207bf  0003            add byte ptr [ebx], al
+
+      ref @ 0x00c207d0  -> string VA 0x00c19420 (hdr-c)
+  00c207cf  1220            adc ah, byte ptr [eax]
+  00c207d1  94              xchg esp, eax
+  00c207d2  c10004          rol dword ptr [eax], 4
+  00c207d5  49              dec ecx
+  00c207d6  7465            je 0xc2083d
+  00c207d8  6d              insd dword ptr es:[edi], dx
+  00c207d9  0200            add al, byte ptr [eax]
+  00c207db  00bc1145000641  add byte ptr [ecx + edx + 0x41060045], bh
+  00c207e2  6374696f        arpl word ptr [ecx + ebp*2 + 0x6f], si
+
+      ref @ 0x00c20ccc  -> string VA 0x00c19420 (hdr-c)
+  00c20ccb  0020            add byte ptr [eax], ah
+  00c20ccd  94              xchg esp, eax
+  00c20cce  c10044          rol dword ptr [eax], 0x44
+  00c20cd1  e4c1            in al, 0xc1
+  00c20cd3  0000            add byte ptr [eax], al
+  00c20cd5  0000            add byte ptr [eax], al
+  00c20cd7  0001            add byte ptr [ecx], al
+  00c20cd9  0000            add byte ptr [eax], al
+  00c20cdb  0000            add byte ptr [eax], al
+      [enclosing fn likely starts at 0x00c20cc3]
+
+      ref @ 0x00c21115  -> string VA 0x00c19420 (hdr-c)
+  00c21114  1220            adc ah, byte ptr [eax]
+  00c21116  94              xchg esp, eax
+  00c21117  c10001          rol dword ptr [eax], 1
+  00c2111a  000556616c75    add byte ptr [0x756c6156], al
+  00c21120  650200          add al, byte ptr gs:[eax]
+  00c21123  0200            add al, byte ptr [eax]
+  00c21125  3800            cmp byte ptr [eax], al
+  00c21127  5c              pop esp
+  00c21128  ddc1            ffree st(1)
+
+      ref @ 0x00c2114c  -> string VA 0x00c19420 (hdr-c)
+  00c2114b  16              push ss
+  00c2114c  2094c100010006  and byte ptr [ecx + eax*8 + 0x6000100], dl
+  00c21153  56              push esi
+  00c21154  61              popal 
+  00c21155  6c              insb byte ptr es:[edi], dx
+  00c21156  7565            jne 0xc211bd
+  00c21158  7302            jae 0xc2115c
+  00c2115a  0002            add byte ptr [edx], al
+  00c2115c  003c00          add byte ptr [eax + eax], bh
+
+      ref @ 0x00c21209  -> string VA 0x00c19420 (hdr-c)
+  00c21208  1220            adc ah, byte ptr [eax]
+  00c2120a  94              xchg esp, eax
+  00c2120b  c10002          rol dword ptr [eax], 2
+  00c2120e  000556616c75    add byte ptr [0x756c6156], al
+  00c21214  650200          add al, byte ptr gs:[eax]
+  00c21217  0200            add al, byte ptr [eax]
+  00c21219  59              pop ecx
+
+      ref @ 0x00c21252  -> string VA 0x00c19420 (hdr-c)
+  00c21251  16              push ss
+  00c21252  2094c100020006  and byte ptr [ecx + eax*8 + 0x6000200], dl
+  00c21259  56              push esi
+  00c2125a  61              popal 
+  00c2125b  6c              insb byte ptr es:[edi], dx
+  00c2125c  7565            jne 0xc212c3
+  00c2125e  7302            jae 0xc21262
+  00c21260  0000            add byte ptr [eax], al
+  00c21262  9c              pushfd 
+
+      ref @ 0x00c212ab  -> string VA 0x00c19420 (hdr-c)
+  00c212aa  16              push ss
+  00c212ab  2094c100020006  and byte ptr [ecx + eax*8 + 0x6000200], dl
+  00c212b2  56              push esi
+  00c212b3  61              popal 
+  00c212b4  6c              insb byte ptr es:[edi], dx
+  00c212b5  7565            jne 0xc2131c
+  00c212b7  7302            jae 0xc212bb
+  00c212b9  0002            add byte ptr [edx], al
+  00c212bb  004e00          add byte ptr [esi], cl
+
+      ref @ 0x00c213d6  -> string VA 0x00c19420 (hdr-c)
+  00c213d5  1220            adc ah, byte ptr [eax]
+  00c213d7  94              xchg esp, eax
+  00c213d8  c10001          rol dword ptr [eax], 1
+  00c213db  000556616c75    add byte ptr [0x756c6156], al
+  00c213e1  650200          add al, byte ptr gs:[eax]
+  00c213e4  0200            add al, byte ptr [eax]
+  00c213e6  4c              dec esp
+
+      ref @ 0x00c2140f  -> string VA 0x00c19420 (hdr-c)
+  00c2140e  1220            adc ah, byte ptr [eax]
+  00c21410  94              xchg esp, eax
+  00c21411  c10001          rol dword ptr [eax], 1
+  00c21414  000556616c75    add byte ptr [0x756c6156], al
+  00c2141a  650200          add al, byte ptr gs:[eax]
+  00c2141d  00d4            add ah, dl
+  00c2141f  55              push ebp
+  00c21420  41              inc ecx
+  00c21421  0002            add byte ptr [edx], al
+
+      ref @ 0x00c214c6  -> string VA 0x00c19420 (hdr-c)
+  00c214c5  0020            add byte ptr [eax], ah
+  00c214c7  94              xchg esp, eax
+  00c214c8  c1000c          rol dword ptr [eax], 0xc
+  00c214cb  000408          add byte ptr [eax + ecx], al
+  00c214ce  f4              hlt 
+  00c214cf  19c2            sbb edx, eax
+  00c214d1  0000            add byte ptr [eax], al
+  00c214d3  000453          add byte ptr [ebx + edx*2], al
+  00c214d6  656c            insb byte ptr es:[edi], dx
+      [enclosing fn likely starts at 0x00c2146a]
+
+      ref @ 0x00c214dc  -> string VA 0x00c19420 (hdr-c)
+  00c214db  1220            adc ah, byte ptr [eax]
+  00c214dd  94              xchg esp, eax
+  00c214de  c10001          rol dword ptr [eax], 1
+  00c214e1  000556616c75    add byte ptr [0x756c6156], al
+  00c214e7  650200          add al, byte ptr gs:[eax]
+  00c214ea  00d4            add ah, dl
+  00c214ec  55              push ebp
+  00c214ed  41              inc ecx
+  00c214ee  0002            add byte ptr [edx], al
+      [enclosing fn likely starts at 0x00c2146a]
+
+      ref @ 0x00c214fe  -> string VA 0x00c19420 (hdr-c)
+  00c214fd  50              push eax
+  00c214fe  2094c100080001  and byte ptr [ecx + eax*8 + 0x1000800], dl
+  00c21505  0102            add dword ptr [edx], eax
+  00c21507  0002            add byte ptr [edx], al
+  00c21509  004100          add byte ptr [ecx], al
+  00c2150c  14e1            adc al, 0xe1
+  00c2150e  c10007          rol dword ptr [eax], 7
+  00c21511  45              inc ebp
+  00c21512  7874            js 0xc21588
+      [enclosing fn likely starts at 0x00c2146a]
+
+      ref @ 0x00c2151a  -> string VA 0x00c19420 (hdr-c)
+  00c21519  0020            add byte ptr [eax], ah
+  00c2151b  94              xchg esp, eax
+  00c2151c  c10008          rol dword ptr [eax], 8
+  00c2151f  0003            add byte ptr [ebx], al
+  00c21521  08f4            or ah, dh
+  00c21523  19c2            sbb edx, eax
+  00c21525  0000            add byte ptr [eax], al
+  00c21527  000453          add byte ptr [ebx + edx*2], al
+  00c2152a  656c            insb byte ptr es:[edi], dx
+      [enclosing fn likely starts at 0x00c2146a]
+
+      ref @ 0x00c21530  -> string VA 0x00c19420 (hdr-c)
+  00c2152f  1220            adc ah, byte ptr [eax]
+  00c21531  94              xchg esp, eax
+  00c21532  c10001          rol dword ptr [eax], 1
+  00c21535  000556616c75    add byte ptr [0x756c6156], al
+  00c2153b  650200          add al, byte ptr gs:[eax]
+  00c2153e  50              push eax
+  00c2153f  2094c100020001  and byte ptr [ecx + eax*8 + 0x1000200], dl
+      [enclosing fn likely starts at 0x00c2146a]
+
+      ref @ 0x00c2153f  -> string VA 0x00c19420 (hdr-c)
+  00c2153e  50              push eax
+  00c2153f  2094c100020001  and byte ptr [ecx + eax*8 + 0x1000200], dl
+  00c21546  0102            add dword ptr [edx], eax
+  00c21548  0002            add byte ptr [edx], al
+  00c2154a  004300          add byte ptr [ebx], al
+  00c2154d  54              push esp
+  00c2154e  e1c1            loope 0xc21511
+  00c21550  0009            add byte ptr [ecx], cl
+  00c21552  45              inc ebp
+      [enclosing fn likely starts at 0x00c2146a]
+
+      ref @ 0x00c2155d  -> string VA 0x00c19420 (hdr-c)
+  00c2155c  0020            add byte ptr [eax], ah
+  00c2155e  94              xchg esp, eax
+  00c2155f  c10008          rol dword ptr [eax], 8
+  00c21562  0003            add byte ptr [ebx], al
+  00c21564  08f4            or ah, dh
+  00c21566  19c2            sbb edx, eax
+  00c21568  0000            add byte ptr [eax], al
+  00c2156a  000453          add byte ptr [ebx + edx*2], al
+  00c2156d  656c            insb byte ptr es:[edi], dx
+      [enclosing fn likely starts at 0x00c2146a]
+
+      ref @ 0x00c21582  -> string VA 0x00c19420 (hdr-c)
+  00c21581  50              push eax
+  00c21582  2094c100020001  and byte ptr [ecx + eax*8 + 0x1000200], dl
+  00c21589  0102            add dword ptr [edx], eax
+  00c2158b  0002            add byte ptr [edx], al
+  00c2158d  004800          add byte ptr [eax], cl
+  00c21590  ac              lodsb al, byte ptr [esi]
+  00c21591  e1c1            loope 0xc21554
+  00c21593  0008            add byte ptr [eax], cl
+  00c21595  45              inc ebp
+      [enclosing fn likely starts at 0x00c2146a]
+
+      ref @ 0x00c2162c  -> string VA 0x00c19420 (hdr-c)
+  00c2162b  0020            add byte ptr [eax], ah
+  00c2162d  94              xchg esp, eax
+  00c2162e  c10008          rol dword ptr [eax], 8
+  00c21631  0002            add byte ptr [edx], al
+  00c21633  08f4            or ah, dh
+  00c21635  19c2            sbb edx, eax
+  00c21637  0000            add byte ptr [eax], al
+  00c21639  000453          add byte ptr [ebx + edx*2], al
+  00c2163c  656c            insb byte ptr es:[edi], dx
+      [enclosing fn likely starts at 0x00c21621]
+
+      ref @ 0x00c21642  -> string VA 0x00c19420 (hdr-c)
+  00c21641  50              push eax
+  00c21642  2094c100010001  and byte ptr [ecx + eax*8 + 0x1000100], dl
+  00c21649  0102            add dword ptr [edx], eax
+  00c2164b  0002            add byte ptr [edx], al
+  00c2164d  002f            add byte ptr [edi], ch
+  00c2164f  0010            add byte ptr [eax], dl
+  00c21651  e2c1            loop 0xc21614
+  00c21653  00044c          add byte ptr [esp + ecx*2], al
+  00c21656  61              popal 
+      [enclosing fn likely starts at 0x00c21621]
+
+
+  [ascii:LoadFromFile] — 37 string occurrence(s)
+    2 xref(s) (using offset variants):
+      ref @ 0x0055ee14  -> string VA 0x0055ee82 (hdr-10)
+  0055ee13  0082ee550000    add byte ptr [edx + 0x55ee], al
+  0055ee19  0000            add byte ptr [eax], al
+  0055ee1b  0088ee550018    add byte ptr [eax + 0x180055ee], cl
+  0055ee21  0000            add byte ptr [eax], al
+  0055ee23  00402a          add byte ptr [eax + 0x2a], al
+  0055ee26  40              inc eax
+  0055ee27  0028            add byte ptr [eax], ch
+  0055ee29  ab              stosd dword ptr es:[edi], eax
+  0055ee2a  40              inc eax
+      [enclosing fn likely starts at 0x0055edc8]
+
+      ref @ 0x009822e7  -> string VA 0x00a13d74 (hdr-8)
+  009822e6  00743da1        add byte ptr [ebp + edi - 0x5f], dh
+  009822ea  0001            add byte ptr [ecx], al
+  009822ec  e101            loope 0x9822ef
+  009822ee  8b00            mov eax, dword ptr [eax]
+  009822f0  83785800        cmp dword ptr [eax + 0x58], 0
+  009822f4  7430            je 0x982326
+  009822f6  a10001e101      mov eax, dword ptr [0x1e10100]
+  009822fb  8b00            mov eax, dword ptr [eax]
+
+
+  EXPORTS:
+    rva 0x0007ec70  TMethodImplementationIntercept
+    rva 0x00014d10  __dbk_fcall_wrapper
+    rva 0x01a15640  dbkFCallWrapperAddr
+==============================================================================
+=== AutoFrame.dll ===
+==============================================================================
+image_base = 0x00400000
+
+  [ascii:MachineSetup] — 10 string occurrence(s)
+    no xrefs found anywhere in .text (tried VA, VA-4, VA-8, VA-c, VA-10)
+
+  [ascii:LoadFromFile] — 1 string occurrence(s)
+    no xrefs found anywhere in .text (tried VA, VA-4, VA-8, VA-c, VA-10)
+
+  EXPORTS:
+    rva 0x0019ae30  AutoFrame_AddBeamPockets
+    rva 0x0019ae50  AutoFrame_AddFramingArea
+    rva 0x0019ae6c  AutoFrame_AddOpenings
+    rva 0x0019ae8c  AutoFrame_AddTriples
+    rva 0x0019aeac  AutoFrame_Authenticate
+    rva 0x0019af9c  AutoFrame_Cleanup
+    rva 0x0019afa8  AutoFrame_GetAuthcodeKey
+    rva 0x0019afd0  AutoFrame_GetChars
+    rva 0x0019aff0  AutoFrame_GetCircles
+    rva 0x0019b00c  AutoFrame_GetCounts
+    rva 0x0019b044  AutoFrame_GetDimensions
+    rva 0x0019b060  AutoFrame_GetExplicits
+    rva 0x0019b07c  AutoFrame_GetFrameObjects
+    rva 0x0019b098  AutoFrame_GetPoints
+    rva 0x0019b0b8  AutoFrame_GetPolylines
+    rva 0x0019b0d4  AutoFrame_GetText
+    rva 0x00063a70  TMethodImplementationIntercept
+    rva 0x00010c44  __dbk_fcall_wrapper
+    rva 0x001a8640  dbkFCallWrapperAddr
+==============================================================================
+=== Tooling.dll ===
+==============================================================================
+image_base = 0x00400000
+
+  [ascii:MachineSetup] — 8 string occurrence(s)
+    no xrefs found anywhere in .text (tried VA, VA-4, VA-8, VA-c, VA-10)
+
+  [ascii:LoadFromFile] — 3 string occurrence(s)
+    no xrefs found anywhere in .text (tried VA, VA-4, VA-8, VA-c, VA-10)
+
+  EXPORTS:
+    rva 0x000cdd3c  TMethodImplementationIntercept
+    rva 0x00010b78  __dbk_fcall_wrapper
+    rva 0x0018633c  add_explicit_route
+    rva 0x00186410  add_frameobject
+    rva 0x001865e0  authenticate
+    rva 0x00186658  cleanup
+    rva 0x00193640  dbkFCallWrapperAddr
+    rva 0x00186678  generate_operations
+    rva 0x001866a8  get_authcode_key
+    rva 0x001866d0  get_intersections_for
+    rva 0x001867d4  get_operations_for

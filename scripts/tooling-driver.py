@@ -613,6 +613,48 @@ if g_engine_ptr:
     if frames_list:
         flist_count = ctypes.c_int32.from_address(frames_list + 8).value
         print(f"[+] engine.frames_list.Count after add: {flist_count}")
+        # Walk the TList to find our TFrameObject and dump its parent
+        # TMachineSetup (the one built from our SectionLookupRecord).
+        if flist_count > 0:
+            # Delphi TList: +4 = TArray<T> data ptr, +8 = Count.
+            tarr = ctypes.c_uint32.from_address(frames_list + 4).value
+            if tarr:
+                first_frameobj = ctypes.c_uint32.from_address(tarr).value
+                if first_frameobj:
+                    print(f"[+] frames_list[0] = TFrameObject @ 0x{first_frameobj:08x}")
+                    # TFrameObject layout (from section-rule-layout.md):
+                    #   +0x60..+0x6c = four sub-lists for Swage/InnerDimple ops
+                    #   +0x70 = frame_id
+                    #   +0x84 = dynamic-array of operations
+                    for off in (0x44, 0x48, 0x60, 0x64, 0x68, 0x6c, 0x70, 0x80, 0x84):
+                        v = ctypes.c_uint32.from_address(first_frameobj + off).value
+                        print(f"       TFrameObject+0x{off:02x} = 0x{v:08x}")
+                    # The four Swage/InnerDimple sub-lists at +0x60..+0x6c
+                    # are NON-NULL after our add_frameobject call, contradicting
+                    # the previous-session prediction that they'd be NULL with
+                    # an empty SectionLookupRecord. Dump their TList structure.
+                    for off in (0x60, 0x64, 0x68, 0x6c):
+                        list_ptr = ctypes.c_uint32.from_address(first_frameobj + off).value
+                        if list_ptr:
+                            try:
+                                # Delphi TList: +0 vmt, +4 data ptr, +8 count
+                                lvmt = ctypes.c_uint32.from_address(list_ptr + 0).value
+                                ldata = ctypes.c_uint32.from_address(list_ptr + 4).value
+                                lcount = ctypes.c_int32.from_address(list_ptr + 8).value
+                                print(f"       TFrameObject+0x{off:02x} TList @ 0x{list_ptr:08x}: vmt=0x{lvmt:08x} data=0x{ldata:08x} count={lcount}")
+                            except OSError:
+                                print(f"       TFrameObject+0x{off:02x} = 0x{list_ptr:08x} (unreadable)")
+                    # Dump first 16 dwords of the frame-object class instance
+                    # so we can see where the parent TMachineSetup ptr lives.
+                    print(f"       First 0x90 bytes of TFrameObject @ 0x{first_frameobj:08x}:")
+                    try:
+                        raw = ctypes.string_at(first_frameobj, 0x90)
+                        for i in range(0, len(raw), 16):
+                            chunk = raw[i:i+16]
+                            hex_str = " ".join(f"{b:02x}" for b in chunk)
+                            print(f"         +{i:02x}  {hex_str}")
+                    except OSError as e:
+                        print(f"         (read failed: {e})")
     if sections_list:
         slist_count = ctypes.c_int32.from_address(sections_list + 8).value
         print(f"[+] engine.sections_list.Count after add: {slist_count}")
@@ -624,57 +666,60 @@ print("[+] cleanup() returned, gate restored on next authenticate() call.")
 print()
 print(textwrap.dedent("""\
     ============================================================
-    SUMMARY (2026-05-03 - SectionRule struct RE complete)
+    SUMMARY (2026-05-03 - .msup loader hunt: PREMISE INVALIDATED)
     ============================================================
-    add_frameobject still returns 0 with the 12-byte SectionRule
-    probe array installed. The rule loop runs without crashing.
-    ops_len=0 because the rule lookup_keys don't match anything
-    in the (empty) parent TMachineSetup catalog.
+    Path A from previous summary -- "call Detailer's .msup
+    loader" -- is NOT viable, and the search saved hours by
+    eliminating it. See scripts/tooling-rev/msup-loader.md for
+    the full write-up. Quick version:
 
-    KEY FINDINGS (this session):
+      1. There are NO .msup files on this system. The
+         %APPDATA%\\FRAMECAD\\Detailer\\Version 5\\Machine Setups\\
+         directory is empty. Detailer ships zero default setups.
 
-      1. Class identification via VMT walk (probe-vmts.py):
-           [0x52f158] = TMachineSetup  (NOT TSection)
-           [0x5482fc] = TFrameObject
-           [0x52fcb8] = TSectionSpecificOptions
-           [0x52fe9c] = TSectionSetup
-           [0x4f7e68] = TCoord2D
-           [0x5280a8] = TProfileShape
+      2. The HYTEK setups on Y: drive are all .sups files (bundle
+         format), and they are PLAIN UTF-8 JSON, not encrypted.
+         No sskeleton.dll / libcrypto-3.dll decryption involved.
 
-      2. The "14-byte SectionRule at SectionLookupRecord+0x9f"
-         hypothesis was WRONG. The actual rule iteration is in
-         add_frameobject @ VA 0x586507..0x586535, working on
-         FrameDefRecord+0x3b (ptr) / +0x3f (count), stride 12.
+      3. Searching Detailer.exe / AutoFrame.dll / Tooling.dll for
+         xrefs to ".msup", ".sups", "Machine Setups",
+         "LoadFromFile" produced ZERO code-side hits. The strings
+         live in Delphi RTTI for the file-extension enum, not in
+         loader call sites. The dispatch is by case index, not by
+         string compare.
 
-      3. The rule struct is 12 bytes (3 dwords):
-           +0x00 dword arg0
-           +0x04 dword arg1
-           +0x08 dword lookup_key   (must match key in parent setup)
+      4. Tooling.dll has 8 exports (add_explicit_route,
+         add_frameobject, authenticate, cleanup,
+         generate_operations, get_authcode_key,
+         get_intersections_for, get_operations_for). NONE is a
+         catalog loader. The catalog gets populated entirely
+         inside Detailer.exe and shipped to Tooling via the
+         SectionLookupRecord parameter on each add_frameobject
+         call.
 
-      4. The op-generator is TFrameObject.vmt+8 @ RVA 0x14da9c.
-         It only emits Swage / InnerDimple / etc. ops when FOUR
-         sub-lists at TFrameObject+0x60..+0x6c are all non-NULL.
-         Those are populated by 0x4fbf64 calls in TFrameObject's
-         constructor, which enumerate data on the parent
-         TMachineSetup (built from SectionLookupRecord).
+    THE REMAINING ARTIFACT IS THE SectionLookupRecord BYTE PAYLOAD,
+    not a hidden loader. The Detailer marshaller at 0x016ba118
+    reads ~30 fields from a TMachineSetup + TSectionSpecificOptions
+    and writes them into a 185-byte record per stick. To replicate
+    that headlessly we need EITHER:
 
-      5. With an all-zero SectionLookupRecord, the parent catalog
-         is empty -> all rule lookups fail -> ops_len = 0.
+      Path A (REVISED, recommended) -- Frida-hook the import-thunk
+      Tooling.dll!add_frameobject inside a running Detailer.exe,
+      log all three records (50 / 185 / 75 bytes) per stick on a
+      real job (e.g. HG260044), then replay any one trio from this
+      driver. ops_len > 0 should be immediate. Estimated cost: 2-4
+      hours of hooking + replay.
 
-    NEXT STEP:
-      Get a real catalog into the SectionLookupRecord. Two paths:
-
-      (A) Call Detailer's .msup loader from inside our driver.
-          The decryption uses sskeleton.dll + libcrypto-3.dll
-          which our process already has loaded.
-      (B) Hook add_frameobject inside a running Detailer.exe to
-          capture one known-good 3-record byte trio per stick,
-          then replay headless. (Recommended in section-rule-
-          layout.md and record-layouts.md "Path A".)
+      Path B -- Reverse-engineer the marshaller's field-mapping
+      pass (~30 fields per record) entirely from disasm. Multi-day
+      project, error-prone, no advantage over Path A.
 
     Files:
-      scripts/tooling-rev/section-rule-layout.md  (this RE pass)
-      scripts/tooling-rev/section-catalog.md      (prior session)
+      scripts/tooling-rev/msup-loader.md          (THIS SESSION)
+      scripts/tooling-rev/find-msup-loader2.py    (xref hunt tool)
+      scripts/tooling-rev/dump-msup-context.py    (string-context)
+      scripts/tooling-rev/msup-xrefs2.txt         (xref output)
+      scripts/tooling-rev/section-rule-layout.md  (prior RE pass)
       scripts/tooling-rev/record-layouts.md       (prior session)
     ============================================================
 """))

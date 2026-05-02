@@ -34,7 +34,7 @@ for (const p of pairs) {
   try {
     const out = execSync(`node scripts/diff-vs-detailer.mjs "${p.xml}" "${p.rfy}"`, { encoding: "utf-8", maxBuffer: 50 * 1024 * 1024 });
     const m = out.match(/MATCHED:\s+(\d+)\s+\(([0-9.]+)% of ref\)/);
-    const refM = out.match(/our (\d+) \| ref (\d+)/);
+    const refM = out.match(/OPS:\s+our (\d+) \| ref (\d+)/);
     if (m && refM) {
       const matched = parseInt(m[1], 10);
       const pct = parseFloat(m[2]);

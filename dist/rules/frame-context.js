@@ -383,6 +383,17 @@ export function generateFrameContextOps(frame) {
             const endPos = startPos + lipSpan;
             stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
             stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+            // Iter 5: B2B partner studs ALSO get InnerNotch at nog crossings.
+            // Verified vs HG260012 LBW-89 L1107/S7 + L1111/S19/S20: paired studs
+            // get InnerNotch+LipNotch [z-24..z+24] (48mm wide) when a nog passes
+            // between them. Width 48mm differs from non-paired 45mm — includes
+            // partner's flange-overlap allowance.
+            if (b2bStudNames.has(stud.stick.name)) {
+                const innerSpan = 48;
+                const iStart = localPos - innerSpan / 2;
+                const iEnd = iStart + innerSpan;
+                stickOps.push({ kind: "spanned", type: "InnerNotch", startPos: round(iStart), endPos: round(iEnd) });
+            }
         }
         // Other horizontal members → LIP NOTCH
         for (const h of otherHorizontal) {

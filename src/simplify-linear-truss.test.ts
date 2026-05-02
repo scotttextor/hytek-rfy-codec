@@ -320,19 +320,27 @@ function readCorpus(rel: string): Buffer {
 }
 
 describe("simplifyLinearTrussRfy — reference fixtures", () => {
-  it("APPLY: 2603191 ROCKVILLE Linear truss — reduces BOLT HOLES", () => {
+  it("APPLY: 2603191 ROCKVILLE Linear truss — reduces BOLT HOLES (deterministic)", () => {
     const rfy = readCorpus("2603191/2603191-GF-LIN-89.075.rfy");
     const xml = readCorpus("2603191/2603191-ROCKVILLE.xml").toString("utf-8");
-    // Parse the input XML for ParsedFrame[] + plan name lookup.
     const parsed = parsePlanXml(xml);
     const result = simplifyLinearTrussRfy(rfy, parsed.frames, parsed.planNameByFrame);
-    // Reference observation: 1359 → 837 (-38%) per landmark
-    expect(result.appliedFrames.length).toBeGreaterThan(0);
+
+    // Deterministic against the frozen 2603191 fixture. If any of these change,
+    // an underlying constant or geometry rule has drifted.
+    expect(result.appliedFrames.length).toBe(22);
     const apply = result.decisions.filter(d => d.decision === "APPLY");
-    expect(apply.length).toBeGreaterThan(0);
+    const fallback = result.decisions.filter(d => d.decision === "FALLBACK");
+    expect(apply.length).toBe(22);
+    expect(fallback.length).toBe(0);
+
     const totalNew = apply.reduce((sum, d) => sum + (d.newBoltCount ?? 0), 0);
-    expect(totalNew).toBeLessThan(900);   // strictly fewer than original 1359
-    expect(totalNew).toBeGreaterThan(700); // not zero — sanity
+    expect(totalNew).toBe(750);
+
+    // Stick-level fallbacks (sticks where the new rule would violate INV-4 and
+    // the source RFY's Web ops are kept verbatim).
+    const stickFallbackTotal = apply.reduce((s, d) => s + (d.fallbackSticks?.length ?? 0), 0);
+    expect(stickFallbackTotal).toBeGreaterThan(0);
   });
 
   it("SKIP: HG260044 GF-NLBW-89.075 wall — output bytes byte-identical to source", () => {

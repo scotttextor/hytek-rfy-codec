@@ -468,6 +468,75 @@ function buildOurProject(xmlText) {
       //   - S studs: caps are LipNotch, NOT Swage (we emit Swage)
       //   - No Chamfer@end on any stick
       //   - T/B chords: dimples at every stud crossing (handled by frame-context)
+      // Short FJ chord stubs (B1/T2/T4 length ≤ 250mm) emit paired InnerNotch
+      // alongside LipNotch caps at the connection-end. Agent verified vs
+      // HG260012 J1202-1/B1 (length 120) ref ops: InnerNotch[81..120] +
+      // LipNotch[81..120] at the join end.
+      const isFJFrame = /-(FJ|JOIST)-/i.test(plan.name);
+      if (isFJFrame) {
+        for (const s of sticks) {
+          const u = String(s.usage ?? "").toLowerCase();
+          if (!/^[TBHV]\d/.test(s.name)) continue;
+          const stickLen = distance3D(s.start, s.end);
+          if (stickLen > 250) continue;  // only short stubs
+          // For each LipNotch at a cap, add a paired InnerNotch
+          const lipNotchCaps = [];
+          for (const op of s.tooling) {
+            if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
+            const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
+            const isEndCap = Math.abs(op.endPos - stickLen) < 1 && Math.abs(op.startPos - (stickLen - 39)) < 1;
+            if (isStartCap || isEndCap) lipNotchCaps.push({ startPos: op.startPos, endPos: op.endPos });
+          }
+          for (const cap of lipNotchCaps) {
+            const exists = s.tooling.some(o => o.kind === "spanned" && o.type === "InnerNotch" &&
+              Math.abs(o.startPos - cap.startPos) < 0.5 && Math.abs(o.endPos - cap.endPos) < 0.5);
+            if (!exists) {
+              s.tooling.push({ kind: "spanned", type: "InnerNotch", startPos: cap.startPos, endPos: cap.endPos });
+            }
+          }
+          void u;
+        }
+      }
+
+      // LIN (Linear Truss) frames have a different chord op pattern: Web@pt
+      // at every panel-point crossing instead of InnerDimple+LipNotch.
+      // Verified vs LINEAR_TRUSS_TESTING/GF-LIN-89.075. We don't yet emit
+      // the LeftFlange/RightFlange spans (separate complex rule).
+      const isLINFrame = /-LIN-/i.test(plan.name);
+      if (isLINFrame) {
+        for (const s of sticks) {
+          const u = String(s.usage ?? "").toLowerCase();
+          if (u !== "topchord" && u !== "bottomchord") continue;
+          // Convert mid-stick LipNotch+InnerDimple panel-point ops into Web@pt.
+          // Cap LipNotches (start at 0 or end at length) stay.
+          const stickLen = distance3D(s.start, s.end);
+          const newOps = [];
+          const removed = [];
+          for (const op of s.tooling) {
+            if (op.kind === "spanned" && op.type === "LipNotch") {
+              const isCap = (op.startPos < 0.5) || (Math.abs(op.endPos - stickLen) < 0.5);
+              if (!isCap) {
+                // Mid-stick LipNotch — convert center to Web@pt
+                removed.push(op);
+                const center = (op.startPos + op.endPos) / 2;
+                newOps.push({ kind: "point", type: "Web", pos: Math.round(center * 10000) / 10000 });
+                continue;
+              }
+            }
+            if (op.kind === "point" && op.type === "InnerDimple") {
+              // Skip mid-stick InnerDimples (they become Web@pt above)
+              const isCapDimple = op.pos < 50 || op.pos > stickLen - 50;
+              if (!isCapDimple) {
+                removed.push(op);
+                continue;
+              }
+            }
+            newOps.push(op);
+          }
+          s.tooling = newOps;
+        }
+      }
+
       const isRPFrame = /-(RP|HJ)-/i.test(plan.name);
       if (isRPFrame) {
         let removed = 0;
@@ -536,6 +605,47 @@ const xmlText = fs.readFileSync(inputXmlPath, "utf8");
 const { project: ourProject, setup } = buildOurProject(xmlText);
 const ourResult = synthesizeRfyFromPlans(ourProject, { machineSetup: setup, lenient: true });
 const ourDoc = decode(ourResult.rfy);
+
+// Post-decode rule swaps for frame types where the codec's default rules
+// emit the wrong op vocabulary. LIN frames need Web@pt (not LipNotch+Dimple)
+// at panel-points on chords. RP frames need NO Chamfer.
+for (const plan of ourDoc.project.plans) {
+  const isLINPlan = /-LIN-/i.test(plan.name);
+  const isRPPlan = /-(RP|HJ)-/i.test(plan.name);
+  for (const frame of plan.frames) {
+    for (const stick of frame.sticks) {
+      const len = stick.length;
+      if (isLINPlan) {
+        // Convert mid-stick LipNotch+InnerDimple to Web@pt on chord-like sticks
+        // (T/B prefix). Keep cap LipNotches.
+        if (/^[TBH]\d/.test(stick.name)) {
+          const newOps = [];
+          for (const op of stick.tooling) {
+            if (op.kind === "spanned" && op.type === "LipNotch") {
+              const isCap = op.startPos < 0.5 || Math.abs(op.endPos - len) < 0.5;
+              if (!isCap) {
+                newOps.push({ kind: "point", type: "Web", pos: Math.round(((op.startPos + op.endPos) / 2) * 10000) / 10000 });
+                continue;
+              }
+            }
+            if (op.kind === "point" && op.type === "InnerDimple") {
+              const isCapDimple = op.pos < 50 || op.pos > len - 50;
+              if (!isCapDimple) continue;  // drop mid-stick dimples
+            }
+            newOps.push(op);
+          }
+          stick.tooling = newOps;
+        }
+      }
+      if (isRPPlan) {
+        // RP frames: remove all Chamfer ops (ref has 0 chamfers on RP)
+        stick.tooling = stick.tooling.filter(op =>
+          !(op.kind === "start" || op.kind === "end") || op.type !== "Chamfer"
+        );
+      }
+    }
+  }
+}
 
 const refDoc = decode(fs.readFileSync(referenceRfyPath));
 

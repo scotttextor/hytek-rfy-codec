@@ -470,18 +470,27 @@ function buildOurProject(xmlText) {
       //   - T/B chords: dimples at every stud crossing (handled by frame-context)
       const isRPFrame = /-(RP|HJ)-/i.test(plan.name);
       if (isRPFrame) {
+        let removed = 0;
         for (const s of sticks) {
-          // Remove Chamfer@start/@end on all sticks (ref has 0 Chamfers on RP)
+          if (process.env.DEBUG_RP === "1" && /^S\d/.test(s.name)) {
+            console.error(s.name, 'ops:', s.tooling.map(o => o.type+'@'+(o.kind==='spanned'?o.startPos+'-'+o.endPos:o.kind==='point'?o.pos:o.kind)).join(','));
+          }
           for (let i = s.tooling.length - 1; i >= 0; i--) {
             const op = s.tooling[i];
             if ((op.kind === "end" || op.kind === "start") && op.type === "Chamfer") {
               s.tooling.splice(i, 1);
+              removed++;
             }
           }
         }
+        if (process.env.DEBUG_RP === "1") console.error("  removed Chamfers:", removed);
       }
 
-      // Raking-frame Chamfer@end rule (verified 2026-05-02 vs HG260012):
+      // Raking-frame Chamfer@end rule — ONLY for ExternalWall/InternalWall
+      // frames (LBW/NLBW). RoofPanel frames have sloped TopPlates too, but
+      // Detailer doesn't add Chamfers — ref shows 0 chamfers on RP studs.
+      const frameType = String(f["@_type"] ?? "").toLowerCase();
+      const isWallFrame = frameType.includes("wall");
       // A frame is "raking" if any TopPlate stick has |end.z - start.z| > 1mm
       // (sloped top plate, e.g. gable wall with raked ceiling). In raking
       // frames:
@@ -489,7 +498,7 @@ function buildOurProject(xmlText) {
       //     which Kb/W diagonals already get)
       //   - Every TopPlate gets Chamfer@start OR @end on the HIGH end
       //     (whichever side has end.z > start.z)
-      const isRaking = sticks.some(s => {
+      const isRaking = isWallFrame && sticks.some(s => {
         const u = String(s.usage ?? "").toLowerCase();
         return u === "topplate" && Math.abs(s.end.z - s.start.z) > 1;
       });

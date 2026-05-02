@@ -186,6 +186,14 @@ function processFrame(frameWrap) {
   const newBoltsPerStick = new Map(); // stickName -> [pos]
   for (let i = 0; i < frameSticks.length; i++) {
     for (let j = i+1; j < frameSticks.length; j++) {
+      // Skip web-to-web intersections. In a HYTEK Linear truss the webs are
+      // only fastened to the chords (never to each other) -- FrameCAD does
+      // not punch BOLT HOLES at W<->W mathematical crossings. Two diagonals
+      // can mathematically cross within the truss envelope without there
+      // being a real fastener at that point.
+      const usageI = (frameSticks[i].usage || "").toLowerCase();
+      const usageJ = (frameSticks[j].usage || "").toLowerCase();
+      if (usageI === "web" && usageJ === "web") continue;
       const r = lineIntersection(frameSticks[i], frameSticks[j]);
       if (!r) continue;
       const lengthI = Math.hypot(

@@ -186,6 +186,14 @@ def apply_centreline_rule(frame, csv_components):
 
     for i in range(len(sticks)):
         for j in range(i+1, len(sticks)):
+            # Skip web-to-web intersections. In a HYTEK Linear truss the webs
+            # are only fastened to the chords (never to each other) — FrameCAD
+            # does not punch BOLT HOLES at W<->W mathematical crossings. Two
+            # diagonals can mathematically cross within the truss envelope
+            # without there being a real fastener at that point.
+            if (sticks[i]['usage'].lower() == 'web' and
+                    sticks[j]['usage'].lower() == 'web'):
+                continue
             r = line_intersection_xz(sticks[i], sticks[j])
             if not r: continue
             pt, t, u = r

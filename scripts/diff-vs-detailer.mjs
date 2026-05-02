@@ -231,6 +231,48 @@ function buildOurProject(xmlText) {
           stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round((length/2)*10)/10 });
         }
 
+        // Gauge-aware cap widths for ≥0.95mm: T/B plate caps swap 39mm → 45mm.
+        // Verified vs HG250082 UPPER-GF-LBW-89.115 vs HG260012 -89.075 by agent
+        // 2026-05-02. Reference shows 0.75 gauge dominates 39mm caps; 1.15 gauge
+        // dominates 45mm caps on T/B plates and S studs.
+        const gaugeFloat = parseFloat(profile.gauge) || 0.75;
+        if (gaugeFloat >= 0.95 && (usage === "topplate" || usage === "bottomplate")) {
+          for (const op of stick.tooling) {
+            if (op.kind !== "spanned") continue;
+            // Start cap: [0..39] → [0..45]
+            if (op.startPos < 0.5 && Math.abs(op.endPos - 39) < 0.5) {
+              op.endPos = 45;
+            }
+            // End cap: [length-39..length] → [length-45..length]
+            if (Math.abs(op.endPos - length) < 0.5 && Math.abs(op.startPos - (length - 39)) < 0.5) {
+              op.startPos = Math.round((length - 45) * 10) / 10;
+            }
+          }
+        }
+
+        // Centered-InnerDimple-on-spanned-op rule for S studs at ≥0.95 gauge.
+        // Verified vs HG250082 UPPER-GF-LBW-89.115: each LipNotch/Swage on S
+        // studs has a paired InnerDimple at the span midpoint. We emit the
+        // span but skip the centered dimple — agent identified ~140 missing
+        // dimples on the corpus from this single gap.
+        const isStudForDimple = usage === "stud" || usage === "endstud" || usage === "trimstud" || usage === "jackstud";
+        if (gaugeFloat >= 0.95 && isStudForDimple) {
+          const newDimples = [];
+          for (const op of stick.tooling) {
+            if (op.kind !== "spanned") continue;
+            if (op.type !== "LipNotch" && op.type !== "Swage") continue;
+            const mid = (op.startPos + op.endPos) / 2;
+            // Skip end-caps (where dimple is at fixed offset from end already)
+            if (mid < 50 || mid > length - 50) continue;
+            newDimples.push({ kind: "point", type: "InnerDimple", pos: Math.round(mid * 100) / 100 });
+          }
+          // Dedupe against existing dimples (within 1mm)
+          for (const d of newDimples) {
+            const existing = stick.tooling.some(o => o.kind === "point" && o.type === "InnerDimple" && Math.abs(o.pos - d.pos) < 1);
+            if (!existing) stick.tooling.push(d);
+          }
+        }
+
         // V-prefix cap rule — DEFERRED. Some V sticks need InnerNotch+LipNotch
         // start cap, others don't. Need geometric detection (which end touches
         // chord) before applying broadly. Empirically reverted 2026-05-02:

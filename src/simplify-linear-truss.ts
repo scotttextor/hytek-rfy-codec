@@ -43,3 +43,68 @@ export function lineIntersectionXZ(
 export function stickLength3D(s: Segment3): number {
   return Math.hypot(s.end[0] - s.start[0], s.end[2] - s.start[2]);
 }
+
+// ---------- Types ----------
+
+export interface SimplifyLinearTrussOptions {
+  rewrite?: boolean;
+  excludeFrames?: ReadonlySet<string>;
+  intersectionSlackMm?: number;
+  endZoneMm?: number;
+  apexCollisionMm?: number;
+  profileGate?: ProfileGate;
+}
+
+export interface ProfileGate {
+  web: number; rFlange: number; lFlange: number; lLip: number; rLip: number;
+  shape: "C" | "S"; gauge: string;
+}
+
+export const DEFAULT_PROFILE_GATE: ProfileGate = {
+  web: 89, rFlange: 41, lFlange: 38, lLip: 11, rLip: 11, shape: "C", gauge: "0.75",
+};
+
+export interface SimplifyDecision {
+  frame: string;
+  decision: "APPLY" | "SKIP" | "FALLBACK";
+  reason: string;
+  modifiedSticks?: number;
+  newBoltCount?: number;
+  fallbackSticks?: string[];
+}
+
+export interface SimplifyResult {
+  rfy: Buffer;
+  decisions: SimplifyDecision[];
+  appliedFrames: string[];
+}
+
+type GateResult = { ok: true } | { ok: false; reason: string };
+
+// ---------- Profile gate (4-layer detection) ----------
+
+export function isLinearTruss(
+  frame: ParsedFrame,
+  planName: string,
+  gate: ProfileGate = DEFAULT_PROFILE_GATE,
+): GateResult {
+  if (frame.type !== "Truss") return { ok: false, reason: `frame type "${frame.type}" not Truss` };
+  if (!/-LIN-/i.test(planName)) return { ok: false, reason: `plan "${planName}" not Linear` };
+  for (const s of frame.sticks) {
+    const p = s.profile;
+    const wrongProfile =
+      p.web !== gate.web || p.rFlange !== gate.rFlange || p.lFlange !== gate.lFlange ||
+      p.lLip !== gate.lLip || p.rLip !== gate.rLip || p.shape !== gate.shape;
+    if (wrongProfile) {
+      return { ok: false, reason: `${s.name} wrong profile (${p.web}x${p.rFlange} ${p.shape})` };
+    }
+    if (s.gauge !== gate.gauge) {
+      return { ok: false, reason: `${s.name} wrong gauge (${s.gauge})` };
+    }
+  }
+  const hasChord = frame.sticks.some(s => /chord/i.test(s.usage));
+  const hasWeb   = frame.sticks.some(s => /web/i.test(s.usage));
+  if (!hasChord) return { ok: false, reason: "no chord members" };
+  if (!hasWeb)   return { ok: false, reason: "no web members" };
+  return { ok: true };
+}

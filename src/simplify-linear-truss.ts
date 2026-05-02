@@ -209,5 +209,28 @@ export function handleParallelPair(
   return { posOnA, posOnB };
 }
 
+// ---------- Validator: RFY format version ----------
+
+export class RfyVersionMismatch extends Error {
+  constructor(public readonly found: string | null) {
+    super(`RFY version "${found ?? "MISSING"}" not supported (need ≥ 2.12.0)`);
+    this.name = "RfyVersionMismatch";
+  }
+}
+
+const MIN_RFY_VERSION = { major: 2, minor: 12, patch: 0 };
+
+export function assertRfyVersion(rfyXml: string): void {
+  const m = rfyXml.match(/<rfy[^>]*\bversion="([^"]+)"/);
+  if (!m) throw new RfyVersionMismatch(null);
+  const parts = m[1].split(".").map(n => parseInt(n, 10));
+  const [maj, min, pat] = [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0];
+  const ok =
+    maj > MIN_RFY_VERSION.major ||
+    (maj === MIN_RFY_VERSION.major && min > MIN_RFY_VERSION.minor) ||
+    (maj === MIN_RFY_VERSION.major && min === MIN_RFY_VERSION.minor && pat >= MIN_RFY_VERSION.patch);
+  if (!ok) throw new RfyVersionMismatch(m[1]);
+}
+
 // Re-export ParsedStick for convenience
 export type { ParsedStick };

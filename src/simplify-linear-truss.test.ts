@@ -277,3 +277,32 @@ describe("handleParallelPair", () => {
     expect(handleParallelPair(a, b, 5)).toBeNull();
   });
 });
+
+import { assertRfyVersion, RfyVersionMismatch } from "./simplify-linear-truss.js";
+
+describe("assertRfyVersion", () => {
+  it("passes when version is 2.12.0", () => {
+    const xml = '<?xml version="1.0"?><rfy version="2.12.0"><body/></rfy>';
+    expect(() => assertRfyVersion(xml)).not.toThrow();
+  });
+
+  it("passes when version is 2.13.5 (any minor/patch ≥ 2.12.0)", () => {
+    const xml = '<?xml version="1.0"?><rfy version="2.13.5"><body/></rfy>';
+    expect(() => assertRfyVersion(xml)).not.toThrow();
+  });
+
+  it("passes when version is 3.0.0 (major ≥ 2)", () => {
+    const xml = '<?xml version="1.0"?><rfy version="3.0.0"><body/></rfy>';
+    expect(() => assertRfyVersion(xml)).not.toThrow();
+  });
+
+  it("throws RfyVersionMismatch for version < 2.12.0", () => {
+    const xml = '<?xml version="1.0"?><rfy version="2.11.5"><body/></rfy>';
+    expect(() => assertRfyVersion(xml)).toThrow(RfyVersionMismatch);
+  });
+
+  it("throws RfyVersionMismatch when no version attribute is present", () => {
+    const xml = '<?xml version="1.0"?><rfy><body/></rfy>';
+    expect(() => assertRfyVersion(xml)).toThrow(RfyVersionMismatch);
+  });
+});

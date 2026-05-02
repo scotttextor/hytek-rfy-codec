@@ -276,7 +276,14 @@ function buildOurProject(xmlText) {
                 matches = stickZ >= svcZmin - 5 && stickZ <= svcZmax + 5;
               }
               if (!matches) continue;
-              const rawPos = Math.abs(stickAxisStart - svcAxis) - 4.0;
+              // Position formula: pos = |trimmed_stick_start - service.axis|.
+              // The agent's "−4mm pre-punch" turns out to equal the
+              // EndClearance trim already applied to T plates (4mm) and the
+              // nog trim (1mm) plus the implicit offset. Verified vs HG260012
+              // L1101: original-T1 23732.786, service 23614.286, raw diff
+              // 118.5; trimmed-T1 23728.786, trimmed diff 114.5 = ref pos.
+              // For N1: original 23729.786, trimmed 23728.786, diff 114.5 = ref.
+              const rawPos = Math.abs(stickAxisStart - svcAxis);
               if (rawPos < 5 || rawPos > length - 5) continue;
               stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round(rawPos * 10000) / 10000 });
             }

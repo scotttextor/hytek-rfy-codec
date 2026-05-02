@@ -462,6 +462,53 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
     }
   }
 
+  // Headers (H): receive LipNotch + InnerDimple at every king-stud crossing
+  // (verified 2026-05-02 vs HG260012 corpus by agent reverse-engineering).
+  // Headers ARE plate-like receivers, not just cripples. The previous code
+  // treated H as cripple-only (generating virtual stud crossings on plates
+  // but not receiving any of its own). Headers cross studs from BELOW —
+  // each king stud's x-position becomes a notch on the header.
+  // Merge threshold: 22mm (smaller than truss 8mm but larger than nothing).
+  // 2026-05-02 — Cat A "Web Lintel" headers (most common) use this rule.
+  // Cat B "secondary" headers (no king studs underneath) emit nothing here.
+  // Cat C "boxed" headers (flipped=false, Web@pt instead of notches) need
+  // separate detection — TBD.
+  const headers = layout.filter(sb => sb.role === "H" && sb.horizontal);
+  const HEADER_JOIN_GAP = 22;  // Detailer's merge threshold for H stud crossings
+  for (const header of headers) {
+    const stickOps = result.get(header.stick.name)!;
+    const seenPositions = new Set<number>();
+    const crossings: number[] = [];
+    for (const stud of allCrossingStuds) {
+      // Stud must overlap header in Y (i.e., its centerline crosses through
+      // header's y-band)
+      const yOverlap = stud.box.yMax >= header.box.yMin && stud.box.yMin <= header.box.yMax;
+      if (!yOverlap) continue;
+      const crossingX = stud.box.cx;
+      if (crossingX < header.box.xMin + 50) continue;
+      if (crossingX > header.box.xMax - 50) continue;
+      const localPos = plateLocalPosition(header, crossingX);
+      if (localPos < 50) continue;
+      if (localPos > header.stick.length - 50) continue;
+      // Skip exact duplicates
+      const q = Math.round(localPos * 10) / 10;
+      if (seenPositions.has(q)) continue;
+      seenPositions.add(q);
+      crossings.push(localPos);
+    }
+    crossings.sort((a, b) => a - b);
+    for (const localPos of crossings) {
+      const startPos = localPos - 22.5;
+      const endPos = localPos + 22.5;
+      stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
+      stickOps.push({ kind: "point", type: "InnerDimple", pos: round(localPos) });
+    }
+    // Merge LipNotches with gap < 22mm
+    if (crossings.length >= 2) {
+      joinAdjacentLipNotches(stickOps, HEADER_JOIN_GAP);
+    }
+  }
+
   // Nogs: studs cross them; emit WEB+LIP NOTCH + DIMPLE + service holes at midpoints
   for (const nog of nogs) {
     const stickOps = result.get(nog.stick.name)!;

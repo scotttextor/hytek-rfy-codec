@@ -277,20 +277,24 @@ export const RULE_TABLE = [
         ],
     },
     // ----------- HEADERS (H) on 89S41 -----------
-    // Same pattern as 70mm headers but with 89mm dimensions.
-    // Verified 2026-05-01 against HG260044 GF-NLBW-89.075: H1 has 12 InnerDimples
-    // at panel-point spacings.
+    // 2026-05-02: REWRITTEN per agent reverse-engineering vs HG260012 corpus.
+    // Header caps are InnerNotch + LipNotch (NOT Swage). Header receives
+    // LipNotch + InnerDimple at every king-stud crossing (handled in
+    // frame-context.ts). Cap dimples at 16.5 + 58.5 + (109.5 if first king
+    // is far enough) at start, mirrored at end.
     {
         rolePattern: HEADER_ROLES,
         profilePattern: /^89S41$/,
         lengthRange: [0, Infinity],
         rules: [
-            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
-            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium", notes: "89mm header dimple #1 at 16.5" },
-            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "medium", notes: "89mm header paired dimple at 58.5" },
-            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "medium" },
-            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
-            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high", notes: "89mm header start cap: InnerNotch (full-web cut)" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high", notes: "89mm header start cap: LipNotch (paired with InnerNotch)" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high", notes: "89mm header dimple #1 at 16.5" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high", notes: "89mm header dimple #2 at 58.5" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high", notes: "89mm header end cap: InnerNotch" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high", notes: "89mm header end cap: LipNotch" },
         ],
     },
     // ----------- TRUSS WEBS (W) on 70S41 -----------

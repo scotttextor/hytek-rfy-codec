@@ -429,13 +429,16 @@ assert ctypes.sizeof(FrameDefRecord) == 0x4b, ctypes.sizeof(FrameDefRecord)
 # ---------------------------------------------------------------------------
 fr = FrameRecord()
 ctypes.memset(ctypes.byref(fr), 0, ctypes.sizeof(fr))
-fr.frame_id        = 1                            # int32 frame id (linkage)
-# Two TPoint endpoints: stick from (0,0,0,0) to (2616,0,0,0).
-# The engine uses [esi+0x22..0x2e] and [esi+0x01..0x0d] to compute distance:
-fr.p1_x1 = 0;     fr.p1_y1 = 0;     fr.p1_x2 = 0;    fr.p1_y2 = 0
-fr.p2_x1 = 2616;  fr.p2_y1 = 0;     fr.p2_x2 = 0;    fr.p2_y2 = 0
-fr.dword_17        = 0
-fr.dword_1b        = 0
+fr.frame_id        = 1
+# REVISED: each "endpoint" is actually a (x:double, y:double) pair, with
+# bytes laid out as (y[31:0], y[63:32], x[31:0], x[63:32]). The engine
+# computes Euclidean distance(endpoint1, endpoint2) and REQUIRES it ≈ 0
+# (rc=8 if nonzero). So both endpoints must be the same point (likely 0,0).
+# The actual stick length lives at +0x17 / +0x1b (the two "unknown" dwords).
+length_double_bytes = struct.pack('<d', 2616.0)  # 8 bytes little-endian
+fr.dword_17 = struct.unpack('<i', length_double_bytes[0:4])[0]
+fr.dword_1b = struct.unpack('<i', length_double_bytes[4:8])[0]
+# Endpoints both = origin (zeroed by memset).
 fr.lipped_flag     = 0
 fr.flag_a          = 1
 fr.flag_b          = 0

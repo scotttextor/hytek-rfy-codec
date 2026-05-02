@@ -393,7 +393,30 @@ assert ctypes.sizeof(SectionLookupRecord) == 0xb9, ctypes.sizeof(SectionLookupRe
 
 
 class FrameDefRecord(ctypes.Structure):
-    """75-byte POD frame-definition record."""
+    """75-byte POD frame-definition record.
+
+    CORRECTED 2026-05-03: the bytes at +0x3b..+0x42 are NOT padding — they
+    are the SectionRule array pointer + count, the THIRD argument's loop
+    target inside add_frameobject (the loop at VA 0x586507..0x586535):
+
+        ebx = [FrameDef+0x3b]   ; pointer to rule array
+        edi = [FrameDef+0x3f] - 1  ; count - 1
+        loop:
+          edx = [ebx+8]                  ; rule[i].lookup_key
+          call 0x52f9f8(setup, key)      ; AL=1 if key found
+          if AL: 0x532ad8(setup, key, [ebx+0], [ebx+4])  ; register-op
+          ebx += 0xc                     ; STRIDE = 12 bytes (NOT 14)
+
+    Each SectionRule = 12 bytes (3 dwords):
+        +0x00 dword arg0       — passed to add-op as 1st pushed arg
+        +0x04 dword arg1       — passed to add-op as 2nd pushed arg
+        +0x08 dword lookup_key — used to look up something on the
+                                 TMachineSetup object created from
+                                 SectionLookupRecord. If key is not found
+                                 in [setup+0x9f]+0x10 (a TList), the rule
+                                 is skipped — i.e. rule needs a matching
+                                 entry in the parent catalog.
+    """
     _pack_ = 1
     _fields_ = [
         ("byte_settings_4",  ctypes.c_uint8),               # +0x00
@@ -413,11 +436,26 @@ class FrameDefRecord(ctypes.Structure):
         ("byte_resolved",    ctypes.c_uint8),               # +0x32 (result of 0x16bb478())
         ("ansistr_len_pass1",ctypes.c_int32),               # +0x33
         ("ansistr_len_pass2",ctypes.c_int32),               # +0x37
-        ("padding_3b_42",    ctypes.c_uint8 * 8),           # +0x3b..+0x42 (unused 8 bytes)
+        ("rule_array_ptr",   ctypes.c_uint32),              # +0x3b (NOT padding)
+        ("rule_array_count", ctypes.c_uint32),              # +0x3f (NOT padding)
         ("dword_settings_48",ctypes.c_int32),               # +0x43
         ("dword_settings_4c",ctypes.c_int32),               # +0x47
     ]
 assert ctypes.sizeof(FrameDefRecord) == 0x4b, ctypes.sizeof(FrameDefRecord)
+
+
+class SectionRule(ctypes.Structure):
+    """12-byte rule entry — the item type of the array on FrameDefRecord+0x3b.
+
+    See section-rule-layout.md for the full RE pass.
+    """
+    _pack_ = 1
+    _fields_ = [
+        ("arg0",       ctypes.c_uint32),   # +0x00 — pushed as arg0 to add-op
+        ("arg1",       ctypes.c_uint32),   # +0x04 — pushed as arg1 to add-op
+        ("lookup_key", ctypes.c_uint32),   # +0x08 — must match key in setup
+    ]
+assert ctypes.sizeof(SectionRule) == 0xc, ctypes.sizeof(SectionRule)
 
 
 # ---------------------------------------------------------------------------
@@ -434,7 +472,7 @@ fr.frame_id        = 1
 #   IsZeroDouble returns AL=1 when |d| ≈ 0, AL=0 when nonzero.
 #   The engine's gate at 0x586493 is `je 0x58649c` — taken when AL==0.
 #   So the engine WANTS distance(endpoint1, endpoint2) to be NONZERO.
-#   With both endpoints at origin, distance=0 → AL=1 → fail rc=8.
+#   With both endpoints at origin, distance=0 -> AL=1 -> fail rc=8.
 #   Fix: endpoint1 = (2616.0, 0.0), endpoint2 = (0.0, 0.0). distance=2616.
 #
 # Encoding (verified against disasm of geom_op_42f5fc + tpoint_ctor_42f5a0):
@@ -447,8 +485,8 @@ fr.frame_id        = 1
 #     [eax+8]  = y_low32
 #     [eax+0xc]= y_high32
 #   Then add_frameobject pushes from FrameRecord+esi:
-#     endpoint1: (esi+0x22 → x_low, esi+0x26 → x_high, esi+0x2a → y_low, esi+0x2e → y_high)
-#     endpoint2: (esi+0x01 → x_low, esi+0x05 → x_high, esi+0x09 → y_low, esi+0x0d → y_high)
+#     endpoint1: (esi+0x22 -> x_low, esi+0x26 -> x_high, esi+0x2a -> y_low, esi+0x2e -> y_high)
+#     endpoint2: (esi+0x01 -> x_low, esi+0x05 -> x_high, esi+0x09 -> y_low, esi+0x0d -> y_high)
 #
 #   So FrameRecord layout for endpoints is:
 #     +0x01..+0x08 = endpoint2.x (double)
@@ -487,11 +525,42 @@ fr.vmethod_result  = 1
 #   engine accepts an empty rule set.
 sl = SectionLookupRecord()
 ctypes.memset(ctypes.byref(sl), 0, ctypes.sizeof(sl))
-# All zeros → ansistr_ptr (renamed: rule_array_ptr) = NULL,
+# All zeros -> ansistr_ptr (renamed: rule_array_ptr) = NULL,
 #              ansistr_length (renamed: rule_array_count) = 0.
 
 fd = FrameDefRecord()
 ctypes.memset(ctypes.byref(fd), 0, ctypes.sizeof(fd))
+
+# 2026-05-03 — Attempt to populate the 12-byte SectionRule array to verify
+# the loop is reached. Even if the rules' lookup_keys don't match anything
+# in the (empty) TMachineSetup, the loop will execute once per rule with
+# the 0x52f9f8 lookup returning AL=0 (not found) — which means 0x532ad8
+# is never called, and we'll end up with the same empty op list. But the
+# loop reaching iter > 0 confirms the layout decode is correct.
+#
+# Schema per scripts/tooling-rev/section-rule-layout.md:
+#   each rule = (uint32 arg0, uint32 arg1, uint32 lookup_key)
+#   stride = 12 bytes
+#
+# Hypothesised lookup_key values from disasm of 0x52f9f8 (which compares
+# rule.lookup_key against [setup_obj+0x9f]+0x10 list entries):
+#   The TMachineSetup object's catalog list is populated by
+#   frame_id_resolve_585f90 — but only with bytes copied from
+#   SectionLookupRecord, not lists. So with all-zero SectionLookupRecord,
+#   the TList at [setup+0x9f]+0x10 is empty/null and ALL lookups fail.
+#
+# This probe just demonstrates the loop *runs* the right number of times
+# without crashing — the real fix requires populating the parent catalog.
+PROBE_RULES = (SectionRule * 4)(
+    SectionRule(arg0=0,        arg1=39,        lookup_key=1),  # Swage start
+    SectionRule(arg0=16,       arg1=0,         lookup_key=2),  # InnerDimple1
+    SectionRule(arg0=2577,     arg1=2616,      lookup_key=1),  # Swage end
+    SectionRule(arg0=2599,     arg1=0,         lookup_key=2),  # InnerDimple2
+)
+fd.rule_array_ptr   = ctypes.addressof(PROBE_RULES)
+fd.rule_array_count = len(PROBE_RULES)
+print(f"[+] FrameDefRecord.rule_array_ptr   = 0x{fd.rule_array_ptr:08x}")
+print(f"[+] FrameDefRecord.rule_array_count = {fd.rule_array_count}")
 
 print()
 print(f"[+] FrameRecord size:         0x{ctypes.sizeof(FrameRecord):x} ({ctypes.sizeof(FrameRecord)} bytes)")
@@ -555,37 +624,57 @@ print("[+] cleanup() returned, gate restored on next authenticate() call.")
 print()
 print(textwrap.dedent("""\
     ============================================================
-    SUMMARY (2026-05-03 — BREAKTHROUGH)
+    SUMMARY (2026-05-03 - SectionRule struct RE complete)
     ============================================================
-    rc=8 IS CLEARED. add_frameobject returns 0. The frame is
-    inserted into engine.frames_list (Count=1 after the call).
-    generate_operations(0) returns 0. get_operations_for(1) returns
-    0 with an empty ops array.
+    add_frameobject still returns 0 with the 12-byte SectionRule
+    probe array installed. The rule loop runs without crashing.
+    ops_len=0 because the rule lookup_keys don't match anything
+    in the (empty) parent TMachineSetup catalog.
 
-    THE FIX (two bugs in one):
-      1. Endpoint encoding — TPoint is (x:double @ 0, y:double @ 8).
-         add_frameobject pushes endpoint1 from FrameRecord as
-         (esi+0x22 → x_lo, esi+0x26 → x_hi, esi+0x2a → y_lo,
-          esi+0x2e → y_hi). The previous struct field naming
-         (p1_x1/p1_y1/p1_x2/p1_y2) was misleading — those bytes
-         are actually (x_lo, x_hi, y_lo, y_hi). Writing the doubles
-         via memmove at the correct offsets fixed it.
-      2. The fake-AnsiString at SectionLookupRecord +0x9f was wrong:
-         that field is a pointer to a 14-byte SectionRule array,
-         with +0xa3 being the COUNT (not an AnsiString length).
-         All-zero SectionLookupRecord (count=0 in all four loops)
-         is accepted — no global catalog needed.
+    KEY FINDINGS (this session):
 
-    REMAINING WORK FOR ACTUAL OPS:
-      * ops_len=0 because we fed the engine an empty rule set. To
-        get non-empty Swage/InnerDimple/etc. arrays out of
-        get_operations_for, populate the SectionLookupRecord:
-          - +0x9f / +0xa3 = SectionRule[14B] array + count
-          - +0x19 / +0x1d = TPoint16[16B] array + count (only if >1)
-          - +0x21 / +0x25 = TPoint16[16B] array + count (only if >1)
-          - +0x29 / +0x2d = TPoint16[16B] array + count (only if >1)
-        Capture one known-good rule set by hooking
-        Tooling.dll!add_frameobject from a running Detailer.exe
-        (Frida or MinHook) — see record-layouts.md "Path A".
+      1. Class identification via VMT walk (probe-vmts.py):
+           [0x52f158] = TMachineSetup  (NOT TSection)
+           [0x5482fc] = TFrameObject
+           [0x52fcb8] = TSectionSpecificOptions
+           [0x52fe9c] = TSectionSetup
+           [0x4f7e68] = TCoord2D
+           [0x5280a8] = TProfileShape
+
+      2. The "14-byte SectionRule at SectionLookupRecord+0x9f"
+         hypothesis was WRONG. The actual rule iteration is in
+         add_frameobject @ VA 0x586507..0x586535, working on
+         FrameDefRecord+0x3b (ptr) / +0x3f (count), stride 12.
+
+      3. The rule struct is 12 bytes (3 dwords):
+           +0x00 dword arg0
+           +0x04 dword arg1
+           +0x08 dword lookup_key   (must match key in parent setup)
+
+      4. The op-generator is TFrameObject.vmt+8 @ RVA 0x14da9c.
+         It only emits Swage / InnerDimple / etc. ops when FOUR
+         sub-lists at TFrameObject+0x60..+0x6c are all non-NULL.
+         Those are populated by 0x4fbf64 calls in TFrameObject's
+         constructor, which enumerate data on the parent
+         TMachineSetup (built from SectionLookupRecord).
+
+      5. With an all-zero SectionLookupRecord, the parent catalog
+         is empty -> all rule lookups fail -> ops_len = 0.
+
+    NEXT STEP:
+      Get a real catalog into the SectionLookupRecord. Two paths:
+
+      (A) Call Detailer's .msup loader from inside our driver.
+          The decryption uses sskeleton.dll + libcrypto-3.dll
+          which our process already has loaded.
+      (B) Hook add_frameobject inside a running Detailer.exe to
+          capture one known-good 3-record byte trio per stick,
+          then replay headless. (Recommended in section-rule-
+          layout.md and record-layouts.md "Path A".)
+
+    Files:
+      scripts/tooling-rev/section-rule-layout.md  (this RE pass)
+      scripts/tooling-rev/section-catalog.md      (prior session)
+      scripts/tooling-rev/record-layouts.md       (prior session)
     ============================================================
 """))

@@ -211,3 +211,33 @@ describe("assertEndZone (INV-4)", () => {
     expect(r.violations).toEqual([]);
   });
 });
+
+import { dedupApex } from "./simplify-linear-truss.js";
+
+describe("dedupApex", () => {
+  it("returns input unchanged when all clusters are >= apexCollisionMm apart", () => {
+    const r = dedupApex([100, 200, 500], 17);
+    expect(r.kept).toEqual([100, 200, 500]);
+    expect(r.merged).toEqual([]);
+  });
+
+  it("merges two clusters within apexCollisionMm — keeps the lower position", () => {
+    // 100 and 110 collide (gap=10 < 17), keep 100, drop 110
+    const r = dedupApex([100, 110, 500], 17);
+    expect(r.kept).toEqual([100, 500]);
+    expect(r.merged).toEqual([110]);
+  });
+
+  it("handles clusters arriving in arbitrary order — sorts before dedup", () => {
+    const r = dedupApex([500, 110, 100], 17);
+    expect(r.kept).toEqual([100, 500]);
+    expect(r.merged).toEqual([110]);
+  });
+
+  it("merges three clusters in a tight chain", () => {
+    // 100, 110, 115 — all within 17 of next; keep the lowest (100), drop both
+    const r = dedupApex([100, 110, 115, 500], 17);
+    expect(r.kept).toEqual([100, 500]);
+    expect(r.merged).toEqual([110, 115]);
+  });
+});

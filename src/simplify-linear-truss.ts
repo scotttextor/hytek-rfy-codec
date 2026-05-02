@@ -148,5 +148,25 @@ export function assertEndZone(
   return { safe, violations };
 }
 
+// ---------- Validator: apex-collision dedup ----------
+
+/** Sort positions ascending and drop any that fall within `apexCollisionMm`
+ *  of the previously-kept position. Caller provides the keep-priority by
+ *  the array's natural ascending order — first-seen wins. */
+export function dedupApex(
+  positions: readonly number[],
+  apexCollisionMm: number
+): { kept: number[]; merged: number[] } {
+  const sorted = [...positions].sort((a, b) => a - b);
+  const kept: number[] = [];
+  const merged: number[] = [];
+  for (const p of sorted) {
+    const last = kept[kept.length - 1];
+    if (last === undefined || p - last >= apexCollisionMm) kept.push(p);
+    else merged.push(p);
+  }
+  return { kept, merged };
+}
+
 // Re-export ParsedStick for convenience
 export type { ParsedStick };

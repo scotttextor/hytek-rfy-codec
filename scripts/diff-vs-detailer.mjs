@@ -273,10 +273,23 @@ function buildOurProject(xmlText) {
           }
         }
 
-        // V-prefix cap rule — DEFERRED. Some V sticks need InnerNotch+LipNotch
-        // start cap, others don't. Need geometric detection (which end touches
-        // chord) before applying broadly. Empirically reverted 2026-05-02:
-        // applying universally regresses overall match.
+        // V-prefix cap rule for SHORT V sticks (length < 100mm).
+        // Verified vs HG260012 FJ J1203/V5 (length 83): ref has
+        // InnerNotch[0..39] + LipNotch[0..39] start cap (paired notch)
+        // and Swage[44..83] end cap. Currently W rule emits Swage at both
+        // ends — wrong start for short V's.
+        if (/^V\d/.test(stickName) && usage === "web" && length < 100) {
+          // Remove start-cap Swage[0..39]
+          for (let i = stick.tooling.length - 1; i >= 0; i--) {
+            const op = stick.tooling[i];
+            if (op.kind === "spanned" && op.type === "Swage" &&
+                op.startPos < 0.5 && op.endPos < 50) {
+              stick.tooling.splice(i, 1);
+            }
+          }
+          stick.tooling.push({ kind: "spanned", type: "InnerNotch", startPos: 0, endPos: 39 });
+          stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 39 });
+        }
         // Nog InnerService: position-dependent on stick context — skipping
         // Truss W angle-dependent: vertical=stud-style (16.5+39), diagonal=Kb-style (10+variable+chamfers)
         // 2026-05-02 — gated dimple swap by usage="web". LBW W sticks have

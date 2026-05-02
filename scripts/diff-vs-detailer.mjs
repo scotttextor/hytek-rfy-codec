@@ -471,25 +471,11 @@ function buildOurProject(xmlText) {
       const isRPFrame = /-(RP|HJ)-/i.test(plan.name);
       if (isRPFrame) {
         for (const s of sticks) {
-          const u = String(s.usage ?? "").toLowerCase();
-          // 1. Remove Chamfer@end on all sticks (ref has 0 ChamferEnd on RP)
+          // Remove Chamfer@start/@end on all sticks (ref has 0 Chamfers on RP)
           for (let i = s.tooling.length - 1; i >= 0; i--) {
             const op = s.tooling[i];
             if ((op.kind === "end" || op.kind === "start") && op.type === "Chamfer") {
               s.tooling.splice(i, 1);
-            }
-          }
-          // 2. S/J studs: convert Swage caps → LipNotch caps
-          if (u === "stud" || u === "endstud" || u === "trimstud" || u === "jackstud") {
-            const stickLen = distance3D(s.start, s.end);
-            for (const op of s.tooling) {
-              if (op.kind !== "spanned" || op.type !== "Swage") continue;
-              // Cap = at start (0..39) or end (length-39..length)
-              const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
-              const isEndCap = Math.abs(op.endPos - stickLen) < 1 && Math.abs(op.startPos - (stickLen - 39)) < 1;
-              if (isStartCap || isEndCap) {
-                op.type = "LipNotch";
-              }
             }
           }
         }

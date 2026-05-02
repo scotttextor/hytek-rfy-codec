@@ -642,6 +642,41 @@ for (const plan of ourDoc.project.plans) {
         stick.tooling = stick.tooling.filter(op =>
           !(op.kind === "start" || op.kind === "end") || op.type !== "Chamfer"
         );
+        // RP edge studs (S1, S11 etc — at chord ymin or ymax): caps are
+        // LipNotch instead of Swage. Verified vs HG260012 RP TH01-2F: S1 and
+        // S11 at y=5663-5704 and y=0-41 (panel edges) emit LipNotch caps;
+        // S2-S10 interior emit Swage caps.
+        if (/^S\d/.test(stick.name)) {
+          // Find this frame's chord (T or B with vertical projection)
+          let chord = null;
+          for (const other of frame.sticks) {
+            if (!/^[TB]\d/.test(other.name)) continue;
+            const oc = other.outlineCorners ?? [];
+            if (oc.length < 4) continue;
+            const oys = oc.map(c => c.y);
+            const oxs = oc.map(c => c.x);
+            const dy = Math.max(...oys) - Math.min(...oys);
+            const dx = Math.max(...oxs) - Math.min(...oxs);
+            if (dy > dx * 5) { chord = { yMin: Math.min(...oys), yMax: Math.max(...oys) }; break; }
+          }
+          if (chord) {
+            const sc = stick.outlineCorners ?? [];
+            if (sc.length >= 4) {
+              const sys = sc.map(c => c.y);
+              const studCy = (Math.min(...sys) + Math.max(...sys)) / 2;
+              const isEdgeStud = Math.abs(studCy - chord.yMin) < 50 || Math.abs(studCy - chord.yMax) < 50;
+              if (isEdgeStud) {
+                // Swap Swage caps → LipNotch caps
+                for (const op of stick.tooling) {
+                  if (op.kind !== "spanned" || op.type !== "Swage") continue;
+                  const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
+                  const isEndCap = Math.abs(op.endPos - len) < 1 && Math.abs(op.startPos - (len - 39)) < 1;
+                  if (isStartCap || isEndCap) op.type = "LipNotch";
+                }
+              }
+            }
+          }
+        }
         // For T/B chords: swap LipNotch caps to Swage caps (RP convention).
         // Verified vs HG260012 RP T1 ref: caps are Swage[0..39], we emit LipNotch.
         if (/^[TB]\d/.test(stick.name) && len > 100) {

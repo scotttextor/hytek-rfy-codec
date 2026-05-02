@@ -319,7 +319,9 @@ function buildOurProject(xmlText) {
         // entries. Position formula identical to Services.
         if (webActions.length > 0) {
           const u = String(stick.usage ?? "").toLowerCase();
-          if (u === "topplate" || u === "topchord") {
+          // Web@pt: T plates, top chords, AND bottom chords (FJ B-chord
+          // gets Web@midpoint marker — agent verified vs HG260012 FJ corpus).
+          if (u === "topplate" || u === "topchord" || u === "bottomchord") {
             const sStart = stick.start, sEnd = stick.end;
             const dxAbs = Math.abs(sEnd.x - sStart.x);
             const dyAbs = Math.abs(sEnd.y - sStart.y);

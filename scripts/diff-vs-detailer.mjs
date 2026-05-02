@@ -68,7 +68,7 @@ function roleForUsage(usage,type,name) {
 }
 
 function buildOurProject(xmlText) {
-  const parser = new XMLParser({ ignoreAttributes:false, attributeNamePrefix:"@_", parseAttributeValue:true, parseTagValue:false, isArray:n=>["plan","frame","stick","vertex"].includes(n) });
+  const parser = new XMLParser({ ignoreAttributes:false, attributeNamePrefix:"@_", parseAttributeValue:true, parseTagValue:false, isArray:n=>["plan","frame","stick","vertex","tool_action"].includes(n) });
   const root = parser.parse(xmlText).framecad_import;
   const firstStick = root.plan?.[0]?.frame?.[0]?.stick?.[0];
   const setup = getMachineSetupForProfile(Number(firstStick?.profile?.["@_web"] ?? 70));
@@ -85,6 +85,20 @@ function buildOurProject(xmlText) {
       const frameElevation = Number(String(elevText).trim()) || 0;
       let frameBasis = null;
       try { frameBasis = deriveFrameBasis(env, true); } catch {}
+      // Parse <tool_action name="Service"> elements — these are vertical service
+      // line cuts authored in Detailer's input XML. Each Service is a vertical
+      // line (start.x==end.x, start.y==end.y, varying z). InnerService ops on
+      // T plates and N nogs are derived from these — they are NOT a fixed
+      // schedule. The current rule-table fixed offset @306/600 is wrong; the
+      // real positions come from these XML elements.
+      // Verified 2026-05-02 via per-frame analysis on HG260012 LBW corpus.
+      const serviceActions = [];
+      for (const ta of (f.tool_action ?? [])) {
+        if (String(ta["@_name"]) !== "Service") continue;
+        const sStart = parseTriple(typeof ta.start === "string" ? ta.start : ta.start?.["#text"] ?? "0,0,0");
+        const sEnd = parseTriple(typeof ta.end === "string" ? ta.end : ta.end?.["#text"] ?? "0,0,0");
+        serviceActions.push({ start: sStart, end: sEnd });
+      }
       const sticks = [];
       for (const s of f.stick ?? []) {
         const profile = {
@@ -223,6 +237,57 @@ function buildOurProject(xmlText) {
           }
         }
         // Web@pt rule: predicate not yet derived (Detailer is selective per stud) — skip.
+
+        // InnerService from XML <tool_action name="Service"> — emit on T plates
+        // and N nogs. Position formula derived 2026-05-02 vs HG260012 corpus:
+        //   pos = |stick.start[run_axis] - service.start[run_axis]| - 4mm
+        // The 4mm trim is the F300i pre-punch offset (consistent across setups).
+        // Selection rule:
+        //   T plate:  service whose max(start.z, end.z) is within 50mm of T.z
+        //   N nog:    service whose z-range CONTAINS the nog's z
+        //   B plate:  NEVER (verified 0/516 cases on LBW corpus)
+        if (serviceActions.length > 0) {
+          const u = String(stick.usage ?? "").toLowerCase();
+          const isTopPlate = u === "topplate" || u === "topchord";
+          const isNog = u === "nog" || u === "noggin";
+          if (isTopPlate || isNog) {
+            // Determine run axis: whichever of x/y varies more along the stick
+            const sStart = stick.start, sEnd = stick.end;
+            const dxAbs = Math.abs(sEnd.x - sStart.x);
+            const dyAbs = Math.abs(sEnd.y - sStart.y);
+            const useX = dxAbs >= dyAbs;
+            const stickAxisStart = useX ? sStart.x : sStart.y;
+            const stickPerp = useX ? sStart.y : sStart.x;
+            const stickZ = (sStart.z + sEnd.z) / 2;
+            for (const svc of serviceActions) {
+              // Service is vertical: start.x==end.x, start.y==end.y, varying z.
+              const svcAxis = useX ? svc.start.x : svc.start.y;
+              const svcPerp = useX ? svc.start.y : svc.start.x;
+              // Skip services on different walls (perpendicular position differs)
+              if (Math.abs(svcPerp - stickPerp) > 100) continue;
+              const svcZmin = Math.min(svc.start.z, svc.end.z);
+              const svcZmax = Math.max(svc.start.z, svc.end.z);
+              let matches = false;
+              if (isTopPlate) {
+                // Service must reach up to within 50mm of plate Z
+                matches = Math.abs(svcZmax - stickZ) < 50;
+              } else if (isNog) {
+                // Nog Z must lie within service's vertical extent
+                matches = stickZ >= svcZmin - 5 && stickZ <= svcZmax + 5;
+              }
+              if (!matches) continue;
+              const rawPos = Math.abs(stickAxisStart - svcAxis) - 4.0;
+              if (rawPos < 5 || rawPos > length - 5) continue;
+              stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round(rawPos * 10000) / 10000 });
+            }
+            // Re-sort tooling by position so InnerService ops slot in correctly
+            stick.tooling.sort((a, b) => {
+              const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? 0 : length));
+              const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? 0 : length));
+              return pa - pb;
+            });
+          }
+        }
         sticks.push(stick);
       }
       plan.frames.push({ name: String(f["@_name"]), envelope: env, sticks });

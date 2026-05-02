@@ -60,6 +60,9 @@ export interface ProfileGate {
   shape: "C" | "S"; gauge: string;
 }
 
+/** HYTEK Linear-truss default profile: 89×41 asymmetric C ("LC"), 0.75mm BMT.
+ *  lFlange=38, rFlange=41 is intentional asymmetry; both lips are 11mm.
+ *  These values gate every Linear-truss frame submitted to the simplifier. */
 export const DEFAULT_PROFILE_GATE: ProfileGate = {
   web: 89, rFlange: 41, lFlange: 38, lLip: 11, rLip: 11, shape: "C", gauge: "0.75",
 };
@@ -88,6 +91,7 @@ export function isLinearTruss(
   planName: string,
   gate: ProfileGate = DEFAULT_PROFILE_GATE,
 ): GateResult {
+  if (frame.type === undefined) return { ok: false, reason: "frame type missing (parser did not populate frame.type)" };
   if (frame.type !== "Truss") return { ok: false, reason: `frame type "${frame.type}" not Truss` };
   if (!/-LIN-/i.test(planName)) return { ok: false, reason: `plan "${planName}" not Linear` };
   for (const s of frame.sticks) {
@@ -98,8 +102,8 @@ export function isLinearTruss(
     if (wrongProfile) {
       return { ok: false, reason: `${s.name} wrong profile (${p.web}x${p.rFlange} ${p.shape})` };
     }
-    if (s.gauge !== gate.gauge) {
-      return { ok: false, reason: `${s.name} wrong gauge (${s.gauge})` };
+    if ((s.gauge ?? "").trim() !== gate.gauge.trim()) {
+      return { ok: false, reason: `${s.name} wrong gauge (${s.gauge ?? "missing"})` };
     }
   }
   const hasChord = frame.sticks.some(s => /chord/i.test(s.usage));

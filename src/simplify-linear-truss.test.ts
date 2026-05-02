@@ -132,4 +132,28 @@ describe("isLinearTruss", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toMatch(/no web/i);
   });
+
+  it("APPLIES when gauge has surrounding whitespace (matches via trim)", () => {
+    const s = makeStick("T1", "TopChord", {}, " 0.75 ");
+    const f = makeFrame("TN1", "Truss", [s, makeStick("W1", "Web")]);
+    expect(isLinearTruss(f, "GF-LIN-89.075")).toEqual({ ok: true });
+  });
+
+  it("SKIPS frames where frame.type is undefined", () => {
+    const f = makeFrame("X1", undefined as unknown as string, [makeStick("T1", "TopChord"), makeStick("W1", "Web")]);
+    const r = isLinearTruss(f, "GF-LIN-89.075");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toMatch(/frame type missing/i);
+  });
+
+  it("respects a custom profileGate override (70x41 0.75)", () => {
+    const customGate = { web: 70, rFlange: 41, lFlange: 38, lLip: 11, rLip: 11, shape: "C" as const, gauge: "0.75" };
+    const stick70 = makeStick("T1", "TopChord", { web: 70 });
+    const f70 = makeFrame("TN1", "Truss", [stick70, makeStick("W1", "Web", { web: 70 })]);
+    expect(isLinearTruss(f70, "GF-LIN-70.075", customGate)).toEqual({ ok: true });
+    // And 89x41 frame must SKIP under the 70x41 gate
+    const f89 = makeFrame("TN2", "Truss", [makeStick("T1", "TopChord"), makeStick("W1", "Web")]);
+    const r89 = isLinearTruss(f89, "GF-LIN-89.075", customGate);
+    expect(r89.ok).toBe(false);
+  });
 });

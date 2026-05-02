@@ -179,22 +179,12 @@ for i in range(0, 0x32, 16):
     print(f"    +{i:02x}  {chunk.hex(' ')}")
 
 # SectionLookupRecord (185 bytes)
+# CORRECTION 2026-05-02: +0x9f is NOT an AnsiString pointer — it's a pointer to
+# an array of 14-byte SectionRule records, and +0xa3 is the COUNT.
+# Zero them both out so the section ctor's rule-loading loops do nothing.
 sl_buf = (ctypes.c_uint8 * 0xb9)()
 ctypes.memset(ctypes.byref(sl_buf), 0, 0xb9)
-
-# Build a Delphi AnsiString for "89S41-1.15"
-SECTION_NAME = b"89S41-1.15"
-ansistr_buf = (ctypes.c_uint8 * (12 + len(SECTION_NAME) + 1))()
-ctypes.c_uint16.from_buffer(ansistr_buf, 0).value = 1252       # codepage
-ctypes.c_uint16.from_buffer(ansistr_buf, 2).value = 1          # element size
-ctypes.c_int32.from_buffer(ansistr_buf, 4).value = -1          # refcount = -1 (literal)
-ctypes.c_int32.from_buffer(ansistr_buf, 8).value = len(SECTION_NAME)
-ctypes.memmove(ctypes.addressof(ansistr_buf) + 12, SECTION_NAME, len(SECTION_NAME))
-
-ansistr_data_ptr = ctypes.addressof(ansistr_buf) + 12
-# ptr at +0x9f, length at +0xa3
-ctypes.c_uint32.from_buffer(sl_buf, 0x9f).value = ansistr_data_ptr
-ctypes.c_int32.from_buffer(sl_buf, 0xa3).value = len(SECTION_NAME)
+# +0x9f (rules ptr) = 0; +0xa3 (rules count) = 0  → no iterations
 
 # FrameDefRecord (75 bytes)
 fd_buf = (ctypes.c_uint8 * 0x4b)()

@@ -35,7 +35,7 @@ export function layoutFrame(frame) {
     return out;
 }
 const STUD_ROLES = new Set(["S", "J"]); // narrow vertical members only
-const TRUSS_WEB_ROLES = new Set(["W"]); // truss web members (verticals + diagonals)
+const TRUSS_WEB_ROLES = new Set(["W", "V"]); // truss web members: W=diagonal, V=vertical post (FJ joists)
 const CRIPPLE_ROLES = new Set(["Kb", "H"]); // wide horizontal+vertical hybrids — handled separately
 const TOP_PLATE_ROLES = new Set(["T", "Tp"]);
 const BOT_PLATE_ROLES = new Set(["B", "Bp"]);

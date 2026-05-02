@@ -209,22 +209,53 @@ def apply_centreline_rule(frame, csv_components):
                 out.append(p)
         return out
 
-    # Patch the CSV components belonging to this frame
-    for comp in csv_components:
-        if comp['kind'] != 'component': continue
-        # Match by frame prefix
-        prefix = frame['name'] + '-'
-        if not comp['name'].startswith(prefix): continue
+    def stick_length(s):
+        return math.hypot(s['end'][0]-s['start'][0], s['end'][2]-s['start'][2])
+
+    # Match each CSV component to its XML stick by name + length.
+    # Chord splices: CSV uses "B1 (Box1)" / "B1 (Box2)" but XML uses "B2" / "B3".
+    # Match by length-with-tolerance to handle this.
+    prefix = frame['name'] + '-'
+    csv_in_frame = [c for c in csv_components
+                    if c['kind'] == 'component' and c['name'].startswith(prefix)]
+
+    xml_used = [False] * len(sticks)
+    csv_to_xml_name = {}  # csv full name → xml stick name
+    for comp in csv_in_frame:
         short = comp['name'][len(prefix):]
-        if short not in name_to_stick: continue
+        # Strip "(BoxN)" suffix to get base name
+        base = re.sub(r'\s*\(Box\d+\)\s*$', '', short).strip()
+        try:
+            comp_len = float(comp['header'][7])
+        except (ValueError, IndexError):
+            continue
+        # Pass 1: exact base name AND length match (within 1mm)
+        best_idx = None
+        for i, s in enumerate(sticks):
+            if xml_used[i]: continue
+            if s['name'] == base and abs(stick_length(s) - comp_len) < 1.0:
+                best_idx = i
+                break
+        # Pass 2: length match only (within 5mm — handles B1→B2 chord splices)
+        if best_idx is None:
+            best_diff = 5.0
+            for i, s in enumerate(sticks):
+                if xml_used[i]: continue
+                d = abs(stick_length(s) - comp_len)
+                if d < best_diff:
+                    best_diff = d
+                    best_idx = i
+        if best_idx is not None:
+            xml_used[best_idx] = True
+            csv_to_xml_name[comp['name']] = sticks[best_idx]['name']
 
-        # Remove old BOLT HOLES, keep everything else
+    # Patch CSV components: replace BOLT HOLES with new centreline-intersection positions
+    for comp in csv_in_frame:
+        xml_name = csv_to_xml_name.get(comp['name'])
+        if not xml_name: continue
         kept = [(t, p) for t, p in comp['ops'] if t != 'BOLT HOLES']
-
-        # Dedupe positions, then add new BOLT HOLES at centreline-intersection positions
-        for pos in dedupe_positions(new_bolts.get(short, [])):
+        for pos in dedupe_positions(new_bolts.get(xml_name, [])):
             kept.append(('BOLT HOLES', round(pos, 2)))
-
         comp['ops'] = kept
 
 

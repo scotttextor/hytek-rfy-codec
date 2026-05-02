@@ -254,60 +254,113 @@ export function generateFrameContextOps(frame) {
                 pos: round(startPos + internalDimpleOffset),
             });
         }
-        // Truss W members crossing this chord: use line-intersection geometry
-        // (bbox.cx is wrong for diagonals — would give the bbox midpoint, not
-        // the actual crossing-x at the chord's y-level).
+        // Truss W/V members crossing this chord — use the agent-derived edge
+        // formula (verified 2026-05-02 vs HG260012 FJ corpus, all 14 notches on
+        // JB1210-1/T4 exact within 0.05mm):
+        //   For each web, compute long-edge intersections with chord's INNER
+        //   face. Each web contributes [edge_lo - offset, edge_hi + offset]
+        //   where offset = 2.0 / sin(θ), θ being the web's angle vs chord.
+        //   Adjacent webs whose extended ranges overlap MERGE into one notch.
+        //
+        // Determine inner face: for top chord, inner face is the lower y of
+        // the chord's bbox (where webs come up from below). For bottom chord,
+        // inner face is the upper y. This branches on usage.
+        const usage = String(plate.stick.usage ?? "").toLowerCase();
+        const isBottom = usage === "bottomplate" || usage === "bottomchord";
+        const innerY = isBottom ? plate.box.yMax : plate.box.yMin;
+        const webCrossings = [];
         for (const web of trussWebs) {
-            const crossingX = getCrossingX(web.stick, plateCenterY);
-            if (crossingX === null)
+            const corners = web.stick.outlineCorners;
+            if (!corners || corners.length < 4)
                 continue;
-            // Skip if crossing is outside plate's X range
-            if (crossingX < plate.box.xMin + 50)
+            // Long edges of web rectangle: [0]→[1] and [3]→[2] (the two parallel
+            // long sides). For vertical V both have x1==x2; for diagonal W they
+            // are sloped lines.
+            const edge1 = { p1: corners[0], p2: corners[1] };
+            const edge2 = { p1: corners[3], p2: corners[2] };
+            function intersectAtY(p1, p2, atY) {
+                const dy = p2.y - p1.y;
+                if (Math.abs(dy) < 1e-6)
+                    return null;
+                const t = (atY - p1.y) / dy;
+                return p1.x + t * (p2.x - p1.x);
+            }
+            const x1 = intersectAtY(edge1.p1, edge1.p2, innerY);
+            const x2 = intersectAtY(edge2.p1, edge2.p2, innerY);
+            if (x1 === null || x2 === null)
                 continue;
-            if (crossingX > plate.box.xMax - 50)
+            const edge_lo = Math.min(x1, x2);
+            const edge_hi = Math.max(x1, x2);
+            // Compute angle θ between long edge and chord axis (horizontal).
+            const e1dx = edge1.p2.x - edge1.p1.x;
+            const e1dy = edge1.p2.y - edge1.p1.y;
+            const e1len = Math.sqrt(e1dx * e1dx + e1dy * e1dy);
+            if (e1len < 1)
                 continue;
-            const localPos = plateLocalPosition(plate, crossingX);
-            if (localPos < span + 5)
+            const sinTheta = Math.abs(e1dy) / e1len;
+            if (sinTheta < 0.1)
+                continue; // near-horizontal edge — degenerate
+            const offset = 2.0 / sinTheta;
+            // Dimple sits at the web's CENTERLINE crossing at the chord's
+            // CENTERLINE Y (not the inner-face edge midpoint). For vertical
+            // V the two are identical; for diagonal W they differ by ~6mm.
+            // Verified vs HG260012 JB1210-1/T4: ref dimple at 260.6 = W8 centerline
+            // at chord-center, NOT 254.3 = W8 edges' midpoint at chord-inner.
+            const centerCrossingX = getCrossingX(web.stick, plateCenterY);
+            if (centerCrossingX === null)
                 continue;
-            if (localPos > plate.stick.length - span - 5)
+            const centerLocalPos = plateLocalPosition(plate, centerCrossingX);
+            // Convert edge intersections to chord-local position
+            const localLo = plateLocalPosition(plate, edge_lo);
+            const localHi = plateLocalPosition(plate, edge_hi);
+            // Skip if centerline crossing is outside plate's range
+            if (centerLocalPos < span + 5)
                 continue;
-            const quantizedPos = Math.round(localPos / 30) * 30;
-            if (seenPositions.has(quantizedPos))
+            if (centerLocalPos > plate.stick.length - span - 5)
                 continue;
-            seenPositions.add(quantizedPos);
-            // Truss web on chord: same LipNotch + Dimple pattern as a stud crossing.
-            const lipSpan = internalSpan; // 45mm — webs are 41mm wide
-            const startPos = localPos - lipSpan / 2;
-            const endPos = startPos + lipSpan;
-            stickOps.push({
-                kind: "spanned", type: "LipNotch",
-                startPos: round(startPos), endPos: round(endPos),
-            });
-            stickOps.push({
-                kind: "point", type: "InnerDimple",
-                pos: round(startPos + internalDimpleOffset),
+            webCrossings.push({
+                localPosLo: Math.min(localLo, localHi),
+                localPosHi: Math.max(localLo, localHi),
+                offset,
+                centerLocalPos: centerLocalPos,
             });
         }
-        // Detailer JOINS adjacent LipNotches into single wider notches — verified
-        // 2026-05-01 against HG260044 GF-TIN PC7-1/B1: 6 W crossings emit ONE
-        // wide LipNotch (513..629, span 116) instead of multiple 45mm notches.
-        // Threshold: notches whose endPos is within JOIN_GAP_MM of the next
-        // notch's startPos get merged. Dimples preserved (they live at the
-        // original crossing positions, not at notch endpoints).
-        //
-        // For trusses (top/bottom chord), the join distance is LARGER because
-        // truss panel-points are spaced wider. For walls, join only very-close
-        // notches (e.g. virtual-stud-crossings on the same Kb).
-        const isTrussChord = trussWebs.length > 0 && stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch");
-        // 2026-05-02 — wall LipNotches are NEVER joined. Detailer keeps every
-        // stud crossing as its own 45mm notch even when they overlap. Verified
-        // vs HG260001 LBW L2/T1: triple stud cluster at x=505/547/589 produces
-        // 3 OVERLAPPING LipNotches [441..486]+[483..528]+[525..570]. Joining any
-        // pair was wrong.
-        // Trusses still join (HG260044 TIN PC7-1-B1: 4-web cluster joins to one
-        // 102mm-wide notch).
-        if (isTrussChord) {
-            joinAdjacentLipNotches(stickOps, 8);
+        // Sort by center, cluster: webs whose extended ranges overlap merge.
+        webCrossings.sort((a, b) => a.centerLocalPos - b.centerLocalPos);
+        const clusters = [];
+        // Cluster threshold: webs whose extended ranges have <= ~15mm gap merge.
+        // Strict overlap is too tight — real Detailer output joins V+W pairs that
+        // are 10mm apart (one panel-point's V + neighboring W). Verified vs HG260012
+        // JB1210-1/T4 ref: V6@311 + W8@260.6 with edges 290.5/331.5 + 232.9/275.8
+        // (gap ~15mm) emit single LipNotch [230.7..333.5].
+        const CHORD_CLUSTER_GAP = 15;
+        for (const wc of webCrossings) {
+            const wcStart = wc.localPosLo - wc.offset;
+            const wcEnd = wc.localPosHi + wc.offset;
+            const last = clusters[clusters.length - 1];
+            if (last && wcStart <= last.endPos + CHORD_CLUSTER_GAP) {
+                last.endPos = Math.max(last.endPos, wcEnd);
+                last.centers.push(wc.centerLocalPos);
+            }
+            else {
+                clusters.push({ startPos: wcStart, endPos: wcEnd, centers: [wc.centerLocalPos] });
+            }
+        }
+        // Cap clamping: if cluster reaches plate end, clamp to [0, length]
+        for (const c of clusters) {
+            if (c.startPos < 0)
+                c.startPos = 0;
+            if (c.endPos > plate.stick.length)
+                c.endPos = plate.stick.length;
+            const quantizedCenter = Math.round((c.centers[0]) / 30) * 30;
+            if (seenPositions.has(quantizedCenter))
+                continue;
+            seenPositions.add(quantizedCenter);
+            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(c.startPos), endPos: round(c.endPos) });
+            // InnerDimple at each web's center within the cluster
+            for (const center of c.centers) {
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(center) });
+            }
         }
         // InnerService — handled by per-stick rule in table.ts (fixed @306, @906,
         // @1506... every 600mm). The frame-context midpoint approach was reverted

@@ -107,12 +107,14 @@ function buildOurProject(xmlText) {
       // Verified 2026-05-02 via per-frame analysis on HG260012 LBW corpus.
       const serviceActions = [];
       const webActions = [];
+      const flangeHoleActions = [];
       for (const ta of (f.tool_action ?? [])) {
         const name = String(ta["@_name"]);
         const sStart = parseTriple(typeof ta.start === "string" ? ta.start : ta.start?.["#text"] ?? "0,0,0");
         const sEnd = parseTriple(typeof ta.end === "string" ? ta.end : ta.end?.["#text"] ?? "0,0,0");
         if (name === "Service") serviceActions.push({ start: sStart, end: sEnd });
         else if (name === "Web") webActions.push({ start: sStart, end: sEnd });
+        else if (name === "FlangeHole") flangeHoleActions.push({ start: sStart, end: sEnd });
       }
       const sticks = [];
       for (const s of f.stick ?? []) {
@@ -317,6 +319,39 @@ function buildOurProject(xmlText) {
         // logic as Services (vertical line, z-range reaches/contains plate z).
         // 2026-05-02: ref T1 has Web @254 etc. matching XML <tool_action name="Web">
         // entries. Position formula identical to Services.
+        // FlangeHole tool_actions → ScrewHoles@pt (TIN truss paired-chord
+        // markers). Verified vs HG250057/U2-GF-TIN-70.075/TN202-1: T2 (outer
+        // chord) has 21 ScrewHoles paired with T3 (inner chord) Web@pt at
+        // identical X positions. Each chord gets one half via z-range matching.
+        if (flangeHoleActions.length > 0) {
+          const u = String(stick.usage ?? "").toLowerCase();
+          if (u === "topchord" || u === "bottomchord") {
+            const sStart = stick.start, sEnd = stick.end;
+            const dxAbs = Math.abs(sEnd.x - sStart.x);
+            const dyAbs = Math.abs(sEnd.y - sStart.y);
+            const useX = dxAbs >= dyAbs;
+            const stickAxisStart = useX ? sStart.x : sStart.y;
+            const stickPerp = useX ? sStart.y : sStart.x;
+            const stickZ = (sStart.z + sEnd.z) / 2;
+            for (const fh of flangeHoleActions) {
+              const fhAxis = useX ? fh.start.x : fh.start.y;
+              const fhPerp = useX ? fh.start.y : fh.start.x;
+              if (Math.abs(fhPerp - stickPerp) > 100) continue;
+              const fhZmin = Math.min(fh.start.z, fh.end.z);
+              const fhZmax = Math.max(fh.start.z, fh.end.z);
+              if (stickZ < fhZmin - 5 || stickZ > fhZmax + 5) continue;
+              const rawPos = Math.abs(stickAxisStart - fhAxis);
+              if (rawPos < 5 || rawPos > length - 5) continue;
+              stick.tooling.push({ kind: "point", type: "ScrewHoles", pos: Math.round(rawPos * 10000) / 10000 });
+            }
+            stick.tooling.sort((a, b) => {
+              const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? 0 : length));
+              const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? 0 : length));
+              return pa - pb;
+            });
+          }
+        }
+
         if (webActions.length > 0) {
           const u = String(stick.usage ?? "").toLowerCase();
           // Web@pt: T plates, top chords, AND bottom chords (FJ B-chord

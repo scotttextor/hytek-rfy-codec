@@ -10,6 +10,9 @@ What it does:
      sticks' physical bounds:
        - Project intersection onto each stick's local axis
        - Add a "BOLT HOLES" op at that local position on each stick
+       - EXCEPT pairs where both sticks have usage="Web". HYTEK Linear trusses
+         fasten webs to chords, never web-to-web. FrameCAD does not punch
+         BOLT HOLES at W<->W mathematical crossings, and neither do we.
   3. Keep all OTHER ops untouched (SWAGE, LIP NOTCH, LEG NOTCH, etc.)
   4. Replace original BOLT HOLES with the new centreline-intersection BOLT HOLES.
 

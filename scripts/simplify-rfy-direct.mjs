@@ -3,6 +3,11 @@
 // PartialFlange, LipNotch, Swage, InnerDimple) exactly as in the source RFY,
 // and only replaces Web (bolt-hole) ops with the new centreline-intersection rule.
 //
+// Centreline rule fires for every pair of sticks whose centrelines intersect
+// within both sticks' bounds, EXCEPT pairs where both sticks have usage="Web".
+// HYTEK Linear trusses fasten webs only to chords (never web-to-web), and
+// FrameCAD does not punch BOLT HOLES at W<->W mathematical crossings.
+//
 // Usage:
 //   node scripts/simplify-rfy-direct.mjs original.rfy truss.xml [--out simplified.rfy]
 //                                          [--report-only] [--exclude FRAME1,FRAME2]

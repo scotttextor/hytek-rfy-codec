@@ -112,7 +112,8 @@ function buildOurProject(xmlText) {
         const isFullStud = usage === "stud" || usage === "endstud" || usage === "jackstud" || usage === "trimstud";
         const isHeader = /^H\d/.test(stickName);
         const isNog = usage === "nog" || usage === "noggin";
-        const T = isFullStud ? 2.0 : (isNog ? 1.0 : 0);
+        const isJoistWeb = /^V\d/.test(stickName) && usage === "web";
+        const T = (isFullStud || isJoistWeb) ? 2.0 : (isNog ? 1.0 : 0);
         void isHeader;
         if (T > 0) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;

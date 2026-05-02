@@ -161,10 +161,10 @@ export const RULE_TABLE = [
         lengthRange: [0, Infinity],
         rules: [
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
-            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Wall B plates: Web access slot for sub-floor wiring (HG260001 has it on B1, B2, B3 alike)" },
+            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx), notes: "70mm wall B plates: Web@8 only on ground-floor (slab-bearing) walls" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Anchor bolt for slab attachment — wall B plates only" },
-            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "Anchor bolt for slab attachment — wall B plates only" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx), notes: "70mm anchor bolt — ground-floor walls only" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx), notes: "70mm anchor bolt — ground-floor walls only" },
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
             // InnerNotch on B plates is SELECTIVE — same as T (some sticks have it,
@@ -194,10 +194,10 @@ export const RULE_TABLE = [
         lengthRange: [0, Infinity],
         rules: [
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
-            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm wall B plates" },
+            { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx), notes: "89mm wall B plates: Web@8 only on ground-floor (slab-bearing) walls" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
-            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm anchor bolt — same offset as 70mm (62mm). Verified vs HG260012 LBW-89.075." },
-            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord", notes: "89mm anchor bolt at length-62mm" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx), notes: "89mm anchor bolt — only on ground-floor walls (slab attachment)" },
+            { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx), notes: "89mm anchor bolt at length-62mm — ground-floor only" },
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
         ],
@@ -376,6 +376,20 @@ export function isWallPlan(ctx) {
     if (!ctx.planName)
         return false;
     return /(LBW|NLBW|LOAD-BEARING|NON-LOAD)/i.test(ctx.planName);
+}
+/** Ground-floor wall plan (slab-bearing) — gets Web@8 + slab anchor bolts.
+ *  Upper-floor walls (1F, 2F, etc.) sit on the floor structure and don't get
+ *  these slab-attachment ops. Plan name pattern: "...GF-LBW-..." or
+ *  "GF-LBW", "G-F-LBW", "GROUND-LBW". Verified vs HG260012 TH01-1F-LBW
+ *  reference (no bolts on B1) vs TH01-GF-LBW (bolts present).
+ */
+export function isGroundFloor(ctx) {
+    if (!ctx.planName)
+        return true; // Default: emit (matches single-storey HG260001/HG260044)
+    // Match -GF- or G-F or GROUND in plan name. Reject 1F/2F/UF.
+    if (/-(1F|2F|3F|UF|U-F|UPPER)-/i.test(ctx.planName))
+        return false;
+    return true;
 }
 /**
  * Primary B plate detection: B1 OR any other B plate >= 1500mm long.

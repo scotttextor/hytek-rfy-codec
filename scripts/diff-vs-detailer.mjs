@@ -93,11 +93,13 @@ function buildOurProject(xmlText) {
       // real positions come from these XML elements.
       // Verified 2026-05-02 via per-frame analysis on HG260012 LBW corpus.
       const serviceActions = [];
+      const webActions = [];
       for (const ta of (f.tool_action ?? [])) {
-        if (String(ta["@_name"]) !== "Service") continue;
+        const name = String(ta["@_name"]);
         const sStart = parseTriple(typeof ta.start === "string" ? ta.start : ta.start?.["#text"] ?? "0,0,0");
         const sEnd = parseTriple(typeof ta.end === "string" ? ta.end : ta.end?.["#text"] ?? "0,0,0");
-        serviceActions.push({ start: sStart, end: sEnd });
+        if (name === "Service") serviceActions.push({ start: sStart, end: sEnd });
+        else if (name === "Web") webActions.push({ start: sStart, end: sEnd });
       }
       const sticks = [];
       for (const s of f.stick ?? []) {
@@ -290,6 +292,40 @@ function buildOurProject(xmlText) {
               stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round(rawPos * 10000) / 10000 });
             }
             // Re-sort tooling by position so InnerService ops slot in correctly
+            stick.tooling.sort((a, b) => {
+              const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? 0 : length));
+              const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? 0 : length));
+              return pa - pb;
+            });
+          }
+        }
+
+        // Web tool_actions: emit Web@pt on T plates only. Same selection
+        // logic as Services (vertical line, z-range reaches/contains plate z).
+        // 2026-05-02: ref T1 has Web @254 etc. matching XML <tool_action name="Web">
+        // entries. Position formula identical to Services.
+        if (webActions.length > 0) {
+          const u = String(stick.usage ?? "").toLowerCase();
+          if (u === "topplate" || u === "topchord") {
+            const sStart = stick.start, sEnd = stick.end;
+            const dxAbs = Math.abs(sEnd.x - sStart.x);
+            const dyAbs = Math.abs(sEnd.y - sStart.y);
+            const useX = dxAbs >= dyAbs;
+            const stickAxisStart = useX ? sStart.x : sStart.y;
+            const stickPerp = useX ? sStart.y : sStart.x;
+            const stickZ = (sStart.z + sEnd.z) / 2;
+            for (const w of webActions) {
+              const wAxis = useX ? w.start.x : w.start.y;
+              const wPerp = useX ? w.start.y : w.start.x;
+              if (Math.abs(wPerp - stickPerp) > 100) continue;
+              const wZmin = Math.min(w.start.z, w.end.z);
+              const wZmax = Math.max(w.start.z, w.end.z);
+              // Web action z-range must include or reach the plate's z
+              if (stickZ < wZmin - 5 || stickZ > wZmax + 5) continue;
+              const rawPos = Math.abs(stickAxisStart - wAxis);
+              if (rawPos < 5 || rawPos > length - 5) continue;
+              stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(rawPos * 10000) / 10000 });
+            }
             stick.tooling.sort((a, b) => {
               const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? 0 : length));
               const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? 0 : length));

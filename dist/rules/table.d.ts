@@ -37,6 +37,15 @@ export declare const RULE_TABLE: RuleGroup[];
 export declare function isWallPlan(ctx: {
     planName?: string;
 }): boolean;
+/** Ground-floor wall plan (slab-bearing) — gets Web@8 + slab anchor bolts.
+ *  Upper-floor walls (1F, 2F, etc.) sit on the floor structure and don't get
+ *  these slab-attachment ops. Plan name pattern: "...GF-LBW-..." or
+ *  "GF-LBW", "G-F-LBW", "GROUND-LBW". Verified vs HG260012 TH01-1F-LBW
+ *  reference (no bolts on B1) vs TH01-GF-LBW (bolts present).
+ */
+export declare function isGroundFloor(ctx: {
+    planName?: string;
+}): boolean;
 /**
  * Primary B plate detection: B1 OR any other B plate >= 1500mm long.
  * Detailer emits anchor bolts (slab attachment) only on the slab-resting

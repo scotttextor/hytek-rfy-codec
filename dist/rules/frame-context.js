@@ -508,10 +508,14 @@ export function generateFrameContextOps(frame) {
             joinAdjacentLipNotches(stickOps, HEADER_JOIN_GAP);
         }
     }
-    // Nogs: studs cross them; emit WEB+LIP NOTCH + DIMPLE + service holes at midpoints
+    // Nogs: studs cross them; emit InnerNotch + LipNotch + InnerDimple at every
+    // stud crossing. Per agent reverse-engineering (2026-05-02 vs HG260012 N1):
+    // adjacent stud pairs (centers within 45mm) get JOINED into a single wider
+    // notch (e.g. studs at 848+890 → notch [825.5..912.5] = 87mm).
     for (const nog of nogs) {
         const stickOps = result.get(nog.stick.name);
-        const studCrossingsOnNog = [];
+        // Collect all stud crossings first, then join adjacent ones
+        const nogCrossings = [];
         for (const stud of studs) {
             const yOverlap = stud.box.yMax >= nog.box.yMin && stud.box.yMin <= nog.box.yMax;
             if (!yOverlap)
@@ -526,18 +530,34 @@ export function generateFrameContextOps(frame) {
                 continue;
             const studWidth = stud.box.xMax - stud.box.xMin;
             const lipSpan = Math.max(45, studWidth + 4);
-            const startPos = localPos - lipSpan / 2;
-            const endPos = startPos + lipSpan;
-            stickOps.push({ kind: "spanned", type: "InnerNotch", startPos: round(startPos), endPos: round(endPos) });
-            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
-            stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
-            studCrossingsOnNog.push(localPos);
+            nogCrossings.push({ localPos, lipSpan });
         }
-        // InnerService on nogs — disabled 2026-05-02. Was emitting at stud-pair
-        // midpoints but Detailer's nog ops match the T-plate pattern (every 600mm
-        // from start). For now skip nogs entirely; the rule's per-stick emission
-        // doesn't fire for NOG_ROLES and Detailer's exact rule is still TBD.
-        void studCrossingsOnNog;
+        nogCrossings.sort((a, b) => a.localPos - b.localPos);
+        // Build notch ranges: each crossing creates [center-span/2 .. center+span/2].
+        // Merge ranges that overlap or touch within 0.1mm gap.
+        const ranges = [];
+        for (const c of nogCrossings) {
+            const s = c.localPos - c.lipSpan / 2;
+            const e = c.localPos + c.lipSpan / 2;
+            const last = ranges[ranges.length - 1];
+            if (last && s <= last.endPos + 0.1) {
+                // Merge — extend end, add center
+                last.endPos = Math.max(last.endPos, e);
+                last.centers.push(c.localPos);
+            }
+            else {
+                ranges.push({ startPos: s, endPos: e, centers: [c.localPos] });
+            }
+        }
+        // Emit InnerNotch + LipNotch (paired) for each merged range,
+        // InnerDimple at each ORIGINAL stud center within the range.
+        for (const r of ranges) {
+            stickOps.push({ kind: "spanned", type: "InnerNotch", startPos: round(r.startPos), endPos: round(r.endPos) });
+            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(r.startPos), endPos: round(r.endPos) });
+            for (const c of r.centers) {
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(c) });
+            }
+        }
     }
     return result;
 }

@@ -306,3 +306,98 @@ describe("assertRfyVersion", () => {
     expect(() => assertRfyVersion(xml)).toThrow(RfyVersionMismatch);
   });
 });
+
+// =============================================================================
+// Task 9: Core walker — simplifyLinearTrussRfy against reference fixtures
+// =============================================================================
+
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { simplifyLinearTrussRfy } from "./simplify-linear-truss.js";
+
+function readCorpus(rel: string): Buffer {
+  return readFileSync(join(__dirname, "..", "test-corpus", rel));
+}
+
+describe("simplifyLinearTrussRfy — reference fixtures", () => {
+  it("APPLY: 2603191 ROCKVILLE Linear truss — reduces BOLT HOLES", () => {
+    const rfy = readCorpus("2603191/2603191-GF-LIN-89.075.rfy");
+    const xml = readCorpus("2603191/2603191-ROCKVILLE.xml").toString("utf-8");
+    // Parse the input XML for ParsedFrame[] + plan name lookup.
+    const parsed = parsePlanXml(xml);
+    const result = simplifyLinearTrussRfy(rfy, parsed.frames, parsed.planNameByFrame);
+    // Reference observation: 1359 → 837 (-38%) per landmark
+    expect(result.appliedFrames.length).toBeGreaterThan(0);
+    const apply = result.decisions.filter(d => d.decision === "APPLY");
+    expect(apply.length).toBeGreaterThan(0);
+    const totalNew = apply.reduce((sum, d) => sum + (d.newBoltCount ?? 0), 0);
+    expect(totalNew).toBeLessThan(900);   // strictly fewer than original 1359
+    expect(totalNew).toBeGreaterThan(700); // not zero — sanity
+  });
+
+  it("SKIP: HG260044 GF-NLBW-89.075 wall — output bytes byte-identical to source", () => {
+    const rfy = readCorpus("HG260044/HG260044-GF-NLBW-89.075.rfy");
+    const result = simplifyLinearTrussRfy(rfy, [], new Map());
+    // Empty ParsedFrame[] means no frame can match → all SKIP.
+    // The walker must round-trip the RFY bytes-for-bytes when nothing matches.
+    expect(result.rfy.equals(rfy)).toBe(true);
+    expect(result.decisions.every(d => d.decision === "SKIP")).toBe(true);
+  });
+});
+
+// ----- helper -----
+function parsePlanXml(xml: string): {
+  frames: import("./synthesize-plans.js").ParsedFrame[];
+  planNameByFrame: Map<string, string>;
+} {
+  const frames: import("./synthesize-plans.js").ParsedFrame[] = [];
+  const planNameByFrame = new Map<string, string>();
+  const planRe = /<plan name="([^"]+)">([\s\S]*?)<\/plan>/g;
+  let pm: RegExpExecArray | null;
+  while ((pm = planRe.exec(xml)) !== null) {
+    const planName = pm[1];
+    const planBody = pm[2];
+    const frameRe = /<frame name="([^"]+)" type="([^"]+)"[^>]*>([\s\S]*?)<\/frame>/g;
+    let fm: RegExpExecArray | null;
+    while ((fm = frameRe.exec(planBody)) !== null) {
+      const frameName = fm[1];
+      planNameByFrame.set(frameName, planName);
+      const frameType = fm[2];
+      const stickRe = /<stick\s+([^>]*?)>\s*<start>([^<]+)<\/start>\s*<end>([^<]+)<\/end>\s*<profile\s+([^/>]*?)\/?>/g;
+      const sticks: import("./synthesize-plans.js").ParsedStick[] = [];
+      let sm: RegExpExecArray | null;
+      while ((sm = stickRe.exec(fm[3])) !== null) {
+        const attrs = sm[1];
+        const get = (k: string) => (attrs.match(new RegExp(`\\b${k}="([^"]*)"`)) ?? [, ""])[1];
+        const [sx, sy, sz] = sm[2].trim().split(",").map(parseFloat);
+        const [ex, ey, ez] = sm[3].trim().split(",").map(parseFloat);
+        const profStr = sm[4];
+        const pget = (k: string) => (profStr.match(new RegExp(`\\b${k}="([^"]*)"`)) ?? [, ""])[1];
+        sticks.push({
+          name: get("name"),
+          type: get("type") || "Stud",
+          usage: get("usage"),
+          gauge: get("gauge"),
+          flipped: false,
+          start: { x: sx, y: sy, z: sz },
+          end:   { x: ex, y: ey, z: ez },
+          profile: {
+            web: parseFloat(pget("web")) || 0,
+            lFlange: parseFloat(pget("l_flange")) || 0,
+            rFlange: parseFloat(pget("r_flange")) || 0,
+            lLip: parseFloat(pget("l_lip")) || 0,
+            rLip: parseFloat(pget("r_lip")) || 0,
+            shape: (pget("shape") as "C" | "S") || "C",
+          },
+        } as any);
+      }
+      frames.push({
+        name: frameName, type: frameType,
+        envelope: [], fasteners: [], fastenerCount: 0, toolActions: [],
+        length: 0, builtHeight: 0, profileLabel: planName, pitchMm: 89,
+        sticks,
+      } as any);
+    }
+  }
+  return { frames, planNameByFrame };
+}

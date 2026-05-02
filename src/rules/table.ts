@@ -341,6 +341,23 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
+  // ----------- TRUSS WEBS / FJ JOIST WEBS (W) on 89S41 -----------
+  // FJ joist V-prefix sticks are mapped to W role (usage="Web"). They get
+  // the same stud-style end clearance pattern: Swage span 39 + Dimple @16.5.
+  // Verified 2026-05-02 against HG260012 TH01-2F-FJ-89.075/J1201-1/V5
+  // (length 352): Swage 0..39 + Dimple@16.5 + Swage 313..352 + Dimple@335.5.
+  {
+    rolePattern: /^W$/,
+    profilePattern: /^89S41$/,
+    lengthRange: [0, Infinity],
+    rules: [
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+    ],
+  },
+
   // ----------- LINTELS (L) on 70S41 -----------
   //
   // 2026-05-02 — REWRITTEN. Earlier rule emitted InnerNotch + 16.5/39mm

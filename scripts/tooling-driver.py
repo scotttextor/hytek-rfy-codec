@@ -430,15 +430,48 @@ assert ctypes.sizeof(FrameDefRecord) == 0x4b, ctypes.sizeof(FrameDefRecord)
 fr = FrameRecord()
 ctypes.memset(ctypes.byref(fr), 0, ctypes.sizeof(fr))
 fr.frame_id        = 1
-# REVISED: each "endpoint" is actually a (x:double, y:double) pair, with
-# bytes laid out as (y[31:0], y[63:32], x[31:0], x[63:32]). The engine
-# computes Euclidean distance(endpoint1, endpoint2) and REQUIRES it ~= 0
-# (rc=8 if nonzero). So both endpoints must be the same point (likely 0,0).
-# The actual stick length lives at +0x17 / +0x1b (the two "unknown" dwords).
-length_double_bytes = struct.pack('<d', 2616.0)  # 8 bytes little-endian
+# CORRECTED 2026-05-03 (per record-layouts.md Finding 1):
+#   IsZeroDouble returns AL=1 when |d| ≈ 0, AL=0 when nonzero.
+#   The engine's gate at 0x586493 is `je 0x58649c` — taken when AL==0.
+#   So the engine WANTS distance(endpoint1, endpoint2) to be NONZERO.
+#   With both endpoints at origin, distance=0 → AL=1 → fail rc=8.
+#   Fix: endpoint1 = (2616.0, 0.0), endpoint2 = (0.0, 0.0). distance=2616.
+#
+# Encoding (verified against disasm of geom_op_42f5fc + tpoint_ctor_42f5a0):
+#   geom_op_42f5fc reads:
+#     fld qword [esi]      ; tpoint.x at offset 0
+#     fld qword [esi+8]    ; tpoint.y at offset 8
+#   tpoint_ctor_42f5a0 builds the TPoint from 4 dword args:
+#     [eax+0]  = x_low32
+#     [eax+4]  = x_high32
+#     [eax+8]  = y_low32
+#     [eax+0xc]= y_high32
+#   Then add_frameobject pushes from FrameRecord+esi:
+#     endpoint1: (esi+0x22 → x_low, esi+0x26 → x_high, esi+0x2a → y_low, esi+0x2e → y_high)
+#     endpoint2: (esi+0x01 → x_low, esi+0x05 → x_high, esi+0x09 → y_low, esi+0x0d → y_high)
+#
+#   So FrameRecord layout for endpoints is:
+#     +0x01..+0x08 = endpoint2.x (double)
+#     +0x09..+0x10 = endpoint2.y (double)
+#     +0x22..+0x29 = endpoint1.x (double)
+#     +0x2a..+0x31 = endpoint1.y (double)
+#
+# Write as raw bytes via memmove to avoid struct-field-naming confusion.
+fr_buf_addr = ctypes.addressof(fr)
+
+# endpoint1 = (x=2616.0, y=0.0)
+ctypes.memmove(fr_buf_addr + 0x22, struct.pack('<d', 2616.0), 8)
+ctypes.memmove(fr_buf_addr + 0x2a, struct.pack('<d', 0.0), 8)
+
+# endpoint2 = (x=0.0, y=0.0) — already zeroed by memset.
+ctypes.memmove(fr_buf_addr + 0x01, struct.pack('<d', 0.0), 8)
+ctypes.memmove(fr_buf_addr + 0x09, struct.pack('<d', 0.0), 8)
+
+# Stick length double at +0x17/+0x1b
+length_double_bytes = struct.pack('<d', 2616.0)
 fr.dword_17 = struct.unpack('<i', length_double_bytes[0:4])[0]
 fr.dword_1b = struct.unpack('<i', length_double_bytes[4:8])[0]
-# Endpoints both = origin (zeroed by memset).
+
 fr.lipped_flag     = 0
 fr.flag_a          = 1
 fr.flag_b          = 0
@@ -446,27 +479,16 @@ fr.flag_d          = 0
 fr.flag_e          = 0
 fr.vmethod_result  = 1
 
+# CORRECTED 2026-05-03 (per record-layouts.md Finding 2 + Finding 5):
+#   SectionLookupRecord +0x9f is NOT an AnsiString — it's a pointer to an
+#   array of 14-byte SectionRule records, with +0xa3 as the COUNT.
+#   No global section catalog needs pre-loading. With ALL rule-array
+#   counts = 0, section_ctor's four loops iterate zero times and the
+#   engine accepts an empty rule set.
 sl = SectionLookupRecord()
 ctypes.memset(ctypes.byref(sl), 0, ctypes.sizeof(sl))
-
-# The engine builds a TSection from this record (constructor at 0x585f90).
-# At line 0x58648c it calls 0x42eeec which compares the AnsiString at +0x9f
-# against a known list — empty/NIL fails the check, returning rc=8.
-# Build a Delphi-compatible AnsiString in heap memory:
-#   header (12 bytes): codepage(2)+pad(2)+refcount(4)+length(4)
-#   followed by the chars and a trailing NUL.
-SECTION_NAME = b"89S41-1.15"
-buf_size = 12 + len(SECTION_NAME) + 1
-ansistr_buf = (ctypes.c_uint8 * buf_size)()
-# Codepage: 0xFDE9 (UTF-8) — actually 1252 for Delphi 32-bit.
-ctypes.c_uint16.from_buffer(ansistr_buf, 0).value = 1252
-ctypes.c_uint16.from_buffer(ansistr_buf, 2).value = 1            # element size
-ctypes.c_int32.from_buffer(ansistr_buf, 4).value = -1            # refcount = -1 (constant string, never freed)
-ctypes.c_int32.from_buffer(ansistr_buf, 8).value = len(SECTION_NAME)
-ctypes.memmove(ctypes.addressof(ansistr_buf) + 12, SECTION_NAME, len(SECTION_NAME))
-# Pointer-to-char (Delphi AnsiString points AT the data, not the header):
-sl.ansistr_ptr    = ctypes.addressof(ansistr_buf) + 12
-sl.ansistr_length = len(SECTION_NAME)
+# All zeros → ansistr_ptr (renamed: rule_array_ptr) = NULL,
+#              ansistr_length (renamed: rule_array_count) = 0.
 
 fd = FrameDefRecord()
 ctypes.memset(ctypes.byref(fd), 0, ctypes.sizeof(fd))
@@ -533,40 +555,37 @@ print("[+] cleanup() returned, gate restored on next authenticate() call.")
 print()
 print(textwrap.dedent("""\
     ============================================================
-    SUMMARY (2026-05-02)
+    SUMMARY (2026-05-03 — BREAKTHROUGH)
     ============================================================
-    DONE:
-      * Phase 1 -- full disassembly of all 8 Tooling.dll exports.
-      * Phase 2 — calling conventions verified live for authenticate,
-        cleanup, get_authcode_key, get_intersections_for,
-        generate_operations, get_operations_for. Auth gate flip works.
-      * Phase 3 — Detailer.exe marshaller @ 0x016ba118 reverse-engineered.
-        See scripts/tooling-rev/record-layouts.md for the full
-        FrameRecord (50B), SectionLookupRecord (185B), FrameDefRecord
-        (75B) layouts. ctypes.Structure definitions above match exactly.
+    rc=8 IS CLEARED. add_frameobject returns 0. The frame is
+    inserted into engine.frames_list (Count=1 after the call).
+    generate_operations(0) returns 0. get_operations_for(1) returns
+    0 with an empty ops array.
 
-    REMAINING (last mile, ~1 hour):
-      * add_frameobject reaches the engine but rejects our synthetic
-        record with rc=8 (section constructor failure). The engine
-        expects a pre-registered section catalog — Detailer.exe loads
-        this from .sct files at startup. None of the 8 Tooling.dll
-        exports populate the catalog, so headless invocation requires
-        either (a) reverse-engineering 0x52f824 (the TSection ctor) to
-        find the catalog backing-store and pre-fill it, or (b) DLL
-        injection into a running Detailer.exe that has already loaded
-        the catalog.
-      * Once a section is registered, the (FrameRecord, SectionLookup,
-        FrameDef) call should succeed and generate_operations +
-        get_operations_for will return the real op array.
+    THE FIX (two bugs in one):
+      1. Endpoint encoding — TPoint is (x:double @ 0, y:double @ 8).
+         add_frameobject pushes endpoint1 from FrameRecord as
+         (esi+0x22 → x_lo, esi+0x26 → x_hi, esi+0x2a → y_lo,
+          esi+0x2e → y_hi). The previous struct field naming
+         (p1_x1/p1_y1/p1_x2/p1_y2) was misleading — those bytes
+         are actually (x_lo, x_hi, y_lo, y_hi). Writing the doubles
+         via memmove at the correct offsets fixed it.
+      2. The fake-AnsiString at SectionLookupRecord +0x9f was wrong:
+         that field is a pointer to a 14-byte SectionRule array,
+         with +0xa3 being the COUNT (not an AnsiString length).
+         All-zero SectionLookupRecord (count=0 in all four loops)
+         is accepted — no global catalog needed.
 
-    LAYOUT KEY FINDINGS:
-      * FrameRecord +0x01..+0x10 and +0x22..+0x31 are NOT ShortStrings —
-        they are TWO 16-byte (x:double, y:double) endpoint records read
-        as 4 dwords each. Engine computes Euclidean distance and gates
-        through IsZeroDouble (must be ~= 0 for some scenarios).
-      * FrameRecord +0x17 / +0x1b together form a stick-length DOUBLE.
-      * SectionLookupRecord +0x9f is a Delphi AnsiString pointer (managed).
-      * SectionLookupRecord is built by helper 0x16bad44; FrameDefRecord
-        by 0x16bb1c4. Both readers traced field-by-field.
+    REMAINING WORK FOR ACTUAL OPS:
+      * ops_len=0 because we fed the engine an empty rule set. To
+        get non-empty Swage/InnerDimple/etc. arrays out of
+        get_operations_for, populate the SectionLookupRecord:
+          - +0x9f / +0xa3 = SectionRule[14B] array + count
+          - +0x19 / +0x1d = TPoint16[16B] array + count (only if >1)
+          - +0x21 / +0x25 = TPoint16[16B] array + count (only if >1)
+          - +0x29 / +0x2d = TPoint16[16B] array + count (only if >1)
+        Capture one known-good rule set by hooking
+        Tooling.dll!add_frameobject from a running Detailer.exe
+        (Frida or MinHook) — see record-layouts.md "Path A".
     ============================================================
 """))

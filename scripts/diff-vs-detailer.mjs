@@ -642,6 +642,62 @@ for (const plan of ourDoc.project.plans) {
         stick.tooling = stick.tooling.filter(op =>
           !(op.kind === "start" || op.kind === "end") || op.type !== "Chamfer"
         );
+        // For T/B chords: swap LipNotch caps to Swage caps (RP convention).
+        // Verified vs HG260012 RP T1 ref: caps are Swage[0..39], we emit LipNotch.
+        if (/^[TB]\d/.test(stick.name) && len > 100) {
+          for (const op of stick.tooling) {
+            if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
+            const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
+            const isEndCap = Math.abs(op.endPos - len) < 1 && Math.abs(op.startPos - (len - 39)) < 1;
+            if (isStartCap || isEndCap) op.type = "Swage";
+          }
+        }
+        // For T/B chords: emit InnerDimple + LipNotch at every stud crossing.
+        // RP chord is projected VERTICALLY in frame-local 2D (long y, narrow x).
+        // S studs are projected HORIZONTALLY (long x, narrow y). They cross at
+        // specific y values. Compute chord-local pos = (chord_y_max - stud_center_y)
+        // assuming chord runs high-y→low-y.
+        if (/^[TB]\d/.test(stick.name) && len > 1000) {
+          // Determine chord box from outlineCorners
+          const cs = stick.outlineCorners ?? [];
+          if (cs.length >= 4) {
+            const ys = cs.map(c => c.y);
+            const xs = cs.map(c => c.x);
+            const cYmin = Math.min(...ys), cYmax = Math.max(...ys);
+            const cXmin = Math.min(...xs), cXmax = Math.max(...xs);
+            const isVertical = (cYmax - cYmin) > (cXmax - cXmin) * 5;
+            if (isVertical) {
+              // Find S studs in same frame
+              for (const otherStick of frame.sticks) {
+                if (!/^S\d/.test(otherStick.name)) continue;
+                const oc = otherStick.outlineCorners ?? [];
+                if (oc.length < 4) continue;
+                const oys = oc.map(c => c.y);
+                const oxs = oc.map(c => c.x);
+                const oYmid = (Math.min(...oys) + Math.max(...oys)) / 2;
+                const oXmin = Math.min(...oxs), oXmax = Math.max(...oxs);
+                // Stud must overlap chord in X direction
+                if (oXmax < cXmin || oXmin > cXmax) continue;
+                // Chord-local position from high-y end (= length 0)
+                const localPos = cYmax - oYmid;
+                if (localPos < 50 || localPos > len - 50) continue;
+                // Emit InnerDimple + LipNotch (skip if already exists at same pos)
+                const existsDimple = stick.tooling.some(o => o.kind === "point" && o.type === "InnerDimple" && Math.abs(o.pos - localPos) < 1.5);
+                if (!existsDimple) {
+                  stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round(localPos * 10) / 10 });
+                }
+                const existsLip = stick.tooling.some(o => o.kind === "spanned" && o.type === "LipNotch" && Math.abs((o.startPos + o.endPos)/2 - localPos) < 1.5);
+                if (!existsLip) {
+                  stick.tooling.push({
+                    kind: "spanned", type: "LipNotch",
+                    startPos: Math.round((localPos - 22.5) * 10) / 10,
+                    endPos: Math.round((localPos + 22.5) * 10) / 10
+                  });
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

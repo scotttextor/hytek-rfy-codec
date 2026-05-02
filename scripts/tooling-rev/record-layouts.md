@@ -260,3 +260,51 @@ nail the geometric meaning and the correct endpoint encoding.
 
 **Estimated remaining work**: 30 minutes — one capstone disasm of `0x42f5fc`
 plus one or two record-tweak retries. No more major surprises expected.
+
+---
+
+## Update: rc=8 root cause is `0x585f90`, NOT `IsZeroDouble`
+
+After tracing more carefully: there are TWO fail paths that both produce
+rc=8-ish:
+
+1. `0x586495: mov al, 8 ; jmp <exit>` — the IsZeroDouble distance gate.
+2. `0x5864a9: jne <exit>` — re-uses whatever AL the section ctor `0x585f90`
+   returned. If the ctor returns AL=8 (or any nonzero), we exit with that
+   code.
+
+Empirically, setting BOTH endpoints to (0,0) (zero distance, IsZeroDouble
+returns AL=0, so the first gate is bypassed) **still** yields rc=8 — proving
+the failure is now at gate #2: the section constructor `0x585f90` is
+rejecting our `SectionLookupRecord`.
+
+`0x585f90` allocates a fresh `TSection` instance (`call 0x52f824` — TObject
+ctor on class `[0x52f158]`), then memcpys all 185 bytes from our record into
+the new instance's fields. Our record has `+0x9f` pointing at a fake
+AnsiString with refcount=-1 — but the engine's downstream consumer
+(`0x42eeec` actually being IsZeroDouble was a **second** check; the first
+in this code path is somewhere inside `0x52f824` itself) is doing more than
+a pointer-NIL test. Likely it's looking up the section name in a global
+catalog (engine.sections_list) and failing because we never registered the
+section.
+
+**True path forward**: we need to either
+- (a) export-trace `0x52f824` (the TObject ctor for `[0x52f158]`) to find
+  what data it expects pre-loaded in some global registry, then either fake
+  that registry or call into it via another export, OR
+- (b) accept that Tooling.dll cannot be driven head-less without first
+  loading a section catalog from disk — which Detailer.exe does at startup,
+  outside the scope of these 8 exports — and switch to in-process injection:
+  attach to a running Detailer.exe, let IT load the catalog, then call
+  add_frameobject from our injected thread.
+
+Option (b) is the pragmatic path. The host process (Detailer.exe) would
+already have:
+- Authenticated state (real license)
+- Loaded section profiles in `engine.sections_list`
+- Loaded frame definitions
+- All the catalog AnsiStrings allocated in real Delphi heap
+
+We could then call `add_frameobject` with our exact 50/185/75-byte records
+and see real ops returned via `get_operations_for`. This is the path that
+would yield 100% bit-exact Detailer parity for our RFY codec.

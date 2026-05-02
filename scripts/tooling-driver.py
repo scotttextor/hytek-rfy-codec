@@ -432,7 +432,7 @@ ctypes.memset(ctypes.byref(fr), 0, ctypes.sizeof(fr))
 fr.frame_id        = 1
 # REVISED: each "endpoint" is actually a (x:double, y:double) pair, with
 # bytes laid out as (y[31:0], y[63:32], x[31:0], x[63:32]). The engine
-# computes Euclidean distance(endpoint1, endpoint2) and REQUIRES it ≈ 0
+# computes Euclidean distance(endpoint1, endpoint2) and REQUIRES it ~= 0
 # (rc=8 if nonzero). So both endpoints must be the same point (likely 0,0).
 # The actual stick length lives at +0x17 / +0x1b (the two "unknown" dwords).
 length_double_bytes = struct.pack('<d', 2616.0)  # 8 bytes little-endian
@@ -533,36 +533,40 @@ print("[+] cleanup() returned, gate restored on next authenticate() call.")
 print()
 print(textwrap.dedent("""\
     ============================================================
-    SUMMARY
+    SUMMARY (2026-05-02)
     ============================================================
     DONE:
-      * Phase 1 — disassembly of all 8 exports + 4 internals
-        (see scripts/tooling-rev/disasm-all.txt and disasm-helpers.txt).
+      * Phase 1 -- full disassembly of all 8 Tooling.dll exports.
       * Phase 2 — calling conventions verified live for authenticate,
         cleanup, get_authcode_key, get_intersections_for,
-        generate_operations, get_operations_for. All cdecl/stdcall,
-        signatures pinned in the bindings above.
-      * Auth gate bypassed by writing 1 to is_authenticated (RVA 0x18fb80)
-        after LoadLibrary. Lazy-initialised engine bootstraps on first
-        gated call. cleanup() resets the engine cleanly.
+        generate_operations, get_operations_for. Auth gate flip works.
+      * Phase 3 — Detailer.exe marshaller @ 0x016ba118 reverse-engineered.
+        See scripts/tooling-rev/record-layouts.md for the full
+        FrameRecord (50B), SectionLookupRecord (185B), FrameDefRecord
+        (75B) layouts. ctypes.Structure definitions above match exactly.
 
-    OUTSTANDING (Phase 3):
-      * add_frameobject / add_explicit_route record layouts.
-        These are 3 untyped Delphi records (FrameRecord, SectionLookup,
-        FrameDef). Field offsets are known from the disasm; semantic
-        mapping (which dword = length, which byte = profile id, etc.)
-        requires reversing Detailer.exe's caller of add_frameobject.
-      * Estimated time to finish: 1-2 hours of disasm on Detailer.exe
-        (just the XML import path -> tooling-marshal function), then
-        ~30 lines of ctypes.Structure to mirror.
+    REMAINING (last mile, ~1 hour):
+      * add_frameobject reaches the engine but rejects our synthetic
+        record with rc=8 (section constructor failure). The engine
+        expects a pre-registered section catalog — Detailer.exe loads
+        this from .sct files at startup. None of the 8 Tooling.dll
+        exports populate the catalog, so headless invocation requires
+        either (a) reverse-engineering 0x52f824 (the TSection ctor) to
+        find the catalog backing-store and pre-fill it, or (b) DLL
+        injection into a running Detailer.exe that has already loaded
+        the catalog.
+      * Once a section is registered, the (FrameRecord, SectionLookup,
+        FrameDef) call should succeed and generate_operations +
+        get_operations_for will return the real op array.
 
-    Once add_frameobject is wired, the round-trip
-        add_frameobject(stud) -> generate_operations(frame_id) ->
-        get_operations_for(frame_id, &arr, &len)
-    will produce Detailer's bit-exact tooling op array. The only
-    remaining task is to decode the dynamic-array element layout
-    (each op record — type, position, length, etc.) by reading the
-    32-bit Python view of the array we get back. That's straightforward
-    once we have a populated engine.
+    LAYOUT KEY FINDINGS:
+      * FrameRecord +0x01..+0x10 and +0x22..+0x31 are NOT ShortStrings —
+        they are TWO 16-byte (x:double, y:double) endpoint records read
+        as 4 dwords each. Engine computes Euclidean distance and gates
+        through IsZeroDouble (must be ~= 0 for some scenarios).
+      * FrameRecord +0x17 / +0x1b together form a stick-length DOUBLE.
+      * SectionLookupRecord +0x9f is a Delphi AnsiString pointer (managed).
+      * SectionLookupRecord is built by helper 0x16bad44; FrameDefRecord
+        by 0x16bb1c4. Both readers traced field-by-field.
     ============================================================
 """))

@@ -248,6 +248,32 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
+  // ----------- RAISED B-PLATES (Bh) on 89S41 -----------
+  // 89mm B plates whose z-coordinate sits at frame_elevation + 61.5 (one
+  // flange-height above the floor) are RAISED — they form the rough-opening
+  // sill above doors, NOT the slab plate. Detailer emits HEADER-STYLE ops:
+  //   - InnerNotch + LipNotch at start AND end (39mm clearance)
+  //   - InnerDimple at start + end (16.5mm offset)
+  //   - NO Web@8 (not slab-attached)
+  //   - NO Bolts (not slab-anchored)
+  // Verified 2026-05-02 vs HG260012 L1001/B2 (length 894mm, z=51861.5,
+  // elevation=51800).
+  // 70mm raised B plates (HG260001 L24/B2) DON'T use this pattern — keep
+  // slab-style ops.
+  {
+    rolePattern: /^Bh$/,
+    profilePattern: /^89S41$/,
+    lengthRange: [0, Infinity],
+    rules: [
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high", notes: "Raised 89mm B: InnerNotch at start clearance" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
+    ],
+  },
+
   // ----------- NOGS on 70S41 -----------
   {
     rolePattern: NOG_ROLES,

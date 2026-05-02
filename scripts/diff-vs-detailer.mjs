@@ -53,8 +53,12 @@ function roleForUsage(usage,type,name) {
   const prefix = (name||"").replace(/[0-9_].*$/,"");
   if (prefix === "Kb" || prefix === "W") return prefix;
   const u=(usage||"").toLowerCase();
+  if(u==="web")return"W";
   if(u==="topplate")return"T";
   if(u==="bottomplate")return"B";
+  if(u==="raisedbottomplate")return"Bh";
+  if(u==="topchord")return"T";
+  if(u==="bottomchord")return"B";
   if(u==="headplate"||u==="head")return"H";
   if(u==="nog"||u==="noggin")return"N";
   if(u==="endstud"||u==="stud")return"S";
@@ -77,6 +81,8 @@ function buildOurProject(xmlText) {
       if (env.length !== 4) continue;
       const fzMin = Math.min(...env.map(v=>v.z));
       const fzMax = Math.max(...env.map(v=>v.z));
+      const elevText = (f.elevation && typeof f.elevation === "object" ? f.elevation["#text"] : f.elevation) ?? "";
+      const frameElevation = Number(String(elevText).trim()) || 0;
       let frameBasis = null;
       try { frameBasis = deriveFrameBasis(env, true); } catch {}
       const sticks = [];
@@ -96,9 +102,24 @@ function buildOurProject(xmlText) {
         const flipped = isDiagonalBrace ? false : inputFlipped;
         let start = parseTriple(String(s.start ?? "0,0,0"));
         let end = parseTriple(String(s.end ?? "0,0,0"));
-        const usage = String(s["@_usage"] ?? "").toLowerCase();
-        // EndClearance plate/chord trim
-        if (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord") {
+        let usage = String(s["@_usage"] ?? "").toLowerCase();
+        // Detect raised 89mm B-plate (z=elevation+61.5) — header-style ops
+        const stickZ = (start.z + end.z) / 2;
+        const isRaised89B = usage === "bottomplate" && profile.web === 89
+                          && Math.abs(stickZ - frameElevation - 61.5) < 1;
+        if (isRaised89B) {
+          usage = "raisedbottomplate";
+          // Apply 1mm/end trim instead of 4mm/end
+          const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
+          const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
+          if (len > 3) {
+            const ux=dx/len,uy=dy/len,uz=dz/len;
+            start = { x: start.x+ux, y: start.y+uy, z: start.z+uz };
+            end = { x: end.x-ux, y: end.y-uy, z: end.z-uz };
+          }
+        }
+        // EndClearance plate/chord trim (skip raised B which has its own 1mm trim)
+        if (!isRaised89B && (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord")) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
           const ec = setup?.endClearance ?? 4;

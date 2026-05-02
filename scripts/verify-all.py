@@ -109,13 +109,21 @@ for frame_name, frame in frames.items():
             expected[sticks[i]['name']].append(max(0, min(L1, t*L1)))
             expected[sticks[j]['name']].append(max(0, min(L2, u*L2)))
 
+    # Dedupe near-identical positions (girder duplicate-stick artefacts)
+    def dedupe(positions, tol=1.0):
+        out = []
+        for p in sorted(positions):
+            if not out or abs(p - out[-1]) > tol:
+                out.append(p)
+        return out
+
     # compare against simplified CSV per stick
     for stick_name in frame['sticks']:
         full_name = f'{frame_name}-{stick_name}'
         total_sticks += 1
         simp_ops = simp.get(full_name, [])
-        simp_bolts = sorted(round(p, 2) for t, p in simp_ops if t == 'BOLT HOLES')
-        expected_bolts = sorted(round(p, 2) for p in expected.get(stick_name, []))
+        simp_bolts = dedupe([round(p, 2) for t, p in simp_ops if t == 'BOLT HOLES'])
+        expected_bolts = dedupe([round(p, 2) for p in expected.get(stick_name, [])])
 
         # Compare
         if len(simp_bolts) != len(expected_bolts):
@@ -170,6 +178,6 @@ print('=' * 60)
 print(f'OVERALL: {pass_sticks}/{total_sticks} sticks PASS, {fail_sticks} FAIL')
 print(f'         {len(by_frame)} Linear frames verified, {len(skipped_frames)} skipped')
 if fail_sticks == 0:
-    print('         ✓ EVERY STICK MATCHES THE EXPECTED CENTRELINE-INTERSECTION POSITIONS')
+    print('         PASS - every stick matches expected centreline-intersection positions')
 else:
-    print(f'         ✗ {fail_sticks} sticks have mismatches — investigate above')
+    print(f'         FAIL - {fail_sticks} sticks have mismatches — investigate above')

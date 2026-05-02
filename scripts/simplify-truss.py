@@ -199,6 +199,16 @@ def apply_centreline_rule(frame, csv_components):
             new_bolts[sticks[i]['name']].append(pos_i)
             new_bolts[sticks[j]['name']].append(pos_j)
 
+    # Dedupe near-identical positions per stick (within 1mm tolerance).
+    # Truss girders have 4× duplicate sticks (W6×4 etc.) at slightly different
+    # XML coords — produces 4 near-identical intersection positions per crossing.
+    def dedupe_positions(positions, tol=1.0):
+        out = []
+        for p in sorted(positions):
+            if not out or abs(p - out[-1]) > tol:
+                out.append(p)
+        return out
+
     # Patch the CSV components belonging to this frame
     for comp in csv_components:
         if comp['kind'] != 'component': continue
@@ -211,12 +221,10 @@ def apply_centreline_rule(frame, csv_components):
         # Remove old BOLT HOLES, keep everything else
         kept = [(t, p) for t, p in comp['ops'] if t != 'BOLT HOLES']
 
-        # Add new BOLT HOLES at centreline-intersection positions
-        for pos in sorted(new_bolts.get(short, [])):
+        # Dedupe positions, then add new BOLT HOLES at centreline-intersection positions
+        for pos in dedupe_positions(new_bolts.get(short, [])):
             kept.append(('BOLT HOLES', round(pos, 2)))
 
-        # Sort by position to keep CSV tidy (but BOLT HOLES go among others)
-        # Actually CSV order matters less — leave as: original-other-ops then new bolts
         comp['ops'] = kept
 
 

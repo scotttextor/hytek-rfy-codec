@@ -36,7 +36,7 @@ md = Cs(CS_ARCH_X86, CS_MODE_32)
 md.detail = True
 
 
-def disasm(name, rva, max_bytes=0x600, max_insns=200):
+def disasm(name, rva, max_bytes=0x1200, max_insns=600):
     print(f"\n=== {name} @ RVA 0x{rva:08x}  (VA 0x{image_base+rva:08x}) ===")
     try:
         data = pe.get_memory_mapped_image()[rva:rva+max_bytes]

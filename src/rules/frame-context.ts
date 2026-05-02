@@ -110,12 +110,15 @@ function getCrossingX(stick: RfyStick, atY: number): number | null {
   return c.startL.x + t * (c.endL.x - c.startL.x);
 }
 
-/** Convert a frame-X-coord crossing into a position along the plate's length. */
+/** Convert a frame-X-coord crossing into a position along the plate's length.
+ *
+ * Detailer's frame projection always orients corners[0] at the stick's
+ * worldStart end and corners[1] at worldEnd. So in frame-local 2D coords
+ * the stick-local axis (pos 0 → pos length) maps directly to xMin → xMax.
+ * Verified vs HG260012 LBW T1+H1: corners[0]=(4,_) and (877.5,_)
+ * respectively, both at xMin, both at worldStart end of the stick.
+ */
 function plateLocalPosition(plate: StickWithBox, crossingX: number): number {
-  // Plates run horizontally; the position along the plate is the crossing X
-  // minus the plate's xMin. (The plate's "length" axis runs xMin → xMax.)
-  // NOTE: crossingX is in FRAME-LOCAL 2D coords (from outlineCorners),
-  // not world coords. Don't mix with worldStart/worldEnd.
   return crossingX - plate.box.xMin;
 }
 
@@ -481,26 +484,53 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
     const stickOps = result.get(header.stick.name)!;
     const seenPositions = new Set<number>();
     const crossings: number[] = [];
+
+    // Pass 1: full-height king studs that pass THROUGH the header.
     for (const stud of allCrossingStuds) {
-      // Stud must overlap header in Y (i.e., its centerline crosses through
-      // header's y-band)
       const yOverlap = stud.box.yMax >= header.box.yMin && stud.box.yMin <= header.box.yMax;
       if (!yOverlap) continue;
       const crossingX = stud.box.cx;
       if (crossingX < header.box.xMin + 50) continue;
       if (crossingX > header.box.xMax - 50) continue;
       const localPos = plateLocalPosition(header, crossingX);
-      // Skip king crossings within the cap region (~80mm) — Detailer absorbs
-      // them into the wide cap LipNotch instead of emitting a separate notch.
-      // Cap dimples at 16.5 + 58.5 (+optional 109.5) cover this range.
       if (localPos < 80) continue;
       if (localPos > header.stick.length - 80) continue;
-      // Skip exact duplicates
       const q = Math.round(localPos * 10) / 10;
       if (seenPositions.has(q)) continue;
       seenPositions.add(q);
       crossings.push(localPos);
     }
+
+    // Pass 2: truss-web (W) stiffeners that terminate AT the header from
+    // ABOVE (lower end touches header's upper face). Verified 2026-05-02 vs
+    // HG260012 LBW L1101/H1: ref has InnerDimple at 109.6/624/816/1614/1716/
+    // 2507/2672 corresponding to W1-W7 stick lower-ends in world X. These get
+    // a LipNotch + InnerDimple just like king-stud crossings.
+    // The W's lower end y is within the header's y range (≈ embedded in H
+    // in the 2D projection). Detect: webYMin ∈ [H.yMin - 30, H.yMax + 30].
+    const headerTopY = Math.max(header.box.yMin, header.box.yMax);
+    const headerCenterY = (header.box.yMin + header.box.yMax) / 2;
+    for (const web of trussWebs) {
+      const ws = web.stick.outlineCorners ?? [];
+      if (ws.length < 2) continue;
+      // Bottom-end y of the web in frame-local
+      const webYMin = Math.min(...ws.map(c => c.y));
+      // Only include webs whose lower end is at/near header's body
+      if (webYMin < header.box.yMin - 30 || webYMin > header.box.yMax + 30) continue;
+      // X at the connection point — use header centerline for line intersection
+      const crossingX = getCrossingX(web.stick, headerCenterY);
+      if (crossingX === null) continue;
+      if (crossingX < header.box.xMin + 50) continue;
+      if (crossingX > header.box.xMax - 50) continue;
+      const localPos = plateLocalPosition(header, crossingX);
+      if (localPos < 80) continue;
+      if (localPos > header.stick.length - 80) continue;
+      const q = Math.round(localPos * 10) / 10;
+      if (seenPositions.has(q)) continue;
+      seenPositions.add(q);
+      crossings.push(localPos);
+    }
+
     crossings.sort((a, b) => a - b);
     for (const localPos of crossings) {
       const startPos = localPos - 22.5;

@@ -2,7 +2,7 @@
 // web members with a centreline-intersection rule (3 holes per stick at every
 // pairwise crossing). See spec at docs/superpowers/specs/2026-05-02-...
 import { decryptRfy, encryptRfy } from "./crypto.js";
-import type { ParsedFrame } from "./synthesize-plans.js";
+import type { ParsedFrame, ParsedStick } from "./synthesize-plans.js";
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
 
 // ---------- Geometry ----------
@@ -112,3 +112,23 @@ export function isLinearTruss(
   if (!hasWeb)   return { ok: false, reason: "no web members" };
   return { ok: true };
 }
+
+// ---------- Validator: zero-length stick ----------
+
+const ZERO_LENGTH_TOL_MM = 1e-3;
+
+export function guardZeroLength(sticks: readonly ParsedStick[]): GateResult {
+  for (const s of sticks) {
+    const seg: Segment3 = {
+      start: [s.start.x, s.start.y, s.start.z],
+      end:   [s.end.x,   s.end.y,   s.end.z],
+    };
+    if (stickLength3D(seg) < ZERO_LENGTH_TOL_MM) {
+      return { ok: false, reason: `zero-length stick ${s.name}` };
+    }
+  }
+  return { ok: true };
+}
+
+// Re-export ParsedStick for convenience
+export type { ParsedStick };

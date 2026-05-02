@@ -157,3 +157,24 @@ describe("isLinearTruss", () => {
     expect(r89.ok).toBe(false);
   });
 });
+
+import { guardZeroLength } from "./simplify-linear-truss.js";
+
+describe("guardZeroLength", () => {
+  it("passes for normal-length sticks", () => {
+    const sticks = [makeStick("T1", "TopChord"), makeStick("W1", "Web")];
+    expect(guardZeroLength(sticks)).toEqual({ ok: true });
+  });
+
+  it("fails when any stick has near-zero length (<1e-3 mm)", () => {
+    const zeroStick: ParsedStick = {
+      ...makeStick("W2", "Web"),
+      start: { x: 0, y: 0, z: 0 },
+      end:   { x: 0, y: 0, z: 0 },
+    };
+    const sticks = [makeStick("T1", "TopChord"), zeroStick];
+    const r = guardZeroLength(sticks);
+    expect(r.ok).toBe(false);
+    expect((r as { reason: string }).reason).toMatch(/zero-length stick W2/i);
+  });
+});

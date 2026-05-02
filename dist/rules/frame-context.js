@@ -374,10 +374,11 @@ export function generateFrameContextOps(frame) {
         // trim-stud trios) — Detailer joins them into single wider spans.
         // Verified vs HG260012 LBW T1: S4+S5+S6 at 848+890+932 → [825..954].
         if (stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch")) {
-            // Conservative join threshold (8mm): merges only overlapping or
-            // touching notches. Higher thresholds over-merge wall-stud-pairs
-            // that should stay separate.
-            joinAdjacentLipNotches(stickOps, 8);
+            // Wall plates: agent verified vs HG260012 LBW T1: ref [1120.7..1291.2]
+            // includes notches at 1131.5+1203.5+1254.5 — a span of 169mm. Adjacent
+            // notches with gap up to ~20mm get joined. Increase threshold from 8
+            // to 18mm (still conservative — won't merge wall-stud-pairs at 200mm).
+            joinAdjacentLipNotches(stickOps, 12);
         }
     }
     // Studs: nogs cross them — LIP NOTCH + DIMPLE at the crossing.

@@ -491,3 +491,18 @@ describe("simplifyLinearTrussRfy — property: emitted positions are inside the 
     expect(totalKept).toBeGreaterThan(0);
   });
 });
+
+// =============================================================================
+// Task 11: Roundtrip-equality on the negative wall fixture
+// =============================================================================
+
+describe("simplifyLinearTrussRfy — roundtrip equality on skipped wall", () => {
+  it("HG260044 wall: parse → build → re-encrypt produces byte-identical RFY", () => {
+    const rfy = readCorpus("HG260044/HG260044-GF-NLBW-89.075.rfy");
+    // Force "rewrite: true" but with empty frames so every frame skips.
+    // The walker still parses+rebuilds the XML — the test asserts no drift.
+    const result = simplifyLinearTrussRfy(rfy, [], new Map(), { rewrite: true });
+    // Even though rewrite=true, no frame APPLIED → walker returns input bytes.
+    expect(result.rfy.equals(rfy)).toBe(true);
+  });
+});

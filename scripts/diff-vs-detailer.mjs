@@ -626,6 +626,14 @@ function buildOurProject(xmlText) {
             meta.isTopChord = isTopChord;
             meta.isBottomChord = isBottomChord;
             meta.is3DLen = chord3DLen;
+            meta.start3D = { x: s.start.x, y: s.start.y, z: s.start.z };
+            meta.end3D = { x: s.end.x, y: s.end.y, z: s.end.z };
+          }
+          if (/^H\d/.test(s.name)) {
+            // Capture H header endpoints for cap-suppression heuristic.
+            meta.start3D = { x: s.start.x, y: s.start.y, z: s.start.z };
+            meta.end3D = { x: s.end.x, y: s.end.y, z: s.end.z };
+            meta.length3D = distance3D(s.start, s.end);
           }
           if (/^W\d/.test(s.name) && u === "web") {
             // W stick: capture flipped flag and angle (vertical vs diagonal)
@@ -641,6 +649,57 @@ function buildOurProject(xmlText) {
             const key = linMetaKey(plan.name, String(f["@_name"]), s.name, occ);
             LIN_META.set(key, meta);
           }
+        }
+
+        // Second pass: detect open ends on B/H chords (ends that abut an apex
+        // T-chord, not a heel) and set hasStartCap/hasEndCap on metadata.
+        // Verified vs LIN ref: TN2-1 B1 ends at the apex foot (not a heel) —
+        // ref shows only ONE cap (start), not both. Default codec-emit logic
+        // emits both, generating ~3 spurious extras per such case.
+        const apexPoints = [];  // [{x, y, z}] from T-chord apex ends
+        const heelPoints = [];  // [{x, y, z}] from T-chord heel ends (low-z)
+        const nameOcc2 = new Map();
+        for (let si = 0; si < sticks.length; si++) {
+          const s2 = sticks[si];
+          if (String(s2.usage).toLowerCase() !== "topchord") continue;
+          const occ2 = nameOcc2.get(s2.name) ?? 0;
+          nameOcc2.set(s2.name, occ2 + 1);
+          // Apex = high-z end; heel = low-z end
+          if (s2.start.z > s2.end.z) {
+            apexPoints.push(s2.start);
+            heelPoints.push(s2.end);
+          } else {
+            apexPoints.push(s2.end);
+            heelPoints.push(s2.start);
+          }
+        }
+        // For each B/H chord, decide if start/end is an open (apex) end.
+        const nameOcc3 = new Map();
+        for (let si = 0; si < sticks.length; si++) {
+          const s2 = sticks[si];
+          if (!/^[BH]\d/.test(s2.name)) continue;
+          const u = String(s2.usage).toLowerCase();
+          if (u !== "bottomchord" && !/^H\d/.test(s2.name)) continue;
+          const occ2 = nameOcc3.get(s2.name) ?? 0;
+          nameOcc3.set(s2.name, occ2 + 1);
+          const key = linMetaKey(plan.name, String(f["@_name"]), s2.name, occ2);
+          const m = LIN_META.get(key);
+          if (!m) continue;
+          // Distance helper
+          const near = (p, q) => {
+            const dx = p.x - q.x, dy = p.y - q.y;
+            // 2D distance is enough — z differs between apex and B
+            return Math.sqrt(dx*dx + dy*dy);
+          };
+          // For B chord: start/end at heel (cap) or apex foot (no cap)
+          // For H chord: start/end at peak (apex) or interior wall (cap)
+          let startNearApex = false, endNearApex = false;
+          for (const ap of apexPoints) {
+            if (near(ap, s2.start) < 200) startNearApex = true;
+            if (near(ap, s2.end) < 200) endNearApex = true;
+          }
+          m.startNearApex = startNearApex;
+          m.endNearApex = endNearApex;
         }
       }
 
@@ -896,8 +955,11 @@ for (const plan of ourDoc.project.plans) {
           }
 
           if (isBChord) {
-            if (hadStartCap) emitBCap(true);
-            if (hadEndCap) emitBCap(false);
+            // Suppress cap at any end that abuts a T-chord apex (open end).
+            const startOpen = !!(linMeta && linMeta.startNearApex);
+            const endOpen = !!(linMeta && linMeta.endNearApex);
+            if (hadStartCap && !startOpen) emitBCap(true);
+            if (hadEndCap && !endOpen) emitBCap(false);
           } else if (isTChord) {
             // T-chord: ONLY emit cap at the apex end. The heel/connection end
             // is butted against another stick and has NO cap.
@@ -917,8 +979,11 @@ for (const plan of ourDoc.project.plans) {
               else if (hadStartCap) emitTApexCap(true);
             }
           } else if (isHChord) {
-            if (hadStartCap) emitHCap(true);
-            if (hadEndCap) emitHCap(false);
+            // H header: similarly suppress caps at apex-adjacent ends.
+            const startOpen = !!(linMeta && linMeta.startNearApex);
+            const endOpen = !!(linMeta && linMeta.endNearApex);
+            if (hadStartCap && !startOpen) emitHCap(true);
+            if (hadEndCap && !endOpen) emitHCap(false);
           }
 
           // Add panel-point Web@pts from metadata

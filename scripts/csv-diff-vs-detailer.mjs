@@ -151,16 +151,20 @@ const fullC = printResult("", refFromRfy, ours);
 // 3. Write JSON report + sample-rows file
 // ---------------------------------------------------------------------------
 
+// compareRows(source, target) returns r.totalA = source rows, r.totalB = target rows.
+// We invoked: A) compareRows(ours, actual)         → totalA=ours, totalB=actual
+//             B) compareRows(refFromRfy, actual)    → totalA=refFromRfy, totalB=actual
+//             C) compareRows(ours, refFromRfy)      → totalA=ours, totalB=refFromRfy
 fs.writeFileSync(`${outPrefix}.json`, JSON.stringify({
   inputs: { oursRfy: oursRfyPath, refRfy: refRfyPath, refCsv: refCsvPath },
   generated: new Date().toISOString(),
   planName,
   fullPipeline: { exact: fullA.exact, differ: fullA.differ, missing: fullA.missing, extra: fullA.extra,
-                  totalActual: actual.totalA, totalOurs: ours.totalA },
+                  totalTarget: fullA.totalB, totalSource: fullA.totalA },
   csvEmission: { exact: fullB.exact, differ: fullB.differ, missing: fullB.missing, extra: fullB.extra,
-                 totalActual: actual.totalA, totalRefFromRfy: refFromRfy.totalA },
+                 totalTarget: fullB.totalB, totalSource: fullB.totalA },
   ruleGeneration: { exact: fullC.exact, differ: fullC.differ, missing: fullC.missing, extra: fullC.extra,
-                    totalRefFromRfy: refFromRfy.totalA, totalOurs: ours.totalA },
+                    totalTarget: fullC.totalB, totalSource: fullC.totalA },
   detailsHeaders: { ours: ours.detailsCount, actual: actual.detailsCount, refFromRfy: refFromRfy.detailsCount },
   samples: {
     fullPipeline: fullA.samples,

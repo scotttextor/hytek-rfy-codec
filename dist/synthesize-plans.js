@@ -365,10 +365,16 @@ function computeFrameContextOps(frame, basis) {
         const len3D = Math.sqrt((stick.end.x - stick.start.x) ** 2 +
             (stick.end.y - stick.start.y) ** 2 +
             (stick.end.z - stick.start.z) ** 2);
+        // Detailer always emits the metric-label shape letter as "S"
+        // (FrameCAD's standard "Section" designation), regardless of the
+        // input XML's shape attribute (which can be "C", "Z", etc.).
+        // Verified 2026-05-03: ref RFY decoded profile shape is "S" for an
+        // input XML with shape="C". Match Detailer's normalization here so
+        // the CSV `profile_code` column matches.
         const profile = {
-            metricLabel: `${stick.profile.web} ${stick.profile.shape || "S"} ${Math.max(stick.profile.lFlange, stick.profile.rFlange)}`,
+            metricLabel: `${stick.profile.web} S ${Math.max(stick.profile.lFlange, stick.profile.rFlange)}`,
             gauge: stick.profile.gauge,
-            shape: stick.profile.shape || "S",
+            shape: "S",
             web: stick.profile.web,
             lFlange: stick.profile.lFlange,
             rFlange: stick.profile.rFlange,
@@ -624,14 +630,17 @@ function buildData3dStub(stick, startL, endL, thickness) {
 }
 function buildProfileNode(stick) {
     const p = stick.profile;
-    // Imperial label: web ≈ 1/100 inch, same for flange. Detailer convention.
+    // Detailer always normalises shape to "S" in the metric/imperial labels
+    // and the <shape> tag, regardless of the input XML's shape attribute.
+    // Verified 2026-05-03 vs HG260044 ref RFY (input has shape="C", ref
+    // has shape="S"). Forcing "S" here matches Detailer.
     const imperialWeb = Math.round(p.web * 3.937);
     const imperialFlange = Math.round(p.rFlange * 3.937);
-    const imperialLabel = `${imperialWeb} ${p.shape || "S"} ${imperialFlange}`;
-    const metricLabel = `${p.web} ${p.shape || "S"} ${p.rFlange}`;
+    const imperialLabel = `${imperialWeb} S ${imperialFlange}`;
+    const metricLabel = `${p.web} S ${p.rFlange}`;
     return {
         profile: [
-            { shape: [{ "#text": p.shape || "S" }] },
+            { shape: [{ "#text": "S" }] },
             { web: [{ "#text": String(p.web) }] },
             { "l-flange": [{ "#text": String(p.lFlange) }] },
             { "r-flange": [{ "#text": String(p.rFlange) }] },

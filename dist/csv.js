@@ -307,6 +307,41 @@ function detailsHeader(project) {
         return `${j}#1-1`;
     return project.name;
 }
+/**
+ * Detailer-internal "module class" for a stick — used to insert FILLER
+ * separator rows between modules in the CSV.
+ *
+ *   "W"   = truss webs (W*-prefix sticks; chamfered diagonal)
+ *   "Kb"  = diagonal braces (Kb*-prefix; long chamfered diagonal)
+ *   "def" = everything else (regular studs, plates, headers, sills, nogs)
+ *
+ * Verified 2026-05-03 vs HG260044 LBW: FILLER appears at every transition
+ * between W and def, between Kb and def, and between W and Kb. Detailer
+ * inserts a single FILLER (not one per side) at each module boundary —
+ * the trailing-FIL of group N is the same row as the leading-FIL of
+ * group N+1.
+ */
+function moduleClass(stickName) {
+    if (/^Kb\d/.test(stickName))
+        return "Kb";
+    if (/^W\d/.test(stickName))
+        return "W";
+    return "def";
+}
+/**
+ * Build the constant FILLER row that separates modules. Detailer's filler
+ * row template (verified vs HG260044 corpus 2026-05-03):
+ *
+ *   COMPONENT,<frame>-FIL,<profile>_<gauge>,FILLER,RIGHT,1,,50,0,0,0,0,41
+ *
+ * The 6 dim columns are the constant `[50, 0, 0, 0, 0, 41]` regardless of
+ * the surrounding sticks' lengths — Detailer treats this as a fixed-length
+ * physical filler stub the rollformer outputs while switching programs.
+ * No tooling.
+ */
+function fillerRow(frameName, profileCodeStr) {
+    return `COMPONENT,${frameName}-FIL,${profileCodeStr},FILLER,RIGHT,1,,50,0,0,0,0,41`;
+}
 /** Emit one plan's CSV text. Format mirrors Detailer's Rollforming CSV.
  *
  * Detailer emits a `DETAILS,<job>#1-1,<plan>` header BEFORE EACH FRAME,
@@ -319,8 +354,16 @@ export function planToCsv(project, plan) {
     const header = `DETAILS,${detailsHeader(project)},${packId}`;
     for (const frame of plan.frames) {
         lines.push(header);
+        let prevClass = null;
+        let prevProfileCode = null;
         for (const stick of frame.sticks) {
             const r = stickToRow(plan, frame, stick);
+            const cls = moduleClass(stick.name);
+            // Insert a FILLER row at every module-class transition (except at
+            // the very start of a frame, when there's no "previous" module).
+            if (prevClass !== null && cls !== prevClass) {
+                lines.push(fillerRow(frame.name, prevProfileCode ?? r.profileCode));
+            }
             // Dim columns precision (verified 2026-05-03 vs HG260044 round-trip):
             //   col-7  length    → 2-decimal  (Kb 1377.73, raking-frame heel offsets)
             //   col-8  startX     → 1-decimal
@@ -342,6 +385,14 @@ export function planToCsv(project, plan) {
                 ...toolingToCsvCells(r.tooling, r.lengthA),
             ];
             lines.push(row.join(","));
+            prevClass = cls;
+            prevProfileCode = r.profileCode;
+        }
+        // Emit a trailing FILLER if the frame ended on a non-default module
+        // (W or Kb). Verified vs HG260044 LBW where frames containing W's at
+        // the very end (L31, etc.) close with a FIL row after the last W.
+        if (prevClass !== null && prevClass !== "def") {
+            lines.push(fillerRow(frame.name, prevProfileCode ?? ""));
         }
     }
     return lines.join("\n") + "\n";

@@ -573,7 +573,9 @@ describe("normaliseDimplesForFrame — pure tree mutation", () => {
   }
 
   it("rewrites a 300mm single-Box pair: Box → [15, 285], main updated to match", () => {
-    const main = makeStickChild("B1", 5000, [200, 268.1, 488.1]);
+    // Main has 3 dimples; Box's gap pattern (258.1mm) matches main[1..2] (268.1, 526.2 → gap 258.1).
+    // The algorithm picks main[1..2] as the matching zone and rewrites them.
+    const main = makeStickChild("B1", 5000, [50, 268.1, 526.2]);
     const box = makeStickChild("B1 (Box1)", 300, [10, 268.1]);
     const frameWrap = { frame: [main, box] };
 
@@ -589,15 +591,15 @@ describe("normaliseDimplesForFrame — pure tree mutation", () => {
       .map(op => parseFloat((op as { ":@"?: { "@_pos"?: string } })[":@"]?.["@_pos"] ?? "NaN"));
     expect(boxDimples).toEqual([15.0, 285.0]);
 
-    // Main chord: in-zone dimples (Box matched main[1..2] = 268.1, 488.1) replaced
+    // Main chord: in-zone dimples (Box matched main[1..2] = 268.1, 526.2) replaced
     // by main_new = boxPosition + boxNew. boxPosition = 268.1 - 10 = 258.1.
-    // → main_new = [273.1, 543.1]. Out-of-zone dimple (200) preserved.
+    // → main_new = [273.1, 543.1]. Out-of-zone dimple (50) preserved.
     const mainTooling = (main.stick as Array<{ tooling: Array<Record<string, unknown>> }>)[0].tooling;
     const mainDimples = mainTooling
       .filter(op => "point-tool" in op && (op as { ":@"?: { "@_type"?: string } })[":@"]?.["@_type"] === "InnerDimple")
       .map(op => parseFloat((op as { ":@"?: { "@_pos"?: string } })[":@"]?.["@_pos"] ?? "NaN"))
       .sort((a, b) => a - b);
-    expect(mainDimples).toEqual([200.0, 273.1, 543.1]);
+    expect(mainDimples).toEqual([50.0, 273.1, 543.1]);
   });
 
   it("two-pass: multi-Box main chord uses ORIGINAL main positions, not mutated ones", () => {

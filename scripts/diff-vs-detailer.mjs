@@ -629,9 +629,21 @@ for (const plan of ourDoc.project.plans) {
     for (const stick of frame.sticks) {
       const len = stick.length;
       if (isLINPlan) {
-        // Convert mid-stick LipNotch+InnerDimple to Web@pt on chord-like sticks
-        // (T/B prefix). Keep cap LipNotches.
+        // ============================================================
+        // LIN (Linear Truss) frames — completely different op vocabulary
+        // from regular wall/joist frames. Verified vs LINEAR_TRUSS_TESTING:
+        //   - Chord sticks (T/B/H prefix): Web@pt at every web crossing,
+        //     paired RightFlange + LeftFlange + LipNotch caps (variable spans).
+        //     NO InnerDimple on simple chords (only on box-doubled chord-on-chord).
+        //   - Web sticks (W prefix): full-length Swage, LeftPartialFlange +
+        //     RightPartialFlange end caps, Web@pt cluster at fixed offsets,
+        //     end-region LipNotch.
+        //   - NO Chamfer on any LIN stick.
+        // Detection: plan name contains "-LIN-".
+        // ============================================================
+
         if (/^[TBH]\d/.test(stick.name)) {
+          // CHORD: convert mid-stick LipNotch+InnerDimple to Web@pt, keep cap.
           const newOps = [];
           for (const op of stick.tooling) {
             if (op.kind === "spanned" && op.type === "LipNotch") {
@@ -648,6 +660,111 @@ for (const plan of ourDoc.project.plans) {
             newOps.push(op);
           }
           stick.tooling = newOps;
+
+          // Add LIN-specific cap stack: RightFlange + LeftFlange (paired with
+          // the LipNotch cap that already exists). Standard values for B
+          // chord (3-cap stack): RightFlange[0..45.89], LeftFlange[0..258.94].
+          // T chord typically gets RightFlange only (interior end abuts apex).
+          // We add the standard "B-chord" cap stack at any end where there's
+          // already a LipNotch[0..39] cap. The LipNotch span needs widening
+          // from 39 → 68.22.
+          const isBChord = /^B\d/.test(stick.name);
+          const isTChord = /^T\d/.test(stick.name);
+          if (isBChord || isTChord) {
+            // Process each cap LipNotch
+            for (const op of stick.tooling) {
+              if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
+              const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
+              const isEndCap = Math.abs(op.endPos - len) < 0.5 && Math.abs(op.startPos - (len - 39)) < 1;
+              if (!isStartCap && !isEndCap) continue;
+              // Widen LipNotch cap from 39 → 68.22
+              if (isStartCap) {
+                op.endPos = 68.22;
+              } else {
+                op.startPos = Math.round((len - 68.22) * 100) / 100;
+              }
+            }
+            // Add Flange caps where a LipNotch cap exists
+            const hasStartCap = stick.tooling.some(o =>
+              o.kind === "spanned" && o.type === "LipNotch" &&
+              o.startPos < 0.5 && o.endPos < 100,
+            );
+            const hasEndCap = stick.tooling.some(o =>
+              o.kind === "spanned" && o.type === "LipNotch" &&
+              Math.abs(o.endPos - len) < 0.5,
+            );
+            if (hasStartCap) {
+              stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: 45.89 });
+              if (isBChord) {
+                stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: 258.94 });
+              }
+            }
+            if (hasEndCap) {
+              if (isBChord) {
+                stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: Math.round((len - 258.94) * 100) / 100, endPos: len });
+              }
+              stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: Math.round((len - 45.89) * 100) / 100, endPos: len });
+            }
+          }
+        } else if (/^W\d/.test(stick.name)) {
+          // WEB STICK: replace cap-style ops with full-length Swage + partial flanges.
+          // Drop existing Swage[0..39], Swage[L-39..L], InnerDimple@10, InnerDimple@L-10, Chamfers.
+          const newOps = [];
+          for (const op of stick.tooling) {
+            if ((op.kind === "start" || op.kind === "end") && op.type === "Chamfer") continue;
+            if (op.kind === "spanned" && op.type === "Swage") {
+              // Drop start/end caps (will be replaced)
+              const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
+              const isEndCap = Math.abs(op.endPos - len) < 0.5 && Math.abs(op.startPos - (len - 39)) < 1;
+              if (isStartCap || isEndCap) continue;
+            }
+            if (op.kind === "point" && op.type === "InnerDimple") {
+              // Drop end-anchored dimples at ~10mm offsets (LIN webs don't have these)
+              if (op.pos < 15 || op.pos > len - 15) continue;
+            }
+            newOps.push(op);
+          }
+          stick.tooling = newOps;
+
+          // Add LIN web ops:
+          // Always: full-length Swage (or 2 segments for longer sticks)
+          if (len <= 250) {
+            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: 0, endPos: len });
+          } else {
+            // Two-segment Swage for longer webs (start band 0..119.5, end band L-141.6..L)
+            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: 0, endPos: 119.5 });
+            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: Math.round((len - 141.6) * 100) / 100, endPos: len });
+          }
+
+          // RightPartialFlange + LeftPartialFlange end caps (76.5mm each)
+          stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: 0, endPos: 76.5 });
+          stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: 0, endPos: 76.5 });
+          stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: Math.round((len - 76.5) * 100) / 100, endPos: len });
+          stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: Math.round((len - 76.5) * 100) / 100, endPos: len });
+
+          // Web@pt cluster: 5 holes at fixed offsets near each end (47, 65.5, 114.53, 128.62, 141.60)
+          const webOffsets = [47.0, 65.5, 114.53, 128.62, 141.60];
+          for (const off of webOffsets) {
+            if (off < len - 50) {
+              stick.tooling.push({ kind: "point", type: "Web", pos: off });
+            }
+          }
+          if (len > 250) {
+            // For longer webs, add 5 more Web@pt near the END
+            for (const off of webOffsets) {
+              const endPos = len - off;
+              if (endPos > 50) {
+                stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(endPos * 100) / 100 });
+              }
+            }
+          }
+
+          // End-region LipNotch (at end side, ~at length-66 to length)
+          stick.tooling.push({
+            kind: "spanned", type: "LipNotch",
+            startPos: Math.round((len - 66) * 100) / 100,
+            endPos: len,
+          });
         }
       }
       if (isRPPlan) {

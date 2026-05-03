@@ -8,9 +8,17 @@
 // HYTEK Linear trusses fasten webs only to chords (never web-to-web), and
 // FrameCAD does not punch BOLT HOLES at W<->W mathematical crossings.
 //
+// In addition, on every chord+Box pair we re-normalise the InnerDimple
+// positions so the first/last dimple sit >=margin from each end of the Box
+// piece and no gap between adjacent dimples exceeds max-gap (HYTEK rule).
+// Box-piece dimples and the matching dimples on the main chord are updated
+// together so the CL-to-CL snap-fit alignment is preserved.
+//
 // Usage:
 //   node scripts/simplify-rfy-direct.mjs original.rfy truss.xml [--out simplified.rfy]
 //                                          [--report-only] [--exclude FRAME1,FRAME2]
+//                                          [--dimple-margin 15] [--dimple-max-gap 400]
+//                                          [--no-dimple-fix]
 import { readFileSync, writeFileSync } from "node:fs";
 import { decode } from "../dist/decode.js";
 import { decryptRfy, encryptRfy } from "../dist/crypto.js";
@@ -18,7 +26,7 @@ import { XMLParser, XMLBuilder } from "fast-xml-parser";
 
 const args = process.argv.slice(2);
 if (args.length < 2) {
-  console.error("Usage: node simplify-rfy-direct.mjs original.rfy truss.xml [--out simplified.rfy] [--report-only] [--exclude FRAME1,FRAME2]");
+  console.error("Usage: node simplify-rfy-direct.mjs original.rfy truss.xml [--out simplified.rfy] [--report-only] [--exclude FRAME1,FRAME2] [--dimple-margin 15] [--dimple-max-gap 400] [--no-dimple-fix]");
   process.exit(1);
 }
 
@@ -26,10 +34,16 @@ const rfyPath = args[0];
 const xmlPath = args[1];
 let outPath = rfyPath.replace(/\.rfy$/i, ".simplified.rfy");
 let reportOnly = false;
+let dimpleMargin = 15.0;
+let dimpleMaxGap = 400.0;
+let dimpleFix = true;
 const excludeFrames = new Set();
 for (let i = 2; i < args.length; i++) {
   if (args[i] === "--out") outPath = args[++i];
   else if (args[i] === "--report-only") reportOnly = true;
+  else if (args[i] === "--no-dimple-fix") dimpleFix = false;
+  else if (args[i] === "--dimple-margin") dimpleMargin = parseFloat(args[++i]);
+  else if (args[i] === "--dimple-max-gap") dimpleMaxGap = parseFloat(args[++i]);
   else if (args[i] === "--exclude") {
     for (const f of (args[++i] || "").split(",")) {
       if (f.trim()) excludeFrames.add(f.trim());
@@ -167,6 +181,182 @@ function walkPlans(node) {
 }
 
 const decisions = [];
+const dimpleAuditAll = []; // collected from every Linear-truss frame
+
+// ---------- Dimple-normalisation helpers ----------
+// Read every InnerDimple position out of a tooling-array (preserveOrder format).
+function readDimples(toolingArr) {
+  const out = [];
+  for (const op of toolingArr) {
+    if (op["point-tool"] !== undefined) {
+      const t = (op[":@"] || {})["@_type"];
+      if (t === "InnerDimple") {
+        const pos = parseFloat((op[":@"] || {})["@_pos"]);
+        if (!Number.isNaN(pos)) out.push(pos);
+      }
+    }
+  }
+  out.sort((a, b) => a - b);
+  return out;
+}
+
+// Strip every InnerDimple op from a tooling-array (returns a new array).
+function stripDimples(toolingArr) {
+  return toolingArr.filter(op => {
+    if (op["point-tool"] !== undefined) {
+      const t = (op[":@"] || {})["@_type"];
+      return t !== "InnerDimple";
+    }
+    return true;
+  });
+}
+
+// Build an InnerDimple point-tool node.
+function makeDimpleNode(pos) {
+  // Match Python output: "%.2f" — toFixed(2) is fine.
+  return { "point-tool": [], ":@": { "@_type": "InnerDimple", "@_pos": pos.toFixed(2) } };
+}
+
+// Compute the Box-piece's normalised dimple set per HYTEK rule.
+function computeBoxDimples(L, margin, maxGap) {
+  const usable = L - 2 * margin;
+  if (usable <= 0) return [Math.round((L / 2) * 100) / 100];
+  const nGaps = Math.max(1, Math.ceil(usable / maxGap));
+  const spacing = usable / nGaps;
+  const out = [];
+  for (let i = 0; i <= nGaps; i++) {
+    out.push(Math.round((margin + i * spacing) * 100) / 100);
+  }
+  return out;
+}
+
+// Run dimple-normalisation on every chord+Box pair in this frame. Mutates the
+// tooling arrays of both the Box-piece sticks and the main-chord sticks. Pushes
+// per-pair audit entries into dimpleAuditAll.
+function normaliseFrameDimples(frameWrap, frameName, margin, maxGap) {
+  // 1. Index sticks by name -> { tooling-arr ref, length }
+  const stickIndex = new Map();
+  for (const child of frameWrap.frame) {
+    if (!child.stick) continue;
+    const stickAttrs = child[":@"] || {};
+    const stickName = stickAttrs["@_name"];
+    if (!stickName) continue;
+    const lengthStr = stickAttrs["@_length"];
+    const length = lengthStr !== undefined ? parseFloat(lengthStr) : NaN;
+    const toolingNode = child.stick.find(c => c.tooling !== undefined);
+    if (!toolingNode) continue;
+    stickIndex.set(stickName, { toolingNode, length, child });
+  }
+
+  // 2. Group: main chord -> [{ idx, boxStickName, boxEntry }]
+  const boxesByMain = new Map();
+  const boxRe = /^(.+?)\s*\(Box(\d+)\)$/;
+  for (const [name, entry] of stickIndex) {
+    const m = name.match(boxRe);
+    if (!m) continue;
+    const baseName = m[1].trim();
+    const boxIdx = parseInt(m[2], 10);
+    if (!boxesByMain.has(baseName)) boxesByMain.set(baseName, []);
+    boxesByMain.get(baseName).push({ boxIdx, boxName: name, boxEntry: entry });
+  }
+
+  // 3. PASS 1: capture original dimple positions on each main + match Box->main zone.
+  const pairs = []; // { mainName, mainEntry, boxName, boxEntry, boxOld, boxLength, mainOldInZone, mainOldIndices, boxPosition }
+  for (const [mainName, boxes] of boxesByMain) {
+    const mainEntry = stickIndex.get(mainName);
+    if (!mainEntry) continue;
+    const mainOld = readDimples(mainEntry.toolingNode.tooling);
+    if (mainOld.length === 0) continue;
+
+    boxes.sort((a, b) => a.boxIdx - b.boxIdx);
+    const mainClaimed = new Array(mainOld.length).fill(false);
+
+    for (const { boxName, boxEntry } of boxes) {
+      const boxOld = readDimples(boxEntry.toolingNode.tooling);
+      if (boxOld.length === 0) continue;
+      if (!Number.isFinite(boxEntry.length)) continue;
+      const boxLength = boxEntry.length;
+
+      const boxGaps = [];
+      for (let i = 0; i < boxOld.length - 1; i++) {
+        boxGaps.push(Math.round((boxOld[i + 1] - boxOld[i]) * 100) / 100);
+      }
+
+      let bestStart = null;
+      if (boxGaps.length === 0) {
+        // Single-dimple Box -> first unclaimed main dimple.
+        for (let i = 0; i < mainOld.length; i++) {
+          if (mainClaimed[i]) continue;
+          bestStart = i;
+          break;
+        }
+      } else {
+        const need = boxOld.length;
+        outer: for (let i = 0; i + need <= mainOld.length; i++) {
+          for (let k = 0; k < need; k++) if (mainClaimed[i + k]) continue outer;
+          let ok = true;
+          for (let k = 0; k < boxGaps.length; k++) {
+            const mg = Math.round((mainOld[i + k + 1] - mainOld[i + k]) * 100) / 100;
+            if (Math.abs(boxGaps[k] - mg) >= 2.0) { ok = false; break; }
+          }
+          if (ok) { bestStart = i; break; }
+        }
+      }
+      if (bestStart === null) continue;
+      for (let k = 0; k < boxOld.length; k++) mainClaimed[bestStart + k] = true;
+
+      const boxPosition = mainOld[bestStart] - boxOld[0];
+      const mainOldIndices = [];
+      const mainOldInZone = [];
+      for (let k = 0; k < boxOld.length; k++) {
+        mainOldIndices.push(bestStart + k);
+        mainOldInZone.push(mainOld[bestStart + k]);
+      }
+      pairs.push({
+        mainName, mainEntry, boxName, boxEntry, boxOld, boxLength,
+        mainOldInZone, mainOldIndices, boxPosition,
+      });
+    }
+  }
+
+  // 4. PASS 2: rewrite Box dimples (replace ALL) and main dimples (replace zone only).
+  for (const p of pairs) {
+    const boxNew = computeBoxDimples(p.boxLength, margin, maxGap);
+    const mainNew = boxNew.map(d => Math.round((p.boxPosition + d) * 100) / 100);
+
+    // Box piece: strip ALL InnerDimple, append new.
+    let boxOps = stripDimples(p.boxEntry.toolingNode.tooling);
+    for (const d of boxNew) boxOps.push(makeDimpleNode(d));
+    p.boxEntry.toolingNode.tooling = boxOps;
+
+    // Main chord: keep dimples OUTSIDE this Box's zone, append new in-zone dimples.
+    const zoneStart = p.boxPosition - 1;
+    const zoneEnd = p.boxPosition + p.boxLength + 1;
+    const mainOps = p.mainEntry.toolingNode.tooling.filter(op => {
+      if (op["point-tool"] !== undefined) {
+        const meta = op[":@"] || {};
+        if (meta["@_type"] === "InnerDimple") {
+          const pos = parseFloat(meta["@_pos"]);
+          if (!Number.isNaN(pos) && pos >= zoneStart && pos <= zoneEnd) return false;
+        }
+      }
+      return true;
+    });
+    for (const d of mainNew) mainOps.push(makeDimpleNode(d));
+    p.mainEntry.toolingNode.tooling = mainOps;
+
+    dimpleAuditAll.push({
+      frame: frameName,
+      box: p.boxName,
+      main: p.mainName,
+      boxLength: p.boxLength,
+      boxOld: p.boxOld,
+      boxNew,
+      mainOldInZone: p.mainOldInZone,
+      mainNew,
+    });
+  }
+}
 
 function processFrame(frameWrap) {
   // frameWrap is { frame: [...], ":@": { @_name: "..." } }

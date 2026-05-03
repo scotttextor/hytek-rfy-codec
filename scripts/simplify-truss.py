@@ -272,6 +272,149 @@ def apply_centreline_rule(frame, csv_components):
 
 # ---------- Main ----------
 
+def normalise_dimples(csv_rows, margin=15.0, max_gap=400.0):
+    """Rewrite INNER DIMPLE positions on every chord+Box pair to comply with
+    HYTEK rules: first/last dimple >= margin from each end, no gap > max_gap.
+    Both the Box piece's dimples and the matching dimples on the main chord
+    are updated together so the snap-fit alignment is preserved (CL-to-CL match).
+
+    Two-pass to handle multi-Box main chords (e.g. B1 with Box1 + Box2):
+      Pass 1: capture every Box's original position on main BEFORE any mutation.
+      Pass 2: apply normalised dimples to Box AND update matching main positions.
+
+    Returns: list of changes for audit log.
+    """
+    changes = []
+
+    # Group components by frame
+    by_frame = defaultdict(list)
+    for comp in csv_rows:
+        if comp['kind'] != 'component': continue
+        m = re.match(r'^(.+?)-([^-]+(?:\s*\(Box\d+\))?)$', comp['name'])
+        if not m: continue
+        by_frame[m.group(1)].append(comp)
+
+    def get_dimples(c):
+        return sorted(p for t, p in c['ops'] if t == 'INNER DIMPLE')
+
+    # ---- PASS 1: capture original positions ----
+    pairs = []  # list of {frame, base_name, main_comp, box_comp, box_position, box_old, main_old_in_zone}
+
+    for frame_name, comps in by_frame.items():
+        # Find main components and Box pieces under each
+        main_comps = {}
+        boxes_by_main = defaultdict(list)
+        for c in comps:
+            short = c['name'][len(frame_name)+1:]
+            bm = re.match(r'^(.+?)\s*\(Box(\d+)\)$', short)
+            if bm:
+                base = bm.group(1).strip()
+                idx = int(bm.group(2))
+                boxes_by_main[base].append((idx, c))
+            else:
+                main_comps[short] = c
+
+        for base_name, boxes in boxes_by_main.items():
+            main_comp = main_comps.get(base_name)
+            if not main_comp: continue
+            main_old = get_dimples(main_comp)
+            if not main_old: continue
+
+            # Sort Boxes by box index (Box1 before Box2)
+            boxes.sort()
+            # Track which main dimples are claimed by which Box
+            main_claimed = [False] * len(main_old)
+
+            for box_idx, box_comp in boxes:
+                box_old = get_dimples(box_comp)
+                if not box_old: continue
+                try:
+                    box_length = float(box_comp['header'][7])
+                except (ValueError, IndexError):
+                    continue
+
+                # Find which main dimples correspond to this Box by gap-pattern matching:
+                # Box has gaps [g1, g2, ...]. Look for unclaimed consecutive main dimples
+                # with the same gap pattern (within 2mm tolerance).
+                box_gaps = [round(box_old[i+1] - box_old[i], 2) for i in range(len(box_old)-1)]
+                best_start = None
+                if not box_gaps:
+                    # Single-dimple Box — match by proximity to box_old[0] offset
+                    for i, m_pos in enumerate(main_old):
+                        if main_claimed[i]: continue
+                        best_start = i; break
+                else:
+                    needed_count = len(box_old)
+                    for i in range(len(main_old) - needed_count + 1):
+                        if any(main_claimed[i+k] for k in range(needed_count)): continue
+                        main_gaps_here = [round(main_old[i+k+1] - main_old[i+k], 2)
+                                          for k in range(needed_count - 1)]
+                        if all(abs(box_gaps[k] - main_gaps_here[k]) < 2.0
+                               for k in range(len(box_gaps))):
+                            best_start = i; break
+                if best_start is None: continue
+
+                # Mark main dimples as claimed
+                for k in range(len(box_old)):
+                    main_claimed[best_start + k] = True
+
+                box_position = main_old[best_start] - box_old[0]
+                pairs.append({
+                    'frame': frame_name,
+                    'base_name': base_name,
+                    'box_comp': box_comp,
+                    'main_comp': main_comp,
+                    'box_position': box_position,
+                    'box_length': box_length,
+                    'box_old': box_old,
+                    'main_old_indices': list(range(best_start, best_start + len(box_old))),
+                    'main_old_in_zone': [main_old[best_start + k] for k in range(len(box_old))],
+                })
+
+    # ---- PASS 2: apply rules to each pair, mutating both ----
+    for p in pairs:
+        # Compute new Box dimples
+        L = p['box_length']
+        usable = L - 2 * margin
+        if usable <= 0:
+            box_new = [round(L / 2, 2)]
+        else:
+            n_gaps = max(1, math.ceil(usable / max_gap))
+            spacing = usable / n_gaps
+            box_new = [round(margin + i * spacing, 2) for i in range(n_gaps + 1)]
+
+        # Matching main dimples = box_new offset by box_position
+        main_new = [round(p['box_position'] + bd, 2) for bd in box_new]
+
+        # Update Box piece (always: replace ALL dimples — single Box has only one set)
+        kept = [(t, pos) for t, pos in p['box_comp']['ops'] if t != 'INNER DIMPLE']
+        for d in box_new:
+            kept.append(('INNER DIMPLE', d))
+        p['box_comp']['ops'] = kept
+
+        # Update main chord: replace ONLY the dimples in this Box's zone, leave others
+        zone_start = p['box_position'] - 1
+        zone_end = p['box_position'] + L + 1
+        non_zone = [(t, pos) for t, pos in p['main_comp']['ops']
+                    if not (t == 'INNER DIMPLE' and zone_start <= pos <= zone_end)]
+        for d in main_new:
+            non_zone.append(('INNER DIMPLE', d))
+        p['main_comp']['ops'] = non_zone
+
+        changes.append({
+            'frame': p['frame'],
+            'box': re.sub(rf'^{re.escape(p["frame"])}-', '', p['box_comp']['name']),
+            'main': p['base_name'],
+            'box_length': L,
+            'box_old': p['box_old'],
+            'box_new': box_new,
+            'main_old_in_zone': p['main_old_in_zone'],
+            'main_new': main_new,
+        })
+
+    return changes
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('xml', help='Truss XML file from FrameCAD Structure')
@@ -279,6 +422,12 @@ def main():
     ap.add_argument('--out', default=None, help='Output CSV path (default: input.simplified.csv)')
     ap.add_argument('--report-only', action='store_true', help='Show decisions but do not write output')
     ap.add_argument('--exclude', default='', help='Comma-separated frame names to NEVER simplify')
+    ap.add_argument('--dimple-margin', type=float, default=15.0,
+                    help='Minimum distance from each end of Box piece to first/last dimple (mm). Default 15.')
+    ap.add_argument('--dimple-max-gap', type=float, default=400.0,
+                    help='Maximum gap between adjacent dimples (mm). Default 400.')
+    ap.add_argument('--no-dimple-fix', action='store_true',
+                    help='Disable dimple normalisation (keep FrameCAD dimples as-is)')
     args = ap.parse_args()
 
     exclude = set(s.strip() for s in args.exclude.split(',') if s.strip())
@@ -316,6 +465,24 @@ def main():
     print(f'Applied:  {applied_count} frames')
     print(f'Skipped:  {skipped_count} frames')
     print()
+
+    # Dimple normalisation pass
+    if not args.no_dimple_fix and not args.report_only:
+        print(f'DIMPLE NORMALISATION (margin={args.dimple_margin}mm, max_gap={args.dimple_max_gap}mm):')
+        print(f'{"-"*78}')
+        changes = normalise_dimples(csv_rows, args.dimple_margin, args.dimple_max_gap)
+        if not changes:
+            print('  No chord+Box pairs found.')
+        else:
+            print(f'  {"Frame":<10} {"Box piece":<15} {"Length":>8} {"Old box":<35} {"New box":<35}')
+            print(f'  {"-"*108}')
+            for c in changes:
+                old_str = str([round(d, 1) for d in c['box_old']])[:33]
+                new_str = str([round(d, 1) for d in c['box_new']])[:33]
+                print(f'  {c["frame"]:<10} {c["box"]:<15} {c["box_length"]:>8.1f} {old_str:<35} {new_str:<35}')
+            print(f'  {"-"*108}')
+            print(f'  {len(changes)} Box pieces normalised. Main-chord dimples updated to match.')
+        print()
 
     if args.report_only:
         print('REPORT-ONLY mode: no output written.')

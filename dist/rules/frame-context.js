@@ -128,14 +128,20 @@ export function generateFrameContextOps(frame) {
     // duplicate emissions accounted for ~660 over-emissions of LipNotch).
     const plates = layout.filter(sb => ALL_PLATE_ROLES.has(sb.role) && !NOG_ROLES.has(sb.role));
     // Build virtual stud crossings from cripple sticks at each X edge of bbox.
+    // Kb-edge centerline is 22.5mm from xMin/xMax (NOT 20). Verified
+    // 2026-05-03 vs HG260012 L1101 (Kb1 x=235.6-523.1, ref T1 dimple at 496.6
+    // = 523.1 - 4 - 22.5) and L1104 (Kb1 x=104.7-409.2, ref T1 dimple at
+    // 123.4 = 104.7 + 22.7 - 4). The 20mm offset was systematically off by
+    // 2.5mm, producing 2-3mm InnerDimple drift on every Kb-bordering plate
+    // crossing across the LBW corpus.
     const virtualStudCrossings = [];
     for (const cr of cripples) {
         virtualStudCrossings.push({
-            role: "Kb-edge-left", box: { ...cr.box, xMin: cr.box.xMin, xMax: cr.box.xMin + 41, cx: cr.box.xMin + 20 },
+            role: "Kb-edge-left", box: { ...cr.box, xMin: cr.box.xMin, xMax: cr.box.xMin + 41, cx: cr.box.xMin + 22.5 },
             stick: cr.stick, horizontal: false,
         });
         virtualStudCrossings.push({
-            role: "Kb-edge-right", box: { ...cr.box, xMin: cr.box.xMax - 41, xMax: cr.box.xMax, cx: cr.box.xMax - 20 },
+            role: "Kb-edge-right", box: { ...cr.box, xMin: cr.box.xMax - 41, xMax: cr.box.xMax, cx: cr.box.xMax - 22.5 },
             stick: cr.stick, horizontal: false,
         });
     }
@@ -435,9 +441,51 @@ export function generateFrameContextOps(frame) {
         }
         return false;
     }
+    // Compute the wall's overall x-extent from plate bboxes (used for
+    // leftmost/rightmost stud detection in the continuous-nog rule below).
+    let wallXMin = Infinity, wallXMax = -Infinity;
+    for (const p of plates) {
+        if (p.box.xMin < wallXMin)
+            wallXMin = p.box.xMin;
+        if (p.box.xMax > wallXMax)
+            wallXMax = p.box.xMax;
+    }
+    const wallSpanX = wallXMax - wallXMin;
+    // Detect leftmost/rightmost FULL-HEIGHT studs (the wall-end studs that
+    // connect to perpendicular walls). Only studs whose box reaches both
+    // top and bottom plates count. Verified 2026-05-03 vs HG260012 LBW
+    // L1101/L1103/L1112: ref emits LipNotch (NOT Swage) on these end studs
+    // even at continuous-nog crossings.
+    let plateYMin = Infinity, plateYMax = -Infinity;
+    for (const p of plates) {
+        if (p.box.yMin < plateYMin)
+            plateYMin = p.box.yMin;
+        if (p.box.yMax > plateYMax)
+            plateYMax = p.box.yMax;
+    }
+    const fullHeightStuds = studs.filter(s => plates.length >= 2 &&
+        s.box.yMin <= plateYMin + 60 &&
+        s.box.yMax >= plateYMax - 60);
+    let leftmostStudName = null;
+    let rightmostStudName = null;
+    if (fullHeightStuds.length >= 2 && wallSpanX > 0) {
+        let leftmostX = Infinity;
+        let rightmostX = -Infinity;
+        for (const s of fullHeightStuds) {
+            if (s.box.cx < leftmostX) {
+                leftmostX = s.box.cx;
+                leftmostStudName = s.stick.name;
+            }
+            if (s.box.cx > rightmostX) {
+                rightmostX = s.box.cx;
+                rightmostStudName = s.stick.name;
+            }
+        }
+    }
     for (const stud of studs) {
         const stickOps = result.get(stud.stick.name);
         const lipNeighbor = studHasLipNeighbor(stud);
+        const isWallEndStud = stud.stick.name === leftmostStudName || stud.stick.name === rightmostStudName;
         // B2B stud-pair Web emission DISABLED 2026-05-02:
         //   The geometric detection (xDelta<45, identical Y range, identical length)
         //   over-fires on HG260001 LBW — every adjacent S stud pair gets flagged,
@@ -449,16 +497,28 @@ export function generateFrameContextOps(frame) {
         //   the XML we haven't identified. Until that's understood, emitting NO
         //   Webs is safer than emitting wrong ones.
         // if (b2bStudNames.has(stud.stick.name)) { ... }
-        // Nog crossing rule: ALWAYS emit LipNotch on the stud at the crossing.
+        // Nog crossing rule.
         //
-        // 2026-05-02 — reverted the "Swage if nog passes through" heuristic. It
-        // matched HG260044's continuous-nog walls but produced WRONG cuts on
-        // HG260001 (segmented nogs) where Detailer always emits LipNotch. The
-        // rollformer test cut showed Swage stiffening ribs where stud-receiving
-        // notches should have been — physically wrong steel. Until we can
-        // distinguish the two configurations from XML data, default to LipNotch
-        // (always safe — a notch won't break a stud, an unnecessary Swage might
-        // misalign a B2B partner).
+        // 2026-05-03 — re-introduced "continuous nog → Swage on interior studs"
+        // heuristic with TWO safety gates that the previous attempt lacked
+        // (which had over-fired on HG260001 segmented-nog walls):
+        //
+        //   1. The NOG itself must be continuous (spans ≥80% of wall length).
+        //      A short/segmented nog (e.g. between two trim studs) still
+        //      produces LipNotch — that was the HG260001 case where the old
+        //      heuristic was wrong.
+        //   2. The STUD must NOT be the leftmost/rightmost full-height stud.
+        //      Wall-end studs always get LipNotch at every nog crossing,
+        //      regardless of continuity — they need to interlock with the
+        //      perpendicular wall. Verified vs HG260012 corpus: every L11xx
+        //      frame's leftmost+rightmost full-height stud gets LipNotch at
+        //      the continuous-nog crossing while interior studs get Swage.
+        //
+        // Verified 2026-05-03 vs HG260012 TH01-1F-LBW: the previous all-LipNotch
+        // rule emitted 60+ extras at position 1163..1208 across L1101/L1103/
+        // L1109/L1110/L1111/L1112 (the continuous wall-spanning nog at z=1185.5).
+        // Ref emits Swage on every interior stud and LipNotch only on S1/S15
+        // (the wall-end full-height studs).
         for (const nog of nogs) {
             const xOverlap = nog.box.xMax >= stud.box.xMin && nog.box.xMin <= stud.box.xMax;
             if (!xOverlap)
@@ -475,11 +535,21 @@ export function generateFrameContextOps(frame) {
             const lipSpan = Math.max(45, nogWidth + 4);
             const startPos = localPos - lipSpan / 2;
             const endPos = startPos + lipSpan;
-            // Lip-neighbor rule: if another stud's web is within 45mm on the
-            // lip-facing side, the lip can't open here — emit Swage (stiffening
-            // cut) instead of LipNotch (lip-clearance notch).
-            if (lipNeighbor) {
+            // Continuous-nog detection: nog spans ≥80% of the wall's plate length.
+            const nogXSpan = nog.box.xMax - nog.box.xMin;
+            const isContinuousNog = wallSpanX > 0 && nogXSpan >= 0.8 * wallSpanX;
+            // Lip-neighbor rule (existing): if another stud's web is within 45mm
+            // on the lip-facing side, the lip can't open here — Swage.
+            // Continuous-nog rule (new): interior full-height studs at a continuous
+            // nog crossing get Swage; wall-end studs keep LipNotch.
+            const useSwage = lipNeighbor ||
+                (isContinuousNog && !isWallEndStud);
+            if (useSwage) {
                 stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
+                // Swage at a nog crossing also emits InnerDimple at its center
+                // (verified vs HG260012 L1103/S2 which has 3 Swages + 3 InnerDimples
+                // at their respective centers).
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(localPos) });
             }
             else {
                 stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });

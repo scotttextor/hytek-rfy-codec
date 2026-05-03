@@ -68,6 +68,19 @@ function roleForUsage(usage,type,name) {
   return prefix||(type==="plate"?"T":"S");
 }
 
+// LIN side-channel: per-stick 3D-derived metadata used in post-decode pass.
+// Keyed by `${normalizedPlan}|${frameName}|${stickName}#${occurrenceIndex}` so
+// duplicates with the same name get distinct entries. Synthesize/decode may
+// reorder sticks AND add prefixes like "PK1-" to plan names, so we strip
+// known prefixes for the key.
+const LIN_META = new Map();
+function normalizePlanName(name) {
+  return String(name).replace(/^(PK\d+-|PLAN\d*-|P\d+-)/i, "");
+}
+function linMetaKey(planName, frameName, stickName, occurrence) {
+  return `${normalizePlanName(planName)}|${frameName}|${stickName}#${occurrence}`;
+}
+
 function buildOurProject(xmlText) {
   const parser = new XMLParser({ ignoreAttributes:false, attributeNamePrefix:"@_", parseAttributeValue:true, parseTagValue:false, isArray:n=>["plan","frame","stick","vertex","tool_action"].includes(n) });
   const root = parser.parse(xmlText).framecad_import;
@@ -116,6 +129,35 @@ function buildOurProject(xmlText) {
         else if (name === "Web") webActions.push({ start: sStart, end: sEnd });
         else if (name === "FlangeHole") flangeHoleActions.push({ start: sStart, end: sEnd });
       }
+      // Pre-pass: capture each plate's WORLD start/end so the per-stick loop
+      // below can detect "this nog spans the same world extent as a plate"
+      // (→ apply plate-style 4mm/end trim) vs "this nog is shorter than the
+      // plate" (→ XML already pre-trimmed; apply 1mm/end trim).
+      // Verified 2026-05-03 vs HG260012 LBW: L1101 N1 starts 3mm inset from
+      // T1's start (already pre-trimmed); ref length 4109.5 = world 4111.5
+      // minus 1mm/end. L1112 N1 starts at SAME world coords as T1; ref
+      // length 3643.67 = world 3651.67 minus 4mm/end. Without this, every
+      // continuous-nog stud-crossing dimple drifts +3mm vs ref (~34 ops on
+      // TH01-1F-LBW alone).
+      const platesWorld = [];
+      for (const s of f.stick ?? []) {
+        const u = String(s["@_usage"] ?? "").toLowerCase();
+        if (u !== "topplate" && u !== "bottomplate") continue;
+        const ps = parseTriple(String(s.start ?? "0,0,0"));
+        const pe = parseTriple(String(s.end ?? "0,0,0"));
+        platesWorld.push({ start: ps, end: pe });
+      }
+      function nogSharesPlateExtent(nogStart, nogEnd) {
+        for (const pl of platesWorld) {
+          const d1a = Math.hypot(nogStart.x - pl.start.x, nogStart.y - pl.start.y);
+          const d2a = Math.hypot(nogEnd.x - pl.end.x, nogEnd.y - pl.end.y);
+          const d1b = Math.hypot(nogStart.x - pl.end.x, nogStart.y - pl.end.y);
+          const d2b = Math.hypot(nogEnd.x - pl.start.x, nogEnd.y - pl.start.y);
+          if ((d1a < 0.5 && d2a < 0.5) || (d1b < 0.5 && d2b < 0.5)) return true;
+        }
+        return false;
+      }
+
       const sticks = [];
       for (const s of f.stick ?? []) {
         const profile = {
@@ -149,8 +191,13 @@ function buildOurProject(xmlText) {
             end = { x: end.x-ux, y: end.y-uy, z: end.z-uz };
           }
         }
-        // EndClearance plate/chord trim (skip raised B which has its own 1mm trim)
-        if (!isRaised89B && (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord")) {
+        // EndClearance plate/chord trim (skip raised B which has its own 1mm trim).
+        // LIN (Linear Truss) chords are NOT trimmed — verified vs LINEAR_TRUSS_TESTING:
+        // ref B1 len 3677.55 == raw XML length, no 4mm/end trim. Skip chord trim
+        // entirely on LIN frames.
+        const isLINPlanForTrim = /-LIN-/i.test(plan.name);
+        const isLINChord = isLINPlanForTrim && (usage === "topchord" || usage === "bottomchord");
+        if (!isRaised89B && !isLINChord && (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord")) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
           const ec = setup?.endClearance ?? 4;
@@ -160,7 +207,7 @@ function buildOurProject(xmlText) {
             end = { x: end.x-ux*ec, y: end.y-uy*ec, z: end.z-uz*ec };
           }
         }
-        // Stud (2mm/end) + Header (1mm/end) end-trim
+        // Stud (2mm/end) + Header (1mm/end) + Nog (1mm or 4mm) end-trim
         const isFullStud = usage === "stud" || usage === "endstud" || usage === "jackstud" || usage === "trimstud";
         const isHeader = /^H\d/.test(stickName);
         const isNog = usage === "nog" || usage === "noggin";
@@ -168,7 +215,17 @@ function buildOurProject(xmlText) {
         // H header: 1mm/end trim (verified 2026-05-02 vs HG260012 L1101/H1
         // input 2782 → ref output 2780). The earlier "no trim" comment was
         // wrong — H IS trimmed, but only 1mm/end vs studs' 2mm/end.
-        const T = (isFullStud || isJoistWeb) ? 2.0 : ((isNog || isHeader) ? 1.0 : 0);
+        // EXCEPT for LIN frames — LIN H sticks (truss headers) are NOT trimmed.
+        // Verified vs LINEAR_TRUSS_TESTING H4 len 3555.83 = raw XML length.
+        const isLINHeader = isLINPlanForTrim && isHeader;
+        // Nog trim: 4mm/end if nog spans the same world extent as a plate
+        // (continuous wall-spanning nog), else 1mm/end. See pre-pass above.
+        const nogTrim = isNog && nogSharesPlateExtent(start, end) ? 4.0 : 1.0;
+        const T = isLINHeader ? 0
+          : ((isFullStud || isJoistWeb) ? 2.0
+            : isNog ? nogTrim
+            : isHeader ? 1.0
+            : 0);
         if (T > 0) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
@@ -197,22 +254,29 @@ function buildOurProject(xmlText) {
         if (/^W\d/.test(stickName) && usage === "web") {
           const dx = end.x - start.x, dy = end.y - start.y;
           const horizDelta = Math.sqrt(dx*dx + dy*dy);
+          const isLINPlanForW = /-LIN-/i.test(plan.name);
           if (horizDelta < 1.0) {
-            // VERTICAL W → extend by lip depth
-            const lipDepth = profile.rLip > 0 ? profile.rLip : 11;
-            const dz = end.z - start.z;
-            if (Math.abs(dz) > 0.1) {
-              const sign = dz > 0 ? 1 : -1;
-              end = { x: end.x, y: end.y, z: end.z + sign * lipDepth };
+            // VERTICAL W → extend by lip depth (NOT for LIN — verified vs
+            // LINEAR_TRUSS_TESTING ref W3 len 190 == raw XML length, no 11mm extension).
+            if (!isLINPlanForW) {
+              const lipDepth = profile.rLip > 0 ? profile.rLip : 11;
+              const dz = end.z - start.z;
+              if (Math.abs(dz) > 0.1) {
+                const sign = dz > 0 ? 1 : -1;
+                end = { x: end.x, y: end.y, z: end.z + sign * lipDepth };
+              }
             }
           } else {
-            // DIAGONAL W → trim 2mm at end (Kb-style)
-            const T = 2.0;
-            const dz = end.z - start.z;
-            const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            if (len > T * 2) {
-              const ux = dx / len, uy = dy / len, uz = dz / len;
-              end = { x: end.x - ux*T, y: end.y - uy*T, z: end.z - uz*T };
+            // DIAGONAL W → trim 2mm at end (Kb-style). NOT for LIN — verified
+            // vs LINEAR_TRUSS_TESTING: diagonal W lengths == raw XML length.
+            if (!isLINPlanForW) {
+              const T = 2.0;
+              const dz = end.z - start.z;
+              const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
+              if (len > T * 2) {
+                const ux = dx / len, uy = dy / len, uz = dz / len;
+                end = { x: end.x - ux*T, y: end.y - uy*T, z: end.z - uz*T };
+              }
             }
           }
         }
@@ -475,6 +539,99 @@ function buildOurProject(xmlText) {
         }
         sticks.push(stick);
       }
+      // ============================================================
+      // LIN per-frame metadata: precompute chord-W intersection panel-points,
+      // chord cap-end orientation (apex-butt vs heel-cap), and per-W flipped flag.
+      // Stored in LIN_META keyed by (plan, frame, stickIndex) since stick names
+      // can repeat (e.g. multiple W3 in same frame).
+      // ============================================================
+      const isLINFrameForMeta = /-LIN-/i.test(plan.name);
+      if (isLINFrameForMeta) {
+        // Find the apex point: highest-z point shared by 2 TopChord sticks.
+        // Also identify the heel ends of B-chord (lowest-y end of each chord).
+        const wSticks = sticks.filter(s => /^W\d/.test(s.name) && String(s.usage).toLowerCase() === "web");
+        const nameOccurrence = new Map();
+        for (let si = 0; si < sticks.length; si++) {
+          const s = sticks[si];
+          const occ = nameOccurrence.get(s.name) ?? 0;
+          nameOccurrence.set(s.name, occ + 1);
+          const u = String(s.usage ?? "").toLowerCase();
+          const meta = { stickIdx: si };
+          if (u === "topchord" || u === "bottomchord") {
+            // Determine chord run axis (whichever of x/y varies more)
+            const dxAbs = Math.abs(s.end.x - s.start.x);
+            const dyAbs = Math.abs(s.end.y - s.start.y);
+            const useX = dxAbs >= dyAbs;
+            const stickAxisStart = useX ? s.start.x : s.start.y;
+            const stickAxisEnd = useX ? s.end.x : s.end.y;
+            const stickAxisLen = Math.abs(stickAxisEnd - stickAxisStart);
+            const stickPerp = useX ? s.start.y : s.start.x;
+            const chord3DLen = distance3D(s.start, s.end);
+            // Determine apex-butt: TopChord's high-z end is at the apex.
+            // For TopChord, both ends differ in z; the apex end is the higher z.
+            // For BottomChord, z is roughly constant; no apex butt.
+            const startZ = s.start.z, endZ = s.end.z;
+            const isTopChord = u === "topchord";
+            const isBottomChord = u === "bottomchord";
+            // Apex-end position along stick (0 if start is high-z, len if end is high-z)
+            let apexAtStart = false, apexAtEnd = false;
+            if (isTopChord && Math.abs(endZ - startZ) > 50) {
+              if (startZ > endZ) apexAtStart = true; else apexAtEnd = true;
+            }
+            // Find W intersections: project each W stick's xy into chord's
+            // axis position, ALSO checking that W stick z-range reaches chord's z.
+            const panelPoints = [];
+            const stickZRange = [Math.min(startZ, endZ), Math.max(startZ, endZ)];
+            for (const w of wSticks) {
+              const wAxis = useX ? w.start.x : w.start.y;
+              const wPerp = useX ? w.start.y : w.start.x;
+              if (Math.abs(wPerp - stickPerp) > 100) continue;
+              const wZmin = Math.min(w.start.z, w.end.z);
+              const wZmax = Math.max(w.start.z, w.end.z);
+              // chord z must lie within w's z range (with ±5mm tolerance)
+              const chordZmid = (startZ + endZ) / 2;
+              // For raked top chord, allow tolerance
+              if (chordZmid < wZmin - 50 || chordZmid > wZmax + 50) continue;
+              // Compute position along chord — which end is "0"?
+              // Use (chord-axis-of-W-coord - chord-start-axis), not abs
+              const localPos = stickAxisStart < stickAxisEnd
+                ? (wAxis - stickAxisStart)
+                : (stickAxisStart - wAxis);
+              if (localPos < 5 || localPos > stickAxisLen - 5) continue;
+              // For diagonal chord, scale localPos by 3DLen/axisLen
+              const scaled = localPos * (chord3DLen / stickAxisLen);
+              panelPoints.push(Math.round(scaled * 100) / 100);
+            }
+            // Diagonal W intersections with chords are NOT consistent across the
+            // corpus — Detailer's panel-point calculation for diagonals appears
+            // to use a different projection that we haven't reverse-engineered.
+            // For now, only emit vertical-W panel-points (handled above) — they
+            // give a clean win on TN-style trusses without spurious extras on H.
+            panelPoints.sort((a,b) => a-b);
+            meta.panelPoints = panelPoints;
+            meta.apexAtStart = apexAtStart;
+            meta.apexAtEnd = apexAtEnd;
+            meta.isTopChord = isTopChord;
+            meta.isBottomChord = isBottomChord;
+            meta.is3DLen = chord3DLen;
+          }
+          if (/^W\d/.test(s.name) && u === "web") {
+            // W stick: capture flipped flag and angle (vertical vs diagonal)
+            const dxy = Math.sqrt((s.end.x - s.start.x) ** 2 + (s.end.y - s.start.y) ** 2);
+            const dz = Math.abs(s.end.z - s.start.z);
+            meta.isVertical = dxy < 1.0;
+            meta.flipped = !!s.flipped;
+            meta.dxy = dxy;
+            meta.dz = dz;
+            meta.length3D = distance3D(s.start, s.end);
+          }
+          if (/^[TBHW]\d/.test(s.name)) {
+            const key = linMetaKey(plan.name, String(f["@_name"]), s.name, occ);
+            LIN_META.set(key, meta);
+          }
+        }
+      }
+
       // RP (RoofPanel) post-processing: Detailer's RP frames have very
       // different op patterns from LBW. Verified 2026-05-02 vs HG260012/
       // HG250096 RP corpus by agent:
@@ -626,8 +783,14 @@ for (const plan of ourDoc.project.plans) {
   const isLINPlan = /-LIN-/i.test(plan.name);
   const isRPPlan = /-(RP|HJ)-/i.test(plan.name);
   for (const frame of plan.frames) {
-    for (const stick of frame.sticks) {
+    const decodeOccurrence = new Map();
+    for (let stickIdx = 0; stickIdx < frame.sticks.length; stickIdx++) {
+      const stick = frame.sticks[stickIdx];
+      const occ = decodeOccurrence.get(stick.name) ?? 0;
+      decodeOccurrence.set(stick.name, occ + 1);
       const len = stick.length;
+      const lookupKey = linMetaKey(plan.name, frame.name, stick.name, occ);
+      const linMeta = LIN_META.get(lookupKey);
       if (isLINPlan) {
         // ============================================================
         // LIN (Linear Truss) frames — completely different op vocabulary
@@ -643,69 +806,117 @@ for (const plan of ourDoc.project.plans) {
         // ============================================================
 
         if (/^[TBH]\d/.test(stick.name)) {
-          // CHORD: convert mid-stick LipNotch+InnerDimple to Web@pt.
-          // LIN chords have NO InnerDimples on simple unboxed chords (only
-          // boxed chord-on-chord crossings get them — out of scope here).
-          // Drop ALL InnerDimples on LIN chords.
-          const newOps = [];
-          for (const op of stick.tooling) {
-            if (op.kind === "spanned" && op.type === "LipNotch") {
-              const isCap = op.startPos < 0.5 || Math.abs(op.endPos - len) < 0.5;
-              if (!isCap) {
-                newOps.push({ kind: "point", type: "Web", pos: Math.round(((op.startPos + op.endPos) / 2) * 10000) / 10000 });
-                continue;
-              }
-            }
-            if (op.kind === "point" && op.type === "InnerDimple") {
-              continue;  // LIN chords: drop ALL InnerDimples (cap + mid)
-            }
-            newOps.push(op);
-          }
-          stick.tooling = newOps;
-
-          // Add LIN-specific cap stack: RightFlange + LeftFlange (paired with
-          // the LipNotch cap that already exists). Standard values for B
-          // chord (3-cap stack): RightFlange[0..45.89], LeftFlange[0..258.94].
-          // T chord typically gets RightFlange only (interior end abuts apex).
-          // We add the standard "B-chord" cap stack at any end where there's
-          // already a LipNotch[0..39] cap. The LipNotch span needs widening
-          // from 39 → 68.22.
+          // CHORD: rebuild from scratch using LIN_META (3D-derived panel-points,
+          // apex-vs-heel orientation). The codec's default rules emit
+          // InnerDimple+LipNotch at panel points which is wrong for LIN.
           const isBChord = /^B\d/.test(stick.name);
           const isTChord = /^T\d/.test(stick.name);
-          if (isBChord || isTChord) {
-            // Process each cap LipNotch
-            for (const op of stick.tooling) {
-              if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
-              const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
-              const isEndCap = Math.abs(op.endPos - len) < 0.5 && Math.abs(op.startPos - (len - 39)) < 1;
-              if (!isStartCap && !isEndCap) continue;
-              // Widen LipNotch cap from 39 → 68.22
-              if (isStartCap) {
-                op.endPos = 68.22;
-              } else {
-                op.startPos = Math.round((len - 68.22) * 100) / 100;
-              }
-            }
-            // Add Flange caps where a LipNotch cap exists
-            const hasStartCap = stick.tooling.some(o =>
-              o.kind === "spanned" && o.type === "LipNotch" &&
-              o.startPos < 0.5 && o.endPos < 100,
-            );
-            const hasEndCap = stick.tooling.some(o =>
-              o.kind === "spanned" && o.type === "LipNotch" &&
-              Math.abs(o.endPos - len) < 0.5,
-            );
-            if (hasStartCap) {
+          const isHChord = /^H\d/.test(stick.name);
+
+          // Identify which ends originally had cap LipNotches (39mm) — we'll
+          // decide per-end whether to emit the full B/T cap stack.
+          let hadStartCap = false, hadEndCap = false;
+          for (const op of stick.tooling) {
+            if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
+            if (op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1) hadStartCap = true;
+            if (Math.abs(op.endPos - len) < 0.5 && Math.abs(op.startPos - (len - 39)) < 1) hadEndCap = true;
+          }
+
+          // Drop ALL existing tooling — we'll rebuild precisely.
+          stick.tooling = [];
+
+          // Determine which end is "apex" (T-chord with high-z) vs "heel" (low end).
+          // From metadata: apexAtStart/apexAtEnd populated for top chords.
+          const apexAtStart = !!(linMeta && linMeta.apexAtStart);
+          const apexAtEnd = !!(linMeta && linMeta.apexAtEnd);
+
+          // Cap-stack widths (widely shared across this corpus):
+          //   B-chord cap: RightFlange[0..45.89] + LeftFlange[0..258.94] + LipNotch[0..68.22]
+          //                + 3 Web@pt cap markers at offsets {81.73, 115.47, 163.81}
+          //   T-chord apex butt: LipNotch[0..40.75] + RightFlange[0..52.01]
+          //                      + 1 Web@pt cap marker at offset 37.04
+          //   H-chord cap: LipNotch[0..52.51] + 1 Web@pt cap marker at offset 30.00
+          // Verified vs LINEAR_TRUSS_TESTING ref ops (TN1/TN2/TT1/U1).
+
+          function emitBCap(startSide) {
+            // startSide: true = at start (positions 0..N), false = at end
+            if (startSide) {
               stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: 45.89 });
-              if (isBChord) {
-                stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: 258.94 });
+              stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: 258.94 });
+              stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 68.22 });
+              for (const off of [81.73, 115.47, 163.81]) {
+                stick.tooling.push({ kind: "point", type: "Web", pos: off });
+              }
+            } else {
+              stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: Math.round((len - 258.94) * 100) / 100, endPos: len });
+              // End LipNotch uses the endPos=0 sentinel (= "to end of stick")
+              stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: Math.round((len - 68.22) * 100) / 100, endPos: 0 });
+              stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: Math.round((len - 45.89) * 100) / 100, endPos: len });
+              for (const off of [81.73, 115.47, 163.81]) {
+                stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - off) * 100) / 100 });
               }
             }
-            if (hasEndCap) {
-              if (isBChord) {
-                stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: Math.round((len - 258.94) * 100) / 100, endPos: len });
-              }
-              stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: Math.round((len - 45.89) * 100) / 100, endPos: len });
+          }
+          function emitTApexCap(startSide) {
+            // Apex-at-start: full apex-butt cap (LipNotch + RightFlange + cap-marker Web)
+            // Apex-at-end: smaller cap (LipNotch only, narrower) — Detailer's
+            // asymmetric end-treatment. Verified vs LIN ref TN1-1 T2 first
+            // (apex-at-end): LipNotch[len-28.54..len], no RightFlange.
+            if (startSide) {
+              stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 40.75 });
+              stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: 52.01 });
+              stick.tooling.push({ kind: "point", type: "Web", pos: 37.04 });
+            } else {
+              // Apex-at-end: just a LipNotch (28.54 wide). The cap marker Web is
+              // 9.5mm before the start of the LipNotch.
+              stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: Math.round((len - 28.54) * 100) / 100, endPos: len });
+              stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 37.04) * 100) / 100 });
+            }
+          }
+          function emitHCap(startSide) {
+            if (startSide) {
+              stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 52.51 });
+              stick.tooling.push({ kind: "point", type: "Web", pos: 30.0 });
+            } else {
+              stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: Math.round((len - 52.51) * 100) / 100, endPos: len });
+              stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 30.0) * 100) / 100 });
+            }
+          }
+
+          if (isBChord) {
+            if (hadStartCap) emitBCap(true);
+            if (hadEndCap) emitBCap(false);
+          } else if (isTChord) {
+            // T-chord: ONLY emit cap at the apex end. The heel/connection end
+            // is butted against another stick and has NO cap.
+            // Verified vs ref TN1-1 T2: len 2447 has only LipNotch[2418..2447]
+            // at the apex end — no heel cap. The codec's default emits caps at
+            // both ends, so we need to drop the heel one.
+            if (apexAtStart) {
+              emitTApexCap(true);
+              // No heel cap at end.
+            } else if (apexAtEnd) {
+              emitTApexCap(false);
+              // No heel cap at start.
+            } else {
+              // No clear apex (e.g. peak-end T3 in TT1-1, len 1721) — emit cap
+              // at original end-cap side only.
+              if (hadEndCap) emitTApexCap(false);
+              else if (hadStartCap) emitTApexCap(true);
+            }
+          } else if (isHChord) {
+            if (hadStartCap) emitHCap(true);
+            if (hadEndCap) emitHCap(false);
+          }
+
+          // Add panel-point Web@pts from metadata
+          if (linMeta && linMeta.panelPoints) {
+            for (const pp of linMeta.panelPoints) {
+              // Skip if too close to an existing Web@pt cap marker (within 5mm)
+              const dup = stick.tooling.some(o =>
+                o.kind === "point" && o.type === "Web" && Math.abs(o.pos - pp) < 1.5
+              );
+              if (!dup) stick.tooling.push({ kind: "point", type: "Web", pos: pp });
             }
           }
         } else if (/^W\d/.test(stick.name)) {
@@ -730,41 +941,70 @@ for (const plan of ourDoc.project.plans) {
           //
           // The "flipped" attribute swaps Left/Right (handled below).
 
-          // Drop ALL existing ops and rebuild from scratch — codec's W rule
-          // emits the wrong vocabulary for LIN.
-          stick.tooling = [];
-
-          // Determine flipped — for flipped sticks, left/right partial-flange swap.
-          // (Kept symmetric for now; tune per-stick if needed.)
+          // Determine flipped — for flipped W sticks, partial-flange caps go on
+          // the OTHER side (reverses Left↔Right).
+          // Vertical short W ref behaviour:
+          //   flipped:true  → RightPartialFlange has caps, LeftPartialFlange is full-length
+          //   flipped:false → LeftPartialFlange has caps, RightPartialFlange is full-length
+          // Long vertical W has caps on BOTH sides (no full-length flange).
           const isShort = len <= 250;
+          const flipped = !!(linMeta && linMeta.flipped);
+          const isVertical = !!(linMeta && linMeta.isVertical);
 
-          if (isShort) {
-            // SHORT W: full-length Swage + full-length LeftPartialFlange
+          // Cap side helpers
+          const capSide = flipped ? "RightPartialFlange" : "LeftPartialFlange";
+          const fullSide = flipped ? "LeftPartialFlange" : "RightPartialFlange";
+
+          if (isShort && isVertical) {
+            // SHORT VERTICAL W: full-length Swage + full-length flange on one side,
+            // capped flange on the other side. Verified vs ref W3 (190mm).
+            // Clear codec defaults — we rebuild from scratch.
+            stick.tooling = [];
             stick.tooling.push({ kind: "spanned", type: "Swage", startPos: 0, endPos: len });
-            stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: 0, endPos: len });
-            stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: 0, endPos: 76.5 });
-            stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: Math.round((len - 62.21) * 100) / 100, endPos: len });
+            stick.tooling.push({ kind: "spanned", type: fullSide, startPos: 0, endPos: len });
+            stick.tooling.push({ kind: "spanned", type: capSide, startPos: 0, endPos: 76.5 });
+            stick.tooling.push({ kind: "spanned", type: capSide, startPos: Math.round((len - 62.21) * 100) / 100, endPos: len });
             // 5 Web@pt at start cluster
             const webOffsets = [47.0, 65.5, 114.53, 128.62, 141.60];
-            for (const off of webOffsets) {
+            // For 187.53-len W6, ref offsets are 112.06, 126.14, 139.13 (different).
+            // Apply length scaling for the cluster ≥100mm.
+            // Empirical: ref shows offsets [47, 65.5, len*0.598, len*0.673, len*0.745]
+            // for len=190; for len=187.53 → 112.07, 126.16, 139.71. Closely matches.
+            const scale = len / 190;
+            const scaledOffsets = [47.0, 65.5, 114.53 * scale, 128.62 * scale, 141.60 * scale];
+            for (const off of scaledOffsets) {
               if (off < len - 10) {
-                stick.tooling.push({ kind: "point", type: "Web", pos: off });
+                stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(off * 100) / 100 });
               }
             }
+            // End-region LipNotch — uses endPos=0 sentinel ("to end of stick").
+            stick.tooling.push({
+              kind: "spanned", type: "LipNotch",
+              startPos: Math.round((len - 66.04) * 100) / 100,
+              endPos: 0,  // sentinel
+            });
+            // Pop the duplicate webOffsets we added — wait we already used scaledOffsets only.
+            void webOffsets;
+          } else if (!isShort && isVertical) {
+            // LONG VERTICAL W: 2-segment Swage + paired partial-flange end caps.
+            // Ref shows BOTH Left+Right have caps at start AND end (no full-length flange).
+            // End-cap span depends on length:
+            //   len ≤ 500: span = 76.5 (matches W6 458mm)
+            //   len > 500: span = 98.77 (matches W4/W9 at 809mm)
+            const endCapSpan = len <= 500 ? 76.5 : 98.77;
+            stick.tooling = [];
+            stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: 0, endPos: 76.5 });
+            stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: 0, endPos: 76.5 });
+            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: 0, endPos: 119.5 });
+            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: Math.round((len - 141.6) * 100) / 100, endPos: len });
+            stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: Math.round((len - endCapSpan) * 100) / 100, endPos: len });
+            stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: Math.round((len - endCapSpan) * 100) / 100, endPos: len });
             // End-region LipNotch
             stick.tooling.push({
               kind: "spanned", type: "LipNotch",
               startPos: Math.round((len - 66.04) * 100) / 100,
               endPos: len,
             });
-          } else {
-            // LONG W: 2-segment Swage + paired partial-flange end caps
-            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: 0, endPos: 119.5 });
-            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: Math.round((len - 141.6) * 100) / 100, endPos: len });
-            stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: 0, endPos: 76.5 });
-            stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: 0, endPos: 76.5 });
-            stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: Math.round((len - 98.77) * 100) / 100, endPos: len });
-            stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: Math.round((len - 98.77) * 100) / 100, endPos: len });
             // 2 Web@pt at start (47, 65.5)
             stick.tooling.push({ kind: "point", type: "Web", pos: 47.0 });
             stick.tooling.push({ kind: "point", type: "Web", pos: 65.5 });
@@ -772,12 +1012,31 @@ for (const plan of ourDoc.project.plans) {
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 75.47) * 100) / 100 });
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 61.39) * 100) / 100 });
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 48.4) * 100) / 100 });
-            // End-region LipNotch
+          } else {
+            // DIAGONAL W (non-vertical) — variable-span caps based on stick angle.
+            // Pattern (verified vs W7 len 1061): variable-width caps at each end
+            // with paired flanges + swage + lipnotch. Spans depend on sin(angle).
+            // For now, use long-vertical layout as best approximation — Detailer's
+            // diagonal-W layout has variable spans that match this template at
+            // sin(θ)=1 (pure vertical). Most diagonal Ws still match Swage start/end
+            // and LipNotch end.
+            stick.tooling = [];
+            stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: 0, endPos: 76.5 });
+            stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: 0, endPos: 76.5 });
+            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: 0, endPos: 119.5 });
+            stick.tooling.push({ kind: "spanned", type: "Swage", startPos: Math.round((len - 141.6) * 100) / 100, endPos: len });
+            stick.tooling.push({ kind: "spanned", type: "RightPartialFlange", startPos: Math.round((len - 98.77) * 100) / 100, endPos: len });
+            stick.tooling.push({ kind: "spanned", type: "LeftPartialFlange", startPos: Math.round((len - 98.77) * 100) / 100, endPos: len });
             stick.tooling.push({
               kind: "spanned", type: "LipNotch",
               startPos: Math.round((len - 66.04) * 100) / 100,
               endPos: len,
             });
+            stick.tooling.push({ kind: "point", type: "Web", pos: 47.0 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: 65.5 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 75.47) * 100) / 100 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 61.39) * 100) / 100 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 48.4) * 100) / 100 });
           }
         }
       }

@@ -662,6 +662,8 @@ function buildOurProject(xmlText) {
         for (let si = 0; si < sticks.length; si++) {
           const s2 = sticks[si];
           if (String(s2.usage).toLowerCase() !== "topchord") continue;
+          // Skip H header sticks (they're tagged as TopChord but aren't pitched chords).
+          if (/^H\d/.test(s2.name)) continue;
           const occ2 = nameOcc2.get(s2.name) ?? 0;
           nameOcc2.set(s2.name, occ2 + 1);
           // Apex = high-z end; heel = low-z end
@@ -691,15 +693,24 @@ function buildOurProject(xmlText) {
             // 2D distance is enough — z differs between apex and B
             return Math.sqrt(dx*dx + dy*dy);
           };
-          // For B chord: start/end at heel (cap) or apex foot (no cap)
-          // For H chord: start/end at peak (apex) or interior wall (cap)
-          let startNearApex = false, endNearApex = false;
+          // For B chord: an "open" end abuts a TopChord endpoint (apex OR
+          // heel-foot — both are points where the B-chord transitions to the
+          // truss interior, not a heel-cap connection). Verified vs TN2-1 B1
+          // (3638.77): B1's end is at the heel-foot of T3 (low-z end of T3).
+          // For H chord: an "open" end abuts a TopChord apex.
+          let startOpen = false, endOpen = false;
           for (const ap of apexPoints) {
-            if (near(ap, s2.start) < 200) startNearApex = true;
-            if (near(ap, s2.end) < 200) endNearApex = true;
+            if (near(ap, s2.start) < 200) startOpen = true;
+            if (near(ap, s2.end) < 200) endOpen = true;
           }
-          m.startNearApex = startNearApex;
-          m.endNearApex = endNearApex;
+          if (s2.usage && String(s2.usage).toLowerCase() === "bottomchord") {
+            for (const hp of heelPoints) {
+              if (near(hp, s2.start) < 200) startOpen = true;
+              if (near(hp, s2.end) < 200) endOpen = true;
+            }
+          }
+          m.startNearApex = startOpen;
+          m.endNearApex = endOpen;
         }
       }
 

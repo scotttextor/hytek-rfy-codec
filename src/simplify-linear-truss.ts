@@ -384,6 +384,11 @@ function processFrame(
   for (let i = 0; i < parsed.sticks.length; i++) {
     for (let j = i + 1; j < parsed.sticks.length; j++) {
       const sA = parsed.sticks[i], sB = parsed.sticks[j];
+      // HYTEK Linear trusses fasten webs to chords only — never web-to-web.
+      // FrameCAD does not punch BOLT HOLES at W<->W mathematical crossings,
+      // and neither do we. Dropping these pairs prevents bogus apex bolts at
+      // every web-to-web crossing in steep trusses.
+      if (/^web$/i.test(sA.usage ?? "") && /^web$/i.test(sB.usage ?? "")) continue;
       const segA = segOf(sA), segB = segOf(sB);
       const lenA = stickLength3D(segA), lenB = stickLength3D(segB);
       const inter = lineIntersectionXZ(segA, segB, cfg.intersectionSlackMm);

@@ -272,7 +272,7 @@ def apply_centreline_rule(frame, csv_components):
 
 # ---------- Main ----------
 
-def normalise_dimples(csv_rows, margin=15.0, max_gap=400.0):
+def normalise_dimples(csv_rows, margin=15.0, max_gap=900.0):
     """Rewrite INNER DIMPLE positions on every chord+Box pair to comply with
     HYTEK rules: first/last dimple >= margin from each end, no gap > max_gap.
     Both the Box piece's dimples and the matching dimples on the main chord
@@ -424,8 +424,8 @@ def main():
     ap.add_argument('--exclude', default='', help='Comma-separated frame names to NEVER simplify')
     ap.add_argument('--dimple-margin', type=float, default=15.0,
                     help='Minimum distance from each end of Box piece to first/last dimple (mm). Default 15.')
-    ap.add_argument('--dimple-max-gap', type=float, default=400.0,
-                    help='Maximum gap between adjacent dimples (mm). Default 400.')
+    ap.add_argument('--dimple-max-gap', type=float, default=900.0,
+                    help='Maximum gap between adjacent dimples (mm). Default 900.')
     ap.add_argument('--no-dimple-fix', action='store_true',
                     help='Disable dimple normalisation (keep FrameCAD dimples as-is)')
     args = ap.parse_args()

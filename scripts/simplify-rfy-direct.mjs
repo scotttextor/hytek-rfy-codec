@@ -17,7 +17,7 @@
 // Usage:
 //   node scripts/simplify-rfy-direct.mjs original.rfy truss.xml [--out simplified.rfy]
 //                                          [--report-only] [--exclude FRAME1,FRAME2]
-//                                          [--dimple-margin 15] [--dimple-max-gap 400]
+//                                          [--dimple-margin 15] [--dimple-max-gap 900]
 //                                          [--no-dimple-fix]
 import { readFileSync, writeFileSync } from "node:fs";
 import { decode } from "../dist/decode.js";
@@ -26,7 +26,7 @@ import { XMLParser, XMLBuilder } from "fast-xml-parser";
 
 const args = process.argv.slice(2);
 if (args.length < 2) {
-  console.error("Usage: node simplify-rfy-direct.mjs original.rfy truss.xml [--out simplified.rfy] [--report-only] [--exclude FRAME1,FRAME2] [--dimple-margin 15] [--dimple-max-gap 400] [--no-dimple-fix]");
+  console.error("Usage: node simplify-rfy-direct.mjs original.rfy truss.xml [--out simplified.rfy] [--report-only] [--exclude FRAME1,FRAME2] [--dimple-margin 15] [--dimple-max-gap 900] [--no-dimple-fix]");
   process.exit(1);
 }
 
@@ -35,7 +35,7 @@ const xmlPath = args[1];
 let outPath = rfyPath.replace(/\.rfy$/i, ".simplified.rfy");
 let reportOnly = false;
 let dimpleMargin = 15.0;
-let dimpleMaxGap = 400.0;
+let dimpleMaxGap = 900.0;
 let dimpleFix = true;
 const excludeFrames = new Set();
 for (let i = 2; i < args.length; i++) {

@@ -291,9 +291,24 @@ function buildOurProject(xmlText) {
           usage: stick.usage,
           stickName: stick.name,
         });
-        if (/^Kb\d/.test(stickName) && length > 100) {
-          stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round((length/2)*10)/10 });
-        }
+        // Kb midpoint InnerService rule REMOVED 2026-05-03.
+        // Verified vs HG260012 LBW corpus: Kb (cripple) InnerService positions
+        // are NOT at length/2 — they are at fixed world Z heights where the
+        // Kb crosses the configured service-hole horizontals (e.g. ref L1101
+        // Kb1 len=1393.3 has InnerService @983.3, NOT @696.7). The midpoint
+        // rule fired 33 wrong ops on TH01-1F-LBW alone vs ~0 actual matches.
+        // Until height-based projection is implemented, emit nothing.
+        // if (/^Kb\d/.test(stickName) && length > 100) {
+        //   stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round((length/2)*10)/10 });
+        // }
+
+        // (InnerService strip rule for non-full-height studs was tried
+        // 2026-05-03 but reverted — although it correctly removed isolated
+        // jamb-stud false-positives on 1F walls (~10 ops), it had no net
+        // benefit on the 2F+UPPER LBW corpus where ref InnerService positions
+        // shift dramatically with frame elevation, and our base @296+@446
+        // ops don't match in either case. Wait for proper height-projection
+        // implementation before re-introducing this strip.)
 
         // Gauge-aware cap widths for ≥0.95mm: T/B plate caps swap 39mm → 45mm.
         // Verified vs HG250082 UPPER-GF-LBW-89.115 vs HG260012 -89.075 by agent
@@ -578,27 +593,24 @@ function buildOurProject(xmlText) {
             if (isTopChord && Math.abs(endZ - startZ) > 50) {
               if (startZ > endZ) apexAtStart = true; else apexAtEnd = true;
             }
-            // Find W intersections: project each W stick's xy into chord's
-            // axis position, ALSO checking that W stick z-range reaches chord's z.
+            // Find W intersections: only vertical W sticks (where start.xy == end.xy).
+            // Diagonal W sticks have inconsistent panel-point projection — Detailer
+            // appears to use a different rule we haven't fully reverse-engineered.
             const panelPoints = [];
-            const stickZRange = [Math.min(startZ, endZ), Math.max(startZ, endZ)];
             for (const w of wSticks) {
+              const wDxy = Math.sqrt((w.end.x - w.start.x) ** 2 + (w.end.y - w.start.y) ** 2);
+              if (wDxy >= 1) continue;  // skip diagonal W
               const wAxis = useX ? w.start.x : w.start.y;
               const wPerp = useX ? w.start.y : w.start.x;
               if (Math.abs(wPerp - stickPerp) > 100) continue;
               const wZmin = Math.min(w.start.z, w.end.z);
               const wZmax = Math.max(w.start.z, w.end.z);
-              // chord z must lie within w's z range (with ±5mm tolerance)
               const chordZmid = (startZ + endZ) / 2;
-              // For raked top chord, allow tolerance
               if (chordZmid < wZmin - 50 || chordZmid > wZmax + 50) continue;
-              // Compute position along chord — which end is "0"?
-              // Use (chord-axis-of-W-coord - chord-start-axis), not abs
               const localPos = stickAxisStart < stickAxisEnd
                 ? (wAxis - stickAxisStart)
                 : (stickAxisStart - wAxis);
               if (localPos < 5 || localPos > stickAxisLen - 5) continue;
-              // For diagonal chord, scale localPos by 3DLen/axisLen
               const scaled = localPos * (chord3DLen / stickAxisLen);
               panelPoints.push(Math.round(scaled * 100) / 100);
             }
@@ -1012,6 +1024,10 @@ for (const plan of ourDoc.project.plans) {
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 75.47) * 100) / 100 });
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 61.39) * 100) / 100 });
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 48.4) * 100) / 100 });
+            // For mid-length W (≤500): additional Web@pt at L-47 (mirror of start @47)
+            if (len <= 500) {
+              stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((len - 47.0) * 100) / 100 });
+            }
           } else {
             // DIAGONAL W (non-vertical) — variable-span caps based on stick angle.
             // Pattern (verified vs W7 len 1061): variable-width caps at each end

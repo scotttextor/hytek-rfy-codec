@@ -53,6 +53,18 @@ export interface SimplifyLinearTrussOptions {
   endZoneMm?: number;
   apexCollisionMm?: number;
   profileGate?: ProfileGate;
+  /** Re-normalise InnerDimple positions on every chord+Box pair so first/last
+   *  dimple sit ≥`dimpleMargin` from each end of the Box piece and no gap
+   *  between adjacent dimples exceeds `dimpleMaxGap`. Box-piece dimples and
+   *  the matching dimples on the main chord are updated together so the CL-to-CL
+   *  snap-fit alignment is preserved. Default: true. */
+  normaliseDimples?: boolean;
+  /** Minimum distance from each end of a Box piece to its first/last dimple.
+   *  Default 15.0mm (HYTEK fabrication rule). */
+  dimpleMargin?: number;
+  /** Maximum gap allowed between adjacent dimples on a Box piece.
+   *  Default 900.0mm (HYTEK fabrication rule). */
+  dimpleMaxGap?: number;
 }
 
 export interface ProfileGate {
@@ -74,6 +86,10 @@ export interface SimplifyDecision {
   modifiedSticks?: number;
   newBoltCount?: number;
   fallbackSticks?: string[];
+  /** Number of InnerDimple ops mutated for this frame (Box dimples written +
+   *  matching main-chord dimples written). Undefined when dimple normalisation
+   *  was disabled or the frame skipped. */
+  dimplesUpdated?: number;
 }
 
 export interface SimplifyResult {
@@ -256,6 +272,234 @@ export function assertRfyVersion(rfyXml: string): void {
 export type { ParsedStick };
 
 // =============================================================================
+// Dimple normalisation (HYTEK Box-piece snap-fit rule)
+// =============================================================================
+//
+// HYTEK Linear trusses use Box pieces — short C-section sticks that clip onto
+// a main chord via dimple snap-fit. Box pieces appear in the RFY as separate
+// <stick> children of the same <frame>, with stick names like "B1 (Box1)",
+// "B1 (Box2)", "T5 (Box1)" — a parent stick name plus a "(BoxN)" suffix.
+//
+// Manufacturing rules (enforced by this pass):
+//  1. First/last dimple on a Box piece must be ≥ `margin` from each end.
+//  2. No gap between adjacent dimples on a Box piece may exceed `maxGap`.
+//  3. The matching dimples on the main chord must be at the same world position
+//     as the Box's dimples (CL-to-CL alignment for snap-fit).
+//
+// Multi-Box main chords (e.g. one B1 with both Box1 and Box2 zones) require
+// TWO-PASS processing: capture every Box's original world-space dimple
+// positions BEFORE any mutation, THEN apply updates. Otherwise the second Box
+// reads already-mutated reference positions.
+
+/** Box-piece stick name regex. Captures the parent stick name in group 1 and
+ *  the box index in group 2. Matches names like "B1 (Box1)", "T5 (Box2)". */
+const BOX_NAME_RE = /^(.+?)\s*\(Box(\d+)\)$/;
+
+/** Compute the Box-piece's normalised dimple set per HYTEK rule.
+ *  - L: Box-piece length in mm.
+ *  - margin: minimum distance from each end (default 15mm).
+ *  - maxGap: maximum allowed gap between adjacent dimples (default 900mm).
+ *  Returns local positions (mm from Box's start) rounded to 2 decimals. */
+export function computeBoxDimples(
+  L: number,
+  margin: number,
+  maxGap: number,
+): number[] {
+  const usable = L - 2 * margin;
+  if (usable <= 0) {
+    return [Math.round((L / 2) * 100) / 100];
+  }
+  const nGaps = Math.max(1, Math.ceil(usable / maxGap));
+  const spacing = usable / nGaps;
+  const out: number[] = [];
+  for (let i = 0; i <= nGaps; i++) {
+    out.push(Math.round((margin + i * spacing) * 100) / 100);
+  }
+  return out;
+}
+
+interface ToolingOp {
+  "point-tool"?: unknown[];
+  ":@"?: { "@_type"?: string; "@_pos"?: string };
+  [key: string]: unknown;
+}
+
+interface StickFrameChild {
+  stick?: Array<Record<string, unknown>>;
+  ":@"?: { "@_name"?: string; "@_length"?: string };
+}
+
+interface ToolingNode {
+  tooling: ToolingOp[];
+}
+
+interface StickEntry {
+  toolingNode: ToolingNode;
+  length: number;
+}
+
+interface DimplePair {
+  mainName: string;
+  mainEntry: StickEntry;
+  boxName: string;
+  boxEntry: StickEntry;
+  boxOld: number[];
+  boxLength: number;
+  boxPosition: number;
+}
+
+/** Read every InnerDimple position out of a tooling-array (preserveOrder format). */
+function readDimples(toolingArr: readonly ToolingOp[]): number[] {
+  const out: number[] = [];
+  for (const op of toolingArr) {
+    if (op["point-tool"] === undefined) continue;
+    const t = op[":@"]?.["@_type"];
+    if (t !== "InnerDimple") continue;
+    const posStr = op[":@"]?.["@_pos"];
+    if (posStr === undefined) continue;
+    const pos = parseFloat(posStr);
+    if (!Number.isNaN(pos)) out.push(pos);
+  }
+  out.sort((a, b) => a - b);
+  return out;
+}
+
+/** Strip every InnerDimple op from a tooling-array (returns a new array). */
+function stripDimples(toolingArr: readonly ToolingOp[]): ToolingOp[] {
+  return toolingArr.filter(op => {
+    if (op["point-tool"] === undefined) return true;
+    return op[":@"]?.["@_type"] !== "InnerDimple";
+  });
+}
+
+/** Build an InnerDimple point-tool node matching the RFY's preserveOrder shape. */
+function makeDimpleNode(pos: number): ToolingOp {
+  return { "point-tool": [], ":@": { "@_type": "InnerDimple", "@_pos": pos.toFixed(2) } };
+}
+
+/** Run dimple-normalisation on every chord+Box pair in this frame. Mutates
+ *  the tooling arrays of both the Box-piece sticks and the main-chord sticks
+ *  in place. Returns the number of InnerDimple ops written (Box + main).
+ *  Pure modulo the in-place tree mutation — no I/O, no module state. */
+export function normaliseDimplesForFrame(
+  frameWrap: { frame: Array<Record<string, unknown>> },
+  margin: number,
+  maxGap: number,
+): number {
+  // 1. Index sticks by name → { tooling-arr ref, length }.
+  const stickIndex = new Map<string, StickEntry>();
+  for (const child of frameWrap.frame as StickFrameChild[]) {
+    if (!child.stick) continue;
+    const stickAttrs = child[":@"];
+    const stickName = stickAttrs?.["@_name"];
+    if (!stickName) continue;
+    const lengthStr = stickAttrs?.["@_length"];
+    const length = lengthStr !== undefined ? parseFloat(lengthStr) : NaN;
+    const toolingNode = child.stick.find(
+      c => (c as { tooling?: unknown }).tooling !== undefined,
+    ) as ToolingNode | undefined;
+    if (!toolingNode || !Array.isArray(toolingNode.tooling)) continue;
+    stickIndex.set(stickName, { toolingNode, length });
+  }
+
+  // 2. Group: main chord → [{ idx, boxStickName, boxEntry }].
+  interface BoxRef { boxIdx: number; boxName: string; boxEntry: StickEntry }
+  const boxesByMain = new Map<string, BoxRef[]>();
+  for (const [name, entry] of stickIndex) {
+    const m = BOX_NAME_RE.exec(name);
+    if (!m) continue;
+    const baseName = m[1].trim();
+    const boxIdx = parseInt(m[2], 10);
+    const arr = boxesByMain.get(baseName);
+    if (arr) arr.push({ boxIdx, boxName: name, boxEntry: entry });
+    else boxesByMain.set(baseName, [{ boxIdx, boxName: name, boxEntry: entry }]);
+  }
+
+  // 3. PASS 1: capture original dimple positions on each main + match Box→main zone.
+  const pairs: DimplePair[] = [];
+  for (const [mainName, boxes] of boxesByMain) {
+    const mainEntry = stickIndex.get(mainName);
+    if (!mainEntry) continue;
+    const mainOld = readDimples(mainEntry.toolingNode.tooling);
+    if (mainOld.length === 0) continue;
+
+    boxes.sort((a, b) => a.boxIdx - b.boxIdx);
+    const mainClaimed = new Array<boolean>(mainOld.length).fill(false);
+
+    for (const { boxName, boxEntry } of boxes) {
+      const boxOld = readDimples(boxEntry.toolingNode.tooling);
+      if (boxOld.length === 0) continue;
+      if (!Number.isFinite(boxEntry.length)) continue;
+      const boxLength = boxEntry.length;
+
+      const boxGaps: number[] = [];
+      for (let i = 0; i < boxOld.length - 1; i++) {
+        boxGaps.push(Math.round((boxOld[i + 1] - boxOld[i]) * 100) / 100);
+      }
+
+      let bestStart: number | null = null;
+      if (boxGaps.length === 0) {
+        // Single-dimple Box → first unclaimed main dimple.
+        for (let i = 0; i < mainOld.length; i++) {
+          if (mainClaimed[i]) continue;
+          bestStart = i;
+          break;
+        }
+      } else {
+        const need = boxOld.length;
+        outer: for (let i = 0; i + need <= mainOld.length; i++) {
+          for (let k = 0; k < need; k++) if (mainClaimed[i + k]) continue outer;
+          let ok = true;
+          for (let k = 0; k < boxGaps.length; k++) {
+            const mg = Math.round((mainOld[i + k + 1] - mainOld[i + k]) * 100) / 100;
+            if (Math.abs(boxGaps[k] - mg) >= 2.0) { ok = false; break; }
+          }
+          if (ok) { bestStart = i; break; }
+        }
+      }
+      if (bestStart === null) continue;
+      for (let k = 0; k < boxOld.length; k++) mainClaimed[bestStart + k] = true;
+
+      const boxPosition = mainOld[bestStart] - boxOld[0];
+      pairs.push({
+        mainName, mainEntry, boxName, boxEntry, boxOld, boxLength, boxPosition,
+      });
+    }
+  }
+
+  // 4. PASS 2: rewrite Box dimples (replace ALL) and main dimples (replace zone only).
+  let dimplesUpdated = 0;
+  for (const p of pairs) {
+    const boxNew = computeBoxDimples(p.boxLength, margin, maxGap);
+    const mainNew = boxNew.map(d => Math.round((p.boxPosition + d) * 100) / 100);
+
+    // Box piece: strip ALL InnerDimples, append new.
+    const boxOps = stripDimples(p.boxEntry.toolingNode.tooling);
+    for (const d of boxNew) boxOps.push(makeDimpleNode(d));
+    p.boxEntry.toolingNode.tooling = boxOps;
+
+    // Main chord: keep dimples OUTSIDE this Box's zone, append new in-zone dimples.
+    const zoneStart = p.boxPosition - 1;
+    const zoneEnd = p.boxPosition + p.boxLength + 1;
+    const mainOps = p.mainEntry.toolingNode.tooling.filter(op => {
+      if (op["point-tool"] === undefined) return true;
+      if (op[":@"]?.["@_type"] !== "InnerDimple") return true;
+      const posStr = op[":@"]?.["@_pos"];
+      if (posStr === undefined) return true;
+      const pos = parseFloat(posStr);
+      if (Number.isNaN(pos)) return true;
+      return !(pos >= zoneStart && pos <= zoneEnd);
+    });
+    for (const d of mainNew) mainOps.push(makeDimpleNode(d));
+    p.mainEntry.toolingNode.tooling = mainOps;
+
+    dimplesUpdated += boxNew.length + mainNew.length;
+  }
+
+  return dimplesUpdated;
+}
+
+// =============================================================================
 // Core walker — simplifyLinearTrussRfy()
 // =============================================================================
 
@@ -265,6 +509,9 @@ const DEFAULTS = {
   endZoneMm: 30,
   apexCollisionMm: 17,
   parallelCoincidenceMm: 5,
+  normaliseDimples: true,
+  dimpleMargin: 15.0,
+  dimpleMaxGap: 900.0,
 };
 
 export function simplifyLinearTrussRfy(
@@ -459,6 +706,19 @@ function processFrame(
     totalNewBolts += positions.length;
   }
 
+  // Dimple normalisation pass — runs on the SAME parsed frame, mutates the
+  // tooling arrays of every chord+Box pair in place. Independent of bolt-hole
+  // placement: Box pieces are fastened to the chord whether or not we
+  // simplified the BOLT HOLES. Runs even when every web stick fell back.
+  let dimplesUpdated = 0;
+  if (cfg.normaliseDimples) {
+    dimplesUpdated = normaliseDimplesForFrame(
+      frameWrap as { frame: Array<Record<string, unknown>> },
+      cfg.dimpleMargin,
+      cfg.dimpleMaxGap,
+    );
+  }
+
   // Frame-level decision per spec §6 (table): APPLY when at least one stick
   // was modified. Stick-level fallbacks are surfaced via `fallbackSticks` but
   // do not demote the frame's decision. FALLBACK at the frame level is
@@ -473,16 +733,24 @@ function processFrame(
         : `${modifiedSticks} sticks updated`,
       modifiedSticks, newBoltCount: totalNewBolts,
       ...(fallbackSticks.size > 0 ? { fallbackSticks: [...fallbackSticks] } : {}),
+      ...(cfg.normaliseDimples ? { dimplesUpdated } : {}),
     });
     appliedFrames.push(frameName);
   } else {
+    // Even when every web fell back, the dimple pass may have mutated the
+    // chord+Box tree — track the frame as applied so the rebuilt RFY is
+    // emitted, not the original bytes.
     decisions.push({
       frame: frameName,
       decision: "FALLBACK",
       reason: `all ${fallbackSticks.size} sticks fell back (end-zone violation) — keeping source RFY's Web ops`,
       modifiedSticks: 0, newBoltCount: 0,
       fallbackSticks: [...fallbackSticks],
+      ...(cfg.normaliseDimples ? { dimplesUpdated } : {}),
     });
+    if (dimplesUpdated > 0) {
+      appliedFrames.push(frameName);
+    }
   }
 }
 

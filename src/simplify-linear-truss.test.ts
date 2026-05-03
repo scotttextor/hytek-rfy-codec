@@ -506,3 +506,236 @@ describe("simplifyLinearTrussRfy — roundtrip equality on skipped wall", () => 
     expect(result.rfy.equals(rfy)).toBe(true);
   });
 });
+
+// =============================================================================
+// Dimple normalisation
+// =============================================================================
+
+import { computeBoxDimples, normaliseDimplesForFrame } from "./simplify-linear-truss.js";
+import { decryptRfy } from "./crypto.js";
+import { XMLParser } from "fast-xml-parser";
+
+describe("computeBoxDimples", () => {
+  it("300mm Box (no extras) → [15, 285]", () => {
+    // usable = 300 - 30 = 270; nGaps = ceil(270/900) = 1; spacing = 270.
+    expect(computeBoxDimples(300, 15, 900)).toEqual([15.0, 285.0]);
+  });
+
+  it("738mm Box (no extras) → [15, 723]", () => {
+    // usable = 738 - 30 = 708; nGaps = ceil(708/900) = 1; spacing = 708.
+    expect(computeBoxDimples(738, 15, 900)).toEqual([15.0, 723.0]);
+  });
+
+  it("1182mm Box (1 extra) → [15, 591, 1167]", () => {
+    // usable = 1182 - 30 = 1152; nGaps = ceil(1152/900) = 2; spacing = 576.
+    expect(computeBoxDimples(1182, 15, 900)).toEqual([15.0, 591.0, 1167.0]);
+  });
+
+  it("1967mm Box (2 extras) → [15, 660.67, 1306.33, 1952]", () => {
+    // usable = 1967 - 30 = 1937; nGaps = ceil(1937/900) = 3; spacing = 645.6666…
+    const got = computeBoxDimples(1967, 15, 900);
+    expect(got).toHaveLength(4);
+    expect(got[0]).toBeCloseTo(15.0, 5);
+    expect(got[1]).toBeCloseTo(660.67, 2);
+    expect(got[2]).toBeCloseTo(1306.33, 2);
+    expect(got[3]).toBeCloseTo(1952.0, 5);
+  });
+
+  it("very short Box (≤ 2*margin) → single dimple at midpoint", () => {
+    // L = 20, usable = 20 - 30 = -10 ≤ 0 → fallback to [L/2].
+    expect(computeBoxDimples(20, 15, 900)).toEqual([10.0]);
+  });
+
+  it("respects custom margin and maxGap", () => {
+    // L=2000, margin=50, maxGap=400. usable=1900; nGaps=ceil(1900/400)=5; spacing=380.
+    const got = computeBoxDimples(2000, 50, 400);
+    expect(got).toEqual([50.0, 430.0, 810.0, 1190.0, 1570.0, 1950.0]);
+  });
+});
+
+describe("normaliseDimplesForFrame — pure tree mutation", () => {
+  // Build a minimal preserveOrder fast-xml-parser frame with one main chord
+  // ("B1") and one Box piece ("B1 (Box1)"). Each stick has a <tooling> child
+  // with a few InnerDimple ops.
+  function makeStickChild(
+    name: string,
+    length: number,
+    dimplePositions: number[],
+  ): Record<string, unknown> {
+    const tooling: Array<Record<string, unknown>> = dimplePositions.map(p => ({
+      "point-tool": [],
+      ":@": { "@_type": "InnerDimple", "@_pos": p.toFixed(2) },
+    }));
+    return {
+      stick: [{ tooling }],
+      ":@": { "@_name": name, "@_length": String(length) },
+    };
+  }
+
+  it("rewrites a 300mm single-Box pair: Box → [15, 285], main updated to match", () => {
+    const main = makeStickChild("B1", 5000, [200, 268.1, 488.1]);
+    const box = makeStickChild("B1 (Box1)", 300, [10, 268.1]);
+    const frameWrap = { frame: [main, box] };
+
+    const updated = normaliseDimplesForFrame(frameWrap, 15.0, 900.0);
+
+    // Box wrote 2 dimples + main wrote 2 in-zone dimples → 4 InnerDimple ops written.
+    expect(updated).toBe(4);
+
+    // Box piece now has [15, 285] only.
+    const boxTooling = (box.stick as Array<{ tooling: Array<Record<string, unknown>> }>)[0].tooling;
+    const boxDimples = boxTooling
+      .filter(op => "point-tool" in op && (op as { ":@"?: { "@_type"?: string } })[":@"]?.["@_type"] === "InnerDimple")
+      .map(op => parseFloat((op as { ":@"?: { "@_pos"?: string } })[":@"]?.["@_pos"] ?? "NaN"));
+    expect(boxDimples).toEqual([15.0, 285.0]);
+
+    // Main chord: in-zone dimples (Box matched main[1..2] = 268.1, 488.1) replaced
+    // by main_new = boxPosition + boxNew. boxPosition = 268.1 - 10 = 258.1.
+    // → main_new = [273.1, 543.1]. Out-of-zone dimple (200) preserved.
+    const mainTooling = (main.stick as Array<{ tooling: Array<Record<string, unknown>> }>)[0].tooling;
+    const mainDimples = mainTooling
+      .filter(op => "point-tool" in op && (op as { ":@"?: { "@_type"?: string } })[":@"]?.["@_type"] === "InnerDimple")
+      .map(op => parseFloat((op as { ":@"?: { "@_pos"?: string } })[":@"]?.["@_pos"] ?? "NaN"))
+      .sort((a, b) => a - b);
+    expect(mainDimples).toEqual([200.0, 273.1, 543.1]);
+  });
+
+  it("two-pass: multi-Box main chord uses ORIGINAL main positions, not mutated ones", () => {
+    // Main B1 has 4 dimples covering Box1 zone (positions 100,200) and Box2 zone (positions 1000,1100).
+    // Box1 length 300 → new local [15, 285] → main_new = [105, 375]
+    // Box2 length 300 → new local [15, 285] → main_new = [1005, 1275]
+    // If we did one-pass and mutated Box1 first, Box2's "boxPosition" lookup
+    // would use already-overwritten main positions. The two-pass design
+    // captures all old positions before any write.
+    const main = makeStickChild("B1", 5000, [100, 200, 1000, 1100]);
+    const box1 = makeStickChild("B1 (Box1)", 300, [10, 110]);
+    const box2 = makeStickChild("B1 (Box2)", 300, [10, 110]);
+    const frameWrap = { frame: [main, box1, box2] };
+
+    normaliseDimplesForFrame(frameWrap, 15.0, 900.0);
+
+    const mainTooling = (main.stick as Array<{ tooling: Array<Record<string, unknown>> }>)[0].tooling;
+    const mainDimples = mainTooling
+      .filter(op => "point-tool" in op && (op as { ":@"?: { "@_type"?: string } })[":@"]?.["@_type"] === "InnerDimple")
+      .map(op => parseFloat((op as { ":@"?: { "@_pos"?: string } })[":@"]?.["@_pos"] ?? "NaN"))
+      .sort((a, b) => a - b);
+
+    // Box1: boxPosition = 100 - 10 = 90 → [105, 375]
+    // Box2: boxPosition = 1000 - 10 = 990 → [1005, 1275]
+    expect(mainDimples).toEqual([105.0, 375.0, 1005.0, 1275.0]);
+  });
+
+  it("orphan Box (no matching main chord) is left untouched", () => {
+    const box = makeStickChild("Z9 (Box1)", 300, [10, 268.1]);
+    const frameWrap = { frame: [box] };
+
+    const updated = normaliseDimplesForFrame(frameWrap, 15.0, 900.0);
+    expect(updated).toBe(0);
+
+    const boxTooling = (box.stick as Array<{ tooling: Array<Record<string, unknown>> }>)[0].tooling;
+    const boxDimples = boxTooling
+      .filter(op => "point-tool" in op && (op as { ":@"?: { "@_type"?: string } })[":@"]?.["@_type"] === "InnerDimple")
+      .map(op => parseFloat((op as { ":@"?: { "@_pos"?: string } })[":@"]?.["@_pos"] ?? "NaN"))
+      .sort((a, b) => a - b);
+    expect(boxDimples).toEqual([10.0, 268.1]);
+  });
+
+  it("frame with no Box pieces makes no changes", () => {
+    const main = makeStickChild("B1", 5000, [100, 200, 300]);
+    const frameWrap = { frame: [main] };
+
+    const updated = normaliseDimplesForFrame(frameWrap, 15.0, 900.0);
+    expect(updated).toBe(0);
+  });
+});
+
+describe("simplifyLinearTrussRfy — dimple normalisation on reference fixture", () => {
+  it("2603191 ROCKVILLE: bolt-hole simplification AND dimple normalisation both fire", () => {
+    const rfy = readCorpus("2603191/2603191-GF-LIN-89.075.rfy");
+    const xml = readCorpus("2603191/2603191-ROCKVILLE.xml").toString("utf-8");
+    const parsed = parsePlanXml(xml);
+    const result = simplifyLinearTrussRfy(rfy, parsed.frames, parsed.planNameByFrame);
+
+    // Bolt-hole pass still produces deterministic counts (default normaliseDimples=true
+    // does not change the bolt-hole rewrite).
+    const apply = result.decisions.filter(d => d.decision === "APPLY");
+    expect(apply.length).toBe(22);
+    const totalBolts = apply.reduce((s, d) => s + (d.newBoltCount ?? 0), 0);
+    expect(totalBolts).toBe(750);
+
+    // At least some frames had Box pieces → dimplesUpdated > 0.
+    const totalDimples = apply.reduce((s, d) => s + (d.dimplesUpdated ?? 0), 0);
+    expect(totalDimples).toBeGreaterThan(0);
+
+    // Output must decrypt cleanly (i.e. encryption roundtrip is intact).
+    const decryptedOut = decryptRfy(result.rfy);
+    expect(decryptedOut.startsWith("<?xml")).toBe(true);
+
+    // Every Box piece's first/last dimple must satisfy the margin rule
+    // (≥15mm from each end), and adjacent gaps must be ≤900mm. This is the
+    // post-condition the script enforces.
+    const parser = new XMLParser({
+      ignoreAttributes: false, attributeNamePrefix: "@_",
+      preserveOrder: true, allowBooleanAttributes: true, parseAttributeValue: false,
+    });
+    const tree = parser.parse(decryptedOut);
+
+    type AnyNode = Record<string, unknown>;
+    const boxStickReports: { name: string; length: number; dimples: number[] }[] = [];
+    const visit = (node: unknown): void => {
+      if (Array.isArray(node)) {
+        for (const item of node) visit(item);
+        return;
+      }
+      if (!node || typeof node !== "object") return;
+      const obj = node as AnyNode;
+      // Stick node?
+      const stickArr = obj["stick"];
+      const meta = (obj as { ":@"?: { "@_name"?: string; "@_length"?: string } })[":@"];
+      if (Array.isArray(stickArr) && meta?.["@_name"] && /\(Box\d+\)\s*$/.test(meta["@_name"])) {
+        const length = meta["@_length"] !== undefined ? parseFloat(meta["@_length"]) : NaN;
+        const tooling = (stickArr as Array<{ tooling?: Array<Record<string, unknown>> }>)
+          .find(c => c.tooling !== undefined)?.tooling;
+        if (tooling) {
+          const dimples = tooling
+            .filter(op => "point-tool" in op && (op as { ":@"?: { "@_type"?: string } })[":@"]?.["@_type"] === "InnerDimple")
+            .map(op => parseFloat((op as { ":@"?: { "@_pos"?: string } })[":@"]?.["@_pos"] ?? "NaN"))
+            .sort((a, b) => a - b);
+          boxStickReports.push({ name: meta["@_name"], length, dimples });
+        }
+      }
+      for (const key of Object.keys(obj)) visit(obj[key]);
+    };
+    visit(tree);
+
+    expect(boxStickReports.length).toBeGreaterThan(0);
+    for (const { name, length, dimples } of boxStickReports) {
+      // First/last ≥ 15mm from each end (allow tiny float drift via 0.01 epsilon).
+      expect(dimples[0]).toBeGreaterThanOrEqual(15.0 - 0.01);
+      expect(dimples[dimples.length - 1]).toBeLessThanOrEqual(length - 15.0 + 0.01);
+      // No gap > 900mm.
+      for (let i = 0; i < dimples.length - 1; i++) {
+        const gap = dimples[i + 1] - dimples[i];
+        expect(gap, `gap between dimples ${i} and ${i + 1} on ${name}`).toBeLessThanOrEqual(900.0 + 0.01);
+      }
+    }
+  });
+
+  it("2603191 ROCKVILLE: opt-out via { normaliseDimples: false } leaves dimple count at zero", () => {
+    const rfy = readCorpus("2603191/2603191-GF-LIN-89.075.rfy");
+    const xml = readCorpus("2603191/2603191-ROCKVILLE.xml").toString("utf-8");
+    const parsed = parsePlanXml(xml);
+    const result = simplifyLinearTrussRfy(rfy, parsed.frames, parsed.planNameByFrame, {
+      normaliseDimples: false,
+    });
+
+    // Bolt-hole pass unchanged.
+    const apply = result.decisions.filter(d => d.decision === "APPLY");
+    expect(apply.length).toBe(22);
+
+    // No frame should report dimplesUpdated when normaliseDimples is off.
+    for (const d of apply) {
+      expect(d.dimplesUpdated).toBeUndefined();
+    }
+  });
+});

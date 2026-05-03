@@ -5,8 +5,20 @@ import type { RfyDocument, RfyPlan, RfyFrame, RfyStick, RfyToolingOp, ToolType, 
  * HYTEK's production workflow (matches the format in
  * Split_HG######/<job>_<profile>.csv files).
  */
+// Detailer's RFY uses these op-type names with the following CSV labels.
+// Verified empirically 2026-05-03 via round-trip diff against
+// HG260044#1-1_GF-LBW-70.075.{rfy,csv}: B1 has `point Web @ 8` matching
+// CSV `BOLT HOLES,8`; `point Bolt @ 62` matches `ANCHOR,62`.
+//
+//   Web   → BOLT HOLES   (holes punched THROUGH the web face)
+//   Bolt  → ANCHOR       (anchor bolts into the slab — Detailer's "Bolt" tool)
+//   InnerNotch → WEB NOTCH  (notches cut INTO the web face for fitment)
+//
+// Common confusion: "Web" the op-name vs "WEB NOTCH" the CSV label —
+// they are NOT the same operation. Web punches a hole; InnerNotch makes
+// a notch.
 const TOOL_TO_CSV: Record<ToolType, string> = {
-  Bolt: "BOLT HOLES",
+  Bolt: "ANCHOR",
   Chamfer: "FULL CHAMFER",
   InnerDimple: "INNER DIMPLE",
   InnerNotch: "WEB NOTCH",
@@ -19,7 +31,7 @@ const TOOL_TO_CSV: Record<ToolType, string> = {
   ScrewHoles: "ANCHOR",
   Swage: "SWAGE",
   TrussChamfer: "FULL CHAMFER",
-  Web: "WEB NOTCH",
+  Web: "BOLT HOLES",
 };
 
 /**

@@ -22,6 +22,18 @@ export interface SimplifyLinearTrussOptions {
     endZoneMm?: number;
     apexCollisionMm?: number;
     profileGate?: ProfileGate;
+    /** Re-normalise InnerDimple positions on every chord+Box pair so first/last
+     *  dimple sit ≥`dimpleMargin` from each end of the Box piece and no gap
+     *  between adjacent dimples exceeds `dimpleMaxGap`. Box-piece dimples and
+     *  the matching dimples on the main chord are updated together so the CL-to-CL
+     *  snap-fit alignment is preserved. Default: true. */
+    normaliseDimples?: boolean;
+    /** Minimum distance from each end of a Box piece to its first/last dimple.
+     *  Default 15.0mm (HYTEK fabrication rule). */
+    dimpleMargin?: number;
+    /** Maximum gap allowed between adjacent dimples on a Box piece.
+     *  Default 900.0mm (HYTEK fabrication rule). */
+    dimpleMaxGap?: number;
 }
 export interface ProfileGate {
     web: number;
@@ -43,6 +55,10 @@ export interface SimplifyDecision {
     modifiedSticks?: number;
     newBoltCount?: number;
     fallbackSticks?: string[];
+    /** Number of InnerDimple ops mutated for this frame (Box dimples written +
+     *  matching main-chord dimples written). Undefined when dimple normalisation
+     *  was disabled or the frame skipped. */
+    dimplesUpdated?: number;
 }
 export interface SimplifyResult {
     rfy: Buffer;
@@ -82,4 +98,17 @@ export declare class RfyVersionMismatch extends Error {
 }
 export declare function assertRfyVersion(rfyXml: string): void;
 export type { ParsedStick };
+/** Compute the Box-piece's normalised dimple set per HYTEK rule.
+ *  - L: Box-piece length in mm.
+ *  - margin: minimum distance from each end (default 15mm).
+ *  - maxGap: maximum allowed gap between adjacent dimples (default 900mm).
+ *  Returns local positions (mm from Box's start) rounded to 2 decimals. */
+export declare function computeBoxDimples(L: number, margin: number, maxGap: number): number[];
+/** Run dimple-normalisation on every chord+Box pair in this frame. Mutates
+ *  the tooling arrays of both the Box-piece sticks and the main-chord sticks
+ *  in place. Returns the number of InnerDimple ops written (Box + main).
+ *  Pure modulo the in-place tree mutation — no I/O, no module state. */
+export declare function normaliseDimplesForFrame(frameWrap: {
+    frame: Array<Record<string, unknown>>;
+}, margin: number, maxGap: number): number;
 export declare function simplifyLinearTrussRfy(rfyBytes: Buffer, frames: readonly ParsedFrame[], planNameByFrame: ReadonlyMap<string, string>, opts?: SimplifyLinearTrussOptions): SimplifyResult;

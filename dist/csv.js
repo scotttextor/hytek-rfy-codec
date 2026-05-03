@@ -3,8 +3,20 @@
  * HYTEK's production workflow (matches the format in
  * Split_HG######/<job>_<profile>.csv files).
  */
+// Detailer's RFY uses these op-type names with the following CSV labels.
+// Verified empirically 2026-05-03 via round-trip diff against
+// HG260044#1-1_GF-LBW-70.075.{rfy,csv}: B1 has `point Web @ 8` matching
+// CSV `BOLT HOLES,8`; `point Bolt @ 62` matches `ANCHOR,62`.
+//
+//   Web   → BOLT HOLES   (holes punched THROUGH the web face)
+//   Bolt  → ANCHOR       (anchor bolts into the slab — Detailer's "Bolt" tool)
+//   InnerNotch → WEB NOTCH  (notches cut INTO the web face for fitment)
+//
+// Common confusion: "Web" the op-name vs "WEB NOTCH" the CSV label —
+// they are NOT the same operation. Web punches a hole; InnerNotch makes
+// a notch.
 const TOOL_TO_CSV = {
-    Bolt: "BOLT HOLES",
+    Bolt: "ANCHOR",
     Chamfer: "FULL CHAMFER",
     InnerDimple: "INNER DIMPLE",
     InnerNotch: "WEB NOTCH",
@@ -17,7 +29,7 @@ const TOOL_TO_CSV = {
     ScrewHoles: "ANCHOR",
     Swage: "SWAGE",
     TrussChamfer: "FULL CHAMFER",
-    Web: "WEB NOTCH",
+    Web: "BOLT HOLES",
 };
 /**
  * The CSV format is: `PROFILE_CODE_GAUGE` where profile label has spaces
@@ -43,14 +55,37 @@ function toFloat32(v) {
     f32[0] = v;
     return f32[0];
 }
+/** Emit a tool POSITION at 1-decimal precision. Ref examples:
+ *    INNER DIMPLE,16.5  /  SWAGE,27.5  /  LIP NOTCH,287  /  SERVICE HOLE,296
+ * Verified 2026-05-03 vs HG260044 round-trip — tool positions are
+ * pre-rounded to 1 decimal in Detailer's internal grid.
+ */
 function n(v) {
     const v32 = toFloat32(v);
-    // Detailer uses 1 decimal place (observed 2026-04-24 across HG260004,
-    // HG260023, HG260032 fixtures — e.g. 1876.0934 -> 1876.1, not 1876.09).
     const rounded = Math.round(v32 * 10) / 10;
     if (Number.isInteger(rounded))
         return rounded.toString();
     return rounded.toFixed(1).replace(/\.?0+$/, "");
+}
+/** Emit a DIMENSION column (length / startX / startY / endX / endY / flange)
+ * at 2-decimal precision. Ref examples:
+ *    1377.73 (Kb stick length)   1947.8 (zero-trimmed)   2494 (integer)
+ * Diagonal Kb-brace lengths and apex/heel outline coords on raking frames
+ * need 2 decimals to round-trip from Float32 storage.
+ */
+function nDim(v) {
+    const v32 = toFloat32(v);
+    const rounded = Math.round(v32 * 100) / 100;
+    if (Number.isInteger(rounded))
+        return rounded.toString();
+    return rounded.toFixed(2).replace(/\.?0+$/, "");
+}
+/** Emit a Chamfer position at 2-decimal precision. Chamfer positions are
+ * derived from stick length (`-3`, `length+3`) and inherit length precision.
+ * Ref example: Kb1 length 1377.73 → FULL CHAMFER,1380.73 at the end.
+ */
+function nChamfer(v) {
+    return nDim(v);
 }
 const SPAN_RULES = {
     Swage: { offset: 27.5, stride: 55 },
@@ -60,18 +95,30 @@ const SPAN_RULES = {
     RightFlange: { offset: 24, stride: 48 },
     Web: { offset: 27.5, stride: 55 },
 };
-function expandSpan(start, end, type) {
+function expandSpan(start, end, type, stickLength) {
     const rule = SPAN_RULES[type];
     if (!rule)
         return [start, end];
     const first = start + rule.offset;
     const last = end - rule.offset;
-    // When the span is shorter than 2 * offset:
-    //   - Swage: still emits at start+offset (observed: span 0..39 -> 27.5)
-    //   - Others (LipNotch, etc.): collapse to span midpoint (observed)
+    // When the span is shorter than 2 * offset (collapse case):
+    // Detailer emits the INTERIOR boundary of the cap — the side facing
+    // the stick body, not the midpoint. Verified 2026-05-03 vs HG260044
+    // round-trip:
+    //   - Start cap [0..39]:        emit `first` (= start + offset, e.g. 24)
+    //   - End cap [length-39..length]: emit `last` (= end - offset, e.g. length-24)
+    //   - Mid-stick collapsed span: fall back to midpoint
+    //
+    // Old behavior (Swage at first; others at midpoint) was wrong:
+    //   • L1-T1 end cap [263..302] LipNotch emitted 282.5 (mid) — ref shows 278 (last)
+    //   • L1-S1 end cap [2718..2757] Swage emitted 2745.5 (first) — ref shows 2729.5 (last)
     if (first >= last) {
-        if (type === "Swage" || type === "Web")
+        const isStartCap = start < 0.5;
+        const isEndCap = stickLength > 0 && Math.abs(end - stickLength) < 0.5;
+        if (isStartCap)
             return [first];
+        if (isEndCap)
+            return [last];
         return [(start + end) / 2];
     }
     const positions = [];
@@ -90,20 +137,30 @@ function expandSpan(start, end, type) {
  * in ascending order (matches Detailer's CSV emission order).
  */
 function toolingToCsvCells(tooling, stickLength) {
+    // priority levels (lower = emitted first at same position):
+    //   0  start-tool
+    //   1  spanned-tool expansion (caps + interior positions)
+    //   2  point-tool
+    //   3  end-tool
+    // Verified vs HG260044 LBW round-trip 2026-05-03: at shared positions,
+    // spanned ops (LipNotch from a [74..119] collapse) are emitted BEFORE
+    // point ops (InnerDimple at the same position 96.5). e.g. ref shows
+    // `LIP NOTCH,96.5,INNER DIMPLE,96.5` — not the reverse. The dominant
+    // pattern across the corpus is spanned-then-point at the same coord.
     const flat = [];
     for (const op of tooling) {
         switch (op.kind) {
             case "point":
-                flat.push({ type: op.type, pos: op.pos, priority: 1 });
+                flat.push({ type: op.type, pos: op.pos, priority: 2 });
                 break;
             case "start":
                 flat.push({ type: op.type, pos: 0, priority: 0 });
                 break;
             case "end":
-                flat.push({ type: op.type, pos: stickLength, priority: 2 });
+                flat.push({ type: op.type, pos: stickLength, priority: 3 });
                 break;
             case "spanned": {
-                const positions = expandSpan(op.startPos, op.endPos, op.type);
+                const positions = expandSpan(op.startPos, op.endPos, op.type, stickLength);
                 for (const pos of positions)
                     flat.push({ type: op.type, pos, priority: 1 });
                 break;
@@ -114,7 +171,10 @@ function toolingToCsvCells(tooling, stickLength) {
     flat.sort((a, b) => a.pos - b.pos || a.priority - b.priority);
     const cells = [];
     for (const op of flat) {
-        cells.push(TOOL_TO_CSV[op.type], n(op.pos));
+        // Chamfer positions inherit stick-length precision (2-decimal) because
+        // they're computed as length ± offset.
+        const isChamfer = op.type === "Chamfer" || op.type === "TrussChamfer";
+        cells.push(TOOL_TO_CSV[op.type], isChamfer ? nChamfer(op.pos) : n(op.pos));
     }
     return cells;
 }
@@ -247,14 +307,28 @@ function detailsHeader(project) {
         return `${j}#1-1`;
     return project.name;
 }
-/** Emit one plan's CSV text. Format mirrors Detailer's Rollforming CSV. */
+/** Emit one plan's CSV text. Format mirrors Detailer's Rollforming CSV.
+ *
+ * Detailer emits a `DETAILS,<job>#1-1,<plan>` header BEFORE EACH FRAME,
+ * not just once per file. Verified 2026-05-03 vs HG260044#1-1_GF-LBW-70.075.csv
+ * which has 39 DETAILS rows for 39 frames.
+ */
 export function planToCsv(project, plan) {
     const lines = [];
     const packId = plan.name;
-    lines.push(`DETAILS,${detailsHeader(project)},${packId}`);
+    const header = `DETAILS,${detailsHeader(project)},${packId}`;
     for (const frame of plan.frames) {
+        lines.push(header);
         for (const stick of frame.sticks) {
             const r = stickToRow(plan, frame, stick);
+            // Dim columns precision (verified 2026-05-03 vs HG260044 round-trip):
+            //   col-7  length    → 2-decimal  (Kb 1377.73, raking-frame heel offsets)
+            //   col-8  startX     → 1-decimal
+            //   col-9  startY     → 1-decimal
+            //   col-10 endX        → 1-decimal
+            //   col-11 endY        → 1-decimal
+            //   col-12 flange      → 1-decimal (typically integer 41)
+            const [length, sx, sy, ex, ey, fl] = r.dim;
             const row = [
                 "COMPONENT",
                 r.frameId,
@@ -263,7 +337,8 @@ export function planToCsv(project, plan) {
                 r.orientation,
                 String(r.qty),
                 "",
-                ...r.dim.map(n),
+                nDim(length),
+                n(sx), n(sy), n(ex), n(ey), n(fl),
                 ...toolingToCsvCells(r.tooling, r.lengthA),
             ];
             lines.push(row.join(","));

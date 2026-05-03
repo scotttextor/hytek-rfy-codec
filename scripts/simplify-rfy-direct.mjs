@@ -437,6 +437,13 @@ function processFrame(frameWrap) {
     toolingNode.tooling = filteredOps;
     modifiedStickCount++;
   }
+
+  // Dimple normalisation pass — runs on the SAME parsed frame, mutates the
+  // tooling arrays of every chord+Box pair in place.
+  if (dimpleFix) {
+    normaliseFrameDimples(frameWrap, frameName, dimpleMargin, dimpleMaxGap);
+  }
+
   decisions.push({
     frame: frameName,
     decision: "APPLY",
@@ -458,6 +465,25 @@ const applied = decisions.filter(d => d.decision === "APPLY").length;
 const skipped = decisions.filter(d => d.decision === "SKIP").length;
 console.error("-".repeat(80));
 console.error(`Applied: ${applied}  Skipped: ${skipped}`);
+
+// Dimple-normalisation audit
+if (dimpleFix) {
+  console.error(`\nDIMPLE NORMALISATION (margin=${dimpleMargin}mm, max_gap=${dimpleMaxGap}mm):`);
+  console.error("-".repeat(110));
+  if (dimpleAuditAll.length === 0) {
+    console.error("  No chord+Box pairs found.");
+  } else {
+    console.error(`  ${"Frame".padEnd(10)} ${"Box piece".padEnd(15)} ${"Length".padStart(8)}  ${"Old box".padEnd(35)}  ${"New box".padEnd(35)}`);
+    console.error("  " + "-".repeat(108));
+    for (const c of dimpleAuditAll) {
+      const oldStr = "[" + c.boxOld.map(d => d.toFixed(1)).join(", ") + "]";
+      const newStr = "[" + c.boxNew.map(d => d.toFixed(1)).join(", ") + "]";
+      console.error(`  ${c.frame.padEnd(10)} ${c.box.padEnd(15)} ${c.boxLength.toFixed(1).padStart(8)}  ${oldStr.slice(0, 35).padEnd(35)}  ${newStr.slice(0, 35).padEnd(35)}`);
+    }
+    console.error("  " + "-".repeat(108));
+    console.error(`  ${dimpleAuditAll.length} Box pieces normalised. Main-chord dimples updated to match.`);
+  }
+}
 
 if (reportOnly) {
   console.error("\nREPORT-ONLY: no output written.");

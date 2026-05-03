@@ -1407,8 +1407,14 @@ for (const fr of report.byFrame.slice(0, 30)) {
 if (report.byFrame.length > 30) txt.push(`  … +${report.byFrame.length - 30} more frames with gaps`);
 
 fs.writeFileSync(`${outPrefix}.txt`, txt.join("\n"));
+
+// Also dump the synthesized RFY bytes so downstream CSV diff can decode
+// our pipeline's output through the same codec path Detailer uses.
+fs.writeFileSync(`${outPrefix}.ours.rfy`, ourResult.rfy);
+
 console.log(txt.join("\n"));
 console.log("");
 console.log(`Reports written:`);
 console.log(`  ${outPrefix}.txt`);
 console.log(`  ${outPrefix}.json`);
+console.log(`  ${outPrefix}.ours.rfy  (synthesized RFY bytes for CSV diff)`);

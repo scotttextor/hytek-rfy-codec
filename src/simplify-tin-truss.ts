@@ -251,7 +251,7 @@ export function simplifyTinTrussFrame(frame: ParsedFrame): SimplifyTinDecision {
   // Detected by chord dz < 50mm (see `isFlatChordTruss`). Stashed on the
   // frame as a private field for the per-stick branch to read.
   const flatChord = isFlatChordTruss(frame);
-  const diagonalShift = flatChord ? 10.0 : 5.0;
+  const diagonalShift = flatChord ? 10.0 : 7.0;
   (frame as unknown as { _tinDiagonalShiftMm?: number })._tinDiagonalShiftMm = diagonalShift;
 
   for (const stick of frame.sticks) {

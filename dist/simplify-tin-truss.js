@@ -199,11 +199,11 @@ export function simplifyTinTrussFrame(frame) {
     const diagonalsChamferStripped = [];
     // Flat-chord trusses (TI2-1 et al.) need different W-length rules:
     //   - Verticals: NO trim (the +11mm wall-rule extension matches ref).
-    //   - Diagonals: +9mm extension (instead of +5mm for sloped-chord frames).
+    //   - Diagonals: +10mm extension (instead of +5mm for sloped-chord frames).
     // Detected by chord dz < 50mm (see `isFlatChordTruss`). Stashed on the
     // frame as a private field for the per-stick branch to read.
     const flatChord = isFlatChordTruss(frame);
-    const diagonalShift = flatChord ? 9.0 : 5.0;
+    const diagonalShift = flatChord ? 10.0 : 5.0;
     frame._tinDiagonalShiftMm = diagonalShift;
     for (const stick of frame.sticks) {
         if (isVerticalWeb(stick)) {

@@ -203,7 +203,7 @@ export function simplifyTinTrussFrame(frame) {
     // Detected by chord dz < 50mm (see `isFlatChordTruss`). Stashed on the
     // frame as a private field for the per-stick branch to read.
     const flatChord = isFlatChordTruss(frame);
-    const diagonalShift = flatChord ? 10.0 : 5.0;
+    const diagonalShift = flatChord ? 10.0 : 5.5;
     frame._tinDiagonalShiftMm = diagonalShift;
     for (const stick of frame.sticks) {
         if (isVerticalWeb(stick)) {

@@ -447,6 +447,39 @@ function buildOurProject(xmlText) {
         return false;
       }
 
+      // Pre-pass: detect paired-header frames. Detailer emits Web stiffeners
+      // on H1 only when the frame has a paired/box header — H2 or H3 that
+      // sits within H1's world-X span and at a closely-related Z (typically
+      // 41mm below H1, the box-section offset). Single-H frames (L4/L8) and
+      // frames with separate non-overlapping H sticks (N14 PK1) get no Webs.
+      // Verified 2026-05-04 vs HG260001 NLBW+LBW.
+      let _h1Stick = null;
+      const _hxSticks = [];
+      for (const s of f.stick ?? []) {
+        const n = String(s["@_name"] ?? "");
+        if (n === "H1") _h1Stick = s;
+        else if (/^H[23]$/.test(n)) _hxSticks.push(s);
+      }
+      let framePairedHeader = false;
+      if (_h1Stick && _hxSticks.length > 0) {
+        const h1s = parseTriple(String(_h1Stick.start ?? "0,0,0"));
+        const h1e = parseTriple(String(_h1Stick.end ?? "0,0,0"));
+        const h1xMin = Math.min(h1s.x, h1e.x), h1xMax = Math.max(h1s.x, h1e.x);
+        const h1yMin = Math.min(h1s.y, h1e.y), h1yMax = Math.max(h1s.y, h1e.y);
+        for (const hx of _hxSticks) {
+          const hxs = parseTriple(String(hx.start ?? "0,0,0"));
+          const hxe = parseTriple(String(hx.end ?? "0,0,0"));
+          const hxXMin = Math.min(hxs.x, hxe.x), hxXMax = Math.max(hxs.x, hxe.x);
+          const hxYMin = Math.min(hxs.y, hxe.y), hxYMax = Math.max(hxs.y, hxe.y);
+          // Paired iff hx sits within H1's world span (with small tolerance)
+          // AND at a similar Z (within 80mm — box headers sit 41mm below H1).
+          const xOverlap = hxXMin >= h1xMin - 5 && hxXMax <= h1xMax + 5;
+          const yOverlap = hxYMin >= h1yMin - 5 && hxYMax <= h1yMax + 5;
+          const zClose = Math.abs((hxs.z + hxe.z) / 2 - (h1s.z + h1e.z) / 2) < 80;
+          if (xOverlap && yOverlap && zClose) { framePairedHeader = true; break; }
+        }
+      }
+
       const sticks = [];
       for (const s of f.stick ?? []) {
         const profile = {
@@ -465,11 +498,14 @@ function buildOurProject(xmlText) {
         let start = parseTriple(String(s.start ?? "0,0,0"));
         let end = parseTriple(String(s.end ?? "0,0,0"));
         let usage = String(s["@_usage"] ?? "").toLowerCase();
-        // Detect raised 89mm B-plate (z=elevation+61.5) — header-style ops
+        // Detect raised B-plate (z=elevation+61.5) — header-style ops + 1mm/end trim.
+        // Verified 2026-05-04 vs HG260001 LBW PK4 L4 B2 (70mm @z=61.5): ref ops
+        // shifted +6mm vs our 4mm-trim output, matching 1mm/end trim. Both 70mm
+        // and 89mm raised B-plates get this treatment.
         const stickZ = (start.z + end.z) / 2;
-        const isRaised89B = usage === "bottomplate" && profile.web === 89
+        const isRaisedB = usage === "bottomplate"
                           && Math.abs(stickZ - frameElevation - 61.5) < 1;
-        if (isRaised89B) {
+        if (isRaisedB) {
           usage = "raisedbottomplate";
           // Apply 1mm/end trim instead of 4mm/end
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
@@ -480,6 +516,7 @@ function buildOurProject(xmlText) {
             end = { x: end.x-ux, y: end.y-uy, z: end.z-uz };
           }
         }
+        const isRaised89B = isRaisedB;  // alias kept for legacy compatibility
         // EndClearance plate/chord trim (skip raised B which has its own 1mm trim).
         // LIN (Linear Truss) chords are NOT trimmed — verified vs LINEAR_TRUSS_TESTING:
         // ref B1 len 3677.55 == raw XML length, no 4mm/end trim. Skip chord trim
@@ -595,6 +632,7 @@ function buildOurProject(xmlText) {
           usage: stick.usage,
           stickName: stick.name,
           angleFromVertical,
+          framePairedHeader,
         });
         // Kb midpoint InnerService rule REMOVED 2026-05-03.
         // Verified vs HG260012 LBW corpus: Kb (cripple) InnerService positions
@@ -1258,6 +1296,63 @@ for (const plan of ourDoc.project.plans) {
           });
           for (const p of positions) {
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(p * 100) / 100 });
+          }
+          // R-rail end-cap rule: short rails (~382mm) between truss apex
+          // and webs get a fixed end-cap pattern at BOTH ends:
+          //   LipNotch 0..22.7 + LeftFlange 0..147.1 + Web @52.2
+          //   Web @(L-52.2) + LeftFlange (L-147.1)..L + LipNotch (L-22.7)..L
+          // Verified vs HG260001 PK10/TN6-1 R8 (L=382.4), PK11/TN5-1 R6,
+          // PK12/TN1-1 R7. Constants are profile-derived (70S41), not from
+          // the centerline-intersection geometry.
+          const stickLen = positions.length > 0 ? Math.max(...positions, ...stick.tooling.map(o => o.kind === "point" ? o.pos : o.kind === "spanned" ? o.endPos : 0)) : 0;
+          const meta3DLen = (() => {
+            const meta3D = meta.sticks.find(s => s.name === stick.name);
+            if (!meta3D) return 0;
+            const dy = meta3D.end3D.y - meta3D.start3D.y;
+            const dz = meta3D.end3D.z - meta3D.start3D.z;
+            return Math.hypot(dy, dz);
+          })();
+          // Match within 5mm of the canonical 382.4mm rail length only.
+          // Wider rails (e.g. 407mm in PK12/TT3-1) have a different op
+          // pattern (different cap behavior).
+          const isShortRail = /^R\d/.test(stick.name) && meta3DLen > 378 && meta3DLen < 387;
+          if (isShortRail) {
+            const L = meta3DLen;
+            const LIP_NOTCH_SPAN = 22.7;
+            const LEFT_FLANGE_SPAN = 147.1;
+            const RAIL_BOLT_OFFSET = 52.2;
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LIP_NOTCH_SPAN });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LEFT_FLANGE_SPAN });
+            stick.tooling.push({ kind: "point", type: "Web", pos: RAIL_BOLT_OFFSET });
+            stick.tooling.push({ kind: "point", type: "Web", pos: L - RAIL_BOLT_OFFSET });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LEFT_FLANGE_SPAN, endPos: L });
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_NOTCH_SPAN, endPos: L });
+          }
+          // H-stick (truss header) cap-stack rule: long header chord between
+          // two truss apexes gets a fixed end-cap pattern at BOTH ends:
+          //   RightFlange 0..30.8 + LipNotch 0..54.9 + LeftFlange 0..179.3
+          //   + Web @84.3 (start cap bolt)
+          //   Web @(L-84.3) + LeftFlange (L-179.3)..L + LipNotch (L-54.9)..L
+          //   + RightFlange (L-30.8)..L
+          // Verified vs HG260001 PK6/TT6-1 H4 (L=1759.6), TT7-1 H4, TT8-1 H4.
+          // For very long H-sticks (PK6 TT9-1 L=8959), the constants are
+          // slightly larger: RightFlange 32.5, LeftFlange 181.1. Use 32.5/181.1
+          // when L > 8000mm, else 30.8/179.3.
+          const isHHeader = /^H\d/.test(stick.name) && meta3DLen > 1500;
+          if (isHHeader) {
+            const L = meta3DLen;
+            const RF_SPAN = L > 8000 ? 32.5 : 30.8;
+            const LIP_NOTCH_SPAN = 54.9;
+            const LF_SPAN = L > 8000 ? 181.1 : 179.3;
+            const HEADER_BOLT_OFFSET = 84.3;
+            stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LIP_NOTCH_SPAN });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
+            stick.tooling.push({ kind: "point", type: "Web", pos: HEADER_BOLT_OFFSET });
+            stick.tooling.push({ kind: "point", type: "Web", pos: L - HEADER_BOLT_OFFSET });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN, endPos: L });
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_NOTCH_SPAN, endPos: L });
+            stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
           }
           stick.tooling.sort((a, b) => {
             const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? -1 : 1e9));

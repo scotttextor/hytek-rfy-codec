@@ -327,6 +327,20 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
             { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header end cap: InnerNotch" },
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header end cap: LipNotch" },
+            // Web stiffener holes — evenly distributed along the header. H1/H3
+            // (the "main" header) starts at @89; H2 (Box1) starts at @50. Both have
+            // the same world-X positions but different stick-local offsets due to
+            // H2 being inset 39mm from each end. Max spacing 300mm.
+            // Verified 2026-05-04 vs HG260001 LBW H1/H3 corpus (L2/L6/L24/L25/L27/
+            // L33/L39/L40/L41/L43): all H1 Webs at 89..length-89, count = ceil(
+            // (length - 178) / 300) + 1.
+            // Only emitted on paired headers (frame has H2/H3 alongside H1) —
+            // single-H frames (e.g. L4/L8 with just one H1) get no Webs.
+            { toolType: "Web", kind: "point",
+                anchor: { kind: "evenlyDistributed", firstOffset: 89, lastOffset: 89, maxSpacing: 300 },
+                confidence: "high",
+                predicate: (ctx) => /^H[13]$/.test(ctx.stickName ?? "") && ctx.framePairedHeader === true,
+                notes: "H1/H3 (main header) on paired-header frame: Web stiffener holes evenly distributed" },
         ],
     },
     // ----------- HEADERS (H) on 89S41 -----------

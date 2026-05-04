@@ -39,6 +39,11 @@ export interface StickContext {
      *  ones untouched. Verified 2026-05-04 vs HG260001 LBW corpus: transition
      *  in ref output between 25.5° (no chamfer) and 29.3° (chamfer). */
     angleFromVertical?: number;
+    /** Optional: true if the containing frame has a paired/box header (H2 or
+     *  H3 alongside H1). Detailer emits Web stiffeners on H1 only when paired
+     *  — single-H frames (header without box) get no Webs. Verified 2026-05-04
+     *  vs HG260001 LBW: L4/L8 single-H1 → 0 webs; L6/L41 paired-H → webs on H1. */
+    framePairedHeader?: boolean;
 }
 /**
  * A position generator. Yields op positions for a given context.

@@ -10,4 +10,5 @@ export { MACHINE_SETUPS, SETUP_BY_PROFILE_WEB, getMachineSetupForProfile, getDef
 export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findGroup, RULE_TABLE, profileOffsets, generateFrameContextOps, layoutFrame, computeBox, roleFromName, type StickContext, type Anchor, type OpRule, type RuleGroup, type RuleApplicationResult, } from "./rules/index.js";
 export { STICK_TYPES, TOOL_TYPES, type StickType, type ToolType, type RfyPointTool, type RfySpannedTool, type RfyEdgeTool, type RfyToolingOp, type RfyProfile, type RfyStick, type RfyFrame, type RfyPlan, type RfyProject, type RfyDocument, } from "./format.js";
 export { simplifyLinearTrussRfy, isLinearTruss, assertRfyVersion, RfyVersionMismatch, DEFAULT_PROFILE_GATE, type SimplifyLinearTrussOptions, type SimplifyDecision, type SimplifyResult, type ProfileGate, type Junction, type JunctionMate, type StickJunctions, } from "./simplify-linear-truss.js";
+export { simplifyTinTrussFrame, simplifyTinTrussFramesInProject, isTinPlanName, isTinTrussFrameName, type SimplifyTinDecision, } from "./simplify-tin-truss.js";
 export declare const VERSION = "0.1.0";

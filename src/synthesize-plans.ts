@@ -33,6 +33,7 @@ import {
 } from "./machine-setups.js";
 import { generateFrameContextOps } from "./rules/index.js";
 import { joinAdjacentLipNotches } from "./rules/frame-context.js";
+import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -367,6 +368,14 @@ export function synthesizeRfyFromPlans(
   let frameCount = 0;
   let stickCount = 0;
   const planNodes: XmlNode[] = [];
+
+  // Post-pass: TIN linear-truss frame simplifier. Mutates `frame.sticks[].end`
+  // and `frame.sticks[].tooling[]` in place for HG260001-style HN/TN/TS/TI
+  // truss frames inside `-TIN-` plans, lining the codec's per-stick rules
+  // engine output up with FrameCAD Detailer's reference RFY. PC-prefix
+  // frames (panel-chord trusses) and non-TIN plans are left untouched.
+  // See `src/simplify-tin-truss.ts` for the rewrite scope.
+  simplifyTinTrussFramesInProject(project.plans);
 
   for (const plan of project.plans) {
     planCount++;

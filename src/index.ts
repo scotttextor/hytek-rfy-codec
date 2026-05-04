@@ -74,5 +74,12 @@ export {
   type JunctionMate,
   type StickJunctions,
 } from "./simplify-linear-truss.js";
+export {
+  simplifyTinTrussFrame,
+  simplifyTinTrussFramesInProject,
+  isTinPlanName,
+  isTinTrussFrameName,
+  type SimplifyTinDecision,
+} from "./simplify-tin-truss.js";
 
 export const VERSION = "0.1.0";

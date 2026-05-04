@@ -756,7 +756,7 @@ function round(n) { return Math.round(n * 10000) / 10000; }
  *
  * Other op types (Dimple, Swage, etc.) are untouched.
  */
-function joinAdjacentLipNotches(stickOps, gap) {
+export function joinAdjacentLipNotches(stickOps, gap) {
     // Pull out LipNotches, sort by startPos, merge runs.
     const lipNotches = [];
     for (let i = 0; i < stickOps.length; i++) {

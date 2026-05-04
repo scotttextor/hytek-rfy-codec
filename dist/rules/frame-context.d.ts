@@ -43,3 +43,15 @@ export declare function layoutFrame(frame: RfyFrame): StickWithBox[];
  * rules add LIP NOTCH + DIMPLE pairs at crossings.
  */
 export declare function generateFrameContextOps(frame: RfyFrame): Map<string, RfyToolingOp[]>;
+/**
+ * Mutates `stickOps` in-place: merges any LipNotch ops whose endPos is within
+ * `gap` mm of the next LipNotch's startPos into a single wider notch.
+ *
+ * Detailer's behaviour (verified 2026-05-01 against HG260044 GF-TIN PC7-1/B1):
+ * adjacent W crossings on a chord get joined into one continuous notch rather
+ * than multiple narrow notches. E.g. 3 webs at x=70, 130, 190 with 45mm
+ * individual spans → one 156mm-wide notch from 47..213 instead of 3 separate.
+ *
+ * Other op types (Dimple, Swage, etc.) are untouched.
+ */
+export declare function joinAdjacentLipNotches(stickOps: RfyToolingOp[], gap: number): void;

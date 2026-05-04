@@ -32,6 +32,7 @@ import {
   getDefaultMachineSetup,
 } from "./machine-setups.js";
 import { generateFrameContextOps } from "./rules/index.js";
+import { joinAdjacentLipNotches } from "./rules/frame-context.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -390,7 +391,7 @@ export function synthesizeRfyFromPlans(
       const sticks: XmlNode[] = [];
       for (const stick of frame.sticks) {
         stickCount++;
-        const merged = mergeStickTooling(stick.tooling, contextOps.get(stick.name) ?? []);
+        const merged = mergeStickTooling(stick.tooling, contextOps.get(stick.name) ?? [], stick.usage);
         const stickWithMerged = { ...stick, tooling: merged };
         sticks.push(buildStickXml(stickWithMerged, basis, frame.name, options.lenient ?? false));
       }
@@ -565,8 +566,21 @@ function computeFrameContextOps(
 function mergeStickTooling(
   perStickOps: RfyToolingOp[],
   contextOps: RfyToolingOp[],
+  stickUsage?: string,
 ): RfyToolingOp[] {
   const merged = [...perStickOps, ...contextOps];
+  // Run the LipNotch-merge across the COMBINED list (start-cap LipNotch from
+  // the rule engine + web-crossing LipNotches from frame-context). Without
+  // this, a chord's start-cap [0..39] stays separate from the adjacent
+  // web-cluster [43..88] even though Detailer emits them as ONE merged
+  // span. Verified 2026-05-04 vs HG260044 GF-TIN-70.075 PC7-1 B1: ref
+  // [0..156.2776] expected, our codec was emitting [0..39] + [43..156.28].
+  // Only run for chord usages — wall plates have a tighter join threshold
+  // already applied inside computeFrameContextOps.
+  const u = (stickUsage ?? "").toLowerCase();
+  if (u === "topchord" || u === "bottomchord") {
+    joinAdjacentLipNotches(merged, 16);
+  }
   return merged.slice().sort((a, b) => positionOf(a) - positionOf(b));
 }
 

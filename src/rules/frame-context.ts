@@ -793,7 +793,7 @@ function round(n: number): number { return Math.round(n * 10000) / 10000; }
  *
  * Other op types (Dimple, Swage, etc.) are untouched.
  */
-function joinAdjacentLipNotches(stickOps: RfyToolingOp[], gap: number): void {
+export function joinAdjacentLipNotches(stickOps: RfyToolingOp[], gap: number): void {
   // Pull out LipNotches, sort by startPos, merge runs.
   const lipNotches: { idx: number; startPos: number; endPos: number }[] = [];
   for (let i = 0; i < stickOps.length; i++) {

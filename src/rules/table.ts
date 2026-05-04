@@ -41,6 +41,17 @@ const NOG_ROLES = /^(N|Nog)$/;
 const BRACE_ROLES = /^(Br|W|R|L)$/;    // W=web brace, R=ribbon, L=lintel — sticks-as-bracing
 
 // 70S41 profile constants (most common — derived empirically from fixture)
+//
+// TODO(rules-coverage): these hardcoded values are derivable from the
+// machine-setup .sups data, now exposed via:
+//   import { endClearanceSpan, dimpleEndOffset } from "../machine-setups.js";
+//   SPAN_70 = endClearanceSpan(setup70)        // = TabSize(35) + EndClearance(4) = 39
+//   DIMPLE_OFFSET_70 = dimpleEndOffset(setup70) // = EndClearance(4) + (TabSize-Dimple1.Size1)/2 = 16.5
+//   BOLT_OFFSET_70 = setup70.boltHoleToEnd      // = 20 (NOT 62 — needs investigation)
+// Verified 2026-05-04 against HYTEK MACHINE TYPES 20260402.sups setup[2] (F325iT 70mm).
+// When the rules engine threads a `setup` through the StickContext it can
+// use these helpers and per-section data (e.g. dimple Y-position from
+// SectionSetup.SectionOptions.Fastener1) to handle 75/78/104mm correctly.
 const SPAN_70 = 39;     // start/end spanned-tool length
 const DIMPLE_OFFSET_70 = 16.5;  // INNER DIMPLE offset from each end
 const BOLT_OFFSET_70 = 62;       // BOLT HOLE offset on bottom plates from each end
@@ -50,6 +61,10 @@ const BOLT_OFFSET_70 = 62;       // BOLT HOLE offset on bottom plates from each 
 // for 89mm sticks as 70mm sticks (Dimple @16.5, Swage span 39). The
 // previous values (20.5, 44) were wrong — they came from a tentative
 // fixture with limited samples.
+//
+// TODO(rules-coverage): identical formulas as 70mm — see helpers above.
+// machine-setup setup[6] (F325iT 89mm) gives: EndClearance=4, TabSize=35,
+// Dimple1.Size1=10 → SPAN=39 + DIMPLE_OFFSET=16.5 (matches the values here).
 const SPAN_89 = 39;
 const DIMPLE_OFFSET_89 = 16.5;
 
@@ -185,6 +200,14 @@ export const RULE_TABLE: RuleGroup[] = [
       // approach matched HG260044 better but FAILED for HG260001 (which is
       // the actual factory corpus). HG260001 reference uses fixed positions
       // @306, @906, @1506, @2106, @2706, @3306 etc. — every 600mm.
+      //
+      // TODO(rules-coverage): the 600mm spacing matches `LargeServiceToLeadingEdgeDistance`
+      // exactly in every HYTEK setup. When threading machine-setup through
+      // ctx, prefer `setup.largeServiceToLeadingEdgeDistance` (= 600) for
+      // spacing and `setup.largeServiceToTrailingEdgeDistance` (= 700) for
+      // end clearance. The 306mm firstOffset is empirically derived (likely
+      // BoxedFirstDimpleOffset(10) + half a 600mm bay - 4mm = ~306, but
+      // this needs verification against HG260001 reference geometry).
       {
         toolType: "InnerService", kind: "point",
         anchor: { kind: "spaced", firstOffset: 306, spacing: 600, lastOffset: 306 },
@@ -481,7 +504,16 @@ export function isPrimaryBPlate(ctx: { stickName?: string; length: number }): bo
   return false;
 }
 
-/** Look up profile-specific span/dimple offsets. */
+/** Look up profile-specific span/dimple offsets.
+ *
+ * TODO(rules-coverage): when the rules engine has access to a MachineSetup
+ * instance (e.g. via `getMachineSetupForProfile(profileWeb)`), prefer the
+ * derived values from `endClearanceSpan(setup)` and `dimpleEndOffset(setup)`
+ * — they correctly handle 104mm setup (which uses span=40, offset=17.5
+ * instead of 39/16.5) and Demo Setup (37mm span). Hardcoded 50/25 for 150mm
+ * is a guess — when a 150mm setup is added to .sups, its values will flow
+ * through automatically.
+ */
 export function profileOffsets(profileFamily: string): { span: number; dimpleOffset: number; boltOffset: number } {
   if (/^89/.test(profileFamily)) return { span: SPAN_89, dimpleOffset: DIMPLE_OFFSET_89, boltOffset: 62 };
   if (/^150/.test(profileFamily)) return { span: 50, dimpleOffset: 25, boltOffset: 62 };  // best guess

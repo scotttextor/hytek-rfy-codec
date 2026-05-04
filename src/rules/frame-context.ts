@@ -198,6 +198,14 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
   for (const plate of plates) {
     const offsets = profileOffsets(plate.stick.profile.metricLabel.replace(/\s/g, ""));
     const span = offsets.span;
+    // TODO(rules-coverage): `internalSpan = 45` should derive from the machine
+    // setup's LipNotch tool length plus a small clearance. Per .sups:
+    //   70/89mm setups: LipNotch.length = 48mm → internal span ≈ 45 (-3 for tool clearance)
+    //   75/78mm setups: LipNotch.length = 60mm → internal span should be ~57
+    //   104mm setup:    LipNotch.length = 75mm → internal span should be ~72
+    // Currently hardcoded for 70/89 — wrong for 75/78/104. Use:
+    //   import { lipNotchToolLength } from "../machine-setups.js";
+    //   const internalSpan = lipNotchToolLength(setup) - 3;
     const internalSpan = 45;        // width of internal lip notches (vs 39 at edges)
     const internalDimpleOffset = 22.5;  // internal lip notch midpoint offset
 

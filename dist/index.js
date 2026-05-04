@@ -6,7 +6,7 @@ export { parseXmlTree, buildXml, encodeXml, encodeTree } from "./encode.js";
 export { applyCsvToRfy } from "./apply.js";
 export { synthesizeRfyFromCsv } from "./synthesize.js";
 export { synthesizeRfyFromPlans, deriveFrameBasis, coerceEnvelopeToRect, projectToFrameLocal, transformationMatrixString, } from "./synthesize-plans.js";
-export { MACHINE_SETUPS, SETUP_BY_PROFILE_WEB, getMachineSetupForProfile, getDefaultMachineSetup, } from "./machine-setups.js";
+export { MACHINE_SETUPS, SETUP_BY_PROFILE_WEB, getMachineSetupForProfile, getDefaultMachineSetup, findSectionSetup, findTool, endClearanceSpan, dimpleEndOffset, lipNotchToolLength, } from "./machine-setups.js";
 export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findGroup, RULE_TABLE, profileOffsets, generateFrameContextOps, layoutFrame, computeBox, roleFromName, } from "./rules/index.js";
 export { STICK_TYPES, TOOL_TYPES, } from "./format.js";
 export { simplifyLinearTrussRfy, isLinearTruss, assertRfyVersion, RfyVersionMismatch, DEFAULT_PROFILE_GATE, } from "./simplify-linear-truss.js";

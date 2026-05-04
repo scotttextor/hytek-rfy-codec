@@ -158,9 +158,24 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
     TRUSS_WEB_ROLES.has(sb.role) &&
     String(sb.stick.usage ?? "").toLowerCase() === "web"
   );
-  // Cripple studs: also vertical, but their outlines are too wide to be useful for crossing detection.
-  // Their connection point is at one of their X edges (which we treat as a virtual stud).
-  const cripples = layout.filter(sb => CRIPPLE_ROLES.has(sb.role));
+  // Cripple studs (Kb/H). Vertical/L-shaped Kbs use virtualKb-edge logic
+  // (their connection is at one X edge of the bbox, treated as a 41mm
+  // virtual stud at cx = bbox.xMin/xMax ± 22.5).
+  //
+  // Diagonal Kbs (where the bbox x-extent significantly exceeds 41mm) are
+  // treated like truss webs: their actual contact footprint on the plate is
+  // a 41/sin(θ)-wide patch at one corner, NOT a 45mm-wide notch centered on
+  // the bbox edge. Verified 2026-05-04 vs HG260001 N2 Kb1: outline-edge
+  // intersection at T1.innerY gives localPos 504.08..548.15 (center 526.11),
+  // matching ref 501.93..550.60 (center 526.27). The old virtualKb-edge cx
+  // gave center 534.97 — 8.7mm offset.
+  const allCripples = layout.filter(sb => CRIPPLE_ROLES.has(sb.role));
+  const KB_DIAGONAL_BBOX_X_MIN = 80;  // bbox-x-extent threshold to count as diagonal
+  const diagonalCripples = allCripples.filter(sb =>
+    sb.role === "Kb" && (sb.box.xMax - sb.box.xMin) > KB_DIAGONAL_BBOX_X_MIN
+  );
+  const diagonalCrippleNames = new Set(diagonalCripples.map(sb => sb.stick.name));
+  const cripples = allCripples.filter(sb => !diagonalCrippleNames.has(sb.stick.name));
   // Plates: top + bottom plates only (NOT nogs — nogs are handled in their
   // own loop below with InnerNotch + LipNotch ops at each stud crossing.
   // Including nogs here would double-emit LipNotch + InnerDimple at each
@@ -391,6 +406,54 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       });
     }
 
+    // Diagonal cripple Kbs crossing this plate — same outline-edge formula as
+    // truss webs. The Kb's outline is a parallelogram tilted at angle θ from
+    // the plate axis; its intersection with the plate's inner face is a
+    // 41/sin(θ)-wide patch. The ±2/sin(θ) clearance matches Detailer.
+    // Skip Kbs whose outline doesn't reach plate.innerY (they don't connect
+    // to this plate — e.g. Kb at bottom of wall doesn't touch top plate).
+    for (const kb of diagonalCripples) {
+      const corners = kb.stick.outlineCorners;
+      if (!corners || corners.length < 4) continue;
+      // Long edges of Kb rectangle (outline-corner CCW order): C0→C1 + C3→C2.
+      const edge1p1 = corners[0]!, edge1p2 = corners[1]!;
+      const edge2p1 = corners[3]!, edge2p2 = corners[2]!;
+      function intersect(p1: RfyPoint, p2: RfyPoint, atY: number): number | null {
+        const dy = p2.y - p1.y;
+        if (Math.abs(dy) < 1e-6) return null;
+        const t = (atY - p1.y) / dy;
+        if (t < -0.05 || t > 1.05) return null;  // outside the segment
+        return p1.x + t * (p2.x - p1.x);
+      }
+      const x1 = intersect(edge1p1, edge1p2, innerY);
+      const x2 = intersect(edge2p1, edge2p2, innerY);
+      if (x1 === null || x2 === null) continue;  // Kb doesn't reach plate
+      const edge_lo = Math.min(x1, x2);
+      const edge_hi = Math.max(x1, x2);
+      // sin(θ) from edge1's slope.
+      const e1dx = edge1p2.x - edge1p1.x;
+      const e1dy = edge1p2.y - edge1p1.y;
+      const e1len = Math.sqrt(e1dx * e1dx + e1dy * e1dy);
+      if (e1len < 1) continue;
+      const sinTheta = Math.abs(e1dy) / e1len;
+      if (sinTheta < 0.1) continue;
+      const offset = offsetMagnitudeBase / sinTheta;
+      // Center crossing at plate centerline (for InnerDimple).
+      const centerCrossingX = getCrossingX(kb.stick, plateCenterY);
+      if (centerCrossingX === null) continue;
+      const centerLocalPos = plateLocalPosition(plate, centerCrossingX);
+      const localLo = plateLocalPosition(plate, edge_lo);
+      const localHi = plateLocalPosition(plate, edge_hi);
+      if (centerLocalPos < span + 5) continue;
+      if (centerLocalPos > plate.stick.length - span - 5) continue;
+      webCrossings.push({
+        localPosLo: Math.min(localLo, localHi),
+        localPosHi: Math.max(localLo, localHi),
+        offset,
+        centerLocalPos: centerLocalPos,
+      });
+    }
+
     // Sort by center, cluster: webs whose extended ranges overlap merge.
     webCrossings.sort((a, b) => a.centerLocalPos - b.centerLocalPos);
     interface NotchCluster {
@@ -449,9 +512,11 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       // (gap = 15.7mm) which the old gap=12 threshold doesn't merge. Bumping
       // to 16mm fixes the TIN case without merging unrelated wall-stud pairs
       // (which sit ~200mm apart).
+      // 2026-05-04: Bumped 16 → 20 to merge HG260001 GF-TIN-70.075 PC1-1/
+      // PC2-1/PC3-1 BottomChord panel-point clusters which sit ~19.4mm apart.
       // Verified 2026-05-04 vs HG260044 GF-TIN-70.075 PC7-1/B1.
       const isTrussChord = usage === "topchord" || usage === "bottomchord";
-      const gap = isTrussChord ? 16 : 12;
+      const gap = isTrussChord ? 20 : 12;
       joinAdjacentLipNotches(stickOps, gap);
     }
   }

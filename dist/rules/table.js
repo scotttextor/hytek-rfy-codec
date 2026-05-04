@@ -388,12 +388,14 @@ export const RULE_TABLE = [
             // (= 39 / sin(angle)). 41mm is a reasonable mid-range value that
             // matches many wall W's exactly and is close for most others.
             // Verified vs HG260001 PK4-PK5 wall W corpus.
-            // Chamfers fire on all wall W's — most are diagonal braces. A small
-            // fraction (vertical-ish W's) may not need them but the net gain is
-            // positive (44 matches gained vs ~23 false-positive chamfers).
+            //
+            // Chamfer-emit rule: Detailer chamfers W's that are angled >=28° from
+            // vertical, leaves near-vertical W's (B2B partner studs) untouched.
+            // Verified 2026-05-04: ref transition between L27/W6 @25.48° (no
+            // chamfer) and L27/W2 @29.31° (chamfer). 28° threshold catches both.
             { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high",
-                predicate: (ctx) => isWallPlan(ctx),
-                notes: "Wall brace W: Chamfer @start (diagonal cut)" },
+                predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
+                notes: "Wall brace W: Chamfer @start (diagonal cut, angle>=28°)" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 41, confidence: "high",
                 predicate: (ctx) => isWallPlan(ctx),
                 notes: "Wall brace W: Swage span 41 at start" },
@@ -405,8 +407,8 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high",
                 predicate: (ctx) => isWallPlan(ctx) },
             { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
-                predicate: (ctx) => isWallPlan(ctx),
-                notes: "Wall brace W: Chamfer @end (diagonal cut)" },
+                predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
+                notes: "Wall brace W: Chamfer @end (diagonal cut, angle>=28°)" },
         ],
     },
     // ----------- TRUSS WEBS / FJ JOIST WEBS (W) on 89S41 -----------

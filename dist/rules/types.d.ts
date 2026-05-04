@@ -33,6 +33,12 @@ export interface StickContext {
     /** Optional: full stick name (e.g. "B1", "B2", "Kb1"). Lets predicates
      *  distinguish primary plates (B1) from secondary plates (B2/B3). */
     stickName?: string;
+    /** Optional: angle of the stick's axis from vertical (degrees). Used by
+     *  W-stick rules to distinguish near-vertical wall studs from diagonal
+     *  braces — Detailer chamfers diagonal W's (>=28°) but leaves near-vertical
+     *  ones untouched. Verified 2026-05-04 vs HG260001 LBW corpus: transition
+     *  in ref output between 25.5° (no chamfer) and 29.3° (chamfer). */
+    angleFromVertical?: number;
 }
 /**
  * A position generator. Yields op positions for a given context.
@@ -59,6 +65,11 @@ export type Anchor = {
     firstOffset: number;
     spacing: number;
     lastOffset: number;
+} | {
+    kind: "evenlyDistributed";
+    firstOffset: number;
+    lastOffset: number;
+    maxSpacing: number;
 };
 /** A single op-placement rule. */
 export interface OpRule {

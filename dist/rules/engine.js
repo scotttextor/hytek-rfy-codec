@@ -22,6 +22,18 @@ function generatePositions(anchor, length) {
             }
             return out;
         }
+        case "evenlyDistributed": {
+            const out = [];
+            const usable = length - anchor.firstOffset - anchor.lastOffset;
+            if (usable <= 0)
+                return out;
+            const count = Math.ceil(usable / anchor.maxSpacing) + 1;
+            const spacing = usable / (count - 1);
+            for (let i = 0; i < count; i++) {
+                out.push(anchor.firstOffset + i * spacing);
+            }
+            return out;
+        }
     }
 }
 function opForRule(rule, position, length) {

@@ -427,9 +427,14 @@ function mergeStickTooling(perStickOps, contextOps, stickUsage) {
     // [0..156.2776] expected, our codec was emitting [0..39] + [43..156.28].
     // Only run for chord usages — wall plates have a tighter join threshold
     // already applied inside computeFrameContextOps.
+    // Bumped 16 → 20 (2026-05-04) to merge HG260001 GF-TIN-70.075 PC1-1/PC2-1/
+    // PC3-1 panel-point clusters: ref merges [0..140.16] etc. but our
+    // per-stick LipNotch caps [0..39] sit 18.4-19.4mm before adjacent web
+    // crossings on the BottomChord (e.g. ref [507.5..666.47] vs ours
+    // [507.5..552.5] + [571.86..666.47] with gap=19.36mm).
     const u = (stickUsage ?? "").toLowerCase();
     if (u === "topchord" || u === "bottomchord") {
-        joinAdjacentLipNotches(merged, 16);
+        joinAdjacentLipNotches(merged, 20);
     }
     return merged.slice().sort((a, b) => positionOf(a) - positionOf(b));
 }

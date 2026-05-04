@@ -161,6 +161,26 @@ function computeTB2BWebPositions(sticks) {
     return L > 0 ? [dx / L, dy / L] : [0, 0];
   }
 
+  /** True if a stick's arc-length output should be reversed (L - x) so that
+   *  Detailer's heel-end measurements line up. Verified vs HG260001:
+   *  - non-flipped bottomchord with start.z > end.z (apex-start) — reverse
+   *    (PK10/TN6-1 B1: !flip, start=high, end=low → reverse aligns refs)
+   *  - rail with flipped=true and L > 600mm — reverse
+   *    (PK10/TN6-1 R9: flipped, len 1677 → reverse aligns 5 of 6 refs)
+   *  Flipped bottom chords (e.g. PK10/TN6-1 B2) are NOT reversed: their
+   *  XML start=apex but Detailer treats them with raw arc.
+   */
+  function needsArcReversal(s) {
+    if (s.usage === "bottomchord" && !s.flipped && s.start3D.z > s.end3D.z + 0.1) return true;
+    if (s.usage === "rail" && s.flipped) {
+      const dy = s.end3D[u] - s.start3D[u];
+      const dz = s.end3D[v] - s.start3D[v];
+      const len = Math.hypot(dy, dz);
+      if (len > 600) return true;
+    }
+    return false;
+  }
+
   /** Bolt-position correction for a chord-vs-web crossing: the actual bolt
    *  on the chord is offset from the centerline-arc-length crossing by
    *  -CHORD_HALF_DEPTH * (chord_unit · web_unit) / 2. Verified against
@@ -175,6 +195,15 @@ function computeTB2BWebPositions(sticks) {
    *  chord axis, but the chord's web is offset by half_depth in the chord's
    *  perpendicular direction. */
   const CHORD_HALF_DEPTH = 35;
+  // Web-side correction when crossing a rail: the rail's flange lies
+  // half_depth (35mm) away from the rail's centerline; the bolt on the WEB
+  // sits at (half_depth - boltHoleToEnd) further along the web in the
+  // direction toward the WEB's midpoint (away from whichever end is closer).
+  // For F325iT 70mm: 35 - 20 = 15mm. Divided by |sin(angle)| for diagonal
+  // webs. Verified vs HG260001 PK10/TN6-1: W14 ∩ R9 +15 (perpendicular,
+  // arc=360 closer to start), W12 ∩ R8 -15 (perpendicular, arc=1799 closer
+  // to end), W18 ∩ R9 +28 (diagonal cos=-0.844, sin=0.536, 15/0.536=27.99).
+  const WEB_VS_RAIL_OFFSET = 15;
 
   const rawByName = new Map();
   function push(name, pos) {
@@ -192,18 +221,15 @@ function computeTB2BWebPositions(sticks) {
       if (inter === null) continue;
       const posA_arc = Math.max(0, Math.min(inter.L1, inter.t * inter.L1));
       const posB_arc = Math.max(0, Math.min(inter.L2, inter.u * inter.L2));
-      // Chord/rail-vs-web bolt-position correction (see CHORD_HALF_DEPTH note).
-      // Also applied at chord-chord apex intersections — verified vs HG260001
-      // PK10 TN6-1 ref: B1 ∩ B2 apex bolt position uses chord-vs-chord
-      // correction (theta ≈ 60° between chord directions), my @9.4 + 15 = 24.4
-      // matches ref @30.9 within 6mm vs no-correction off by 21mm.
       const aIsChord = sA.usage === "topchord" || sA.usage === "bottomchord" || sA.usage === "rail";
       const bIsChord = sB.usage === "topchord" || sB.usage === "bottomchord" || sB.usage === "rail";
+      const aIsRail = sA.usage === "rail";
+      const bIsRail = sB.usage === "rail";
       let posA = posA_arc, posB = posB_arc;
       const [aux, auy] = unitDir(sA);
       const [bux, buy] = unitDir(sB);
       const dot = aux * bux + auy * buy;
-      // Per-chord correction:
+      // Per-chord correction (see CHORD_HALF_DEPTH note above):
       //  - chord-vs-web (one is chord, other is web): -half_depth * dot / 2
       //    (the dot reflects the angle between chord and web — verified vs
       //    HG260001 PK10/TN6-1: T3 ∩ W10 (vertical W) -7.40, T3 ∩ W11
@@ -212,22 +238,50 @@ function computeTB2BWebPositions(sticks) {
       //    (the v-component is the chord's slope from horizontal — verified
       //    vs HG260001 PK10/TN6-1: T3 ∩ T4 apex T3-side -7.40, T4-side
       //    +7.40, both match ref within 0.2mm)
-      // For chord-chord apex correction, use the chord's "vertical-axis"
-      // (z) component as the slope factor. Auto-detected u/v may put y on
-      // either index, so explicitly pick whichever is the z-axis.
       const aZ = (v === "z") ? auy : (u === "z") ? aux : 0;
       const bZ = (v === "z") ? buy : (u === "z") ? bux : 0;
+      // For chords/rails that will be reversed post-hoc (sloped B-chord with
+      // apex=start, or flipped long rail), the correction sign must FLIP:
+      // reversing the chord direction negates `dot`, which negates the
+      // correction. We pre-flip the sign here so post-hoc `L - pos` gives
+      // the right answer. Verified vs HG260001 PK10/TN6-1: B1 W10 crossing
+      // arc=2664.86, raw correction +4.53. Pre-flipped: 2664.86 - 4.53 =
+      // 2660.33. After L-x: 2691.72 - 2660.33 = 31.39. Ref Web@30.9 → match
+      // within 0.5mm.
+      const aReversal = needsArcReversal(sA);
+      const bReversal = needsArcReversal(sB);
       if (aIsChord) {
-        const correction = bIsChord
+        const corrRaw = bIsChord
           ? -CHORD_HALF_DEPTH * aZ / 2
           : -CHORD_HALF_DEPTH * dot / 2;
+        const correction = aReversal ? -corrRaw : corrRaw;
         posA = Math.max(0, Math.min(inter.L1, posA_arc + correction));
       }
       if (bIsChord) {
-        const correction = aIsChord
+        const corrRaw = aIsChord
           ? -CHORD_HALF_DEPTH * bZ / 2
           : -CHORD_HALF_DEPTH * dot / 2;
+        const correction = bReversal ? -corrRaw : corrRaw;
         posB = Math.max(0, Math.min(inter.L2, posB_arc + correction));
+      }
+      // Web-vs-horizontal-chord/rail bolt offset on the WEB side: shift the
+      // bolt position toward the web's midpoint by
+      // (half_depth - boltHoleToEnd) / |sin(angle)|.
+      // Verified vs HG260001 PK10/TN6-1 W14∩R9 (+15 perpendicular),
+      // PK12/TN1-1 W13∩B2 (+15 perpendicular). Applies equally to rails and
+      // horizontal bottom chords (both "horizontal members" the web pierces).
+      const sin = Math.sqrt(Math.max(0, 1 - dot * dot));
+      const aIsHorizMember = (bIsRail || sB.usage === "bottomchord");
+      const bIsHorizMember = (aIsRail || sA.usage === "bottomchord");
+      if (sA.usage === "web" && aIsHorizMember && sin > 0.05) {
+        const offset = WEB_VS_RAIL_OFFSET / sin;
+        const sign = posA_arc < inter.L1 / 2 ? +1 : -1;
+        posA = Math.max(0, Math.min(inter.L1, posA_arc + sign * offset));
+      }
+      if (sB.usage === "web" && bIsHorizMember && sin > 0.05) {
+        const offset = WEB_VS_RAIL_OFFSET / sin;
+        const sign = posB_arc < inter.L2 / 2 ? +1 : -1;
+        posB = Math.max(0, Math.min(inter.L2, posB_arc + sign * offset));
       }
       push(sA.name, posA);
       push(sB.name, posB);
@@ -237,16 +291,23 @@ function computeTB2BWebPositions(sticks) {
       // vs HG260001 PK10/TN6-1: T3 ∩ T4 apex (T3 arc=1288) emits
       // Web@1280.98 + Web@1127.58 (= 1280.98 - 153.4) on T3, and
       // Web@22.85 + Web@176.30 (= 22.85 + 153.45) on T4.
+      // ONLY emit pair when BOTH posA AND posB are near a stick endpoint
+      // (real apex, not mid-stick chord crossing like T4∩B2 in PK10/TN6-1).
       const APEX_PAIR_OFFSET = 153.4;
+      const APEX_END_THRESHOLD = 50;
       if (aIsChord && bIsChord) {
-        const aNearStart = posA < inter.L1 / 2;
-        const bNearStart = posB < inter.L2 / 2;
-        const sign_a = aNearStart ? +1 : -1;
-        const sign_b = bNearStart ? +1 : -1;
-        const pairA = posA + sign_a * APEX_PAIR_OFFSET;
-        const pairB = posB + sign_b * APEX_PAIR_OFFSET;
-        if (pairA >= 0 && pairA <= inter.L1) push(sA.name, pairA);
-        if (pairB >= 0 && pairB <= inter.L2) push(sB.name, pairB);
+        const aAtEnd = Math.min(posA, inter.L1 - posA) < APEX_END_THRESHOLD;
+        const bAtEnd = Math.min(posB, inter.L2 - posB) < APEX_END_THRESHOLD;
+        if (aAtEnd && bAtEnd) {
+          const aNearStart = posA < inter.L1 / 2;
+          const bNearStart = posB < inter.L2 / 2;
+          const sign_a = aNearStart ? +1 : -1;
+          const sign_b = bNearStart ? +1 : -1;
+          const pairA = posA + sign_a * APEX_PAIR_OFFSET;
+          const pairB = posB + sign_b * APEX_PAIR_OFFSET;
+          if (pairA >= 0 && pairA <= inter.L1) push(sA.name, pairA);
+          if (pairB >= 0 && pairB <= inter.L2) push(sB.name, pairB);
+        }
       }
     }
   }
@@ -288,7 +349,21 @@ function computeTB2BWebPositions(sticks) {
     } else {
       // Chord/rail rule: emit Web@pt at every centerline crossing,
       // end-zone-filtered.
-      const filtered = dedup.filter(p => p >= END_ZONE - 0.5 && p <= L - END_ZONE + 0.5);
+      let filtered = dedup.filter(p => p >= END_ZONE - 0.5 && p <= L - END_ZONE + 0.5);
+      // Detailer measures bottom-chord and certain rail positions from the
+      // OPPOSITE end (heel-end). Reverse the arc-length output for sticks
+      // whose XML start is the apex (high-z) end. Verified vs HG260001
+      // PK10/TN6-1 ref: B1 (start.z=3872 > end.z=3176) reversal aligns 7+
+      // missing Web positions; R9 (length 1677, multiple webs) reversal
+      // aligns 2 of 3 missing with arcs computed from new end.
+      // Reverse arc-length output for sticks whose start is the apex
+      // (Detailer measures from heel). See needsArcReversal helper above.
+      // Verified vs HG260001 PK10/TN6-1: B1 (sloped B-chord, start.z=3872 >
+      // end.z=3176) reversal aligns ref Web positions within 0.5mm; R9
+      // (flipped rail, len 1677) reversal aligns 2 of 3 mid-stick refs.
+      if (needsArcReversal(stick)) {
+        filtered = filtered.map(p => L - p).sort((a, b) => a - b);
+      }
       out.set(name, filtered);
     }
   }
@@ -507,12 +582,19 @@ function buildOurProject(xmlText) {
         const length = Math.round(distance3D(stick.start, stick.end) * 10) / 10;
         const role = roleForUsage(stick.usage, String(s["@_type"] ?? ""), stick.name);
         const profileFamily = profileCode(profile.web, profile.lFlange, profile.rFlange, parseFloat(profile.gauge) || 0.75).split("_")[0];
+        // Angle of stick from vertical (degrees) — used by wall-W chamfer rule.
+        const _stkDx = stick.end.x - stick.start.x;
+        const _stkDy = stick.end.y - stick.start.y;
+        const _stkDz = stick.end.z - stick.start.z;
+        const _stkHoriz = Math.hypot(_stkDx, _stkDy);
+        const angleFromVertical = Math.atan2(_stkHoriz, Math.abs(_stkDz)) * 180 / Math.PI;
         stick.tooling = generateTooling({
           role, length, profileFamily,
           gauge: profile.gauge, flipped,
           planName: plan.name, frameName: String(f["@_name"]),
           usage: stick.usage,
           stickName: stick.name,
+          angleFromVertical,
         });
         // Kb midpoint InnerService rule REMOVED 2026-05-03.
         // Verified vs HG260012 LBW corpus: Kb (cripple) InnerService positions
@@ -608,6 +690,8 @@ function buildOurProject(xmlText) {
           if (dxL > 1.0 && usage === "web") {
             stick.tooling.push({ kind: "start", type: "Chamfer" });
             stick.tooling.push({ kind: "end", type: "Chamfer" });
+          }
+          if (dxL > 1.0 && usage === "web") {
             if (usage === "web") {
               const dStart = 16.5, dEnd = length - 16.5, tol = 0.5;
               for (let i = stick.tooling.length - 1; i >= 0; i--) {
@@ -624,11 +708,24 @@ function buildOurProject(xmlText) {
               // For 89mm web with profile flange 41mm: cap span ≈ 41/sin(θ).
               // Agent verified vs HG260012 FJ: spans 49.97, 57.72, 58.63mm
               // for different W angles. Default rule emits 39mm — wrong.
+              //
+              // 2026-05-04 — bumped 41 → 45 (diagonal-W truss span on TIN
+              // panel frames). Verified vs HG260001 GF-TIN-70.075 PC1-1/PC3-1:
+              //   PC1-1 W4 (sin=0.638): 45/sin = 70.5, ref = 70.0 (Δ 0.5mm)
+              //   PC1-1 W5 (sin=0.593): 45/sin = 75.9, ref = 75.7 (Δ 0.2mm)
+              //   PC3-1 W4 (sin=0.538): 45/sin = 83.6, ref = 83.9 (Δ 0.3mm)
+              //   PC3-1 W5 (sin=0.608): 45/sin = 74.0, ref = 73.8 (Δ 0.2mm)
+              // The +4mm "extra" is the trim allowance — Swage extends past
+              // the lip-flange-clearance mark by ~4mm to absorb the F300i's
+              // standard end-cap clearance (matches LipNotch span 39 + 4 = 43,
+              // and Swage on a 90° vertical gets 45 cleanly).
+              // Doesn't affect 89mm FJ joist V's (those go through a separate
+              // V-stick branch at /^V\d/ above).
               const dyL = Math.abs(endL.y - startL.y);
               const lenL = Math.sqrt(dxL * dxL + dyL * dyL);
               const sinTheta = lenL > 1 ? (dyL / lenL) : 1;
               if (sinTheta > 0.1 && sinTheta < 0.99) {
-                const variableSpan = Math.min(80, Math.max(39, 41 / sinTheta));
+                const variableSpan = Math.min(80, Math.max(39, 45 / sinTheta));
                 // Replace existing Swage[0..39] and Swage[length-39..length]
                 const tol2 = 1.0;
                 for (let i = stick.tooling.length - 1; i >= 0; i--) {

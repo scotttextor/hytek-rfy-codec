@@ -56,6 +56,11 @@ export {
   type SimplifyDecision,
   type SimplifyResult,
   type ProfileGate,
+  // Junction-list extraction (#5) — exported so hytek-itm's label & drawing
+  // PDF generators can consume `decisions[].sticks` without a deep import.
+  type Junction,
+  type JunctionMate,
+  type StickJunctions,
 } from "./simplify-linear-truss.js";
 
 export const VERSION = "0.1.0";

@@ -382,9 +382,18 @@ export function generateFrameContextOps(frame) {
         if (stickOps.some(o => o.kind === "spanned" && o.type === "LipNotch")) {
             // Wall plates: agent verified vs HG260012 LBW T1: ref [1120.7..1291.2]
             // includes notches at 1131.5+1203.5+1254.5 — a span of 169mm. Adjacent
-            // notches with gap up to ~20mm get joined. Increase threshold from 8
-            // to 18mm (still conservative — won't merge wall-stud-pairs at 200mm).
-            joinAdjacentLipNotches(stickOps, 12);
+            // notches with gap up to ~20mm get joined.
+            //
+            // Truss chords (TIN PC7-1 B1, etc.): ref emits ONE merged span per
+            // panel-point cluster — e.g. [513.8..629.85] covering V+W+adjacent
+            // crossings. Our code emits separate spans 513.8..558.8 + 574.54..629.85
+            // (gap = 15.7mm) which the old gap=12 threshold doesn't merge. Bumping
+            // to 16mm fixes the TIN case without merging unrelated wall-stud pairs
+            // (which sit ~200mm apart).
+            // Verified 2026-05-04 vs HG260044 GF-TIN-70.075 PC7-1/B1.
+            const isTrussChord = usage === "topchord" || usage === "bottomchord";
+            const gap = isTrussChord ? 16 : 12;
+            joinAdjacentLipNotches(stickOps, gap);
         }
     }
     // Studs: nogs cross them — LIP NOTCH + DIMPLE at the crossing.

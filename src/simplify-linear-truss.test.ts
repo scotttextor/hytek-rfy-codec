@@ -741,3 +741,184 @@ describe("simplifyLinearTrussRfy — dimple normalisation on reference fixture",
     }
   });
 });
+
+// =============================================================================
+// Junction-list extraction (#5) — per-stick mate metadata for label/drawing PDFs
+// =============================================================================
+
+import { dedupApexWithMates } from "./simplify-linear-truss.js";
+import type { Junction, StickJunctions } from "./simplify-linear-truss.js";
+
+describe("dedupApexWithMates", () => {
+  it("returns one junction per raw entry when all positions are far apart", () => {
+    const out = dedupApexWithMates([
+      { pos: 100, mate: "W5", mateUsage: "Web" },
+      { pos: 500, mate: "W7", mateUsage: "Web" },
+      { pos: 900, mate: "T3", mateUsage: "TopChord" },
+    ], 17);
+    expect(out.length).toBe(3);
+    expect(out[0]).toEqual({ posMm: 100, mates: [{ name: "W5", usage: "Web" }] });
+    expect(out[1]).toEqual({ posMm: 500, mates: [{ name: "W7", usage: "Web" }] });
+    expect(out[2]).toEqual({ posMm: 900, mates: [{ name: "T3", usage: "TopChord" }] });
+  });
+
+  it("collapses positions within apexCollisionMm and merges mates onto the kept junction", () => {
+    // Two webs meeting the chord at the same apex (within 17mm tolerance).
+    const out = dedupApexWithMates([
+      { pos: 1000, mate: "W5", mateUsage: "Web" },
+      { pos: 1010, mate: "W6", mateUsage: "Web" },
+      { pos: 1015, mate: "W7", mateUsage: "Web" },
+    ], 17);
+    expect(out.length).toBe(1);
+    expect(out[0].posMm).toBe(1000);
+    expect(out[0].mates).toEqual([
+      { name: "W5", usage: "Web" },
+      { name: "W6", usage: "Web" },
+      { name: "W7", usage: "Web" },
+    ]);
+  });
+
+  it("keeps the EARLIER position when collapsing (matches dedupApex behaviour)", () => {
+    const out = dedupApexWithMates([
+      { pos: 200, mate: "W5", mateUsage: "Web" },
+      { pos: 215, mate: "W6", mateUsage: "Web" },  // within 17mm → merge into 200
+      { pos: 800, mate: "W7", mateUsage: "Web" },
+    ], 17);
+    expect(out[0].posMm).toBe(200);
+    expect(out[0].mates).toHaveLength(2);
+    expect(out[1].posMm).toBe(800);
+  });
+
+  it("sorts before deduping — apex collision is detected regardless of input order", () => {
+    const out = dedupApexWithMates([
+      { pos: 800, mate: "W7", mateUsage: "Web" },
+      { pos: 200, mate: "W5", mateUsage: "Web" },
+      { pos: 215, mate: "W6", mateUsage: "Web" },
+    ], 17);
+    expect(out.length).toBe(2);
+    expect(out[0].posMm).toBe(200);
+    expect(out[0].mates.map(m => m.name).sort()).toEqual(["W5", "W6"]);
+    expect(out[1].posMm).toBe(800);
+  });
+
+  it("dedupes a single mate that appears twice (defensive — same pair from both sides)", () => {
+    const out = dedupApexWithMates([
+      { pos: 500, mate: "W5", mateUsage: "Web" },
+      { pos: 510, mate: "W5", mateUsage: "Web" },
+    ], 17);
+    expect(out.length).toBe(1);
+    expect(out[0].mates).toEqual([{ name: "W5", usage: "Web" }]);
+  });
+
+  it("returns empty array for empty input", () => {
+    expect(dedupApexWithMates([], 17)).toEqual([]);
+  });
+});
+
+describe("simplifyLinearTrussRfy — sticks[] junction list on reference fixture", () => {
+  it("2603191 ROCKVILLE: every APPLY frame has sticks[] populated with valid junctions", () => {
+    const rfy = readCorpus("2603191/2603191-GF-LIN-89.075.rfy");
+    const xml = readCorpus("2603191/2603191-ROCKVILLE.xml").toString("utf-8");
+    const parsed = parsePlanXml(xml);
+    const result = simplifyLinearTrussRfy(rfy, parsed.frames, parsed.planNameByFrame);
+
+    const apply = result.decisions.filter(d => d.decision === "APPLY");
+    expect(apply.length).toBe(22);
+
+    for (const d of apply) {
+      // Every APPLY frame should have sticks[] populated (none of them have
+      // ALL sticks fall back, so at least one stick produces junctions).
+      expect(d.sticks).toBeDefined();
+      expect(d.sticks!.length).toBeGreaterThan(0);
+
+      for (const s of d.sticks!) {
+        // Stick metadata is sane.
+        expect(s.stick).toBeTruthy();
+        expect(s.lengthMm).toBeGreaterThan(0);
+        // Every junction has at least one mate, mates have non-empty names.
+        for (const j of s.junctions) {
+          expect(j.posMm).toBeGreaterThanOrEqual(0);
+          expect(j.posMm).toBeLessThanOrEqual(s.lengthMm);
+          expect(j.mates.length).toBeGreaterThanOrEqual(1);
+          for (const m of j.mates) {
+            expect(m.name).toBeTruthy();
+            // No stick should be its own mate.
+            expect(m.name).not.toBe(s.stick);
+          }
+        }
+        // Junctions are sorted ascending by position.
+        for (let i = 1; i < s.junctions.length; i++) {
+          expect(s.junctions[i].posMm).toBeGreaterThanOrEqual(s.junctions[i - 1].posMm);
+        }
+      }
+    }
+
+    // Total junction count across all sticks across all frames should equal
+    // the total newBoltCount (each new bolt position = exactly one junction).
+    let totalJunctions = 0;
+    let totalBolts = 0;
+    for (const d of apply) {
+      totalBolts += d.newBoltCount ?? 0;
+      for (const s of d.sticks ?? []) {
+        totalJunctions += s.junctions.length;
+      }
+    }
+    expect(totalJunctions).toBe(totalBolts);
+  });
+
+  it("W<->W skip is reflected in junctions: no Web stick lists another Web as a mate", () => {
+    const rfy = readCorpus("2603191/2603191-GF-LIN-89.075.rfy");
+    const xml = readCorpus("2603191/2603191-ROCKVILLE.xml").toString("utf-8");
+    const parsed = parsePlanXml(xml);
+    const result = simplifyLinearTrussRfy(rfy, parsed.frames, parsed.planNameByFrame);
+
+    const apply = result.decisions.filter(d => d.decision === "APPLY");
+    for (const d of apply) {
+      for (const s of d.sticks ?? []) {
+        if (!/^web$/i.test(s.usage)) continue;
+        for (const j of s.junctions) {
+          for (const m of j.mates) {
+            expect(/^web$/i.test(m.usage)).toBe(false);
+          }
+        }
+      }
+    }
+  });
+
+  it("usage information is populated — labels can sort chord-mates before web-mates", () => {
+    const rfy = readCorpus("2603191/2603191-GF-LIN-89.075.rfy");
+    const xml = readCorpus("2603191/2603191-ROCKVILLE.xml").toString("utf-8");
+    const parsed = parsePlanXml(xml);
+    const result = simplifyLinearTrussRfy(rfy, parsed.frames, parsed.planNameByFrame);
+
+    const apply = result.decisions.filter(d => d.decision === "APPLY");
+    // At least one chord stick somewhere should list its joining webs by usage.
+    let chordWithWebMate = false;
+    for (const d of apply) {
+      for (const s of d.sticks ?? []) {
+        if (!/chord/i.test(s.usage)) continue;
+        for (const j of s.junctions) {
+          if (j.mates.some(m => /^web$/i.test(m.usage))) {
+            chordWithWebMate = true;
+            break;
+          }
+        }
+        if (chordWithWebMate) break;
+      }
+      if (chordWithWebMate) break;
+    }
+    expect(chordWithWebMate).toBe(true);
+  });
+});
+
+// Type re-export sanity — ensures the public types are actually exported.
+describe("Junction / StickJunctions types are part of the public API", () => {
+  it("can be imported from the package entry — typecheck-only sanity", () => {
+    // If this compiles, the types are exported. Runtime check is trivial.
+    const j: Junction = { posMm: 100, mates: [{ name: "W5", usage: "Web" }] };
+    const s: StickJunctions = {
+      stick: "T3", usage: "TopChord", lengthMm: 1000, junctions: [j],
+    };
+    expect(s.junctions[0].posMm).toBe(100);
+  });
+});

@@ -559,8 +559,13 @@ function processFrame(frameWrap, frameByName, planNameByFrame, gate, cfg, exclud
     }
     // Mutate the RFY XML — replace Web point-tools per stick, preserve all
     // physical-fit ops byte-identical. FALLBACK sticks: don't touch their tooling.
+    // Track which sticks actually got rewritten so the junction list emitted on
+    // the decision matches the bolt-hole count exactly (sticks present in
+    // parsed.sticks but missing from frameWrap.frame, or lacking a tooling node,
+    // would otherwise contribute junctions without a corresponding bolt write).
     let modifiedSticks = 0;
     let totalNewBolts = 0;
+    const writtenSticks = new Set();
     for (const child of frameWrap.frame) {
         const stickArr = child.stick;
         if (!Array.isArray(stickArr))
@@ -595,6 +600,7 @@ function processFrame(frameWrap, frameByName, planNameByFrame, gate, cfg, exclud
         toolingNode.tooling = filtered;
         modifiedSticks++;
         totalNewBolts += positions.length;
+        writtenSticks.add(stickName);
     }
     // Dimple normalisation pass — runs on the SAME parsed frame, mutates the
     // tooling arrays of every chord+Box pair in place. Independent of bolt-hole
@@ -611,11 +617,14 @@ function processFrame(frameWrap, frameByName, planNameByFrame, gate, cfg, exclud
     // i.e. the frame matched the gate but produced zero usable rewrites.
     if (modifiedSticks > 0) {
         // Build per-stick junction summary in parsed-sticks order so labels can
-        // be emitted in declaration order. Skip sticks that fell back (no rewrite
-        // happened, so we don't have new junctions for them).
+        // be emitted in declaration order. Only include sticks whose Web ops were
+        // ACTUALLY rewritten — `writtenSticks` is the set of names where the
+        // rewrite loop completed successfully (stick present in frameWrap.frame
+        // with a tooling node). This guarantees `sum(s.junctions.length)` exactly
+        // equals `newBoltCount` for every APPLY decision.
         const sticksJunctions = [];
         for (const stick of parsed.sticks) {
-            if (fallbackSticks.has(stick.name))
+            if (!writtenSticks.has(stick.name))
                 continue;
             const junctions = finalJunctionsPerStick.get(stick.name);
             if (!junctions || junctions.length === 0)

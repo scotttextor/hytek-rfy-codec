@@ -150,45 +150,85 @@ function expandSpan(start: number, end: number, type: ToolType, stickLength: num
 }
 
 /**
+ * Type-based tiebreaker for same-position ordering. Lower = emitted first.
+ *
+ * Verified 2026-05-03 vs HG260044 LBW corpus, ref L1-N1 @ 96.5:
+ *   "LIP NOTCH, INNER DIMPLE, WEB NOTCH"
+ * — interleaves a spanned op (LipNotch) → point op (InnerDimple) → spanned
+ * op (InnerNotch/"WEB NOTCH") at the SAME coord. The kind-based priority
+ * model (spanned-before-point) gets the InnerDimple in the wrong place.
+ *
+ * Conservative table: ONLY the LipNotch < InnerDimple < InnerNotch trio
+ * gets explicit ordering. All other types share a sentinel (5) so the
+ * stable sort preserves their original input order. Adding more types
+ * without empirical evidence breaks more cases than it fixes — verified
+ * 2026-05-04 by trying a fully-prescribed table (round-trip dropped from
+ * 51.7% to 39.3%).
+ */
+const TYPE_ORDER: Partial<Record<ToolType, number>> = {
+  LipNotch: 1,
+  LeftFlange: 1,
+  RightFlange: 1,
+  LeftPartialFlange: 1,
+  RightPartialFlange: 1,
+  InnerDimple: 2,
+  InnerNotch: 3,
+};
+const TYPE_ORDER_DEFAULT = 5;
+
+/**
  * Flatten a stick's tooling list into per-position cells, sorted by position
  * in ascending order (matches Detailer's CSV emission order).
+ *
+ * Three-level sort:
+ *   1. pos ascending
+ *   2. kind (start < body < end) — keeps start/end ops at the right edges
+ *   3. type tiebreaker (LipNotch < InnerDimple < InnerNotch; else stable)
  */
 function toolingToCsvCells(tooling: RfyToolingOp[], stickLength: number): string[] {
-  // priority levels (lower = emitted first at same position):
-  //   0  start-tool
-  //   1  spanned-tool expansion (caps + interior positions)
-  //   2  point-tool
-  //   3  end-tool
-  // Verified vs HG260044 LBW round-trip 2026-05-03: at shared positions,
-  // spanned ops (LipNotch from a [74..119] collapse) are emitted BEFORE
-  // point ops (InnerDimple at the same position 96.5). e.g. ref shows
-  // `LIP NOTCH,96.5,INNER DIMPLE,96.5` — not the reverse. The dominant
-  // pattern across the corpus is spanned-then-point at the same coord.
-  const flat: Array<{ type: ToolType; pos: number; priority: number }> = [];
+  // Body ops have a sub-priority: spanned (0) before point (1). This is the
+  // dominant pattern for non-trio types (e.g. Swage span before InnerDimple
+  // point at same pos). The trio (LipNotch < InnerDimple < InnerNotch) is
+  // handled as a type-level override below.
+  const flat: Array<{ type: ToolType; pos: number; edgePriority: number; bodySubPriority: number; insIdx: number }> = [];
+  let counter = 0;
   for (const op of tooling) {
     switch (op.kind) {
       case "point":
-        flat.push({ type: op.type, pos: op.pos, priority: 2 });
+        flat.push({ type: op.type, pos: op.pos, edgePriority: 1, bodySubPriority: 1, insIdx: counter++ });
         break;
       case "start":
-        flat.push({ type: op.type, pos: 0, priority: 0 });
+        flat.push({ type: op.type, pos: 0, edgePriority: 0, bodySubPriority: 0, insIdx: counter++ });
         break;
       case "end":
-        flat.push({ type: op.type, pos: stickLength, priority: 3 });
+        flat.push({ type: op.type, pos: stickLength, edgePriority: 2, bodySubPriority: 0, insIdx: counter++ });
         break;
       case "spanned": {
         const positions = expandSpan(op.startPos, op.endPos, op.type, stickLength);
-        for (const pos of positions) flat.push({ type: op.type, pos, priority: 1 });
+        for (const pos of positions) flat.push({ type: op.type, pos, edgePriority: 1, bodySubPriority: 0, insIdx: counter++ });
         break;
       }
     }
   }
-  // Stable sort by (pos ascending, priority ascending for same pos).
-  flat.sort((a, b) => a.pos - b.pos || a.priority - b.priority);
+  flat.sort((a, b) => {
+    if (a.pos !== b.pos) return a.pos - b.pos;
+    if (a.edgePriority !== b.edgePriority) return a.edgePriority - b.edgePriority;
+    // For body ops at same pos:
+    //   If both types are in the explicit TYPE_ORDER trio, use that order
+    //   (overrides spanned/point — InnerDimple goes BETWEEN LipNotch and
+    //   InnerNotch even though it's a point op).
+    //   Otherwise, fall back to spanned-before-point (the dominant pattern
+    //   for non-trio types like Swage), with insertion order as final tie.
+    const ta = TYPE_ORDER[a.type];
+    const tb = TYPE_ORDER[b.type];
+    if (ta !== undefined && tb !== undefined) {
+      if (ta !== tb) return ta - tb;
+    }
+    if (a.bodySubPriority !== b.bodySubPriority) return a.bodySubPriority - b.bodySubPriority;
+    return a.insIdx - b.insIdx;
+  });
   const cells: string[] = [];
   for (const op of flat) {
-    // Chamfer positions inherit stick-length precision (2-decimal) because
-    // they're computed as length ± offset.
     const isChamfer = op.type === "Chamfer" || op.type === "TrussChamfer";
     cells.push(TOOL_TO_CSV[op.type], isChamfer ? nChamfer(op.pos) : n(op.pos));
   }

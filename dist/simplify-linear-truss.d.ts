@@ -48,6 +48,41 @@ export interface ProfileGate {
  *  lFlange=38, rFlange=41 is intentional asymmetry; both lips are 11mm.
  *  These values gate every Linear-truss frame submitted to the simplifier. */
 export declare const DEFAULT_PROFILE_GATE: ProfileGate;
+/** One bolt-hole junction on a stick, after end-zone filter + apex dedup.
+ *  Multiple `mates` indicate an apex collision where two or more sticks meet
+ *  at the same position (the bolt-hole pattern fastens all of them at once). */
+export interface Junction {
+    /** Position along the stick from start (mm). */
+    posMm: number;
+    /** Other stick(s) that meet at this junction. Length 1 = chord-web,
+     *  length ≥2 = apex (e.g. two webs meeting the chord at the same point). */
+    mates: ReadonlyArray<JunctionMate>;
+}
+/** Cross-reference to another stick at a junction. Includes its usage so
+ *  downstream label/drawing generators can sort chord-mates before web-mates
+ *  without a second lookup. */
+export interface JunctionMate {
+    /** Stick name within the same frame (e.g. "T3", "W5", "B1 (Box1)"). */
+    name: string;
+    /** Stick's `usage` from the parsed XML (e.g. "TopChord", "Web", "BottomChord"). */
+    usage: string;
+}
+/** Per-stick junction summary, populated for every stick whose Web bolt-holes
+ *  were rewritten on an APPLY frame. Drives label PDFs ("B1 → joins T3 / W5 /
+ *  W7"), drawing-overlay annotations, and assembly summaries. Sticks that fell
+ *  back (kept their source RFY ops) are not present in this list. */
+export interface StickJunctions {
+    /** Stick name within the frame. */
+    stick: string;
+    /** Stick `usage` from the parsed XML. */
+    usage: string;
+    /** Stick length (XZ-plane Euclidean, mm). */
+    lengthMm: number;
+    /** Junctions in ascending position order. Each junction's `mates` lists
+     *  every OTHER stick that meets at that position (1 for chord-web, 2+ for
+     *  apex collisions). */
+    junctions: ReadonlyArray<Junction>;
+}
 export interface SimplifyDecision {
     frame: string;
     decision: "APPLY" | "SKIP" | "FALLBACK";
@@ -59,6 +94,10 @@ export interface SimplifyDecision {
      *  matching main-chord dimples written). Undefined when dimple normalisation
      *  was disabled or the frame skipped. */
     dimplesUpdated?: number;
+    /** Per-stick junction list for every stick whose Web ops were rewritten.
+     *  Populated on APPLY frames (and only for sticks not in `fallbackSticks`).
+     *  Undefined / absent on SKIP and FALLBACK decisions. */
+    sticks?: ReadonlyArray<StickJunctions>;
 }
 export interface SimplifyResult {
     rfy: Buffer;
@@ -112,3 +151,21 @@ export declare function normaliseDimplesForFrame(frameWrap: {
     frame: Array<Record<string, unknown>>;
 }, margin: number, maxGap: number): number;
 export declare function simplifyLinearTrussRfy(rfyBytes: Buffer, frames: readonly ParsedFrame[], planNameByFrame: ReadonlyMap<string, string>, opts?: SimplifyLinearTrussOptions): SimplifyResult;
+/** Internal raw junction record — one per (stick, mate) crossing produced by
+ *  the pairwise loop, before apex dedup. Keyed by stick name, with the
+ *  mate's name + usage attached so the public Junction shape can be assembled
+ *  after dedup. */
+interface RawJunction {
+    pos: number;
+    mate: string;
+    mateUsage: string;
+}
+/** Sort raw junctions ascending and collapse those within `apexCollisionMm`
+ *  of the previously-kept junction — same algorithm as `dedupApex` but also
+ *  merges mate metadata onto the kept junction. When a collision occurs, the
+ *  EARLIER junction's position is kept (matches `dedupApex` behaviour) and
+ *  the dropped junction's mate is appended (de-duplicated) to the kept
+ *  junction's `mates` list.
+ *
+ *  Exported for unit-testing the dedup math in isolation. */
+export declare function dedupApexWithMates(raw: readonly RawJunction[], apexCollisionMm: number): Junction[];

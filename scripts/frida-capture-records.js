@@ -39,7 +39,7 @@ if (!tooling) {
   function hexDump(ptr, length, label) {
     let hex = '';
     for (let i = 0; i < length; i++) {
-      const byte = Memory.readU8(ptr.add(i));
+      const byte = ptr.add(i).readU8();
       hex += byte.toString(16).padStart(2, '0');
       if ((i + 1) % 16 === 0) hex += '\n  ';
       else if ((i + 1) % 8 === 0) hex += ' | ';
@@ -55,39 +55,35 @@ if (!tooling) {
       const sectLookup = args[1];
       const frameDef = args[2];
 
-      console.log(`\n========================= add_frameobject call #${callCount} =========================`);
-      console.log(`  FrameRecord*       = ${frameRec}`);
-      console.log(`  SectionLookupRec*  = ${sectLookup}`);
-      console.log(`  FrameDefRecord*    = ${frameDef}`);
+      try {
+        console.log(`\n========================= add_frameobject call #${callCount} =========================`);
+        console.log(`  FrameRecord*       = ${frameRec}`);
+        console.log(`  SectionLookupRec*  = ${sectLookup}`);
+        console.log(`  FrameDefRecord*    = ${frameDef}`);
 
-      // Dump all 3 records as hex
-      console.log(hexDump(frameRec, 0x32, 'FrameRecord'));
-      console.log(hexDump(sectLookup, 0xb9, 'SectionLookupRecord (CATALOG PAYLOAD)'));
-      console.log(hexDump(frameDef, 0x4b, 'FrameDefRecord'));
+        console.log(hexDump(frameRec, 0x32, 'FrameRecord'));
+        console.log(hexDump(sectLookup, 0xb9, 'SectionLookupRecord (CATALOG PAYLOAD)'));
+        console.log(hexDump(frameDef, 0x4b, 'FrameDefRecord'));
 
-      // Decode key fields for human readability
-      console.log('Decoded:');
-      // FrameRecord +0x12 = frame_id (int32)
-      const frameId = Memory.readU32(frameRec.add(0x12));
-      console.log(`  frame_id = ${frameId}`);
+        console.log('Decoded:');
+        const frameId = frameRec.add(0x12).readU32();
+        console.log(`  frame_id = ${frameId}`);
 
-      // FrameRecord +0x22..0x29 = endpoint1.x (double)
-      const ep1x = Memory.readDouble(frameRec.add(0x22));
-      const ep1y = Memory.readDouble(frameRec.add(0x2a));
-      console.log(`  endpoint1 = (${ep1x.toFixed(3)}, ${ep1y.toFixed(3)})`);
+        const ep1x = frameRec.add(0x22).readDouble();
+        const ep1y = frameRec.add(0x2a).readDouble();
+        console.log(`  endpoint1 = (${ep1x.toFixed(3)}, ${ep1y.toFixed(3)})`);
 
-      // FrameRecord +0x01..0x08 = endpoint2.x (double)
-      const ep2x = Memory.readDouble(frameRec.add(0x01));
-      const ep2y = Memory.readDouble(frameRec.add(0x09));
-      console.log(`  endpoint2 = (${ep2x.toFixed(3)}, ${ep2y.toFixed(3)})`);
+        const ep2x = frameRec.add(0x01).readDouble();
+        const ep2y = frameRec.add(0x09).readDouble();
+        console.log(`  endpoint2 = (${ep2x.toFixed(3)}, ${ep2y.toFixed(3)})`);
 
-      // SectionLookupRecord +0x9f = pointer/offset to rule data (TList)
-      // SectionLookupRecord +0xa3 = count
-      const ruleCount = Memory.readU32(sectLookup.add(0xa3));
-      console.log(`  SectionLookupRecord rule_count @ +0xa3 = ${ruleCount}`);
+        const ruleCount = sectLookup.add(0xa3).readU32();
+        console.log(`  SectionLookupRecord rule_count @ +0xa3 = ${ruleCount}`);
+      } catch (e) {
+        console.log(`  [decode-error] ${e.message}`);
+      }
     },
     onLeave: function (retval) {
-      // retval is in EAX, low byte is the result code (0=ok)
       const rc = retval.toInt32() & 0xff;
       console.log(`  → rc = 0x${rc.toString(16).padStart(2, '0')} (${rc === 0 ? 'OK' : 'FAIL'})`);
     }
@@ -107,21 +103,23 @@ if (tooling) {
       this.outLen = args[2];
     },
     onLeave: function (retval) {
-      const rc = retval.toInt32() & 0xff;
-      const arrPtr = Memory.readPointer(this.outArr);
-      const len = Memory.readS32(this.outLen);
-      console.log(`\n  get_operations_for(frame_id=${this.frameId}) → rc=${rc}, len=${len}`);
-      if (rc === 0 && len > 0 && !arrPtr.isNull()) {
-        // Each op is presumably a fixed struct — dump first few to learn layout
-        for (let i = 0; i < Math.min(len, 10); i++) {
-          // TODO: confirm op struct size from RE; tentative 16 bytes
-          const opOffset = arrPtr.add(i * 16);
-          let opHex = '';
-          for (let j = 0; j < 16; j++) {
-            opHex += Memory.readU8(opOffset.add(j)).toString(16).padStart(2, '0') + ' ';
+      try {
+        const rc = retval.toInt32() & 0xff;
+        const arrPtr = this.outArr.readPointer();
+        const len = this.outLen.readS32();
+        console.log(`\n  get_operations_for(frame_id=${this.frameId}) → rc=${rc}, len=${len}`);
+        if (rc === 0 && len > 0 && !arrPtr.isNull()) {
+          for (let i = 0; i < Math.min(len, 10); i++) {
+            const opOffset = arrPtr.add(i * 16);
+            let opHex = '';
+            for (let j = 0; j < 16; j++) {
+              opHex += opOffset.add(j).readU8().toString(16).padStart(2, '0') + ' ';
+            }
+            console.log(`    op[${i}]: ${opHex}`);
           }
-          console.log(`    op[${i}]: ${opHex}`);
         }
+      } catch (e) {
+        console.log(`  [getops-error] ${e.message}`);
       }
     }
   });

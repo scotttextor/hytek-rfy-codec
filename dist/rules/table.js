@@ -166,11 +166,39 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "medium" },
         ],
     },
-    // ----------- TOP PLATES on 70S41 -----------
+    // ----------- SHORT TOP PLATES (length < 200) on 70S41 -----------
+    //
+    // 2026-05-04 — Verified vs HG260001 PK4 LBW L4: T2/T3/T4 sub-plates of
+    // length 121mm-127mm sit ABOVE the H1 header (header-cap T-plates). They
+    // get HEADER-STYLE end caps: InnerNotch + LipNotch + InnerDimple @16.5
+    // + InnerDimple @58.5 (paired LBW dimples) at each end. Same pattern
+    // as 70mm headers (H rule below).
+    //
+    // Triggered ONLY when length < 200mm (sub-plates above headers). Long T
+    // plates (full top plates) keep their normal LipNotch-only caps.
     {
         rolePattern: /^(T|Tp)$/,
         profilePattern: /^70S41$/,
-        lengthRange: [0, Infinity],
+        lengthRange: [0, 200],
+        rules: [
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "Short T sub-plate (header cap): InnerNotch @start" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high",
+                predicate: (ctx) => /(LBW)/i.test(ctx.planName ?? "") && !/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""),
+                notes: "Short T (header cap) on LBW: paired dimple at 58.5" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high",
+                predicate: (ctx) => /(LBW)/i.test(ctx.planName ?? "") && !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "Short T sub-plate: InnerNotch @end" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+        ],
+    },
+    // ----------- TOP PLATES on 70S41 (length >= 200) -----------
+    {
+        rolePattern: /^(T|Tp)$/,
+        profilePattern: /^70S41$/,
+        lengthRange: [200, Infinity],
         rules: [
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "100% of T plates have lip notch span at start" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },

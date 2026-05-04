@@ -896,7 +896,6 @@ export function generateFrameContextOps(frame) {
         // With ~20mm inner gap between them.
         crossings.sort((a, b) => a - b);
         const PAIR_THRESHOLD = 70; // pairs are ~50mm apart (jamb+king)
-        const PAIR_NOTCH_SPAN = 50;
         const PAIR_NOTCH_OUTER_OFFSET = 35; // outer extent
         const PAIR_NOTCH_INNER_OFFSET = 15; // inner extent (toward pair midpoint)
         const SINGLE_NOTCH_SPAN_HALF = 22.5;

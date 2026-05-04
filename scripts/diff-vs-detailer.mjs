@@ -167,17 +167,36 @@ function computeTB2BWebPositions(sticks) {
    *    (PK10/TN6-1 B1: !flip, start=high, end=low → reverse aligns refs)
    *  - rail with flipped=true and L > 600mm — reverse
    *    (PK10/TN6-1 R9: flipped, len 1677 → reverse aligns 5 of 6 refs)
+   *  - flipped top-chord (header H4 in PK6) — reverse
+   *    (PK6/TT7-1 H4: flipped=true → ref positions match reversed centerlines)
    *  Flipped bottom chords (e.g. PK10/TN6-1 B2) are NOT reversed: their
    *  XML start=apex but Detailer treats them with raw arc.
    */
   function needsArcReversal(s) {
-    if (s.usage === "bottomchord" && !s.flipped && s.start3D.z > s.end3D.z + 0.1) return true;
+    if (s.usage === "bottomchord") {
+      const zSpan = Math.abs(s.end3D.z - s.start3D.z);
+      if (!s.flipped) {
+        // Sloped B-chord (apex-start): reverse so output measures from heel.
+        if (s.start3D.z > s.end3D.z + 0.1) return true;
+        // Horizontal B-chord: reverse if start.y > end.y so Detailer's
+        // measure-from-low-y convention applies. Verified vs PK6 TT6-1 B1
+        // (start.y=20627, end.y=9697, raw W21 cross @345 → reversed @10585
+        // ≈ ref @10584.85). 10 of 10 PERP web crossings align after reversal.
+        if (zSpan < 5 && s.start3D.y > s.end3D.y + 0.1) return true;
+      }
+    }
     if (s.usage === "rail" && s.flipped) {
       const dy = s.end3D[u] - s.start3D[u];
       const dz = s.end3D[v] - s.start3D[v];
       const len = Math.hypot(dy, dz);
       if (len > 600) return true;
     }
+    // Flipped top-chord — Detailer measures from heel (low-y or low-z end)
+    // when the XML start is the apex. Verified vs HG260001:
+    //   - PK9/TN11-1 T3 (flipped=true, sloped, start.z=5358 high): reversed
+    //     positions match ref centerlines within 0.5mm (15 of 17 webs match).
+    //   - PK6/TT7-1 H4 (flipped=true, horizontal): reversed matches ref.
+    if (s.usage === "topchord" && s.flipped) return true;
     return false;
   }
 
@@ -260,18 +279,27 @@ function computeTB2BWebPositions(sticks) {
       // within 0.5mm.
       const aReversal = needsArcReversal(sA);
       const bReversal = needsArcReversal(sB);
+      // For sloped/horizontal B-chord reversals, the chord's physical
+      // orientation flips when measured from heel; the chord's web-face
+      // points to opposite direction so half-depth correction flips sign.
+      // For T-chord (header) reversals, the web-face direction is the same
+      // — no sign flip needed. Verified vs:
+      //   - PK10/TN6-1 B1 (B reversal): flip → ref @30.88 matches
+      //   - PK9/TN11-1 T3 (T reversal): NO flip → ref @6679.71 matches
+      const aFlipSign = aReversal && (sA.usage === "bottomchord" || sA.usage === "rail");
+      const bFlipSign = bReversal && (sB.usage === "bottomchord" || sB.usage === "rail");
       if (aIsChord) {
         const corrRaw = bIsChord
           ? -CHORD_HALF_DEPTH * aZ / 2
           : -CHORD_HALF_DEPTH * dot / 2;
-        const correction = aReversal ? -corrRaw : corrRaw;
+        const correction = aFlipSign ? -corrRaw : corrRaw;
         posA = Math.max(0, Math.min(inter.L1, posA_arc + correction));
       }
       if (bIsChord) {
         const corrRaw = aIsChord
           ? -CHORD_HALF_DEPTH * bZ / 2
           : -CHORD_HALF_DEPTH * dot / 2;
-        const correction = bReversal ? -corrRaw : corrRaw;
+        const correction = bFlipSign ? -corrRaw : corrRaw;
         posB = Math.max(0, Math.min(inter.L2, posB_arc + correction));
       }
       // Web-vs-horizontal-chord/rail bolt offset on the WEB side: shift the
@@ -293,27 +321,18 @@ function computeTB2BWebPositions(sticks) {
         const sign = posB_arc < inter.L2 / 2 ? +1 : -1;
         posB = Math.max(0, Math.min(inter.L2, posB_arc + sign * offset));
       }
-      // Web centerline crossings: emit only for PERPENDICULAR webs. PAR
-      // (diagonal) web crossings are NOT emitted as centerlines — instead,
-      // their position appears as a +98 pair from the neighboring PERP web
-      // (panel-point pattern, see post-loop processing below).
-      // Verified vs HG260001 PK10/TN6-1 T4: W15 (PAR, dot=-0.76) raw 935 NOT
-      // in ref; W14 (PERP) +98 = 952.72 IS in ref.
-      const PERP_THRESHOLD = 0.5;
+      // Push centerline crossings normally. Bolt-pair logic happens in a
+      // post-loop pass (see chordWebCrossings processing below) — we record
+      // chord-vs-web crossings there to enable panel-point pair-emission.
+      push(sA.name, posA);
+      push(sB.name, posB);
+      // Record chord-vs-web crossings for post-loop panel-point pair
+      // emission. The pair fires only when the PERP web has a PAR neighbor
+      // within PANEL_RANGE on the same chord.
       if (aIsChord && sB.usage === "web") {
-        // Record for post-loop pair-emission. Always record (used to decide
-        // whether neighbor PERP gets a pair).
         recordChordWeb(sA.name, sB.name, posA, dot);
-        // Only emit centerline for PERP-ish webs (|dot| < threshold).
-        if (Math.abs(dot) < PERP_THRESHOLD) push(sA.name, posA);
       } else if (bIsChord && sA.usage === "web") {
         recordChordWeb(sB.name, sA.name, posB, dot);
-        if (Math.abs(dot) < PERP_THRESHOLD) push(sB.name, posB);
-      } else {
-        // Non-chord-web: chord-chord, web-web (already gated), other.
-        // Push centerline normally.
-        push(sA.name, posA);
-        push(sB.name, posB);
       }
       // Chord-chord apex 2-bolt pair rule. When two chord sticks intersect
       // (apex), Detailer emits TWO Web@pt on each chord: one at the apex
@@ -321,20 +340,20 @@ function computeTB2BWebPositions(sticks) {
       // vs HG260001 PK10/TN6-1: T3 ∩ T4 apex (T3 arc=1288) emits
       // Web@1280.98 + Web@1127.58 (= 1280.98 - 153.4) on T3, and
       // Web@22.85 + Web@176.30 (= 22.85 + 153.45) on T4.
-      // ONLY emit pair when:
+      // Emit pair when:
       //   1. BOTH posA AND posB are near a stick endpoint (real apex)
-      //   2. AT LEAST ONE chord is a top-chord (T-T or T-rail apex)
-      // BB (bottom-chord vs bottom-chord) meetings are HEEL junctures, not
-      // apexes — they don't get the +153.4 pair. Verified vs HG260001
-      // PK10/TN6-1: B1 ∩ B2 at @4.85 (both bottom chords) — ref does NOT
-      // emit a 153.4 pair. Without this guard we emit a spurious @2533.47
-      // on B1 (after reversal). Restricting to TT-only removes this.
+      //   2. AT LEAST ONE chord is a top-chord (TT apex, or TB-heel where
+      //      a top chord meets a bottom chord at the truss heel)
+      // BB (bottom-chord vs bottom-chord) meetings are HEEL junctures with
+      // a different cap pattern — they don't get the +153.4 pair.
       const APEX_PAIR_OFFSET = 153.4;
       const APEX_END_THRESHOLD = 50;
       if (aIsChord && bIsChord) {
-        const isTTApex = (sA.usage === "topchord" || sB.usage === "topchord");
+        const isTApex = (sA.usage === "topchord" || sB.usage === "topchord");
         const aAtEnd = Math.min(posA, inter.L1 - posA) < APEX_END_THRESHOLD;
         const bAtEnd = Math.min(posB, inter.L2 - posB) < APEX_END_THRESHOLD;
+        const isTTApex = sA.usage === "topchord" && sB.usage === "topchord";
+        // TT apex (true vertex): emit on BOTH chords.
         if (aAtEnd && bAtEnd && isTTApex) {
           const aNearStart = posA < inter.L1 / 2;
           const bNearStart = posB < inter.L2 / 2;
@@ -344,6 +363,26 @@ function computeTB2BWebPositions(sticks) {
           const pairB = posB + sign_b * APEX_PAIR_OFFSET;
           if (pairA >= 0 && pairA <= inter.L1) push(sA.name, pairA);
           if (pairB >= 0 && pairB <= inter.L2) push(sB.name, pairB);
+        } else if (isTApex && (aAtEnd || bAtEnd)) {
+          // TB heel-juncture: top-chord meets bottom-chord at heel of one
+          // of them. Emit pair on the OTHER chord (mid-stick relative to
+          // the at-end one). Verified vs HG260001 PK9/TN11-1 T3 ∩ B1
+          // (B1 atEnd posB=0, T3 mid posA=6058): emit on T3 at +153.4
+          // toward heel direction → after reversal ≈ ref @815.14.
+          if (aAtEnd && !bAtEnd && sB.usage === "topchord") {
+            // sB is top-chord, sA is bottom-chord at end. Emit apex-pair
+            // on sB only (toward sB's mid).
+            const bNearStart = posB < inter.L2 / 2;
+            const sign_b = bNearStart ? +1 : -1;
+            const pairB = posB + sign_b * APEX_PAIR_OFFSET;
+            if (pairB >= 0 && pairB <= inter.L2) push(sB.name, pairB);
+          }
+          if (bAtEnd && !aAtEnd && sA.usage === "topchord") {
+            const aNearStart = posA < inter.L1 / 2;
+            const sign_a = aNearStart ? +1 : -1;
+            const pairA = posA + sign_a * APEX_PAIR_OFFSET;
+            if (pairA >= 0 && pairA <= inter.L1) push(sA.name, pairA);
+          }
         }
       }
     }
@@ -719,16 +758,83 @@ function buildOurProject(xmlText) {
           angleFromVertical,
           framePairedHeader,
         });
-        // Kb midpoint InnerService rule REMOVED 2026-05-03.
-        // Verified vs HG260012 LBW corpus: Kb (cripple) InnerService positions
-        // are NOT at length/2 — they are at fixed world Z heights where the
-        // Kb crosses the configured service-hole horizontals (e.g. ref L1101
-        // Kb1 len=1393.3 has InnerService @983.3, NOT @696.7). The midpoint
-        // rule fired 33 wrong ops on TH01-1F-LBW alone vs ~0 actual matches.
-        // Until height-based projection is implemented, emit nothing.
-        // if (/^Kb\d/.test(stickName) && length > 100) {
-        //   stick.tooling.push({ kind: "point", type: "InnerService", pos: Math.round((length/2)*10)/10 });
-        // }
+        // Kb InnerService at horizontal Service crossings.
+        //
+        // 2026-05-04 — implemented after analysis of HG260001 PK1/PK2/PK4/PK5
+        // wall corpus. Detailer emits InnerService on diagonal Kbs at every
+        // local position where the Kb's centerline crosses a horizontal
+        // <tool_action name="Service"> z-line (typically z=300, z=450 — the
+        // standard outlet/switch wall heights).
+        //
+        // Position formula (Pattern A — length=plate-attached convention):
+        //   pos = (z_h - z_plate) / sin(angle_from_horizontal) - 10mm
+        // where:
+        //   z_h        = the horizontal Service line's z value
+        //   z_plate    = z of the Kb's plate-attached end (= `end` after norm)
+        //   sin(angle) = |start.z - end.z| / centerline_length
+        //   -10mm      = chamfer/end-trim offset at plate-attached cut tip
+        //
+        // Pattern A vs B: not all Kbs use the length=plate convention. The
+        // rfy direction depends on (inputFlipped XOR isTopKb):
+        //   FALSE → Pattern A (length=plate, formula above works)
+        //   TRUE  → Pattern B (length=mid-wall, different formula — TODO)
+        // For now, emit only for Pattern A. Pattern B remains a gap (~30 ops).
+        //
+        // Verified vs L1 Kb2 (PK4 LBW): ref @305.6 + @469.0 ↔ z=300, z=450.
+        // Vertical Service crossings produce a 3rd position (~658.4 in the
+        // L1 Kb2 case) but the formula has an extra +56mm offset I haven't
+        // pinned down — left as remaining gap.
+        if (/^Kb\d/.test(stickName) && serviceActions.length > 0) {
+          const dxk = end.x - start.x, dyk = end.y - start.y, dzk = end.z - start.z;
+          const lenK = Math.sqrt(dxk*dxk + dyk*dyk + dzk*dzk);
+          const sinTheta = Math.abs(dzk) / lenK;
+          // Detect Pattern A vs B. Note: after the swap above, start=mid-wall
+          // (far from any plate) and end=plate-attached (close to a plate).
+          // isTopKb: end (plate-attached) is at the top plate (high z).
+          const isTopKb = end.z > start.z;
+          const isPatternA = (inputFlipped && isTopKb) || (!inputFlipped && !isTopKb);
+          if (isPatternA && sinTheta > 0.1) {
+            const zMin = Math.min(start.z, end.z);
+            const zMax = Math.max(start.z, end.z);
+            // Find horizontal Service lines (start.z == end.z) whose z lies
+            // within the Kb's centerline z range. Same wall plane (perpendicular
+            // axis match) — services on a parallel-but-offset wall don't apply.
+            const stickPerpAxis = Math.abs(dxk) > Math.abs(dyk) ? "y" : "x";
+            const stickPerpVal = stickPerpAxis === "y" ? start.y : start.x;
+            for (const svc of serviceActions) {
+              const isHorizontal = Math.abs(svc.start.z - svc.end.z) < 0.01;
+              if (!isHorizontal) continue;
+              // Kb wall axis is whichever of x/y varies more along stick. Service
+              // must run along that same axis (not perpendicular to it).
+              const svcDx = Math.abs(svc.start.x - svc.end.x);
+              const svcDy = Math.abs(svc.start.y - svc.end.y);
+              const svcAxis = svcDx > svcDy ? "x" : "y";
+              const stickRunAxis = stickPerpAxis === "y" ? "x" : "y";
+              if (svcAxis !== stickRunAxis) continue;
+              // Same wall plane (perpendicular coord matches Kb's perpendicular)
+              const svcPerp = stickPerpAxis === "y" ? svc.start.y : svc.start.x;
+              if (Math.abs(svcPerp - stickPerpVal) > 5) continue;
+              const zh = svc.start.z;
+              if (zh < zMin || zh > zMax) continue;
+              // Pattern A formula: pos = (z_h - z_plate)/sin(angle) - 10
+              const pos = Math.abs(zh - end.z) / sinTheta - 10;
+              if (pos < 30 || pos > length - 30) continue;
+              // Avoid duplicate
+              const rounded = Math.round(pos * 10) / 10;
+              const dup = stick.tooling.some(op =>
+                op.type === "InnerService" && op.kind === "point" &&
+                Math.abs(op.pos - rounded) < 1.5);
+              if (dup) continue;
+              stick.tooling.push({ kind: "point", type: "InnerService", pos: rounded });
+            }
+            // Re-sort tooling by position
+            stick.tooling.sort((a, b) => {
+              const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? 0 : length));
+              const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? 0 : length));
+              return pa - pb;
+            });
+          }
+        }
 
         // (InnerService strip rule for non-full-height studs was tried
         // 2026-05-03 but reverted — although it correctly removed isolated
@@ -1500,6 +1606,33 @@ for (const plan of ourDoc.project.plans) {
             stick.tooling.push({ kind: "point", type: "Web", pos: 84.33 });
             stick.tooling.push({ kind: "point", type: "Web", pos: 91.70 });
             stick.tooling.push({ kind: "point", type: "Web", pos: L - 35 });
+          }
+          // Long horizontal B-chord cap-stack rule: bottom chord that runs
+          // truss-to-truss (between two TT apexes) gets a fixed end-cap
+          // pattern at BOTH ends:
+          //   RightFlange 0..8.2 + LipNotch 0..32.3 + LeftFlange 0..156.7
+          //   + Web @60 (start cap bolt)
+          //   Web @(L-60) + LeftFlange (L-156.7)..L + LipNotch (L-32.3)..L
+          //   + RightFlange (L-8.2)..L
+          // Verified vs HG260001 PK6/TT6-1 B1, TT7-1 B1, TT8-1 B1, TT9-1 B1
+          // (all L=10930 horizontal bottom chords).
+          const meta3D = meta.sticks.find(s => s.name === stick.name);
+          const meta3DZSpan = meta3D ? Math.abs(meta3D.end3D.z - meta3D.start3D.z) : 0;
+          const isLongHorizB = /^B\d/.test(stick.name) && meta3DLen > 5000 && meta3DZSpan < 5;
+          if (isLongHorizB) {
+            const L = meta3DLen;
+            const RF_SPAN = 8.19;
+            const LIP_SPAN = 32.32;
+            const LF_SPAN = 156.70;
+            const STUB_BOLT = 59.98;
+            stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LIP_SPAN });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
+            stick.tooling.push({ kind: "point", type: "Web", pos: STUB_BOLT });
+            stick.tooling.push({ kind: "point", type: "Web", pos: L - STUB_BOLT });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN, endPos: L });
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_SPAN, endPos: L });
+            stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
           }
           stick.tooling.sort((a, b) => {
             const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? -1 : 1e9));

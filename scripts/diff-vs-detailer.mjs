@@ -547,10 +547,14 @@ function buildOurProject(xmlText) {
         // EXCEPT for LIN frames — LIN H sticks (truss headers) are NOT trimmed.
         // Verified vs LINEAR_TRUSS_TESTING H4 len 3555.83 = raw XML length.
         const isLINHeader = isLINPlanForTrim && isHeader;
+        // TB2B headers (truss headers between two half-trusses): NOT trimmed.
+        // Verified vs HG260001 PK6/TT6-1 H4: ref length 1761.6 = raw XML
+        // length, our 1mm/end trim was producing 1759.6. Removed for TB2B.
+        const isTB2BHeader = isTB2BPlanForTrim && isHeader;
         // Nog trim: 4mm/end if nog spans the same world extent as a plate
         // (continuous wall-spanning nog), else 1mm/end. See pre-pass above.
         const nogTrim = isNog && nogSharesPlateExtent(start, end) ? 4.0 : 1.0;
-        const T = isLINHeader ? 0
+        const T = (isLINHeader || isTB2BHeader) ? 0
           : ((isFullStud || isJoistWeb) ? 2.0
             : isNog ? nogTrim
             : isHeader ? 1.0

@@ -245,18 +245,19 @@ export function simplifyTinTrussFrame(frame: ParsedFrame): SimplifyTinDecision {
   const verticalWsTrimmed: string[] = [];
   const diagonalsChamferStripped: string[] = [];
 
-  // Flat-chord trusses (TI2-1 et al.) need a different diagonal-W length
-  // extension: +9mm instead of +5mm. The codec's diagonal -2mm trim runs
-  // against a different lip-extension basis on flat-chord trusses, so the
-  // net wanted shift is larger.
-  const diagonalShift = isFlatChordTruss(frame) ? 9.0 : 5.0;
-  // Stash the shift on the frame itself so the per-stick branch can read it
-  // without changing the function signature.  Ergonomic shortcut — the field
-  // is private and never read outside this module.
+  // Flat-chord trusses (TI2-1 et al.) need different W-length rules:
+  //   - Verticals: NO trim (the +11mm wall-rule extension matches ref).
+  //   - Diagonals: +10mm extension (instead of +5mm for sloped-chord frames).
+  // Detected by chord dz < 50mm (see `isFlatChordTruss`). Stashed on the
+  // frame as a private field for the per-stick branch to read.
+  const flatChord = isFlatChordTruss(frame);
+  const diagonalShift = flatChord ? 10.0 : 5.0;
   (frame as unknown as { _tinDiagonalShiftMm?: number })._tinDiagonalShiftMm = diagonalShift;
 
   for (const stick of frame.sticks) {
     if (isVerticalWeb(stick)) {
+      // Flat-chord verticals already match ref — leave coords + tooling alone.
+      if (flatChord) continue;
       const oldLen = stickLen(stick);
       // Skip very short sticks where the trim would over-shorten the end-Swage
       // span.  TS1-1 W3 / HN3-1 W4 are length ~70mm; their end-Swage in ref

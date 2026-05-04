@@ -81,6 +81,220 @@ function linMetaKey(planName, frameName, stickName, occurrence) {
   return `${normalizePlanName(planName)}|${frameName}|${stickName}#${occurrence}`;
 }
 
+// TB2B side-channel: per-frame stick geometry captured at XML parse, used in
+// the post-decode rewriter to compute pairwise centerline intersections and
+// emit Web@pt ops. Keyed by `${normalizedPlan}|${frameName}`.
+const TB2B_META = new Map();
+function tb2bFrameKey(planName, frameName) {
+  return `${normalizePlanName(planName)}|${frameName}`;
+}
+
+/** Pairwise centerline-intersection rule for TB2B (back-to-back) trusses.
+ *  Mirrors simplify-linear-truss.ts but works in whichever 2D plane the
+ *  truss lies in (TB2B is typically YZ — sticks share a constant X — while
+ *  LIN trusses are XZ). For each pair of sticks, project to 2D and find the
+ *  intersection's local arc-length on each stick.
+ *
+ *  TB2B distinguishes W (web) members from chord/rail (T/B/R/H) members:
+ *  - W members: emit Web@END_ANCHOR + Web@(len-END_ANCHOR) (fixed 35mm
+ *    end-cap offsets where the web butts into the chord), plus mid-stick
+ *    Web@pt at every chord/rail crossing more than END_ANCHOR+5mm from
+ *    each end. Verified vs HG260001 PK10/TN6-1 ref: W10/W11/W12/W13 have
+ *    only the two end-caps; W14 (which crosses R9 mid-stick) has 3 Webs.
+ *  - Chord/rail members (T/B/R/H): emit Web@pt at every web/rail
+ *    centerline crossing, end-zone filtered.
+ *  Returns Map<stickName, sortedPositions[]>. */
+function computeTB2BWebPositions(sticks) {
+  // Detect the constant-axis: compute per-axis range across ALL endpoints.
+  // The axis with min range (within 1mm) is the "out-of-plane" axis.
+  const axes = ["x", "y", "z"];
+  const ranges = { x: [Infinity, -Infinity], y: [Infinity, -Infinity], z: [Infinity, -Infinity] };
+  for (const s of sticks) {
+    for (const p of [s.start3D, s.end3D]) {
+      if (p[axes[0]] < ranges.x[0]) ranges.x[0] = p.x;
+      if (p[axes[0]] > ranges.x[1]) ranges.x[1] = p.x;
+      if (p[axes[1]] < ranges.y[0]) ranges.y[0] = p.y;
+      if (p[axes[1]] > ranges.y[1]) ranges.y[1] = p.y;
+      if (p[axes[2]] < ranges.z[0]) ranges.z[0] = p.z;
+      if (p[axes[2]] > ranges.z[1]) ranges.z[1] = p.z;
+    }
+  }
+  const spans = {
+    x: ranges.x[1] - ranges.x[0],
+    y: ranges.y[1] - ranges.y[0],
+    z: ranges.z[1] - ranges.z[0],
+  };
+  // Sort axes by span ascending; constant axis = smallest. The other two are
+  // the in-plane axes used for 2D intersection.
+  const sortedAxes = axes.slice().sort((a, b) => spans[a] - spans[b]);
+  const u = sortedAxes[1], v = sortedAxes[2]; // in-plane axes (largest 2 spans)
+
+  function len2D(s) {
+    const du = s.end3D[u] - s.start3D[u];
+    const dv = s.end3D[v] - s.start3D[v];
+    return Math.hypot(du, dv);
+  }
+  function intersect(a, b) {
+    const x1 = a.start3D[u], y1 = a.start3D[v];
+    const x2 = a.end3D[u], y2 = a.end3D[v];
+    const x3 = b.start3D[u], y3 = b.start3D[v];
+    const x4 = b.end3D[u], y4 = b.end3D[v];
+    const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    if (Math.abs(denom) < 1e-9) return null;
+    const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+    const u_ = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+    const L1 = Math.hypot(x2 - x1, y2 - y1);
+    const L2 = Math.hypot(x4 - x3, y4 - y3);
+    const SLACK = 5;  // mm beyond stick endpoints accepted (apex extension)
+    const stA = L1 > 0 ? SLACK / L1 : 0;
+    const stB = L2 > 0 ? SLACK / L2 : 0;
+    if (t < -stA || t > 1 + stA) return null;
+    if (u_ < -stB || u_ > 1 + stB) return null;
+    return { t, u: u_, L1, L2 };
+  }
+
+  /** Direction unit vector in the 2D plane (u, v axes). */
+  function unitDir(s) {
+    const dx = s.end3D[u] - s.start3D[u];
+    const dy = s.end3D[v] - s.start3D[v];
+    const L = Math.hypot(dx, dy);
+    return L > 0 ? [dx / L, dy / L] : [0, 0];
+  }
+
+  /** Bolt-position correction for a chord-vs-web crossing: the actual bolt
+   *  on the chord is offset from the centerline-arc-length crossing by
+   *  -CHORD_HALF_DEPTH * (chord_unit · web_unit) / 2. Verified against
+   *  HG260001 PK10 TN6-1 ref data:
+   *    - T3 ∩ W10 (vertical-W on 25° sloping chord): theta=65°, cos=0.4226.
+   *      My arc 85.31 - 7.40 = 77.91. Ref Web@78.3 → match within 0.4mm.
+   *    - T3 ∩ W11 (diagonal-W on 25° sloping chord): theta=97.87°,
+   *      cos=-0.137. My arc 174.2 + 2.40 = 176.60. Ref Web@176.30 → match
+   *      within 0.3mm.
+   *  Geometric interpretation: the bolt physically goes through the chord's
+   *  WEB at the centerline-crossing's perpendicular projection onto the
+   *  chord axis, but the chord's web is offset by half_depth in the chord's
+   *  perpendicular direction. */
+  const CHORD_HALF_DEPTH = 35;
+
+  const rawByName = new Map();
+  function push(name, pos) {
+    const arr = rawByName.get(name);
+    if (arr) arr.push(pos);
+    else rawByName.set(name, [pos]);
+  }
+  for (let i = 0; i < sticks.length; i++) {
+    for (let j = i + 1; j < sticks.length; j++) {
+      const sA = sticks[i], sB = sticks[j];
+      // Web-to-web: skip (TB2B trusses fasten webs to chords, not web-to-web).
+      // Match the LIN simplifier's gate.
+      if (sA.usage === "web" && sB.usage === "web") continue;
+      const inter = intersect(sA, sB);
+      if (inter === null) continue;
+      const posA_arc = Math.max(0, Math.min(inter.L1, inter.t * inter.L1));
+      const posB_arc = Math.max(0, Math.min(inter.L2, inter.u * inter.L2));
+      // Chord/rail-vs-web bolt-position correction (see CHORD_HALF_DEPTH note).
+      // Also applied at chord-chord apex intersections — verified vs HG260001
+      // PK10 TN6-1 ref: B1 ∩ B2 apex bolt position uses chord-vs-chord
+      // correction (theta ≈ 60° between chord directions), my @9.4 + 15 = 24.4
+      // matches ref @30.9 within 6mm vs no-correction off by 21mm.
+      const aIsChord = sA.usage === "topchord" || sA.usage === "bottomchord" || sA.usage === "rail";
+      const bIsChord = sB.usage === "topchord" || sB.usage === "bottomchord" || sB.usage === "rail";
+      let posA = posA_arc, posB = posB_arc;
+      const [aux, auy] = unitDir(sA);
+      const [bux, buy] = unitDir(sB);
+      const dot = aux * bux + auy * buy;
+      // Per-chord correction:
+      //  - chord-vs-web (one is chord, other is web): -half_depth * dot / 2
+      //    (the dot reflects the angle between chord and web — verified vs
+      //    HG260001 PK10/TN6-1: T3 ∩ W10 (vertical W) -7.40, T3 ∩ W11
+      //    (diagonal W) +2.40, both match ref within 0.4mm)
+      //  - chord-vs-chord apex: -half_depth * chord_v_component / 2
+      //    (the v-component is the chord's slope from horizontal — verified
+      //    vs HG260001 PK10/TN6-1: T3 ∩ T4 apex T3-side -7.40, T4-side
+      //    +7.40, both match ref within 0.2mm)
+      // For chord-chord apex correction, use the chord's "vertical-axis"
+      // (z) component as the slope factor. Auto-detected u/v may put y on
+      // either index, so explicitly pick whichever is the z-axis.
+      const aZ = (v === "z") ? auy : (u === "z") ? aux : 0;
+      const bZ = (v === "z") ? buy : (u === "z") ? bux : 0;
+      if (aIsChord) {
+        const correction = bIsChord
+          ? -CHORD_HALF_DEPTH * aZ / 2
+          : -CHORD_HALF_DEPTH * dot / 2;
+        posA = Math.max(0, Math.min(inter.L1, posA_arc + correction));
+      }
+      if (bIsChord) {
+        const correction = aIsChord
+          ? -CHORD_HALF_DEPTH * bZ / 2
+          : -CHORD_HALF_DEPTH * dot / 2;
+        posB = Math.max(0, Math.min(inter.L2, posB_arc + correction));
+      }
+      push(sA.name, posA);
+      push(sB.name, posB);
+      // Chord-chord apex 2-bolt pair rule. When two chord sticks intersect
+      // (apex), Detailer emits TWO Web@pt on each chord: one at the apex
+      // position, one at apex ± 153.4mm toward the chord interior. Verified
+      // vs HG260001 PK10/TN6-1: T3 ∩ T4 apex (T3 arc=1288) emits
+      // Web@1280.98 + Web@1127.58 (= 1280.98 - 153.4) on T3, and
+      // Web@22.85 + Web@176.30 (= 22.85 + 153.45) on T4.
+      const APEX_PAIR_OFFSET = 153.4;
+      if (aIsChord && bIsChord) {
+        const aNearStart = posA < inter.L1 / 2;
+        const bNearStart = posB < inter.L2 / 2;
+        const sign_a = aNearStart ? +1 : -1;
+        const sign_b = bNearStart ? +1 : -1;
+        const pairA = posA + sign_a * APEX_PAIR_OFFSET;
+        const pairB = posB + sign_b * APEX_PAIR_OFFSET;
+        if (pairA >= 0 && pairA <= inter.L1) push(sA.name, pairA);
+        if (pairB >= 0 && pairB <= inter.L2) push(sB.name, pairB);
+      }
+    }
+  }
+
+  const END_ZONE = 8;        // drop positions closer than this to either end
+  const APEX_DEDUP = 3;      // collapse positions within this distance into one
+  const W_END_ANCHOR = 35;   // fixed end-cap Web@pt offset on web (W) members
+  const W_MID_BUFFER = 5;    // suppress mid-Web@pt within this distance of an end-anchor
+
+  const out = new Map();
+  for (const [name, raw] of rawByName) {
+    const stick = sticks.find(s => s.name === name);
+    if (!stick) continue;
+    const L = len2D(stick);
+    const isWeb = stick.usage === "web";
+    // Sort + apex-dedup
+    const sorted = raw.slice().sort((a, b) => a - b);
+    const dedup = [];
+    for (const p of sorted) {
+      const last = dedup[dedup.length - 1];
+      if (last === undefined || p - last >= APEX_DEDUP) dedup.push(p);
+    }
+
+    if (isWeb) {
+      // W rule: Web@35 + Web@(len-35) (fixed end-anchored caps where web
+      // butts into chord) + mid-stick Web@pt at every chord/rail crossing
+      // sufficiently far from the end-caps. Suppresses the geometric end-
+      // intersection positions which would emit at ~19mm from end (= half
+      // chord depth offset from the centerline-crossing) — the fixed 35mm
+      // matches Detailer's standard end-anchor exactly.
+      const result = [W_END_ANCHOR, L - W_END_ANCHOR];
+      for (const p of dedup) {
+        const tooNearStart = Math.abs(p - W_END_ANCHOR) < W_END_ANCHOR + W_MID_BUFFER;
+        const tooNearEnd = Math.abs(p - (L - W_END_ANCHOR)) < W_END_ANCHOR + W_MID_BUFFER;
+        if (!tooNearStart && !tooNearEnd) result.push(p);
+      }
+      result.sort((a, b) => a - b);
+      out.set(name, result);
+    } else {
+      // Chord/rail rule: emit Web@pt at every centerline crossing,
+      // end-zone-filtered.
+      const filtered = dedup.filter(p => p >= END_ZONE - 0.5 && p <= L - END_ZONE + 0.5);
+      out.set(name, filtered);
+    }
+  }
+  return out;
+}
+
 function buildOurProject(xmlText) {
   const parser = new XMLParser({ ignoreAttributes:false, attributeNamePrefix:"@_", parseAttributeValue:true, parseTagValue:false, isArray:n=>["plan","frame","stick","vertex","tool_action"].includes(n) });
   const root = parser.parse(xmlText).framecad_import;
@@ -194,10 +408,13 @@ function buildOurProject(xmlText) {
         // EndClearance plate/chord trim (skip raised B which has its own 1mm trim).
         // LIN (Linear Truss) chords are NOT trimmed — verified vs LINEAR_TRUSS_TESTING:
         // ref B1 len 3677.55 == raw XML length, no 4mm/end trim. Skip chord trim
-        // entirely on LIN frames.
+        // entirely on LIN frames. TB2B (back-to-back) trusses use raw XML chord
+        // lengths — verified 2026-05-04 vs HG260001_PK10/TN6-1: T3 ref-len
+        // 1303.8 = raw XML 1303.8.
         const isLINPlanForTrim = /-LIN-/i.test(plan.name);
-        const isLINChord = isLINPlanForTrim && (usage === "topchord" || usage === "bottomchord");
-        if (!isRaised89B && !isLINChord && (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord")) {
+        const isTB2BPlanForTrim = /-TB2B-/i.test(plan.name);
+        const isTrussChord = (isLINPlanForTrim || isTB2BPlanForTrim) && (usage === "topchord" || usage === "bottomchord");
+        if (!isRaised89B && !isTrussChord && (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord")) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
           const ec = setup?.endClearance ?? 4;
@@ -251,14 +468,19 @@ function buildOurProject(xmlText) {
         // ONLY for actual truss webs (usage="Web") — LBW walls have W-named
         // sticks too but those are B2B partner studs (usage="Stud").
         // See framecad-import.ts for full derivation.
+        // TB2B (back-to-back trusses) keep raw XML lengths — verified 2026-05-04
+        // vs HG260001_PK10/TN6-1: W10/W12/W14 vertical-W ref lengths == raw XML
+        // (no 11mm lip extension); W11/W13 diagonal-W ref lengths == raw XML
+        // (no 2mm trim).
         if (/^W\d/.test(stickName) && usage === "web") {
           const dx = end.x - start.x, dy = end.y - start.y;
           const horizDelta = Math.sqrt(dx*dx + dy*dy);
           const isLINPlanForW = /-LIN-/i.test(plan.name);
+          const isTB2BPlanForW = /-TB2B-/i.test(plan.name);
           if (horizDelta < 1.0) {
-            // VERTICAL W → extend by lip depth (NOT for LIN — verified vs
+            // VERTICAL W → extend by lip depth (NOT for LIN/TB2B — verified vs
             // LINEAR_TRUSS_TESTING ref W3 len 190 == raw XML length, no 11mm extension).
-            if (!isLINPlanForW) {
+            if (!isLINPlanForW && !isTB2BPlanForW) {
               const lipDepth = profile.rLip > 0 ? profile.rLip : 11;
               const dz = end.z - start.z;
               if (Math.abs(dz) > 0.1) {
@@ -267,9 +489,10 @@ function buildOurProject(xmlText) {
               }
             }
           } else {
-            // DIAGONAL W → trim 2mm at end (Kb-style). NOT for LIN — verified
-            // vs LINEAR_TRUSS_TESTING: diagonal W lengths == raw XML length.
-            if (!isLINPlanForW) {
+            // DIAGONAL W → trim 2mm at end (Kb-style). NOT for LIN/TB2B —
+            // verified vs LINEAR_TRUSS_TESTING/HG260001 TB2B: diagonal W lengths
+            // == raw XML length.
+            if (!isLINPlanForW && !isTB2BPlanForW) {
               const T = 2.0;
               const dz = end.z - start.z;
               const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
@@ -842,6 +1065,26 @@ function buildOurProject(xmlText) {
           }
         }
       }
+      // TB2B side-channel: capture per-frame stick endpoints + names + usage
+      // for the post-decode pairwise-intersection Web@pt rewriter. Only
+      // populated for TB2B-pattern plans (back-to-back trusses, /-TB2B-/).
+      // Web@pt positions are derived purely from centerline crossings of
+      // every stick pair in the frame, then end-zone-filtered + apex-deduped.
+      const isTB2BPlanForMeta = /-TB2B-/i.test(plan.name);
+      const isTrussFrame = String(f["@_type"] ?? "") === "Truss";
+      if (isTB2BPlanForMeta && isTrussFrame) {
+        const frameMetaSticks = [];
+        for (const s of sticks) {
+          frameMetaSticks.push({
+            name: s.name,
+            start3D: { x: s.start.x, y: s.start.y, z: s.start.z },
+            end3D: { x: s.end.x, y: s.end.y, z: s.end.z },
+            usage: String(s.usage ?? "").toLowerCase(),
+            flipped: !!s.flipped,
+          });
+        }
+        TB2B_META.set(tb2bFrameKey(plan.name, String(f["@_name"])), { sticks: frameMetaSticks });
+      }
       plan.frames.push({ name: String(f["@_name"]), envelope: env, sticks });
     }
     plans.push(plan);
@@ -860,11 +1103,74 @@ const ourDoc = decode(ourResult.rfy);
 
 // Post-decode rule swaps for frame types where the codec's default rules
 // emit the wrong op vocabulary. LIN frames need Web@pt (not LipNotch+Dimple)
-// at panel-points on chords. RP frames need NO Chamfer.
+// at panel-points on chords. RP frames need NO Chamfer. TB2B frames (back-to-
+// back trusses) need pairwise-centerline-intersection Web@pt on every stick,
+// nothing else.
 for (const plan of ourDoc.project.plans) {
   const isLINPlan = /-LIN-/i.test(plan.name);
   const isRPPlan = /-(RP|HJ)-/i.test(plan.name);
+  const isTB2BPlan = /-TB2B-/i.test(plan.name);
   for (const frame of plan.frames) {
+    // TB2B Web@pt rewrite — per-frame pairwise centerline intersections.
+    // Mirrors simplify-linear-truss.ts's algorithm but runs on the decoded
+    // tooling array (not on the encrypted RFY bytes) and works in any flat
+    // 2D plane (TB2B sticks are in YZ; the LIN simplifier hardcodes XZ).
+    if (isTB2BPlan) {
+      const meta = TB2B_META.get(tb2bFrameKey(plan.name, frame.name));
+      if (meta) {
+        const positionsByName = computeTB2BWebPositions(meta.sticks);
+        // Apply: for each stick whose name is in positionsByName AND name
+        // matches /^[TBWRH]\d/ (truss member), strip Chamfer/Swage/InnerDimple/
+        // LipNotch/Web ops and replace with Web@pt at each computed position.
+        // Box-piece sticks (e.g. "T4 (Box1)") are NOT touched — their
+        // InnerDimple ops are pre-derived by the codec/rules at the right
+        // positions for snap-fit.
+        for (const stick of frame.sticks) {
+          if (/\(Box\d+\)/.test(stick.name)) continue;
+          if (!/^[TBWRH]\d/.test(stick.name)) continue;
+          // Truss members: ALWAYS strip codec's wrong ops (Swage/Chamfer/
+          // mid-stick InnerDimple/mid-stick LipNotch). Then add Web@pt at
+          // each computed position (if any).
+          const positions = positionsByName.get(stick.name) ?? [];
+          stick.tooling = stick.tooling.filter(op => {
+            // Keep cap-style spanned ops (LeftFlange/RightFlange/LipNotch
+            // span at start/end of stick) — those are emitted by the codec
+            // for chamfer-end chords like R8 that abut another truss.
+            // Drop everything else: Chamfer, Swage, InnerDimple, mid-stick
+            // LipNotch (including the bogus negative-span LipNotch the
+            // codec sometimes emits for raking T4-style chords).
+            if (op.kind === "start" || op.kind === "end") return false;
+            if (op.kind === "point") return false;
+            if (op.kind === "spanned") {
+              if (op.type === "Swage") return false;
+              if (op.type === "LipNotch") {
+                // Drop bogus mid-stick LipNotch (startPos < endPos but not
+                // anchored to either end) and end-anchored LipNotch with
+                // negative endPos sentinel that should be re-emitted by
+                // the cap rule below if at all.
+                return false;
+              }
+              if (op.type === "LeftFlange" || op.type === "RightFlange") {
+                // Drop LeftFlange/RightFlange — chord caps are not part of
+                // the standard Web@pt rule. (We could re-add them on
+                // raking-end chords later; for now drop to avoid extras.)
+                return false;
+              }
+            }
+            return true;
+          });
+          for (const p of positions) {
+            stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(p * 100) / 100 });
+          }
+          stick.tooling.sort((a, b) => {
+            const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? -1 : 1e9));
+            const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? -1 : 1e9));
+            return pa - pb;
+          });
+        }
+      }
+    }
+
     const decodeOccurrence = new Map();
     for (let stickIdx = 0; stickIdx < frame.sticks.length; stickIdx++) {
       const stick = frame.sticks[stickIdx];

@@ -69,6 +69,27 @@ function trimStickEnd(stick, mmFromEnd) {
     };
     return true;
 }
+/** Extend the stick's end point along its centerline by `mmFromEnd` (positive
+ *  shift = grow the stick).  Used by the diagonal-W length adjustment in
+ *  TIN trusses where ref's centerlength is longer than the codec's wall-rule
+ *  output. */
+function extendStickEnd(stick, mmFromEnd) {
+    const dx = stick.end.x - stick.start.x;
+    const dy = stick.end.y - stick.start.y;
+    const dz = stick.end.z - stick.start.z;
+    const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (len < 1)
+        return false;
+    const ux = dx / len;
+    const uy = dy / len;
+    const uz = dz / len;
+    stick.end = {
+        x: stick.end.x + ux * mmFromEnd,
+        y: stick.end.y + uy * mmFromEnd,
+        z: stick.end.z + uz * mmFromEnd,
+    };
+    return true;
+}
 /** Mutate `tooling` in place: shift any tooling op whose position is at or
  *  beyond `oldLen - 1` by `-mmFromEnd`, preserving span widths.  Spans whose
  *  endPos was at L now end at L_new; their startPos shifts by the same amount.
@@ -106,19 +127,67 @@ function shiftEndAnchoredOps(tooling, oldLen, newLen, endSwageSpan) {
         op.startPos = op.endPos - endSwageSpan;
     }
 }
-/** Strip Chamfer@start from a stick's tooling.  Used to delete extras the
- *  codec emits on diagonal Ws of TIN frames where the reference RFY shows
- *  the start side has no apex chamfer. Returns the number of ops removed. */
-function stripStartChamfer(tooling) {
+/** Shift any tooling op anchored at or past `oldLen - 1` by `delta` (positive
+ *  = extend, negative = trim).  Preserves spans (both start+end shifted by
+ *  delta).  Does NOT re-span — the existing end-Swage span width is kept. */
+function shiftEndAnchoredOpsByDelta(tooling, oldLen, delta) {
+    const END_ANCHOR_TOL = 1.0;
+    for (const op of tooling) {
+        if (op.kind === "spanned") {
+            if (op.endPos >= oldLen - END_ANCHOR_TOL) {
+                op.endPos += delta;
+                op.startPos += delta;
+            }
+        }
+        else if (op.kind === "point") {
+            if (op.pos >= oldLen - END_ANCHOR_TOL) {
+                op.pos += delta;
+            }
+        }
+    }
+}
+/** Strip Chamfer of the given edge from a stick's tooling.  Returns the
+ *  number of ops removed (0 or 1 in practice — Chamfer is a singleton per
+ *  edge in well-formed RFY tooling). */
+function stripChamfer(tooling, edge) {
     let removed = 0;
     for (let i = tooling.length - 1; i >= 0; i--) {
         const op = tooling[i];
-        if (op.kind === "start" && op.type === "Chamfer") {
+        if (op.kind === edge && op.type === "Chamfer") {
             tooling.splice(i, 1);
             removed++;
         }
     }
     return removed;
+}
+/** Compute angle from vertical (degrees) for a diagonal stick.  0° = pure
+ *  vertical, 90° = pure horizontal.  Used to classify diagonal Ws into
+ *  brace-style (high angle) vs main-truss-strut (low angle, less Chamfer). */
+function angleFromVerticalDeg(stick) {
+    const dx = stick.end.x - stick.start.x;
+    const dy = stick.end.y - stick.start.y;
+    const dz = stick.end.z - stick.start.z;
+    const horiz = Math.sqrt(dx * dx + dy * dy);
+    if (Math.abs(dz) < 1e-6)
+        return 90;
+    return Math.atan2(horiz, Math.abs(dz)) * 180 / Math.PI;
+}
+/** Detect "flat-chord" trusses: every TopChord/BottomChord stick has |dz| < 50mm
+ *  (i.e. the chord is roughly horizontal in elevation).  TI2-1 is the canonical
+ *  example — its H2 + B1 are both perfectly horizontal.  HN/TS frames with
+ *  sloped chords (T2's gable peak, etc.) return false. */
+function isFlatChordTruss(frame) {
+    let chordCount = 0;
+    for (const s of frame.sticks) {
+        const u = (s.usage ?? "").toLowerCase();
+        if (u !== "topchord" && u !== "bottomchord")
+            continue;
+        chordCount++;
+        const dz = Math.abs(s.end.z - s.start.z);
+        if (dz > 50)
+            return false;
+    }
+    return chordCount > 0;
 }
 /** Run the TIN-truss simplifier on a single frame.  Mutates `frame.sticks[].end`
  *  and `frame.sticks[].tooling[]` in place.  Returns a decision describing
@@ -128,6 +197,15 @@ function stripStartChamfer(tooling) {
 export function simplifyTinTrussFrame(frame) {
     const verticalWsTrimmed = [];
     const diagonalsChamferStripped = [];
+    // Flat-chord trusses (TI2-1 et al.) need a different diagonal-W length
+    // extension: +9mm instead of +5mm. The codec's diagonal -2mm trim runs
+    // against a different lip-extension basis on flat-chord trusses, so the
+    // net wanted shift is larger.
+    const diagonalShift = isFlatChordTruss(frame) ? 9.0 : 5.0;
+    // Stash the shift on the frame itself so the per-stick branch can read it
+    // without changing the function signature.  Ergonomic shortcut — the field
+    // is private and never read outside this module.
+    frame._tinDiagonalShiftMm = diagonalShift;
     for (const stick of frame.sticks) {
         if (isVerticalWeb(stick)) {
             const oldLen = stickLen(stick);
@@ -145,13 +223,58 @@ export function simplifyTinTrussFrame(frame) {
             verticalWsTrimmed.push(stick.name);
             continue;
         }
-        // Diagonal Ws: Chamfer rule is geometry-dependent (apex-end vs mid-chord
-        // attach). The conservative strip-start rule over-removed real chamfers
-        // (e.g. TS1-1 W5 has Chamfer@start in ref). Defer diagonal-W rewrites to
-        // a v2 where topology can be modelled. Retained as no-op for now.
-        void stripStartChamfer;
-        void diagonalsChamferStripped;
         if (isDiagonalWeb(stick)) {
+            // Diagonal-W rules.  Two intertwined fixes:
+            //
+            //   (a) Length adjustment.  The diff harness applies a -2mm trim on
+            //       diagonal Ws of TIN frames, but FrameCAD's reference RFY shows
+            //       low-angle main-truss diagonals (angle < 50° from vertical,
+            //       length > 800mm) are LONGER by ~5mm vs ours.  Net wanted:
+            //       extend stick by +5mm at the END side and shift the end-Swage
+            //       endPos (and same-shifted startPos preserving span width).
+            //       Verified vs HG260001 HN3-1 W11..W21 + HN12-1 W17..W29 +
+            //       TS1-1 W11..W13 + TN8-1 W6/W8 + TN18-1 W4: all land within
+            //       1.5mm of ref length after +5mm extension.
+            //
+            //   (b) Chamfer rule.  Same length+angle band:
+            //         angle < 30° AND len > 800mm  → strip BOTH chamfers
+            //         30° ≤ angle < 50° AND len > 800  → strip start only
+            //         otherwise → leave both (codec default).
+            //       Ref's chamfer placement is otherwise apex-side-dependent
+            //       (HN12-1 W30, TS1-1 W15/W17 are outliers); a handful still
+            //       mismatch and are accepted as out-of-scope for v1.
+            //
+            // Flat-chord trusses (TI2-1 — horizontal H2 + B1) follow a slightly
+            // different length-extension rule (+9 instead of +5) because the
+            // codec's diagonal trim works against a different lip-extension
+            // basis.  We detect that case at the frame level (caller may pass
+            // an explicit shift via `frameDiagonalShift`) and override.
+            const len = stickLen(stick);
+            if (len <= 800)
+                continue;
+            const angle = angleFromVerticalDeg(stick);
+            if (angle >= 50)
+                continue;
+            // (a) Length extension.  Default +5mm; overridden to +9mm for flat-
+            // chord trusses (see frame-level dispatcher below).
+            const shiftMm = frame;
+            const lengthShift = shiftMm._tinDiagonalShiftMm ?? 5.0;
+            extendStickEnd(stick, lengthShift);
+            const oldLen = len;
+            const newLen = len + lengthShift;
+            shiftEndAnchoredOpsByDelta(stick.tooling, oldLen, lengthShift);
+            // (b) Chamfer strip.
+            let removed = 0;
+            if (angle < 30) {
+                removed += stripChamfer(stick.tooling, "start");
+                removed += stripChamfer(stick.tooling, "end");
+            }
+            else {
+                removed += stripChamfer(stick.tooling, "start");
+            }
+            if (removed > 0 || lengthShift !== 0)
+                diagonalsChamferStripped.push(stick.name);
+            void newLen;
             continue;
         }
     }

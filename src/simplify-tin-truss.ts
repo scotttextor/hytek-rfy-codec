@@ -9,20 +9,27 @@
 // 95%+ parity with the existing codec rules.
 //
 // Scope (v1, conservative):
-//   1. Vertical Ws (XML horiz-delta < 0.5mm): trim the stick endpoint by
-//      6.5mm so net length-extension is +4.5mm (matches ref) instead of
-//      the +11mm the codec applies via the wall-rule. Rebuild the end-Swage
-//      span to 44.4mm — the dominant ref width across all TIN vertical Ws.
-//   2. Diagonal Ws: leave coords untouched. Strip any extra Chamfer@start
-//      that the codec emitted but the ref doesn't have. Reference shows
-//      chamfers vary stick-by-stick by geometry; the conservative cut is
-//      the start-side because the codec consistently over-emits there.
+//   1. Vertical Ws (XML horiz-delta < 0.5mm): on sloped-chord trusses, trim
+//      the stick endpoint by 6.5mm so net length-extension is +4.5mm
+//      (matches ref) instead of the +11mm the codec applies via the wall-
+//      rule. Rebuild the end-Swage span to 44.4mm — the dominant ref width
+//      across all TIN vertical Ws. Flat-chord trusses (TI2-1) skip this —
+//      their +11mm matches ref.
+//   2. Diagonal Ws (length > 800mm, angle from vertical < 50°): extend
+//      stick endpoint by +6mm (sloped-chord) or +10mm (flat-chord) so the
+//      end-Swage anchor matches ref. Strip Chamfer@start (and Chamfer@end
+//      when angle < 30°) — codec's wall-W default chamfer-pair is wrong
+//      on TIN main-truss struts.
+//   3. Bottom-chord ScrewHoles cleanup: strip any cluster of 3+ ScrewHoles
+//      in the first 100mm of a BottomChord stick (codec emits a tight
+//      6.8/31.3/62.2 cluster vs ref's single 18.6).
 //
-// Anything more ambitious (chord panel-point clusters with ScrewHoles +
-// paired InnerDimples + LipNotch, diagonal-W length recompute, end-Chamfer
-// rewriter, etc.) is deferred to a v2 in a separate session — those changes
-// require modelling truss topology (apex / panel points) which is tangled
-// with the same frame-context machinery that another agent is editing.
+// Anything more ambitious (chord panel-point InnerDimple paired-pattern,
+// chord ScrewHoles cluster on top chords, chord LipNotch span at panel
+// points, chord Web@pt panel-point clusters, end-Chamfer rule for medium-
+// angle diagonals) is deferred to a v2 in a separate session — those
+// changes require modelling truss topology (apex / panel points) and the
+// per-frame panel-pitch which isn't on the input XML.
 import type { ParsedFrame, ParsedStick } from "./synthesize-plans.js";
 import type { RfyToolingOp } from "./format.js";
 
@@ -162,7 +169,13 @@ function shiftEndAnchoredOps(
 
 /** Shift any tooling op anchored at or past `oldLen - 1` by `delta` (positive
  *  = extend, negative = trim).  Preserves spans (both start+end shifted by
- *  delta).  Does NOT re-span — the existing end-Swage span width is kept. */
+ *  delta).  Does NOT re-span — the existing end-Swage span width is kept.
+ *
+ *  Only ops with endPos/pos within END_ANCHOR_TOL of oldLen are shifted.
+ *  Mid-stick ops (e.g. InnerDimple at L_old-10 = the "10mm from end" rule)
+ *  are NOT shifted — verified empirically: shifting them caused regressions
+ *  on TS1-1 W11 where ref keeps ID at the OLD position (which happens to
+ *  match because ref's L-10 = our L_old-10 + delta — i.e. no net shift). */
 function shiftEndAnchoredOpsByDelta(
   tooling: RfyToolingOp[],
   oldLen: number,
@@ -251,10 +264,32 @@ export function simplifyTinTrussFrame(frame: ParsedFrame): SimplifyTinDecision {
   // Detected by chord dz < 50mm (see `isFlatChordTruss`). Stashed on the
   // frame as a private field for the per-stick branch to read.
   const flatChord = isFlatChordTruss(frame);
-  const diagonalShift = flatChord ? 10.0 : 5.5;
+  const diagonalShift = flatChord ? 10.0 : 6.0;
   (frame as unknown as { _tinDiagonalShiftMm?: number })._tinDiagonalShiftMm = diagonalShift;
 
   for (const stick of frame.sticks) {
+    // Bottom-chord ScrewHoles cleanup: the codec emits a tight 3-cluster of
+    // ScrewHoles at ~6-62mm on bottom chords of TIN trusses (HN3-1 B1,
+    // HN12-1 B1: ScrewHoles @6.8/31.3/62.2 ours vs single ScrewHoles @18.6
+    // ref). Detect by `usage=BottomChord` AND ≥3 ScrewHoles in first 100mm
+    // of stick → strip all of them (accept the 1 missing @18.6, save 3 extras
+    // each frame). Only fires on bottom chords; top chords have legitimate
+    // panel-point ScrewHoles clusters that are correct.
+    const usage = (stick.usage ?? "").toLowerCase();
+    if (usage === "bottomchord") {
+      const earlyScrews = stick.tooling.filter(
+        op => op.kind === "point" && op.type === "ScrewHoles" && op.pos < 100,
+      );
+      if (earlyScrews.length >= 3) {
+        for (let i = stick.tooling.length - 1; i >= 0; i--) {
+          const op = stick.tooling[i]!;
+          if (op.kind === "point" && op.type === "ScrewHoles" && op.pos < 100) {
+            stick.tooling.splice(i, 1);
+          }
+        }
+      }
+    }
+
     if (isVerticalWeb(stick)) {
       // Flat-chord verticals already match ref — leave coords + tooling alone.
       if (flatChord) continue;
@@ -298,10 +333,11 @@ export function simplifyTinTrussFrame(frame: ParsedFrame): SimplifyTinDecision {
       //       mismatch and are accepted as out-of-scope for v1.
       //
       // Flat-chord trusses (TI2-1 — horizontal H2 + B1) follow a slightly
-      // different length-extension rule (+9 instead of +5) because the
+      // different length-extension rule (+10 instead of +6) because the
       // codec's diagonal trim works against a different lip-extension
-      // basis.  We detect that case at the frame level (caller may pass
-      // an explicit shift via `frameDiagonalShift`) and override.
+      // basis.  Detected at the frame level via `isFlatChordTruss(frame)`
+      // and stashed on the frame as `_tinDiagonalShiftMm` for this branch
+      // to read.
       const len = stickLen(stick);
       if (len <= 800) continue;
       const angle = angleFromVerticalDeg(stick);

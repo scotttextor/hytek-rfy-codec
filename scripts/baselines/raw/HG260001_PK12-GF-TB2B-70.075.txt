@@ -1,0 +1,177 @@
+OP-LEVEL DIFF — HG260001 LOT 289 COORA CRESCENT CURRIMUNDI 4551-GF-TB2B-70.075.xml vs HG260001_PK12-GF-TB2B-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 33 | ref 7
+
+OPS:      our 1196 | ref 792
+MATCHED:  15  (1.9% of ref)
+MISSING:  777  (ops Detailer has, we don't)
+EXTRAS:   1181   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                     0       645        0   (0% ref-coverage)
+InnerDimple@pt             2        50      576   (4% ref-coverage)
+LipNotch@span             13        21      241   (38% ref-coverage)
+Swage@span                 0         0      262   (- ref-coverage)
+Chamfer@start              0         0       51   (- ref-coverage)
+Chamfer@end                0         0       51   (- ref-coverage)
+LeftFlange@span            0        32        0   (0% ref-coverage)
+RightFlange@span           0        29        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TN1-1 (24 sticks with gaps)
+    T5       MISSING (16): Web @22.8 | Web @176.3 | Web @410.3 | Web @508.3 | Web @1431.4 ... +11
+    T5       EXTRAS  (26): InnerDimple @16.5 | InnerDimple @173.2 | InnerDimple @459.4 | InnerDimple @989.9 | InnerDimple @1384.8 ... +21
+    B1       MISSING (25): Web @60.0 | Web @290.0 | Web @1366.2 | Web @2634.5 | Web @2732.5 ... +20
+    B1       EXTRAS  (31): InnerDimple @16.5 | InnerDimple @286.0 | InnerDimple @1362.3 | InnerDimple @2657.7 | InnerDimple @2728.5 ... +26
+    W8       MISSING (2): Web @35.0 | Web @142.3
+    W8       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @171.8 | Swage 0.0..39.0 | Swage 149.3..188.3
+    W9       MISSING (2): Web @35.0 | Web @644.5
+    W9       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @673.6 | Swage 0.0..39.0 | Swage 651.1..690.1
+    W10      MISSING (2): Web @35.0 | Web @1382.1
+    W10      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1404.9 | Swage 0.0..80.0 | Swage 1334.9..1414.9 ... +1
+    W11      MISSING (2): Web @35.0 | Web @1281.6
+    W11      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1310.7 | Swage 0.0..39.0 | Swage 1288.2..1327.2
+    W12      MISSING (3): Web @35.0 | Web @692.3 | Web @1609.2
+    W12      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1632.2 | Swage 0.0..50.1 | Swage 1592.1..1642.2 ... +1
+    W13      MISSING (3): Web @35.0 | Web @815.0 | Web @1790.7
+    W13      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1820.2 | Swage 0.0..39.0 | Swage 1797.7..1836.7
+    W14      MISSING (2): Web @35.0 | Web @1215.8
+    W14      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1238.8 | Swage 0.0..47.6 | Swage 1201.2..1248.8 ... +1
+    B2       MISSING (13): Web @78.0 | InnerDimple @313.9 | Web @703.5 | InnerDimple @1373.8 | Web @1392.2 ... +8
+    B2       EXTRAS  (20): InnerDimple @16.5 | InnerDimple @63.4 | InnerDimple @699.5 | InnerDimple @1397.0 | InnerDimple @1486.2 ... +15
+
+  TN2-1 (24 sticks with gaps)
+    T5       MISSING (16): Web @22.8 | Web @176.3 | Web @410.3 | Web @508.3 | Web @1431.4 ... +11
+    T5       EXTRAS  (26): InnerDimple @16.5 | InnerDimple @173.2 | InnerDimple @459.4 | InnerDimple @989.9 | InnerDimple @1384.8 ... +21
+    B1       MISSING (25): Web @60.0 | Web @290.0 | Web @1366.3 | Web @2634.5 | Web @2732.5 ... +20
+    B1       EXTRAS  (31): InnerDimple @16.5 | InnerDimple @286.0 | InnerDimple @1362.3 | InnerDimple @2657.7 | InnerDimple @2728.5 ... +26
+    W8       MISSING (2): Web @35.0 | Web @142.3
+    W8       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @171.8 | Swage 0.0..39.0 | Swage 149.3..188.3
+    W9       MISSING (2): Web @35.0 | Web @644.5
+    W9       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @673.6 | Swage 0.0..39.0 | Swage 651.1..690.1
+    W10      MISSING (2): Web @35.0 | Web @1382.1
+    W10      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1404.9 | Swage 0.0..80.0 | Swage 1334.9..1414.9 ... +1
+    W11      MISSING (2): Web @35.0 | Web @1281.6
+    W11      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1310.7 | Swage 0.0..39.0 | Swage 1288.2..1327.2
+    W12      MISSING (3): Web @35.0 | Web @692.3 | Web @1609.2
+    W12      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1632.2 | Swage 0.0..50.1 | Swage 1592.1..1642.2 ... +1
+    W13      MISSING (3): Web @35.0 | Web @815.0 | Web @1790.7
+    W13      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1820.2 | Swage 0.0..39.0 | Swage 1797.7..1836.7
+    W14      MISSING (2): Web @35.0 | Web @1215.8
+    W14      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1238.8 | Swage 0.0..47.6 | Swage 1201.2..1248.8 ... +1
+    B2       MISSING (13): Web @78.0 | InnerDimple @313.9 | Web @703.5 | InnerDimple @1373.8 | Web @1392.2 ... +8
+    B2       EXTRAS  (20): InnerDimple @16.5 | InnerDimple @63.4 | InnerDimple @699.5 | InnerDimple @1397.0 | InnerDimple @1486.2 ... +15
+
+  TN19-1 (16 sticks with gaps)
+    T2       MISSING (11): Web @43.3 | Web @296.7 | Web @935.4 | Web @1047.0 | Web @1145.0 ... +6
+    T2       EXTRAS  (9): InnerDimple @16.5 | InnerDimple @1930.2 | InnerDimple @2195.8 | InnerDimple @2655.2 | InnerDimple @2915.5 ... +4
+    B1       MISSING (16): Web @60.4 | Web @290.0 | Web @970.0 | Web @1842.0 | Web @1940.0 ... +11
+    B1       EXTRAS  (26): InnerDimple @16.5 | InnerDimple @286.0 | InnerDimple @966.0 | InnerDimple @1863.2 | InnerDimple @1936.0 ... +21
+    W7       MISSING (2): Web @35.0 | Web @142.1
+    W7       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @171.6 | Swage 0.0..39.0 | Swage 149.1..188.1
+    R5       MISSING (15): Web @52.2 | Web @153.3 | Web @441.6 | Web @1123.3 | Web @1529.2 ... +10
+    R5       EXTRAS  (4): InnerDimple @11.0 | InnerDimple @3685.6 | Swage 0.0..41.0 | Swage 3655.6..3696.6
+    W8       MISSING (3): Web @35.0 | Web @382.0 | Web @459.1
+    W8       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @488.7 | Swage 0.0..39.0 | Swage 466.2..505.2
+    W9       MISSING (3): Web @35.0 | Web @714.1 | Web @946.1
+    W9       EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @969.1 | Swage 0.0..80.0 | Swage 899.1..979.1 ... +1
+    W10      MISSING (3): Web @35.0 | Web @412.0 | Web @911.5
+    W10      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @941.0 | Swage 0.0..39.0 | Swage 918.5..957.5
+    W11      MISSING (3): Web @35.0 | Web @472.0 | Web @1099.0
+    W11      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1122.0 | Swage 0.0..47.5 | Swage 1084.5..1132.0 ... +1
+    R6       MISSING (7): Web @52.2 | Web @191.2 | Web @330.2 | LipNotch 0.0..22.7 | LeftFlange 0.0..147.1 ... +2
+    R6       EXTRAS  (4): InnerDimple @11.0 | InnerDimple @371.4 | Swage 0.0..41.0 | Swage 341.4..382.4
+    T3       MISSING (12): Web @22.8 | Web @176.3 | Web @724.8 | Web @822.8 | Web @1795.1 ... +7
+    T3       EXTRAS  (10): InnerDimple @16.5 | InnerDimple @395.5 | InnerDimple @744.4 | InnerDimple @1640.3 | InnerDimple @1714.4 ... +5
+
+  TT2-1 (26 sticks with gaps)
+    T2       MISSING (7): Web @715.9 | Web @1023.5 | Web @1097.7 | Web @1707.3 | Web @1829.1 ... +2
+    T2       EXTRAS  (9): InnerDimple @16.5 | InnerDimple @939.0 | InnerDimple @1558.7 | InnerDimple @1612.3 | InnerDimple @1868.2 ... +4
+    T3       MISSING (5): Web @802.0 | Web @1006.9 | Web @1097.7 | Web @1702.9 | Web @1835.2
+    T3       EXTRAS  (10): InnerDimple @16.5 | InnerDimple @909.0 | InnerDimple @1528.7 | InnerDimple @1582.3 | InnerDimple @1781.8 ... +5
+    B1       MISSING (28): Web @60.0 | Web @156.4 | Web @338.8 | Web @958.4 | Web @1056.4 ... +23
+    B1       EXTRAS  (41): InnerDimple @16.5 | InnerDimple @334.8 | InnerDimple @954.4 | InnerDimple @1025.3 | InnerDimple @1948.1 ... +36
+    W9       MISSING (2): Web @35.0 | Web @165.1
+    W9       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @194.5 | Swage 0.0..39.0 | Swage 172.0..211.0
+    W10      MISSING (3): Web @35.0 | Web @445.2 | Web @454.0
+    W10      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @483.5 | Swage 0.0..39.0 | Swage 461.0..500.0
+    H7       MISSING (18): Web @84.3 | Web @91.7 | Web @869.6 | Web @967.6 | Web @1857.8 ... +13
+    H7       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @7289.0 | LipNotch 7266.5..7305.5
+    W11      MISSING (2): Web @35.0 | Web @946.2
+    W11      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @969.2 | Swage 0.0..80.0 | Swage 899.2..979.2 ... +1
+    W12      MISSING (2): Web @35.0 | Web @475.4
+    W12      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @505.0 | Swage 0.0..39.0 | Swage 482.5..521.5
+    W13      MISSING (2): Web @35.0 | Web @941.4
+    W13      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @964.4 | Swage 0.0..80.0 | Swage 894.4..974.4 ... +1
+    W12      MISSING (2): Web @35.0 | Web @475.4
+    W12      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @505.0 | Swage 0.0..39.0 | Swage 482.5..521.5
+
+  TT3-1 (24 sticks with gaps)
+    T2       MISSING (9): InnerDimple @50.0 | Web @715.9 | Web @1023.5 | InnerDimple @1050.0 | Web @1843.6 ... +4
+    T2       EXTRAS  (10): InnerDimple @16.5 | InnerDimple @1682.2 | InnerDimple @1978.6 | InnerDimple @2754.6 | InnerDimple @2812.3 ... +5
+    B1       MISSING (25): Web @60.0 | Web @338.8 | Web @1082.0 | Web @2056.4 | Web @2154.4 ... +20
+    B1       EXTRAS  (39): InnerDimple @16.5 | InnerDimple @334.8 | InnerDimple @1078.0 | InnerDimple @2078.0 | InnerDimple @2150.4 ... +34
+    W9       MISSING (2): Web @35.0 | Web @165.4
+    W9       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @194.5 | Swage 0.0..39.0 | Swage 172.0..211.0
+    W10      MISSING (2): Web @35.0 | Web @511.6
+    W10      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @541.1 | Swage 0.0..39.0 | Swage 518.6..557.6
+    W11      MISSING (2): Web @35.0 | Web @1060.9
+    W11      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1083.9 | Swage 0.0..80.0 | Swage 1013.9..1093.9 ... +1
+    W12      MISSING (2): Web @35.0 | Web @1011.6
+    W12      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1041.1 | Swage 0.0..39.0 | Swage 1018.6..1057.6
+    H7       MISSING (14): Web @84.3 | Web @1128.5 | Web @1226.5 | Web @2375.5 | Web @2473.5 ... +9
+    H7       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @6089.0 | LipNotch 6066.5..6105.5
+    W13      MISSING (2): Web @35.0 | Web @1492.7
+    W13      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1515.7 | Swage 0.0..59.8 | Swage 1465.9..1525.7 ... +1
+    W14      MISSING (2): Web @35.0 | Web @1035.0
+    W14      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1064.5 | Swage 0.0..39.0 | Swage 1042.0..1081.0
+    W15      MISSING (2): Web @35.0 | Web @1485.7
+    W15      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1508.7 | Swage 0.0..59.5 | Swage 1459.2..1518.7 ... +1
+
+  TT4-1 (23 sticks with gaps)
+    T2       MISSING (11): Web @91.2 | Web @216.4 | Web @1346.3 | Web @1444.3 | InnerDimple @2518.4 ... +6
+    T2       EXTRAS  (17): InnerDimple @16.5 | InnerDimple @138.2 | InnerDimple @194.8 | InnerDimple @884.2 | InnerDimple @1307.7 ... +12
+    B1       MISSING (26): Web @60.0 | Web @338.8 | Web @1121.3 | Web @2144.6 | Web @2242.6 ... +21
+    B1       EXTRAS  (41): InnerDimple @16.5 | InnerDimple @334.8 | InnerDimple @1117.3 | InnerDimple @2166.7 | InnerDimple @2238.6 ... +36
+    W5       MISSING (2): Web @35.0 | Web @165.0
+    W5       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @194.5 | Swage 0.0..39.0 | Swage 172.0..211.0
+    W6       MISSING (2): Web @35.0 | Web @529.9
+    W6       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @559.4 | Swage 0.0..39.0 | Swage 536.9..575.9
+    W7       MISSING (2): Web @35.0 | Web @1112.4
+    W7       EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1135.4 | Swage 0.0..80.0 | Swage 1065.4..1145.4 ... +1
+    W8       MISSING (2): Web @35.0 | Web @1052.8
+    W8       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1082.3 | Swage 0.0..39.0 | Swage 1059.8..1098.8
+    W9       MISSING (2): Web @35.0 | Web @1440.6
+    W9       EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1463.6 | Swage 0.0..54.4 | Swage 1419.2..1473.6 ... +1
+    W10      MISSING (2): Web @35.0 | Web @1571.7
+    W10      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1600.2 | Swage 0.0..39.0 | Swage 1577.7..1616.7
+    H4       MISSING (14): Web @84.3 | Web @1151.9 | Web @1249.9 | Web @1347.9 | Web @2520.5 ... +9
+    H4       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @4134.4 | LipNotch 4111.9..4150.9
+    W11      MISSING (2): Web @35.0 | Web @1934.9
+    W11      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1957.9 | Swage 0.0..50.0 | Swage 1918.0..1967.9 ... +1
+
+  TT5-1 (24 sticks with gaps)
+    T2       MISSING (13): Web @91.2 | Web @216.9 | Web @1368.0 | Web @1466.0 | Web @2626.9 ... +8
+    T2       EXTRAS  (22): InnerDimple @16.5 | InnerDimple @138.2 | InnerDimple @195.2 | InnerDimple @854.8 | InnerDimple @1327.3 ... +17
+    B1       MISSING (26): Web @60.0 | Web @338.8 | Web @1141.0 | Web @2184.0 | Web @2282.0 ... +21
+    B1       EXTRAS  (41): InnerDimple @16.5 | InnerDimple @334.8 | InnerDimple @1137.0 | InnerDimple @2206.2 | InnerDimple @2278.0 ... +36
+    W6       MISSING (2): Web @35.0 | Web @165.0
+    W6       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @194.5 | Swage 0.0..39.0 | Swage 172.0..211.0
+    W7       MISSING (2): Web @35.0 | Web @539.1
+    W7       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @568.6 | Swage 0.0..39.0 | Swage 546.1..585.1
+    W8       MISSING (2): Web @35.0 | Web @1134.1
+    W8       EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1157.1 | Swage 0.0..80.0 | Swage 1087.1..1167.1 ... +1
+    W9       MISSING (2): Web @35.0 | Web @1071.1
+    W9       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1100.6 | Swage 0.0..39.0 | Swage 1078.1..1117.1
+    W10      MISSING (2): Web @35.0 | Web @1474.3
+    W10      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1497.3 | Swage 0.0..54.8 | Swage 1452.5..1507.3 ... +1
+    W11      MISSING (2): Web @35.0 | Web @1603.2
+    W11      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1632.7 | Swage 0.0..39.0 | Swage 1610.2..1649.2
+    W12      MISSING (2): Web @35.0 | Web @1900.2
+    W12      EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1923.2 | Swage 0.0..47.5 | Swage 1885.7..1933.2 ... +1
+    W13      MISSING (3): Web @35.0 | Web @1663.3 | Web @2129.8
+    W13      EXTRAS  (4): InnerDimple @16.5 | InnerDimple @2159.3 | Swage 0.0..39.0 | Swage 2136.8..2175.8

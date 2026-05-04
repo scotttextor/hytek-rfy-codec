@@ -1,0 +1,32 @@
+OP-LEVEL DIFF — HG260001 LOT 289 COORA CRESCENT CURRIMUNDI 4551-GF-TIN-70.095.xml vs HG260001_GF-TIN-70.095.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 96 | ref 88
+MATCHED:  84  (95.5% of ref)
+MISSING:  4  (ops Detailer has, we don't)
+EXTRAS:   12   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+LipNotch@span             12         0        8   (100% ref-coverage)
+Swage@span                18         4        4   (82% ref-coverage)
+InnerDimple@pt            44         0        0   (100% ref-coverage)
+Chamfer@start              5         0        0   (100% ref-coverage)
+Chamfer@end                5         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  PC2-1 (6 sticks with gaps)
+    T2       EXTRAS  (4): LipNotch 507.5..552.5 | LipNotch 1107.5..1152.5 | LipNotch 1554.0..1599.0 | LipNotch 2154.0..2199.0
+    W4       MISSING (1): Swage 428.8..511.2
+    W4       EXTRAS  (1): Swage 436.3..511.2
+    B1       EXTRAS  (4): LipNotch 58.0..140.2 | LipNotch 571.9..666.5 | LipNotch 1170.9..1244.0 | LipNotch 1618.4..1713.0
+    W5       MISSING (1): Swage 490.3..585.6
+    W5       EXTRAS  (1): Swage 505.6..585.6
+    W6       MISSING (1): Swage 383.9..456.7
+    W6       EXTRAS  (1): Swage 390.1..456.7
+    W5       MISSING (1): Swage 490.3..585.6
+    W5       EXTRAS  (1): Swage 505.6..585.6

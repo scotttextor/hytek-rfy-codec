@@ -436,6 +436,7 @@ function buildOurProject(xmlText) {
       const serviceActions = [];
       const webActions = [];
       const flangeHoleActions = [];
+      const boltActions = [];
       for (const ta of (f.tool_action ?? [])) {
         const name = String(ta["@_name"]);
         const sStart = parseTriple(typeof ta.start === "string" ? ta.start : ta.start?.["#text"] ?? "0,0,0");
@@ -443,6 +444,7 @@ function buildOurProject(xmlText) {
         if (name === "Service") serviceActions.push({ start: sStart, end: sEnd });
         else if (name === "Web") webActions.push({ start: sStart, end: sEnd });
         else if (name === "FlangeHole") flangeHoleActions.push({ start: sStart, end: sEnd });
+        else if (name === "Bolt") boltActions.push({ start: sStart, end: sEnd });
       }
       // Pre-pass: capture each plate's WORLD start/end so the per-stick loop
       // below can detect "this nog spans the same world extent as a plate"
@@ -816,6 +818,46 @@ function buildOurProject(xmlText) {
           }
         }
         // Web@pt rule: predicate not yet derived (Detailer is selective per stud) — skip.
+
+        // Bolt from XML <tool_action name="Bolt"> — emit on ground-floor B
+        // plates. Position formula: pos = |stick.start - bolt.axis| (after trim).
+        // Replaces the default-rule @62 / @length-62 bolt positions which are
+        // wrong for slabs with non-uniform anchor schedules.
+        // Verified 2026-05-04 vs HG260001 PK1 N2 B1: ref has Bolt @641.5, @1626,
+        // @2611, @3261 matching world Y of XML <tool_action name="Bolt">.
+        if (boltActions.length > 0) {
+          const u = String(stick.usage ?? "").toLowerCase();
+          const isBottomPlate = u === "bottomplate";
+          if (isBottomPlate) {
+            const sStart = stick.start, sEnd = stick.end;
+            const dxAbs = Math.abs(sEnd.x - sStart.x);
+            const dyAbs = Math.abs(sEnd.y - sStart.y);
+            const useX = dxAbs >= dyAbs;
+            const stickAxisStart = useX ? sStart.x : sStart.y;
+            const stickAxisEnd = useX ? sEnd.x : sEnd.y;
+            const stickPerp = useX ? sStart.y : sStart.x;
+            // Remove default Bolt ops (codec emitted at @62 / @length-62);
+            // they will be replaced by tool-action-derived positions.
+            stick.tooling = stick.tooling.filter(o => !(o.kind === "point" && o.type === "Bolt"));
+            const axisLo = Math.min(stickAxisStart, stickAxisEnd);
+            const axisHi = Math.max(stickAxisStart, stickAxisEnd);
+            const seen = new Set();
+            for (const ba of boltActions) {
+              const baAxis = useX ? ba.start.x : ba.start.y;
+              const baPerp = useX ? ba.start.y : ba.start.x;
+              // Skip bolts on different walls
+              if (Math.abs(baPerp - stickPerp) > 100) continue;
+              // Skip if outside stick's axis range
+              if (baAxis < axisLo - 5 || baAxis > axisHi + 5) continue;
+              const rawPos = Math.abs(stickAxisStart - baAxis);
+              if (rawPos < 5 || rawPos > length - 5) continue;
+              const rounded = Math.round(rawPos * 10) / 10;
+              if (seen.has(rounded)) continue;
+              seen.add(rounded);
+              stick.tooling.push({ kind: "point", type: "Bolt", pos: Math.round(rawPos * 10000) / 10000 });
+            }
+          }
+        }
 
         // InnerService from XML <tool_action name="Service"> — emit on T plates
         // and N nogs. Position formula derived 2026-05-02 vs HG260012 corpus:
@@ -1219,9 +1261,12 @@ function buildOurProject(xmlText) {
           const u = String(s.usage ?? "").toLowerCase();
           const isFullStud = u === "stud" || u === "trimstud";
           if (isFullStud) {
-            // Only Chamfer@end (the high-end side meeting sloped top plate).
-            const hasEnd = s.tooling.some(t => t.kind === "end" && t.type === "Chamfer");
-            if (!hasEnd) s.tooling.push({ kind: "end", type: "Chamfer" });
+            // 2026-05-04 — DISABLED. Verified vs HG260001 PK4 LBW L16/L17/L20:
+            // raking-frame studs do NOT get Chamfer @end in ref. The rule was
+            // over-firing on every wall-frame with sloped top plate. Until a
+            // real signal is identified, emit nothing.
+            // const hasEnd = s.tooling.some(t => t.kind === "end" && t.type === "Chamfer");
+            // if (!hasEnd) s.tooling.push({ kind: "end", type: "Chamfer" });
           } else if (u === "topplate") {
             const dz = s.end.z - s.start.z;
             if (Math.abs(dz) > 1) {

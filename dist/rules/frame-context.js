@@ -118,6 +118,13 @@ export function generateFrameContextOps(frame) {
     // shouldn't trigger truss-chord behavior on plates.
     const trussWebs = layout.filter(sb => TRUSS_WEB_ROLES.has(sb.role) &&
         String(sb.stick.usage ?? "").toLowerCase() === "web");
+    // Wall W braces: diagonal sticks with role=W but usage=Stud. They terminate
+    // AT plates (not crossing them like truss webs). Detailer emits LipNotch +
+    // InnerDimple on T plates above openings where these W braces meet.
+    // Verified 2026-05-04 vs HG260001 PK4 L4/T2: 6 W braces produce ref dimples
+    // at 395/745/796/1146/1197/1547 + paired LipNotches.
+    const wallWBraces = layout.filter(sb => sb.role === "W" &&
+        String(sb.stick.usage ?? "").toLowerCase() !== "web");
     // Cripple studs (Kb/H). Vertical/L-shaped Kbs use virtualKb-edge logic
     // (their connection is at one X edge of the bbox, treated as a 41mm
     // virtual stud at cx = bbox.xMin/xMax ± 22.5).
@@ -301,7 +308,13 @@ export function generateFrameContextOps(frame) {
         const offsetSign = +1;
         const offsetMagnitudeBase = 2.0;
         const webCrossings = [];
-        for (const web of trussWebs) {
+        // Process truss webs + wall W braces uniformly. Wall W braces (usage=Stud)
+        // terminate at plates the same way truss webs do — same outline-edge
+        // intersection formula applies. Verified 2026-05-04 vs HG260001 PK4 L4/T2:
+        // 6 W braces ending at T2 produce the expected jamb+king pair LipNotches.
+        //
+        const allWebsForCrossing = [...trussWebs, ...wallWBraces];
+        for (const web of allWebsForCrossing) {
             const corners = web.stick.outlineCorners;
             if (!corners || corners.length < 4)
                 continue;
@@ -501,8 +514,12 @@ export function generateFrameContextOps(frame) {
             const yMaxDelta = Math.abs(a.box.yMax - b.box.yMax);
             // Length similarity: paired studs are identical sticks
             const lenDelta = Math.abs(a.stick.length - b.stick.length);
-            // Tight criteria: < 45mm X-apart, < 5mm Y-range diff, identical length
-            if (xDelta < 45 && yMinDelta < 5 && yMaxDelta < 5 && lenDelta < 5) {
+            // Tight criteria: < 5mm X-apart (truly back-to-back, sharing web),
+            // < 5mm Y-range diff, identical length. Earlier "< 45mm" caught
+            // jamb+king pairs which are NOT b2b (they're 42mm side-by-side, not
+            // overlapping). Verified 2026-05-04 vs HG260001 PK4 L19/S2-S3-S4:
+            // 42mm apart, ref does NOT emit b2b InnerNotch — they're separate studs.
+            if (xDelta < 5 && yMinDelta < 5 && yMaxDelta < 5 && lenDelta < 5) {
                 b2bStudNames.add(a.stick.name);
                 b2bStudNames.add(b.stick.name);
             }

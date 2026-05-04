@@ -163,8 +163,33 @@ export const RULE_TABLE: RuleGroup[] = [
     lengthRange: [0, Infinity],
     rules: [
       { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START only (no Chamfer-end observed)" },
+      // Start Swage: ~42mm at the mid-wall end (cap perpendicular to Kb axis).
+      // Verified 2026-05-04 vs HG260001 PK4 LBW Kb1: ref Swage 0..42.4 (span 42).
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 42, confidence: "high",
+        predicate: (ctx) => ctx.role === "Kb",
+        notes: "Kb start Swage: ~42mm cap at mid-wall end" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "high", notes: "Kb dimple at 10mm (not 16.5mm)" },
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 43 }, spanLength: 43, confidence: "medium", notes: "End swage span 43mm (slightly different from S stud 39mm)" },
+      // End Swage: angle-dependent span = 45/cos(angle from horizontal).
+      // For steep Kbs (~68° from horizontal) this is ~120mm — covers the
+      // Kb's plate-attached angled cut. Verified 2026-05-04 vs HG260001 PK4
+      // LBW Kb1 (angle 68.3°): ref Swage 1354..1476.6 (span 122.6 ≈ 45/cos(68.3°)
+      // = 121.6).
+      { toolType: "Swage", kind: "spanned",
+        anchor: { kind: "endAnchored", offset: 0 },
+        spanLengthFn: (ctx) => {
+          const angleFromVert = ctx.angleFromVertical ?? 0;
+          const angleFromHoriz = 90 - angleFromVert;
+          const c = Math.cos(angleFromHoriz * Math.PI / 180);
+          if (c < 0.05) return 43;  // near-horizontal Kb
+          return Math.min(45 / c, 200);  // cap at 200mm
+        },
+        confidence: "medium",
+        predicate: (ctx) => ctx.role === "Kb",
+        notes: "Kb end Swage: angle-dependent span (45/cos(angle from horizontal))" },
+      // For H sticks (cripple role but not Kb), keep simpler 43mm span.
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 43 }, spanLength: 43, confidence: "medium",
+        predicate: (ctx) => ctx.role !== "Kb",
+        notes: "H end swage span 43mm" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high" },
     ],
   },
@@ -288,8 +313,10 @@ export const RULE_TABLE: RuleGroup[] = [
 
   // ----------- RAISED B-PLATES (Bh) on 70S41 -----------
   // 70mm version of the 89mm raised B-plate rule. Same pattern: InnerNotch +
-  // LipNotch at both ends, InnerDimple at 16.5 each end, NO Web/Bolt.
-  // Verified 2026-05-04 vs HG260001 PK4 LBW L4/B2 (length 1360, z=61.5).
+  // LipNotch at both ends, InnerDimple at 16.5 each end.
+  // LBW (load-bearing wall) frames: NO Web/Bolt — verified vs HG260001 PK4 L4/B2.
+  // NLBW frames: ALSO Web@8 + Bolt@62 — verified vs HG260001 PK1 N14/B1
+  //   (length 1872, z=61.5: ref has BOTH cap notches AND Web@8 + Bolt@62).
   {
     rolePattern: /^Bh$/,
     profilePattern: /^70S41$/,
@@ -298,6 +325,16 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "Raised 70mm B: InnerNotch at start clearance" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      // NLBW raised B-plates also get slab-anchor Web@8 + Bolt@62.
+      { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high",
+        predicate: (ctx) => /(NLBW)/i.test(ctx.planName ?? ""),
+        notes: "NLBW raised B plate: slab-anchor Web@8" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium",
+        predicate: (ctx) => /(NLBW)/i.test(ctx.planName ?? ""),
+        notes: "NLBW raised B plate: slab-anchor Bolt@62" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium",
+        predicate: (ctx) => /(NLBW)/i.test(ctx.planName ?? ""),
+        notes: "NLBW raised B plate: slab-anchor Bolt@end-62" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },

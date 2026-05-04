@@ -36,7 +36,7 @@ function generatePositions(anchor, length) {
         }
     }
 }
-function opForRule(rule, position, length) {
+function opForRule(rule, position, length, ctx) {
     switch (rule.kind) {
         case "start":
             return { kind: "start", type: rule.toolType };
@@ -45,10 +45,20 @@ function opForRule(rule, position, length) {
         case "point":
             return { kind: "point", type: rule.toolType, pos: round(position) };
         case "spanned": {
-            const span = rule.spanLength ?? 0;
-            const startPos = round(position);
-            const endPos = round(Math.min(position + span, length));
-            return { kind: "spanned", type: rule.toolType, startPos, endPos };
+            const span = rule.spanLengthFn ? rule.spanLengthFn(ctx) : (rule.spanLength ?? 0);
+            // If endAnchored with offset==0 AND dynamic span, anchor end to stick
+            // end and set start = length - span. Otherwise position is start.
+            let startPos;
+            let endPos;
+            if (rule.spanLengthFn && rule.anchor.kind === "endAnchored" && rule.anchor.offset === 0) {
+                endPos = length;
+                startPos = Math.max(0, length - span);
+            }
+            else {
+                startPos = position;
+                endPos = Math.min(position + span, length);
+            }
+            return { kind: "spanned", type: rule.toolType, startPos: round(startPos), endPos: round(endPos) };
         }
     }
 }
@@ -63,7 +73,7 @@ export function applyRule(rule, ctx) {
     for (const p of positions) {
         if (p < 0 || p > ctx.length)
             continue;
-        const op = opForRule(rule, p, ctx.length);
+        const op = opForRule(rule, p, ctx.length, ctx);
         if (op)
             ops.push(op);
     }

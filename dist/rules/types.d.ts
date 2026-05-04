@@ -86,6 +86,10 @@ export interface OpRule {
     anchor: Anchor;
     /** For spanned tools: span length (added to start to get end). */
     spanLength?: number;
+    /** For spanned tools: alternative to spanLength, computed from context.
+     *  When provided, takes precedence over spanLength. Used for angle-dependent
+     *  Kb/W Swage spans where span = 45/cos(angle). */
+    spanLengthFn?: (ctx: StickContext) => number;
     /** Confidence of this rule from corpus analysis. */
     confidence: "high" | "medium" | "low";
     /** Optional predicate — rule only fires if this returns true. */

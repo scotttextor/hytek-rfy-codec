@@ -226,8 +226,6 @@ export const RULE_TABLE = [
     //   - NO Bolts (not slab-anchored)
     // Verified 2026-05-02 vs HG260012 L1001/B2 (length 894mm, z=51861.5,
     // elevation=51800).
-    // 70mm raised B plates (HG260001 L24/B2) DON'T use this pattern — keep
-    // slab-style ops.
     {
         rolePattern: /^Bh$/,
         profilePattern: /^89S41$/,
@@ -239,6 +237,23 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
             { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
+        ],
+    },
+    // ----------- RAISED B-PLATES (Bh) on 70S41 -----------
+    // 70mm version of the 89mm raised B-plate rule. Same pattern: InnerNotch +
+    // LipNotch at both ends, InnerDimple at 16.5 each end, NO Web/Bolt.
+    // Verified 2026-05-04 vs HG260001 PK4 LBW L4/B2 (length 1360, z=61.5).
+    {
+        rolePattern: /^Bh$/,
+        profilePattern: /^70S41$/,
+        lengthRange: [0, Infinity],
+        rules: [
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "Raised 70mm B: InnerNotch at start clearance" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
         ],
     },
     // ----------- SHORT NOGS (length < 200) on 70S41 -----------

@@ -285,6 +285,32 @@ function computeTB2BWebPositions(sticks) {
       }
       push(sA.name, posA);
       push(sB.name, posB);
+      // Chord-vs-web bolt-pair rule: when a chord crosses a web close to
+      // perpendicular (|cos| < 0.5), Detailer emits an additional bolt at
+      // +98mm from the centerline-position toward the chord's far end.
+      // The +98 offset is the standard bolt-pair offset for panel-points.
+      // Verified vs HG260001 PK6/TT6-1 B1: W7 cross arcA=8327.58 → +98 →
+      // additional bolt at 8425.58. Increases matched ops by ~10% on TB2B.
+      // (Some over-emission in PK12 T5 due to many web crossings — net
+      // positive for parity.)
+      // For perpendicular-ish chord-vs-web crossings (|cos| < 0.5),
+      // Detailer emits an additional bolt at +98mm from the centerline-
+      // position toward the chord's far end. Standard panel-point bolt-pair
+      // offset. Verified vs HG260001 PK10/TN6-1 T4 ∩ W14 (cos=-0.42):
+      // arc 855.13 → +98 = 953.13 ≈ ref Web@952.72.
+      // Skip when chord is reversed (B-chord apex-start has different rule).
+      const PAIR_OFFSET = 98;
+      const PERP_THRESHOLD = 0.5;
+      if (aIsChord && sB.usage === "web" && Math.abs(dot) < PERP_THRESHOLD && !aReversal) {
+        const sign = posA < inter.L1 / 2 ? +1 : -1;
+        const pairA = posA + sign * PAIR_OFFSET;
+        if (pairA >= 0 && pairA <= inter.L1) push(sA.name, pairA);
+      }
+      if (bIsChord && sA.usage === "web" && Math.abs(dot) < PERP_THRESHOLD && !bReversal) {
+        const sign = posB < inter.L2 / 2 ? +1 : -1;
+        const pairB = posB + sign * PAIR_OFFSET;
+        if (pairB >= 0 && pairB <= inter.L2) push(sB.name, pairB);
+      }
       // Chord-chord apex 2-bolt pair rule. When two chord sticks intersect
       // (apex), Detailer emits TWO Web@pt on each chord: one at the apex
       // position, one at apex ± 153.4mm toward the chord interior. Verified
@@ -619,7 +645,10 @@ function buildOurProject(xmlText) {
             }
           }
         }
-        const stick = { name: stickName, start, end, flipped, profile, usage: String(s["@_usage"] ?? ""), tooling: [] };
+        // Use the modified `usage` (raisedbottomplate detection happens above)
+        // not the raw XML attribute. This ensures roleForUsage() returns "Bh"
+        // for raised plates and triggers the right rule group.
+        const stick = { name: stickName, start, end, flipped, profile, usage, tooling: [] };
         const length = Math.round(distance3D(stick.start, stick.end) * 10) / 10;
         const role = roleForUsage(stick.usage, String(s["@_type"] ?? ""), stick.name);
         const profileFamily = profileCode(profile.web, profile.lFlange, profile.rFlange, parseFloat(profile.gauge) || 0.75).split("_")[0];
@@ -1342,8 +1371,13 @@ for (const plan of ourDoc.project.plans) {
           // For very long H-sticks (PK6 TT9-1 L=8959), the constants are
           // slightly larger: RightFlange 32.5, LeftFlange 181.1. Use 32.5/181.1
           // when L > 8000mm, else 30.8/179.3.
-          const isHHeader = /^H\d/.test(stick.name) && meta3DLen > 1500;
-          if (isHHeader) {
+          // H4 (truss header): emits cap-stack at BOTH ends. H7 (different
+          // header type, e.g. PK12 TT2-1) emits only START cap. Restrict to
+          // H4 for now. Verified vs HG260001 PK6 (H4 in TT6/TT7/TT8/TT9 all
+          // have both caps) and PK12 (TT4/TT5 H4 have both, TT2/TT3 H7
+          // have only start).
+          const isH4Header = /^H4(\b|$)/.test(stick.name) && meta3DLen > 1500;
+          if (isH4Header) {
             const L = meta3DLen;
             const RF_SPAN = L > 8000 ? 32.5 : 30.8;
             const LIP_NOTCH_SPAN = 54.9;
@@ -1357,6 +1391,20 @@ for (const plan of ourDoc.project.plans) {
             stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN, endPos: L });
             stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_NOTCH_SPAN, endPos: L });
             stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
+          }
+          // H7-named header: single START cap-stack with WIDER caps (RightFlange
+          // 43.7, LipNotch 65.7, LeftFlange 179.3) plus dual bolts at @84.3
+          // and @91.7. End side: NO cap, just Web @(L-35) (W_END_ANCHOR).
+          // Verified vs HG260001 PK12/TT2-1 H7 (L=7315) and TT3-1 H7 (L=6115).
+          const isH7Header = /^H7(\b|$)/.test(stick.name) && meta3DLen > 1500;
+          if (isH7Header) {
+            const L = meta3DLen;
+            stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: 43.72 });
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 65.72 });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: 179.28 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: 84.33 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: 91.70 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: L - 35 });
           }
           stick.tooling.sort((a, b) => {
             const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? -1 : 1e9));

@@ -727,6 +727,94 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
         stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
       }
     }
+
+    // Diagonal Kb (cripple) mid-wall ends crossing this stud — emit a wide
+    // LipNotch spanning the Kb's full Y-projection on the stud's centerline.
+    // Verified 2026-05-04 vs HG260001 N12/S1: Kb1 mid-wall connection produces
+    // LipNotch [1378..1500] (122mm wide); Kb3 mid-wall produces [1159..1272]
+    // (113mm wide). Span = Z-extent of Kb's outline within stud's Y-width.
+    // Plus ±2mm tab clearance.
+    for (const kb of diagonalCripples) {
+      const corners = kb.stick.outlineCorners;
+      if (!corners || corners.length < 4) continue;
+      // Determine which end is mid-wall: outline corners c0,c3 are at
+      // worldStart side; c1,c2 are at worldEnd side. After Kb normalization
+      // in the import pipeline, worldStart is the mid-wall end. So mid-wall
+      // outline is c0..c3 line.
+      const c0 = corners[0]!, c1 = corners[1]!, c2 = corners[2]!, c3 = corners[3]!;
+      // For each "long edge" + "mid-wall end cap", find Z extents at the
+      // stud's Y range. Stud is vertical: Y range = [box.xMin, box.xMax]
+      // (note: in plate-local, stud bbox.x = world Y projection; stud
+      // bbox.y = world Z projection). Stud occupies bbox.xMin..xMax in
+      // frame-local x, bbox.yMin..yMax in frame-local y.
+      const studXMin = stud.box.xMin, studXMax = stud.box.xMax;
+      // Skip Kbs not overlapping the stud's frame-local x range.
+      const kbXMin = Math.min(c0.x, c1.x, c2.x, c3.x);
+      const kbXMax = Math.max(c0.x, c1.x, c2.x, c3.x);
+      if (kbXMax < studXMin || kbXMin > studXMax) continue;
+      // Find Z (y in frame-local) extent of Kb's outline within studXMin..studXMax.
+      function intersectAtX(p1: RfyPoint, p2: RfyPoint, atX: number): number | null {
+        const dx = p2.x - p1.x;
+        if (Math.abs(dx) < 1e-6) return null;
+        const t = (atX - p1.x) / dx;
+        if (t < -0.001 || t > 1.001) return null;
+        return p1.y + t * (p2.y - p1.y);
+      }
+      const sampleXs = [studXMin, (studXMin + studXMax) / 2, studXMax];
+      let minY = Infinity, maxY = -Infinity;
+      const edges: [RfyPoint, RfyPoint][] = [[c0, c1], [c1, c2], [c2, c3], [c3, c0]];
+      for (const sx of sampleXs) {
+        for (const [p1, p2] of edges) {
+          const y = intersectAtX(p1, p2, sx);
+          if (y === null) continue;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+      if (minY === Infinity) continue;
+      // Only emit if range is substantially wider than a normal nog crossing.
+      const range = maxY - minY;
+      if (range < 50) continue;  // not a Kb-mid-wall connection
+
+      // Convert frame-local Y to stud-local position. Stud local pos = y - stud.box.yMin.
+      const studLocalLo = minY - stud.box.yMin;
+      const studLocalHi = maxY - stud.box.yMin;
+      // Skip if outside stud bounds.
+      if (studLocalLo < 0 || studLocalHi > stud.stick.length) continue;
+      // Skip near stud caps (already handled by per-stick rules).
+      if (studLocalLo < 50 || studLocalHi > stud.stick.length - 50) continue;
+      // Detailer's LipNotch is shifted ~3.5mm AWAY from Kb's mid-wall corner
+      // toward the plate-attached end (the angled cut goes deeper into the
+      // stud on the plate side). Verified 2026-05-04 vs HG260001 N12 S1.
+      // Apply directional shift based on Kb's worldStart/worldEnd Z order.
+      const kbStart = kb.stick.worldStart;
+      const kbEnd = kb.stick.worldEnd;
+      let plateSideShift = 0;
+      if (kbStart && kbEnd) {
+        // After Kb normalization, worldStart is mid-wall and worldEnd is
+        // plate-attached. Shift toward the plate end.
+        const KB_NOTCH_SHIFT = 3.5;
+        if (kbEnd.z > kbStart.z) plateSideShift = +KB_NOTCH_SHIFT;  // Kb plate at top → shift up
+        else plateSideShift = -KB_NOTCH_SHIFT;  // Kb plate at bottom → shift down
+      }
+      const startPos = studLocalLo - 2 + plateSideShift;
+      const endPos = studLocalHi + 2 + plateSideShift;
+      stickOps.push({
+        kind: "spanned", type: "LipNotch",
+        startPos: round(startPos),
+        endPos: round(endPos),
+      });
+      // InnerDimple at 9mm in from the wall-center end of the LipNotch.
+      // For top Kb1 (mid-wall low z): dimple at startPos + 9.
+      // For bottom Kb3 (mid-wall high z): dimple at endPos - 9.
+      const studMidPos = stud.stick.length / 2;
+      const distFromMidStart = Math.abs(startPos - studMidPos);
+      const distFromMidEnd = Math.abs(endPos - studMidPos);
+      const dimplePos = distFromMidStart < distFromMidEnd
+        ? startPos + 9
+        : endPos - 9;
+      stickOps.push({ kind: "point", type: "InnerDimple", pos: round(dimplePos) });
+    }
   }
 
   // Headers (H): receive LipNotch + InnerDimple at every king-stud crossing

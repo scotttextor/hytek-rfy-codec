@@ -287,7 +287,17 @@ function stickToRow(plan, frame, stick) {
     // Trusses use TOPCHORD/BOTTOMCHORD/WEB/FILLER.
     const name = stick.name.toUpperCase();
     const frameName = frame.name.toUpperCase();
-    const isTruss = /^TN/i.test(frameName) || /TRUSS/.test(frameName);
+    // Truss detection — verified 2026-05-04 against HG260044 corpus by
+    // surveying every CSV's role distribution per plan:
+    //   TIN-* and TB2B-* plans use ONLY truss roles (TOPCHORD/BOTTOMCHORD/
+    //     WEB/FILLER/RAIL); never STUD/NOG/BRACE/etc.
+    //   LBW/NLBW/MH/CP/RP plans use only wall roles.
+    // The earlier `frameName ^TN` check missed both TIN frames (PC*, TGI*)
+    // and TB2B frames (TT*) — both are trusses but don't start with "TN".
+    // The plan-name pattern is the reliable signal.
+    const planName = plan.name.toUpperCase();
+    const isTrussPlan = /(?:^|-)(TIN|TB2B)(?:-|$|\d)/.test(planName);
+    const isTruss = isTrussPlan || /^TN/i.test(frameName) || /TRUSS/.test(frameName);
     let role = "STUD";
     // Name-prefix dictionary (observed in Detailer CSVs on Y: drive):
     //   S*=STUD (or TRIMSTUD if with trim)   T*=TOPPLATE / TOPCHORD

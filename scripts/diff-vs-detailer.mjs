@@ -211,6 +211,16 @@ function computeTB2BWebPositions(sticks) {
     if (arr) arr.push(pos);
     else rawByName.set(name, [pos]);
   }
+  // Collect all chord-vs-web crossings: per-chord list of (web, posA, dot).
+  // Used after the main loop to determine which PERP webs have a PAR
+  // neighbor on the same chord, which gates the +98 bolt-pair emission.
+  // Map<chordName, Array<{webName, pos, dot}>>
+  const chordWebCrossings = new Map();
+  function recordChordWeb(chordName, webName, pos, dot) {
+    let arr = chordWebCrossings.get(chordName);
+    if (!arr) { arr = []; chordWebCrossings.set(chordName, arr); }
+    arr.push({ webName, pos, dot });
+  }
   for (let i = 0; i < sticks.length; i++) {
     for (let j = i + 1; j < sticks.length; j++) {
       const sA = sticks[i], sB = sticks[j];
@@ -283,33 +293,27 @@ function computeTB2BWebPositions(sticks) {
         const sign = posB_arc < inter.L2 / 2 ? +1 : -1;
         posB = Math.max(0, Math.min(inter.L2, posB_arc + sign * offset));
       }
-      push(sA.name, posA);
-      push(sB.name, posB);
-      // Chord-vs-web bolt-pair rule: when a chord crosses a web close to
-      // perpendicular (|cos| < 0.5), Detailer emits an additional bolt at
-      // +98mm from the centerline-position toward the chord's far end.
-      // The +98 offset is the standard bolt-pair offset for panel-points.
-      // Verified vs HG260001 PK6/TT6-1 B1: W7 cross arcA=8327.58 → +98 →
-      // additional bolt at 8425.58. Increases matched ops by ~10% on TB2B.
-      // (Some over-emission in PK12 T5 due to many web crossings — net
-      // positive for parity.)
-      // For perpendicular-ish chord-vs-web crossings (|cos| < 0.5),
-      // Detailer emits an additional bolt at +98mm from the centerline-
-      // position toward the chord's far end. Standard panel-point bolt-pair
-      // offset. Verified vs HG260001 PK10/TN6-1 T4 ∩ W14 (cos=-0.42):
-      // arc 855.13 → +98 = 953.13 ≈ ref Web@952.72.
-      // Skip when chord is reversed (B-chord apex-start has different rule).
-      const PAIR_OFFSET = 98;
+      // Web centerline crossings: emit only for PERPENDICULAR webs. PAR
+      // (diagonal) web crossings are NOT emitted as centerlines — instead,
+      // their position appears as a +98 pair from the neighboring PERP web
+      // (panel-point pattern, see post-loop processing below).
+      // Verified vs HG260001 PK10/TN6-1 T4: W15 (PAR, dot=-0.76) raw 935 NOT
+      // in ref; W14 (PERP) +98 = 952.72 IS in ref.
       const PERP_THRESHOLD = 0.5;
-      if (aIsChord && sB.usage === "web" && Math.abs(dot) < PERP_THRESHOLD && !aReversal) {
-        const sign = posA < inter.L1 / 2 ? +1 : -1;
-        const pairA = posA + sign * PAIR_OFFSET;
-        if (pairA >= 0 && pairA <= inter.L1) push(sA.name, pairA);
-      }
-      if (bIsChord && sA.usage === "web" && Math.abs(dot) < PERP_THRESHOLD && !bReversal) {
-        const sign = posB < inter.L2 / 2 ? +1 : -1;
-        const pairB = posB + sign * PAIR_OFFSET;
-        if (pairB >= 0 && pairB <= inter.L2) push(sB.name, pairB);
+      if (aIsChord && sB.usage === "web") {
+        // Record for post-loop pair-emission. Always record (used to decide
+        // whether neighbor PERP gets a pair).
+        recordChordWeb(sA.name, sB.name, posA, dot);
+        // Only emit centerline for PERP-ish webs (|dot| < threshold).
+        if (Math.abs(dot) < PERP_THRESHOLD) push(sA.name, posA);
+      } else if (bIsChord && sA.usage === "web") {
+        recordChordWeb(sB.name, sA.name, posB, dot);
+        if (Math.abs(dot) < PERP_THRESHOLD) push(sB.name, posB);
+      } else {
+        // Non-chord-web: chord-chord, web-web (already gated), other.
+        // Push centerline normally.
+        push(sA.name, posA);
+        push(sB.name, posB);
       }
       // Chord-chord apex 2-bolt pair rule. When two chord sticks intersect
       // (apex), Detailer emits TWO Web@pt on each chord: one at the apex
@@ -317,14 +321,21 @@ function computeTB2BWebPositions(sticks) {
       // vs HG260001 PK10/TN6-1: T3 ∩ T4 apex (T3 arc=1288) emits
       // Web@1280.98 + Web@1127.58 (= 1280.98 - 153.4) on T3, and
       // Web@22.85 + Web@176.30 (= 22.85 + 153.45) on T4.
-      // ONLY emit pair when BOTH posA AND posB are near a stick endpoint
-      // (real apex, not mid-stick chord crossing like T4∩B2 in PK10/TN6-1).
+      // ONLY emit pair when:
+      //   1. BOTH posA AND posB are near a stick endpoint (real apex)
+      //   2. AT LEAST ONE chord is a top-chord (T-T or T-rail apex)
+      // BB (bottom-chord vs bottom-chord) meetings are HEEL junctures, not
+      // apexes — they don't get the +153.4 pair. Verified vs HG260001
+      // PK10/TN6-1: B1 ∩ B2 at @4.85 (both bottom chords) — ref does NOT
+      // emit a 153.4 pair. Without this guard we emit a spurious @2533.47
+      // on B1 (after reversal). Restricting to TT-only removes this.
       const APEX_PAIR_OFFSET = 153.4;
       const APEX_END_THRESHOLD = 50;
       if (aIsChord && bIsChord) {
+        const isTTApex = (sA.usage === "topchord" || sB.usage === "topchord");
         const aAtEnd = Math.min(posA, inter.L1 - posA) < APEX_END_THRESHOLD;
         const bAtEnd = Math.min(posB, inter.L2 - posB) < APEX_END_THRESHOLD;
-        if (aAtEnd && bAtEnd) {
+        if (aAtEnd && bAtEnd && isTTApex) {
           const aNearStart = posA < inter.L1 / 2;
           const bNearStart = posB < inter.L2 / 2;
           const sign_a = aNearStart ? +1 : -1;
@@ -335,6 +346,45 @@ function computeTB2BWebPositions(sticks) {
           if (pairB >= 0 && pairB <= inter.L2) push(sB.name, pairB);
         }
       }
+    }
+  }
+
+  // Panel-point bolt-pair rule. For each chord, find each PERP web crossing
+  // and check if there's a PAR (diagonal) web crossing within PANEL_RANGE
+  // along the chord. If so, emit a +98 pair toward that PAR's direction.
+  // Verified vs HG260001 PK10/TN6-1 T4:
+  //   W14 PERP @855, W15 PAR @935 (dist 80) → emit W14+98 = 953 ≈ ref @952.72
+  //   W19 PERP @2628, W18 PAR @2540 (dist 88) → emit W19-98 = 2530 ≈ ref @2530.46
+  //   W21 PERP @3570, W20 PAR @3486 (dist 84) → emit W21-98 = 3472 ≈ ref @3472.33
+  //   W23 PERP @4663, W22 PAR @4595 (dist 68) → emit W23-98 = 4565 ≈ ref @4565.45
+  //   W25 PERP @5191, W24 PAR @5113 (dist 78) → emit W25-98 = 5093 ≈ ref @5093.75
+  // PERP webs without PAR neighbors (W13/W16/W17 in PK10 TN6-1 T4) get NO pair.
+  const PAIR_OFFSET = 98;
+  const PANEL_RANGE = 130;  // PAR neighbor must be within this many mm
+  const PERP_GATE = 0.5;
+  const PAR_GATE = 0.5;     // |dot| > PAR_GATE → diagonal/PAR web
+  for (const [chordName, crossings] of chordWebCrossings) {
+    // Sort by position for fast neighbor lookup.
+    crossings.sort((a, b) => a.pos - b.pos);
+    const chordStick = sticks.find(s => s.name === chordName);
+    if (!chordStick) continue;
+    const chordL = len2D(chordStick);
+    for (const c of crossings) {
+      if (Math.abs(c.dot) >= PERP_GATE) continue;  // not PERP
+      // Find nearest PAR neighbor.
+      let bestPar = null;
+      for (const o of crossings) {
+        if (o === c) continue;
+        if (Math.abs(o.dot) <= PAR_GATE) continue;  // not PAR
+        const dist = Math.abs(o.pos - c.pos);
+        if (dist > PANEL_RANGE) continue;
+        if (!bestPar || dist < Math.abs(bestPar.pos - c.pos)) bestPar = o;
+      }
+      if (!bestPar) continue;
+      // Emit +98 toward the PAR neighbor (sign = direction of neighbor).
+      const sign = bestPar.pos > c.pos ? +1 : -1;
+      const pair = c.pos + sign * PAIR_OFFSET;
+      if (pair >= 0 && pair <= chordL) push(chordName, pair);
     }
   }
 

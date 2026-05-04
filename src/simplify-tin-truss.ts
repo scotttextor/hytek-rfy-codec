@@ -139,19 +139,31 @@ function shiftEndAnchoredOps(
   }
 }
 
-/** Strip Chamfer@start from a stick's tooling.  Used to delete extras the
- *  codec emits on diagonal Ws of TIN frames where the reference RFY shows
- *  the start side has no apex chamfer. Returns the number of ops removed. */
-function stripStartChamfer(tooling: RfyToolingOp[]): number {
+/** Strip Chamfer of the given edge from a stick's tooling.  Returns the
+ *  number of ops removed (0 or 1 in practice — Chamfer is a singleton per
+ *  edge in well-formed RFY tooling). */
+function stripChamfer(tooling: RfyToolingOp[], edge: "start" | "end"): number {
   let removed = 0;
   for (let i = tooling.length - 1; i >= 0; i--) {
     const op = tooling[i]!;
-    if (op.kind === "start" && op.type === "Chamfer") {
+    if (op.kind === edge && op.type === "Chamfer") {
       tooling.splice(i, 1);
       removed++;
     }
   }
   return removed;
+}
+
+/** Compute angle from vertical (degrees) for a diagonal stick.  0° = pure
+ *  vertical, 90° = pure horizontal.  Used to classify diagonal Ws into
+ *  brace-style (high angle) vs main-truss-strut (low angle, less Chamfer). */
+function angleFromVerticalDeg(stick: ParsedStick): number {
+  const dx = stick.end.x - stick.start.x;
+  const dy = stick.end.y - stick.start.y;
+  const dz = stick.end.z - stick.start.z;
+  const horiz = Math.sqrt(dx * dx + dy * dy);
+  if (Math.abs(dz) < 1e-6) return 90;
+  return Math.atan2(horiz, Math.abs(dz)) * 180 / Math.PI;
 }
 
 export interface SimplifyTinDecision {

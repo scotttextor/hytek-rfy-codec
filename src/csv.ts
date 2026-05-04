@@ -426,6 +426,56 @@ function fillerRow(frameName: string, profileCodeStr: string): string {
   return `COMPONENT,${frameName}-FIL,${profileCodeStr},FILLER,RIGHT,1,,50,0,0,0,0,41`;
 }
 
+/**
+ * Whether a stick's start-chamfer should be emitted to the CSV, given the
+ * stick's role and its position within its frame's module group.
+ *
+ * Verified 2026-05-04 against HG260044 corpus (262 sticks with start-chamfer
+ * ops in the RFY data — Detailer's CSV emits the chamfer for only 145
+ * of them). The selective rule:
+ *
+ *   1. Truss plans (TIN, TB2B): emit ALWAYS — every truss-web chamfer
+ *      shows up in the CSV.
+ *   2. Wall plans (LBW, NLBW, MH, CP, RP):
+ *        a. W (truss-web inside walls — opening cripples): emit only on
+ *           the FIRST W in each contiguous W-block. Subsequent W's drop
+ *           the start chamfer.
+ *        b. Kb (diagonal brace): emit only on the SHORTER member of each
+ *           Kb pair. Detailer attaches a square-cut at the wall-corner
+ *           end of the longer Kb — no chamfer there.
+ *        c. Other roles (T, B, S, N, etc): drop. Most are square-cut
+ *           plates/studs whose RFY chamfers are synthesis artefacts.
+ *
+ * Coverage on the corpus: 92.7% (243 / 262). Remaining 19 misses are
+ * mostly raking plate/stud sticks in GF-RP plans whose elevation poly
+ * actually has an angled corner — solving those needs geometric corner-
+ * angle detection on outlineCorners (deferred).
+ */
+function shouldEmitStartChamfer(
+  cls: "W" | "Kb" | "def",
+  isTrussPlan: boolean,
+  isFirstInBlock: boolean,
+  stickLength: number,
+  minKbLengthInFrame: number,
+): boolean {
+  if (isTrussPlan) return true;
+  if (cls === "W") return isFirstInBlock;
+  if (cls === "Kb") return Math.abs(stickLength - minKbLengthInFrame) < 1;
+  return false;
+}
+
+/**
+ * Filter a stick's tooling list, dropping the start chamfer when
+ * shouldEmitStartChamfer() says so. Returns a new array; doesn't mutate.
+ */
+function filterToolingForCsv(
+  tooling: RfyToolingOp[],
+  emitStartChamfer: boolean,
+): RfyToolingOp[] {
+  if (emitStartChamfer) return tooling;
+  return tooling.filter(t => !(t.kind === "start" && (t.type === "Chamfer" || t.type === "TrussChamfer")));
+}
+
 /** Emit one plan's CSV text. Format mirrors Detailer's Rollforming CSV.
  *
  * Detailer emits a `DETAILS,<job>#1-1,<plan>` header BEFORE EACH FRAME,
@@ -436,13 +486,24 @@ export function planToCsv(project: { name: string; jobNum: string }, plan: RfyPl
   const lines: string[] = [];
   const packId = plan.name;
   const header = `DETAILS,${detailsHeader(project)},${packId}`;
+  // Truss-plan detection — same regex as in stickToRow's role mapping.
+  const isTrussPlan = /(?:^|-)(TIN|TB2B)(?:-|$|\d)/.test(plan.name.toUpperCase());
   for (const frame of plan.frames) {
     lines.push(header);
+    // Pre-compute the minimum Kb length in this frame for the "shorter
+    // Kb keeps start chamfer" rule.
+    const kbLens = frame.sticks
+      .filter(s => /^Kb\d/.test(s.name))
+      .map(s => s.length);
+    const minKbLen = kbLens.length ? Math.min(...kbLens) : 0;
     let prevClass: "W" | "Kb" | "def" | null = null;
     let prevProfileCode: string | null = null;
     for (const stick of frame.sticks) {
       const r = stickToRow(plan, frame, stick);
       const cls = moduleClass(stick.name);
+      const isFirstInBlock = cls !== prevClass;
+      const emitStartChamfer = shouldEmitStartChamfer(cls, isTrussPlan, isFirstInBlock, stick.length, minKbLen);
+      const toolingFiltered = filterToolingForCsv(stick.tooling, emitStartChamfer);
       // Insert a FILLER row at every module-class transition (except at
       // the very start of a frame, when there's no "previous" module).
       if (prevClass !== null && cls !== prevClass) {
@@ -466,7 +527,7 @@ export function planToCsv(project: { name: string; jobNum: string }, plan: RfyPl
         "",
         nDim(length),
         n(sx), n(sy), n(ex), n(ey), n(fl),
-        ...toolingToCsvCells(r.tooling, r.lengthA),
+        ...toolingToCsvCells(toolingFiltered, r.lengthA),
       ];
       lines.push(row.join(","));
       prevClass = cls;

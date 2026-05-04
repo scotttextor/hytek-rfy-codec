@@ -25,7 +25,8 @@
 const TOOLING = 'Tooling.dll';
 const ADD_FRAMEOBJECT_RVA = 0x186410;
 
-const tooling = Module.findBaseAddress(TOOLING);
+let tooling = null;
+try { tooling = Process.getModuleByName(TOOLING).base; } catch (e) {}
 if (!tooling) {
   console.error(`[!] ${TOOLING} not loaded yet — start Detailer first`);
 } else {

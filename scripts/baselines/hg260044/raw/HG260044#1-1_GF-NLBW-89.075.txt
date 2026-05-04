@@ -1,0 +1,35 @@
+OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-NLBW-89.075.xml vs HG260044#1-1_GF-NLBW-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 1 | ref 1
+
+OPS:      our 106 | ref 97
+MATCHED:  87  (89.7% of ref)
+MISSING:  10  (ops Detailer has, we don't)
+EXTRAS:   19   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+LipNotch@span             18         2        6   (90% ref-coverage)
+Swage@span                16         4        2   (80% ref-coverage)
+InnerService@pt            4         2        4   (67% ref-coverage)
+InnerDimple@pt            42         2        2   (95% ref-coverage)
+InnerNotch@span            4         0        4   (100% ref-coverage)
+Web@pt                     1         0        1   (100% ref-coverage)
+Bolt@pt                    2         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  N28 (7 sticks with gaps)
+    T1       EXTRAS  (1): LipNotch 1673.0..1712.0
+    B3       EXTRAS  (2): Web @8.0 | LipNotch 58.0..97.0
+    H1       EXTRAS  (2): InnerDimple @58.5 | InnerDimple @1515.5
+    N1       MISSING (2): Swage 0.0..39.0 | Swage 68.0..107.0
+    N1       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 68.0..107.0 | LipNotch 68.0..107.0
+    N2       MISSING (2): Swage 0.0..39.0 | Swage 58.0..97.0
+    N2       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 58.0..97.0 | LipNotch 58.0..97.0
+    S2       MISSING (2): InnerDimple @57.5 | LipNotch 1303.0..1348.0
+    S2       EXTRAS  (3): InnerService @296.0 | InnerService @446.0 | Swage 1303.0..1348.0
+    S6       MISSING (4): InnerDimple @57.5 | InnerService @1325.5 | InnerService @2600.5 | LipNotch 1303.0..1348.0
+    S6       EXTRAS  (3): InnerService @296.0 | InnerService @446.0 | Swage 1303.0..1348.0

@@ -1,0 +1,31 @@
+OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-MH-70.075.xml vs HG260044#1-1_GF-MH-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 64 | ref 84
+MATCHED:  60  (71.4% of ref)
+MISSING:  24  (ops Detailer has, we don't)
+EXTRAS:   4   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            32         8        0   (80% ref-coverage)
+LipNotch@span             16         4        4   (80% ref-coverage)
+Swage@span                12         8        0   (60% ref-coverage)
+InnerNotch@span            0         4        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  MH1 (8 sticks with gaps)
+    B1       MISSING (2): InnerNotch 0.0..39.0 | InnerNotch 600.0..639.0
+    B2       MISSING (2): Swage 0.0..39.0 | Swage 250.0..289.0
+    B2       EXTRAS  (2): LipNotch 0.0..39.0 | LipNotch 250.0..289.0
+    B4       MISSING (2): InnerNotch 0.0..39.0 | InnerNotch 600.0..639.0
+    B5       MISSING (2): Swage 0.0..39.0 | Swage 250.0..289.0
+    B5       EXTRAS  (2): LipNotch 0.0..39.0 | LipNotch 250.0..289.0
+    S1       MISSING (2): InnerDimple @396.0 | LipNotch 373.5..418.5
+    S2       MISSING (6): InnerDimple @93.0 | InnerDimple @396.0 | InnerDimple @699.0 | Swage 70.5..115.5 | LipNotch 373.5..418.5 ... +1
+    S4       MISSING (6): InnerDimple @93.0 | InnerDimple @396.0 | InnerDimple @699.0 | Swage 70.5..115.5 | LipNotch 373.5..418.5 ... +1
+    S5       MISSING (2): InnerDimple @396.0 | LipNotch 373.5..418.5

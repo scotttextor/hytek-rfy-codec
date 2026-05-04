@@ -1834,6 +1834,49 @@ for (const plan of ourDoc.project.plans) {
 
 const refDoc = decode(fs.readFileSync(referenceRfyPath));
 
+// PROBE: if PROBE_FRAME env var is set, dump ours+ref tooling for that frame
+// (and optional stick). Used during TB2B tuning to see what's emitted.
+if (process.env.PROBE_FRAME) {
+  const PF = process.env.PROBE_FRAME;
+  const PS = process.env.PROBE_STICK ?? "";
+  function fmtOp(op) {
+    if (op.kind === "spanned") return `${op.type} ${op.startPos.toFixed(2)}..${op.endPos.toFixed(2)}`;
+    if (op.kind === "point") return `${op.type} @${op.pos.toFixed(2)}`;
+    if (op.kind === "start" || op.kind === "end") return `${op.type} @${op.kind}`;
+    return JSON.stringify(op);
+  }
+  function dumpDoc(label, doc) {
+    console.log(`\n--- ${label} ---`);
+    for (const plan of doc.project.plans) {
+      for (const frame of plan.frames) {
+        if (frame.name !== PF) continue;
+        for (const stick of frame.sticks) {
+          if (PS && stick.name !== PS) continue;
+          console.log(`  ${stick.name}  L=${stick.length?.toFixed(1) ?? "?"}  ops=${stick.tooling.length}`);
+          for (const op of stick.tooling) console.log(`    ${fmtOp(op)}`);
+        }
+      }
+    }
+  }
+  dumpDoc("OURS (post-rewrite)", ourDoc);
+  dumpDoc("REF", refDoc);
+  if (process.env.PROBE_META) {
+    // Dump TB2B_META for the probed frame
+    for (const [key, meta] of TB2B_META) {
+      if (!key.endsWith("|" + PF)) continue;
+      console.log(`\n--- META ${key} ---`);
+      for (const s of meta.sticks) {
+        const dx = s.end3D.x - s.start3D.x;
+        const dy = s.end3D.y - s.start3D.y;
+        const dz = s.end3D.z - s.start3D.z;
+        const L = Math.hypot(dx, dy, dz);
+        console.log(`  ${s.name}  ${s.usage}  flipped=${s.flipped}  start=(${s.start3D.x.toFixed(1)},${s.start3D.y.toFixed(1)},${s.start3D.z.toFixed(1)})  end=(${s.end3D.x.toFixed(1)},${s.end3D.y.toFixed(1)},${s.end3D.z.toFixed(1)})  L3D=${L.toFixed(1)}`);
+      }
+    }
+  }
+  process.exit(0);
+}
+
 console.log(`Our  RFY: ${ourDoc.project.plans[0].frames.length} frames, ${ourDoc.project.plans[0].frames.reduce((s,f)=>s+f.sticks.length,0)} sticks`);
 console.log(`Ref  RFY: ${refDoc.project.plans.reduce((s,p)=>s+p.frames.length,0)} frames, ${refDoc.project.plans.reduce((s,p)=>s+p.frames.reduce((ss,f)=>ss+f.sticks.length,0),0)} sticks`);
 console.log("");

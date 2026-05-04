@@ -289,11 +289,19 @@ export function coerceEnvelopeToRect(vertices: Vec3[]): [Vec3, Vec3, Vec3, Vec3]
   if (vertices.length < 3) return null;
   const V0 = vertices[0]!;
 
-  // right axis: V1 - V0 (first edge)
-  const e1 = subtract(vertices[1]!, V0);
-  const e1len = magnitude(e1);
-  if (e1len < ORTHOGONALITY_TOLERANCE) return null;
-  const right = scale(e1, 1 / e1len);
+  // right axis: first non-degenerate edge from V0 (typically V1-V0, but RP
+  // frames sometimes encode V0==V1 with a 5-vertex polygon — in that case
+  // walk forward to V2-V0, V3-V0, etc., until a real edge is found).
+  let right: Vec3 | null = null;
+  for (let i = 1; i < vertices.length; i++) {
+    const e = subtract(vertices[i]!, V0);
+    const eLen = magnitude(e);
+    if (eLen >= ORTHOGONALITY_TOLERANCE) {
+      right = scale(e, 1 / eLen);
+      break;
+    }
+  }
+  if (!right) return null;
 
   // up axis: pick a vertex non-collinear with right. Prefer the last vertex
   // (in CCW polygon ordering this is the "top-left" corner).
@@ -370,7 +378,29 @@ export function synthesizeRfyFromPlans(
       try {
         basis = deriveFrameBasis(frame.envelope, options.lenient);
       } catch (e) {
-        throw new Error(`Frame "${frame.name}": ${(e as Error).message}`);
+        // Fallback for degenerate 4-vertex envelopes: some Roof-Panel frames
+        // collapse one corner (V0==V1, or V1-V0 sub-mm) so V1-V0 / V3-V0
+        // become collinear. The literal V0..V3 cannot form a basis, but the
+        // 4 vertices still bound a real polygon. Coerce to a bounding rect
+        // in the dominant non-collinear axes (via coerceEnvelopeToRect) and
+        // re-derive. Verified 2026-05-04 against HG260001 RP R1.
+        const coerced = coerceEnvelopeToRect(frame.envelope);
+        if (coerced) {
+          try {
+            basis = deriveFrameBasis(coerced, options.lenient);
+            console.warn(
+              `Frame "${frame.name}": 4-vertex envelope coerced to bounding rectangle ` +
+              `(original ${(e as Error).message})`,
+            );
+          } catch (e2) {
+            throw new Error(
+              `Frame "${frame.name}": ${(e as Error).message} ` +
+              `(coerce also failed: ${(e2 as Error).message})`,
+            );
+          }
+        } else {
+          throw new Error(`Frame "${frame.name}": ${(e as Error).message}`);
+        }
       }
 
       // FRAME-CONTEXT TOOLING: before building XML, run the codec's crossing-

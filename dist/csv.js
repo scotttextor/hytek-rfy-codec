@@ -180,10 +180,26 @@ function toolingToCsvCells(tooling, stickLength) {
                 flat.push({ type: op.type, pos: op.pos, edgePriority: 1, bodySubPriority: 1, insIdx: counter++ });
                 break;
             case "start":
-                flat.push({ type: op.type, pos: 0, edgePriority: 0, bodySubPriority: 0, insIdx: counter++ });
+                // Chamfer/TrussChamfer at start emit at pos -3 (3mm BEFORE the stick
+                // origin) to match Detailer's CSV convention. Verified 2026-05-04
+                // against HG260044 corpus: 320/320 start-chamfers at pos = -3.
+                // Other start-edge tools stay at pos 0.
+                {
+                    const isChamfer = op.type === "Chamfer" || op.type === "TrussChamfer";
+                    const startPos = isChamfer ? -3 : 0;
+                    flat.push({ type: op.type, pos: startPos, edgePriority: 0, bodySubPriority: 0, insIdx: counter++ });
+                }
                 break;
             case "end":
-                flat.push({ type: op.type, pos: stickLength, edgePriority: 2, bodySubPriority: 0, insIdx: counter++ });
+                // Chamfer/TrussChamfer at end emit at pos length+3 (3mm BEYOND the
+                // stick end), again per Detailer's CSV convention. Verified
+                // 2026-05-04 against HG260044 corpus: 650/650 end-chamfers at
+                // pos = length + 3.
+                {
+                    const isChamfer = op.type === "Chamfer" || op.type === "TrussChamfer";
+                    const endPos = isChamfer ? stickLength + 3 : stickLength;
+                    flat.push({ type: op.type, pos: endPos, edgePriority: 2, bodySubPriority: 0, insIdx: counter++ });
+                }
                 break;
             case "spanned": {
                 const positions = expandSpan(op.startPos, op.endPos, op.type, stickLength);

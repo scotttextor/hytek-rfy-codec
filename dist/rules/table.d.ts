@@ -55,7 +55,16 @@ export declare function isPrimaryBPlate(ctx: {
     stickName?: string;
     length: number;
 }): boolean;
-/** Look up profile-specific span/dimple offsets. */
+/** Look up profile-specific span/dimple offsets.
+ *
+ * TODO(rules-coverage): when the rules engine has access to a MachineSetup
+ * instance (e.g. via `getMachineSetupForProfile(profileWeb)`), prefer the
+ * derived values from `endClearanceSpan(setup)` and `dimpleEndOffset(setup)`
+ * — they correctly handle 104mm setup (which uses span=40, offset=17.5
+ * instead of 39/16.5) and Demo Setup (37mm span). Hardcoded 50/25 for 150mm
+ * is a guess — when a 150mm setup is added to .sups, its values will flow
+ * through automatically.
+ */
 export declare function profileOffsets(profileFamily: string): {
     span: number;
     dimpleOffset: number;

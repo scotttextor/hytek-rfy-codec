@@ -195,26 +195,17 @@ export const RULE_TABLE: RuleGroup[] = [
       // InnerNotch on T plates is SELECTIVE (some short T sub-plates have it,
       // some don't — pattern not yet derivable from sample). Skipping to avoid
       // over-emission (100 extras vs 12 matches when emitted unconditionally).
-      // T-plate Service holes — every 600mm starting at 306mm.
-      // 2026-05-02: REVERTED to fixed schedule. The frame-context midpoint
-      // approach matched HG260044 better but FAILED for HG260001 (which is
-      // the actual factory corpus). HG260001 reference uses fixed positions
-      // @306, @906, @1506, @2106, @2706, @3306 etc. — every 600mm.
-      //
-      // TODO(rules-coverage): the 600mm spacing matches `LargeServiceToLeadingEdgeDistance`
-      // exactly in every HYTEK setup. When threading machine-setup through
-      // ctx, prefer `setup.largeServiceToLeadingEdgeDistance` (= 600) for
-      // spacing and `setup.largeServiceToTrailingEdgeDistance` (= 700) for
-      // end clearance. The 306mm firstOffset is empirically derived (likely
-      // BoxedFirstDimpleOffset(10) + half a 600mm bay - 4mm = ~306, but
-      // this needs verification against HG260001 reference geometry).
-      {
-        toolType: "InnerService", kind: "point",
-        anchor: { kind: "spaced", firstOffset: 306, spacing: 600, lastOffset: 306 },
-        confidence: "high",
-        predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 600,
-        notes: "T plates: power-feed drops at 600mm intervals from offset 306mm",
-      },
+      // T-plate Service holes — DISABLED 2026-05-04.
+      // Verified empirically vs HG260001 PK1/PK2/PK4/PK5 reference:
+      // Detailer emits ZERO InnerService ops on T plates of these wall
+      // plans. The fixed schedule produced 256 extras vs only 14 missing
+      // across the 4 wall plans. Removing the rule is a net +242 op gain.
+      // (Whatever drives Detailer's T-plate InnerService emission isn't
+      //  derivable from the XML alone in this corpus — likely tied to
+      //  electrical-services data we don't import.)
+      // TODO(rules-coverage): if a future corpus DOES need T-plate
+      // InnerService, the spacing matches `setup.largeServiceToLeadingEdgeDistance`
+      // (= 600 for HYTEK setups) — wire it through ctx instead of hardcoding.
     ],
   },
 
@@ -297,11 +288,31 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- NOGS on 70S41 -----------
+  // ----------- SHORT NOGS (length < 200) on 70S41 -----------
+  // 2026-05-04: Verified vs HG260001 PK1+PK2+PK4: short cross-noggin
+  // sticks (length < 200mm, sitting between two studs) want
+  // InnerNotch+LipNotch caps at start AND end. Net positive change overall
+  // (PK1: +0.6pp, PK4: +0.3pp). Some PK5 short nogs prefer Swage but the
+  // PK1+PK4 wins outweigh.
   {
     rolePattern: NOG_ROLES,
     profilePattern: /^70S41$/,
-    lengthRange: [0, Infinity],
+    lengthRange: [0, 200],
+    rules: [
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+    ],
+  },
+
+  // ----------- LONG NOGS (length >= 200) on 70S41 -----------
+  {
+    rolePattern: NOG_ROLES,
+    profilePattern: /^70S41$/,
+    lengthRange: [200, Infinity],
     rules: [
       { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
@@ -310,11 +321,26 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- NOGS on 89S41 -----------
+  // ----------- SHORT NOGS on 89S41 -----------
   {
     rolePattern: NOG_ROLES,
     profilePattern: /^89S41$/,
-    lengthRange: [0, Infinity],
+    lengthRange: [0, 200],
+    rules: [
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
+    ],
+  },
+
+  // ----------- LONG NOGS on 89S41 -----------
+  {
+    rolePattern: NOG_ROLES,
+    profilePattern: /^89S41$/,
+    lengthRange: [200, Infinity],
     rules: [
       { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
@@ -325,27 +351,33 @@ export const RULE_TABLE: RuleGroup[] = [
 
   // ----------- HEADERS (H) on 70S41 -----------
   //
-  // 2026-05-02 — InnerNotch ops REMOVED. Earlier note ("verified HG260044
-  // L6/H1") was incorrect — re-checking against HG260001 reference shows H
-  // headers have NO InnerNotch ops. The cut steel had spurious web-notches
-  // that didn't exist in Detailer's output. The header pattern is:
-  //   - Swage 0..39 at start
-  //   - Dimple @16.5 + paired Dimple @58.5 at start
-  //   - Dimple @length-58.5 + paired Dimple @length-16.5 at end
-  //   - Swage length-39..length at end
-  // Paired dimples (16.5 + 58.5 = 42mm spacing) at each end is the
-  // distinctive header pattern (vs 1 dimple for studs).
+  // 2026-05-04 — REWRITTEN. Earlier rule emitted Swage caps + paired Dimples
+  // @58.5 unconditionally. Verified vs HG260001 PK1-PK5:
+  //   START: InnerNotch + LipNotch (39mm) + InnerDimple @16.5
+  //          (+ InnerDimple @58.5 ONLY for LBW plans)
+  //   END:   InnerNotch + LipNotch (39mm) + InnerDimple @length-16.5
+  //          (+ InnerDimple @length-58.5 ONLY for LBW plans)
+  // Both ends use header-style caps; frame-context.ts adds king-stud
+  // crossing LipNotches (with pair-aware emission) which the merge step
+  // joins with the end caps for long Hs with crossings. For short Hs
+  // with no crossings, the InnerNotch+LipNotch cap stands alone.
   {
     rolePattern: HEADER_ROLES,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high", notes: "Header dimple #1 at 16.5" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high", notes: "Header paired dimple at 58.5 (= 16.5 + 42mm)" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header start cap: InnerNotch" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header start cap: LipNotch" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high", notes: "Header dimple at 16.5" },
+      // Paired dimple @58.5 — LBW headers only.
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high",
+        predicate: (ctx) => /(LBW)/i.test(ctx.planName ?? "") && !/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""),
+        notes: "LBW header paired dimple at 58.5" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high",
+        predicate: (ctx) => /(LBW)/i.test(ctx.planName ?? "") && !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header end cap: InnerNotch" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header end cap: LipNotch" },
     ],
   },
 
@@ -371,26 +403,63 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- TRUSS WEBS (W) on 70S41 -----------
-  // Truss web members get the SAME end-anchored pattern as full studs:
-  // Swage span 39mm + Dimple at 16.5 from each end.
+  // ----------- TRUSS WEBS / WALL BRACES (W) on 70S41 -----------
+  // 2026-05-04 — DUAL BEHAVIOR. W sticks in TRUSS plans (TIN/TB2B) and W
+  // sticks in WALL plans (LBW/NLBW) use different end-cap patterns:
+  //
+  //   TRUSS WEB (W on truss): Swage span 39 + Dimple @16.5 (verified
+  //     vs HG260044 GF-TIN W3 length=617: Swage 0..39, Dimple @16.5,
+  //     Swage 578..617, Dimple @600.5)
+  //   WALL BRACE (W on wall): Dimple @10 from each end + NO Swage caps
+  //     by default. Verified vs HG260001 PK4-PK5 LBW W sticks (L4/W1,
+  //     L8/W1, L33/W3, L34/W1): ref ops = Dimple @10 + Dimple @length-10.
+  //     Some shorter W's (length < ~500mm) ALSO get a Swage cap with
+  //     variable span 41-46mm at the end, but the Dimple @10 pattern is
+  //     universal.
   //
   // Chamfer is added in framecad-import.ts post-processing (NOT here),
   // because Detailer's rule is angle-dependent: vertical webs (angle=0
   // from vertical) get NO chamfer, diagonal webs (angle > 0) get BOTH
-  // start AND end chamfer. Verified 2026-04-30 against HG260044 GF-TIN
-  // reference: 100% correlation between non-zero angle and chamfer-both-ends.
-  //
-  // Sample W3 (length 617): Swage 0..39, Dimple @16.5, Swage 578..617, Dimple @600.5
+  // start AND end chamfer.
   {
     rolePattern: /^W$/,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      // Truss-W behavior: Swage caps + Dimple @16.5 (only when NOT a wall plan).
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !isWallPlan(ctx) },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high",
+        predicate: (ctx) => !isWallPlan(ctx) },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !isWallPlan(ctx) },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high",
+        predicate: (ctx) => !isWallPlan(ctx) },
+      // Wall-W behavior: Chamfer @start + Swage 0..41 + Dimple @10 +
+      // Swage end-41..end + Dimple @length-10 + Chamfer @end.
+      // Span 41 is approximate — Detailer uses length-dependent span
+      // (= 39 / sin(angle)). 41mm is a reasonable mid-range value that
+      // matches many wall W's exactly and is close for most others.
+      // Verified vs HG260001 PK4-PK5 wall W corpus.
+      // Chamfers fire on all wall W's — most are diagonal braces. A small
+      // fraction (vertical-ish W's) may not need them but the net gain is
+      // positive (44 matches gained vs ~23 false-positive chamfers).
+      { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx),
+        notes: "Wall brace W: Chamfer @start (diagonal cut)" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 41, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx),
+        notes: "Wall brace W: Swage span 41 at start" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx),
+        notes: "Wall brace W: Dimple @10mm (not @16.5)" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 41 }, spanLength: 41, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx) },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx) },
+      { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx),
+        notes: "Wall brace W: Chamfer @end (diagonal cut)" },
     ],
   },
 
@@ -435,22 +504,22 @@ export const RULE_TABLE: RuleGroup[] = [
 
   // ----------- LINTELS (L) on 70S41 -----------
   //
-  // 2026-05-02 — REWRITTEN. Earlier rule emitted InnerNotch + 16.5/39mm
-  // stud-style ops; the rollformer test cut had wrong web-notches and the
-  // Swage span was 2mm too narrow. HG260001 reference shows lintels use a
-  // diagonal-W-style pattern: 41mm Swage span (not 39), 11mm dimple offset
-  // (not 16.5), NO InnerNotch.
-  //
-  // Sample L1 (length 2266): Swage[0..41] + Dimple@11 + Swage[2225..2266] + Dimple@2255
+  // 2026-05-04 — REWRITTEN AGAIN. Earlier rule emitted Swage[0..41] +
+  // Dimple@11 caps. Verified vs HG260001 PK4-PK5 reference (L1 in L22, L33,
+  // L34, N22): Detailer emits header-style caps with InnerNotch+LipNotch
+  // (39mm) + InnerDimple@16.5. Same pattern as 70mm headers and 89mm L
+  // sills.
   {
     rolePattern: /^L$/,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 41, confidence: "high", notes: "Lintel: 41mm Swage span (not 39 like studs)" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 11 }, confidence: "high", notes: "Lintel: dimple at 11mm (not 16.5)" },
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 41 }, spanLength: 41, confidence: "high" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 11 }, confidence: "high" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "70mm lintel start cap: InnerNotch" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
     ],
   },
 

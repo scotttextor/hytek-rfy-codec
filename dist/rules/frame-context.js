@@ -555,11 +555,13 @@ export function generateFrameContextOps(frame) {
             // Continuous-nog detection: nog spans ≥80% of the wall's plate length.
             const nogXSpan = nog.box.xMax - nog.box.xMin;
             const isContinuousNog = wallSpanX > 0 && nogXSpan >= 0.8 * wallSpanX;
-            // Lip-neighbor rule (existing): if another stud's web is within 45mm
-            // on the lip-facing side, the lip can't open here — Swage.
-            // Continuous-nog rule (new): interior full-height studs at a continuous
-            // nog crossing get Swage; wall-end studs keep LipNotch.
+            // 2026-05-04 — broadened the Swage rule. Verified vs HG260001 PK1-PK5
+            // wall corpus: interior studs (NOT leftmost/rightmost full-height) get
+            // Swage at most nog crossings, regardless of nog continuity.
+            // Wall-end studs keep LipNotch (lip clearance for perpendicular wall
+            // interlock). Lip-neighbor rule (B2B partner stud) also forces Swage.
             const useSwage = lipNeighbor ||
+                (!isWallEndStud) ||
                 (isContinuousNog && !isWallEndStud);
             if (useSwage) {
                 stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
@@ -584,7 +586,10 @@ export function generateFrameContextOps(frame) {
                 stickOps.push({ kind: "spanned", type: "InnerNotch", startPos: round(iStart), endPos: round(iEnd) });
             }
         }
-        // Other horizontal members → LipNotch (or Swage if lip is pinned)
+        // Other horizontal members (H, L, R, B sub-plates) → Swage on
+        // interior studs. Wall-end studs keep LipNotch.
+        // 2026-05-04 — broadened (matches nog rule). Verified vs HG260001
+        // PK1-PK5 wall corpus: ~70% of interior-stud H/L crossings want Swage.
         for (const h of otherHorizontal) {
             const xOverlap = h.box.xMax >= stud.box.xMin && h.box.xMin <= stud.box.xMax;
             if (!xOverlap)
@@ -601,8 +606,10 @@ export function generateFrameContextOps(frame) {
             const lipSpan = Math.max(45, memberWidth + 4);
             const startPos = localPos - lipSpan / 2;
             const endPos = startPos + lipSpan;
-            if (lipNeighbor) {
+            const useSwage = lipNeighbor || !isWallEndStud;
+            if (useSwage) {
                 stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(localPos) });
             }
             else {
                 stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
@@ -657,9 +664,16 @@ export function generateFrameContextOps(frame) {
         // a LipNotch + InnerDimple just like king-stud crossings.
         // The W's lower end y is within the header's y range (≈ embedded in H
         // in the 2D projection). Detect: webYMin ∈ [H.yMin - 30, H.yMax + 30].
+        //
+        // 2026-05-04: also iterate WALL W braces (role=W, usage=Stud) — they
+        // sit ABOVE the header in wall sections with cripple infill. Verified
+        // vs HG260001 PK4 L4/H1: 6 W braces produce 6 crossings (jamb pairs
+        // around openings).
         const headerTopY = Math.max(header.box.yMin, header.box.yMax);
         const headerCenterY = (header.box.yMin + header.box.yMax) / 2;
-        for (const web of trussWebs) {
+        // All W role sticks (truss webs + wall braces) — both terminate at H.
+        const allWebStyleSticks = layout.filter(sb => sb.role === "W");
+        for (const web of allWebStyleSticks) {
             const ws = web.stick.outlineCorners ?? [];
             if (ws.length < 2)
                 continue;
@@ -687,16 +701,71 @@ export function generateFrameContextOps(frame) {
             seenPositions.add(q);
             crossings.push(localPos);
         }
+        // 2026-05-04 — pair-aware LipNotch emission. For pairs of crossings
+        // ~50mm apart (JAMB+KING), Detailer emits 2 separate ~50.8mm-wide
+        // LipNotches OFFSET OUTWARD from the pair midpoint:
+        //   LipNotch A: [posA - 35.6 .. posA + 15.2]  (extends outward, 50.8 wide)
+        //   LipNotch B: [posB - 15.2 .. posB + 35.6]
+        // With ~20mm inner gap between them.
         crossings.sort((a, b) => a - b);
-        for (const localPos of crossings) {
-            const startPos = localPos - 22.5;
-            const endPos = localPos + 22.5;
-            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
-            stickOps.push({ kind: "point", type: "InnerDimple", pos: round(localPos) });
+        const PAIR_THRESHOLD = 70; // pairs are ~50mm apart (jamb+king)
+        const PAIR_NOTCH_SPAN = 50;
+        const PAIR_NOTCH_OUTER_OFFSET = 35; // outer extent
+        const PAIR_NOTCH_INNER_OFFSET = 15; // inner extent (toward pair midpoint)
+        const SINGLE_NOTCH_SPAN_HALF = 22.5;
+        const used = new Set();
+        for (let i = 0; i < crossings.length; i++) {
+            if (used.has(i))
+                continue;
+            const posA = crossings[i];
+            // Look for a near neighbor
+            let pairIdx = -1;
+            for (let j = i + 1; j < crossings.length; j++) {
+                if (used.has(j))
+                    continue;
+                const posB = crossings[j];
+                if (Math.abs(posB - posA) < PAIR_THRESHOLD) {
+                    pairIdx = j;
+                    break;
+                }
+            }
+            if (pairIdx >= 0) {
+                const posB = crossings[pairIdx];
+                used.add(i);
+                used.add(pairIdx);
+                // A is the LEFT one, B is the RIGHT one
+                const left = Math.min(posA, posB);
+                const right = Math.max(posA, posB);
+                // LipNotch A: extends OUT to the left (outer offset)
+                stickOps.push({
+                    kind: "spanned", type: "LipNotch",
+                    startPos: round(left - PAIR_NOTCH_OUTER_OFFSET),
+                    endPos: round(left + PAIR_NOTCH_INNER_OFFSET),
+                });
+                // LipNotch B: extends OUT to the right
+                stickOps.push({
+                    kind: "spanned", type: "LipNotch",
+                    startPos: round(right - PAIR_NOTCH_INNER_OFFSET),
+                    endPos: round(right + PAIR_NOTCH_OUTER_OFFSET),
+                });
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(left) });
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(right) });
+            }
+            else {
+                // Single crossing — symmetric notch
+                used.add(i);
+                stickOps.push({
+                    kind: "spanned", type: "LipNotch",
+                    startPos: round(posA - SINGLE_NOTCH_SPAN_HALF),
+                    endPos: round(posA + SINGLE_NOTCH_SPAN_HALF),
+                });
+                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(posA) });
+            }
         }
-        // Merge LipNotches with gap < 22mm
+        // Merge LipNotches with gap < 4mm (keep pairs separate, only merge
+        // truly-overlapping ones)
         if (crossings.length >= 2) {
-            joinAdjacentLipNotches(stickOps, HEADER_JOIN_GAP);
+            joinAdjacentLipNotches(stickOps, 4);
         }
     }
     // Nogs: studs cross them; emit InnerNotch + LipNotch + InnerDimple at every

@@ -81,5 +81,11 @@ export {
   isTinTrussFrameName,
   type SimplifyTinDecision,
 } from "./simplify-tin-truss.js";
+export {
+  simplifyRpFrame,
+  simplifyRpFramesInProject,
+  isRpPlanName,
+  type SimplifyRpDecision,
+} from "./simplify-rp.js";
 
 export const VERSION = "0.1.0";

@@ -11,4 +11,5 @@ export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findG
 export { STICK_TYPES, TOOL_TYPES, } from "./format.js";
 export { simplifyLinearTrussRfy, isLinearTruss, assertRfyVersion, RfyVersionMismatch, DEFAULT_PROFILE_GATE, } from "./simplify-linear-truss.js";
 export { simplifyTinTrussFrame, simplifyTinTrussFramesInProject, isTinPlanName, isTinTrussFrameName, } from "./simplify-tin-truss.js";
+export { simplifyRpFrame, simplifyRpFramesInProject, isRpPlanName, } from "./simplify-rp.js";
 export const VERSION = "0.1.0";

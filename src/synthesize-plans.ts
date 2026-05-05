@@ -34,6 +34,7 @@ import {
 import { generateFrameContextOps } from "./rules/index.js";
 import { joinAdjacentLipNotches } from "./rules/frame-context.js";
 import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
+import { simplifyRpFramesInProject } from "./simplify-rp.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -376,6 +377,12 @@ export function synthesizeRfyFromPlans(
   // frames (panel-chord trusses) and non-TIN plans are left untouched.
   // See `src/simplify-tin-truss.ts` for the rewrite scope.
   simplifyTinTrussFramesInProject(project.plans);
+
+  // Post-pass: RP (Roof-Panel) Reversed-Tooling simplifier. Mutates
+  // `frame.sticks[].tooling[]` in place for frames inside `-RP-` plans
+  // where horizontals (T/B/N) are continuous and verticals (S) get notched.
+  // See `src/simplify-rp.ts` for the rewrite scope.
+  simplifyRpFramesInProject(project.plans);
 
   for (const plan of project.plans) {
     planCount++;

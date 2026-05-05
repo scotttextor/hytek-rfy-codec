@@ -561,20 +561,53 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- TRUSS WEBS / FJ JOIST WEBS (W) on 89S41 -----------
-  // FJ joist V-prefix sticks are mapped to W role (usage="Web"). They get
-  // the same stud-style end clearance pattern: Swage span 39 + Dimple @16.5.
-  // Verified 2026-05-02 against HG260012 TH01-2F-FJ-89.075/J1201-1/V5
-  // (length 352): Swage 0..39 + Dimple@16.5 + Swage 313..352 + Dimple@335.5.
+  // ----------- TRUSS WEBS / FJ JOIST WEBS / WALL BRACES (W) on 89S41 -----------
+  // 2026-05-05 — DUAL BEHAVIOR (Agent P). Mirrors the 70S41 W rule. W sticks
+  // in TRUSS plans (TIN/TB2B) and FJ joists use stud-style end clearance,
+  // while W sticks in WALL plans (LBW/NLBW) use the wall-brace pattern with
+  // Chamfer + Dimple @10.
+  //
+  //   TRUSS WEB / FJ joist (W on truss/joist): Swage span 39 + Dimple @16.5.
+  //     Verified 2026-05-02 against HG260012 TH01-2F-FJ-89.075/J1201-1/V5
+  //     (length 352): Swage 0..39 + Dimple@16.5 + Swage 313..352 + Dimple@335.5.
+  //   WALL BRACE (W on 89mm wall): Chamfer @start + Swage 0..39 + Dimple @10
+  //     + Swage end-39..end + Dimple @length-10 + Chamfer @end.
+  //     Verified vs HG260023 PK3-GF-LBW-89.075 L21/W1..W8 (8 sticks length
+  //     ≈ 364mm): ref ops include Chamfer @start, Chamfer @end, Dimple @10,
+  //     Dimple @length-10. Codec previously emitted truss-style here causing
+  //     5 missing ops per stick and 3 wrong-position extras.
   {
     rolePattern: /^W$/,
     profilePattern: /^89S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+      // Truss/FJ behavior: Swage span 39 + Dimple @16.5 at each end (only NOT wall plans).
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high",
+        predicate: (ctx) => !isWallPlan(ctx) },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high",
+        predicate: (ctx) => !isWallPlan(ctx) },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high",
+        predicate: (ctx) => !isWallPlan(ctx) },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high",
+        predicate: (ctx) => !isWallPlan(ctx) },
+      // Wall-W behavior: same shape as 70mm rule. SPAN_89 = 39 (matches the
+      // 70mm value). Dimple at @10. Chamfer at angle >= 28° from vertical.
+      { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
+        notes: "89mm wall brace W: Chamfer @start (diagonal cut, angle>=28°)" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx),
+        notes: "89mm wall brace W: Swage span 39 at start" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx),
+        notes: "89mm wall brace W: Dimple @10mm (not @16.5)" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx) },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx) },
+      { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
+        notes: "89mm wall brace W: Chamfer @end (diagonal cut, angle>=28°)" },
     ],
   },
 

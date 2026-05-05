@@ -1488,15 +1488,155 @@ for (const plan of ourDoc.project.plans) {
       const meta = TB2B_META.get(tb2bFrameKey(plan.name, frame.name));
       if (meta) {
         const positionsByName = computeTB2BWebPositions(meta.sticks);
+
+        // Box-piece InnerDimple rule (chord-on-chord overlap).
+        //
+        // When one TopChord (or BottomChord) stick lies over another chord
+        // of the same usage in the YZ plane (centerline distance < 5mm at
+        // both endpoints), the LONGER underlying chord receives InnerDimple
+        // ops on the overlap region.
+        //
+        // Formula (verified vs HG260001 PK10/TN6-1 T4 boxes T5/T6/T7,
+        // PK6/TT6-1 T2 box T3):
+        //   - Project box piece's two endpoints onto the long chord's
+        //     centerline → arc-length positions box_a, box_b (sorted).
+        //   - N = max(2, floor((box_b - box_a - 100) / 1000) + 1)
+        //   - Emit N InnerDimple ops evenly spaced from (box_a + 50) to
+        //     (box_b - 50).
+        //
+        // Examples:
+        //   - T5 box on T4 (404mm overlap): N=2 → @709.8 (start+50) +
+        //     @1014.1 (end-50)
+        //   - T3 box on T2 (2100mm overlap): N=3 → @3842, @4842, @5842
+        //   - T7 box on T4 (2268mm overlap): N=3 → @4484, @5568, @6652
+        //
+        // Long chord ID rule: if A and B are both chords (same usage), B's
+        // endpoints both project onto A's [0, L_A] range AND perpendicular
+        // distance (in YZ plane) < 5mm at both endpoints, B is a "box on A".
+        // The LONGER stick is the long chord.
+        // Keyed by `${stickName}#${stickOccurrence}` so two sticks with the
+        // same name (e.g. mirrored TB2B trusses with two T2 sticks) get their
+        // own dimple lists. The occurrence is the index within `meta.sticks`
+        // grouped by name (0-indexed).
+        const boxDimplesByKey = new Map();  // "name#occurrence" → [pos, ...]
+        const chordSticks = [];
+        const stickKeyBySrc = new Map();  // meta.sticks-index → "name#occ"
+        {
+          const occByName = new Map();
+          for (let si = 0; si < meta.sticks.length; si++) {
+            const s = meta.sticks[si];
+            const u = s.usage;
+            const occ = occByName.get(s.name) ?? 0;
+            occByName.set(s.name, occ + 1);
+            const key = `${s.name}#${occ}`;
+            stickKeyBySrc.set(si, key);
+            if (u === "topchord" || u === "bottomchord") {
+              chordSticks.push({ ...s, _key: key });
+            }
+          }
+        }
+        // Compute YZ-plane distance from point P to line A→B
+        function distPointToLine2D(P, A, B) {
+          const dy = B.y - A.y, dz = B.z - A.z;
+          const lenSq = dy*dy + dz*dz;
+          if (lenSq < 1e-9) return Infinity;
+          const t = ((P.y - A.y) * dy + (P.z - A.z) * dz) / lenSq;
+          const projY = A.y + t * dy;
+          const projZ = A.z + t * dz;
+          return Math.hypot(P.y - projY, P.z - projZ);
+        }
+        function projArc2D(P, A, B) {
+          const dy = B.y - A.y, dz = B.z - A.z;
+          const lenSq = dy*dy + dz*dz;
+          if (lenSq < 1e-9) return 0;
+          const t = ((P.y - A.y) * dy + (P.z - A.z) * dz) / lenSq;
+          return t * Math.sqrt(lenSq);
+        }
+        for (let i = 0; i < chordSticks.length; i++) {
+          const A = chordSticks[i];
+          const Astart = A.start3D, Aend = A.end3D;
+          const Adya = Aend.y - Astart.y, Adza = Aend.z - Astart.z;
+          const Alen = Math.hypot(Adya, Adza);
+          if (Alen < 100) continue;  // skip degenerate
+          for (let j = 0; j < chordSticks.length; j++) {
+            if (i === j) continue;
+            const B = chordSticks[j];
+            if (B.usage !== A.usage) continue;
+            const Bstart = B.start3D, Bend = B.end3D;
+            const Bdya = Bend.y - Bstart.y, Bdza = Bend.z - Bstart.z;
+            const Blen = Math.hypot(Bdya, Bdza);
+            if (Blen < 100) continue;
+            // B is a "box on A" if both B endpoints project onto A's
+            // centerline within 5mm perpendicular distance AND lie inside
+            // A's arc-length range. Equal-length paired chords (T2+T3 with
+            // identical endpoints in TT9-1) BOTH count — each is a "box on
+            // the other" and ref emits dimples on each. Strictly-longer A
+            // (T4 on TN6-1 with shorter T5/T6/T7 boxes) is the most common
+            // case.
+            // Both B endpoints must project onto A's centerline within 5mm
+            // perpendicular AND lie inside [0, Alen] arc-length range.
+            const d1 = distPointToLine2D(Bstart, Astart, Aend);
+            const d2 = distPointToLine2D(Bend, Astart, Aend);
+            if (d1 > 5 || d2 > 5) continue;
+            const a1 = projArc2D(Bstart, Astart, Aend);
+            const a2 = projArc2D(Bend, Astart, Aend);
+            const boxA = Math.min(a1, a2);
+            const boxB = Math.max(a1, a2);
+            // Both endpoints must lie inside A's range (with 1mm slack).
+            if (boxA < -1 || boxB > Alen + 1) continue;
+            // Compute dimple positions
+            const overlapLen = boxB - boxA;
+            if (overlapLen < 100) continue;  // too short
+            // Round overlap to integer mm before deriving N — avoids float
+            // precision flips (e.g. 2099.96 vs 2100.04 giving N=2 vs N=3).
+            const overlapMm = Math.round(overlapLen);
+            const N = Math.max(2, Math.floor((overlapMm - 100) / 1000) + 1);
+            const startPos = boxA + 50;
+            const endPos = boxB - 50;
+            const positions = [];
+            for (let k = 0; k < N; k++) {
+              const t = N === 1 ? 0 : k / (N - 1);
+              positions.push(Math.round((startPos + t * (endPos - startPos)) * 100) / 100);
+            }
+            if (process.env.DEBUG_TB2B_BOX === "1") {
+              console.error(`[BOX] plan=${plan.name} frame=${frame.name} A=${A.name}(${Alen.toFixed(1)})[${A._key}] B=${B.name}(${Blen.toFixed(1)})[${B._key}] overlap=${boxA.toFixed(1)}..${boxB.toFixed(1)} N=${N} positions=${positions}`);
+            }
+            // Now apply correction: project the position back onto the
+            // ORIGINAL stick's tooling-arc-length convention. The codec
+            // stores positions on the trimmed-axis arc-length (some chords
+            // are arc-reversed for measurement-from-heel). For TB2B chords
+            // we apply the same arc-reversal as needsArcReversal in the
+            // computeTB2BWebPositions helper. Concretely: for sloped
+            // bottom-chords with apex-start (z descending), position is
+            // measured from heel = L - pos.
+            // For TB2B chord-on-chord box, we DO need to handle this for
+            // TopChords too — verified vs PK10 T4 box positions which
+            // match WITHOUT reversal (T4 is non-flipped TopChord with
+            // start.z=5358 high, end.z=2526 low — apex-at-start, but
+            // the missing InnerDimple positions match raw arc-length
+            // from start, NOT reversed).
+            // So box dimples appear to use RAW arc-length from A.start —
+            // no reversal. Verified for both T2 (TT6-1, flipped) and T4
+            // (TN6-1, non-flipped) cases.
+            const arr = boxDimplesByKey.get(A._key) ?? [];
+            for (const p of positions) arr.push(p);
+            boxDimplesByKey.set(A._key, arr);
+          }
+        }
+
         // Apply: for each stick whose name is in positionsByName AND name
         // matches /^[TBWRH]\d/ (truss member), strip Chamfer/Swage/InnerDimple/
         // LipNotch/Web ops and replace with Web@pt at each computed position.
         // Box-piece sticks (e.g. "T4 (Box1)") are NOT touched — their
         // InnerDimple ops are pre-derived by the codec/rules at the right
         // positions for snap-fit.
+        const stickOccByName = new Map();
         for (const stick of frame.sticks) {
           if (/\(Box\d+\)/.test(stick.name)) continue;
           if (!/^[TBWRH]\d/.test(stick.name)) continue;
+          const stOcc = stickOccByName.get(stick.name) ?? 0;
+          stickOccByName.set(stick.name, stOcc + 1);
+          const stKey = `${stick.name}#${stOcc}`;
           // Truss members: ALWAYS strip codec's wrong ops (Swage/Chamfer/
           // mid-stick InnerDimple/mid-stick LipNotch). Then add Web@pt at
           // each computed position (if any).
@@ -1530,6 +1670,20 @@ for (const plan of ourDoc.project.plans) {
           });
           for (const p of positions) {
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(p * 100) / 100 });
+          }
+          // Box-piece InnerDimple ops (chord-on-chord overlap rule).
+          // See boxDimplesByKey computation above the stick loop.
+          const boxDimples = boxDimplesByKey.get(stKey);
+          if (boxDimples && boxDimples.length > 0) {
+            for (const p of boxDimples) {
+              // Avoid duplicate at same position
+              const dup = stick.tooling.some(o =>
+                o.kind === "point" && o.type === "InnerDimple" &&
+                Math.abs(o.pos - p) < 1);
+              if (!dup) {
+                stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round(p * 100) / 100 });
+              }
+            }
           }
           // R-rail end-cap rule: short rails (~382mm) between truss apex
           // and webs get a fixed end-cap pattern at BOTH ends:
@@ -2152,11 +2306,46 @@ for (const ourFrame of ourDoc.project.plans[0].frames) {
   const refFrame = refFrames.get(ourFrame.name);
   if (!refFrame) continue;
 
-  const refSticks = new Map(refFrame.sticks.map(s => [s.name, s]));
+  // Pair same-name sticks by best-match score so back-to-back trusses
+  // (which have e.g. two T2 sticks with different geometry) get correctly
+  // matched. Without this, the previous Map[name]=stick collapse made
+  // both ours-T2 sticks compare against the SAME ref-T2 (last one in
+  // the file). Strict-occurrence ordering (T2#0→T2#0) also fails when
+  // ours and ref order opposite halves differently.
+  // Best-match: try each unused ref-stick of the same name, pick the
+  // one with the most ops matched.
+  const refByName = new Map();
+  for (const s of refFrame.sticks) {
+    if (!refByName.has(s.name)) refByName.set(s.name, []);
+    refByName.get(s.name).push(s);
+  }
+  const refUsed = new Set();
+  function getRefStick(ourStick) {
+    const arr = refByName.get(ourStick.name);
+    if (!arr || arr.length === 0) return null;
+    const candidates = arr.map((s, i) => ({ s, i })).filter(({i}) => !refUsed.has(`${ourStick.name}#${i}`));
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) {
+      refUsed.add(`${ourStick.name}#${candidates[0].i}`);
+      return candidates[0].s;
+    }
+    // Score each candidate by # ops matched (cheap pre-test using matchOps)
+    let best = candidates[0];
+    let bestScore = -1;
+    for (const c of candidates) {
+      const trial = matchOps(ourStick.tooling, c.s.tooling);
+      if (trial.matched.length > bestScore) {
+        bestScore = trial.matched.length;
+        best = c;
+      }
+    }
+    refUsed.add(`${ourStick.name}#${best.i}`);
+    return best.s;
+  }
   const frameRecord = { name: ourFrame.name, sticks: [] };
 
   for (const ourStick of ourFrame.sticks) {
-    const refStick = refSticks.get(ourStick.name);
+    const refStick = getRefStick(ourStick);
     if (!refStick) continue;
 
     const { matched, extras, missing } = matchOps(ourStick.tooling, refStick.tooling);

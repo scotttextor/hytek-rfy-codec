@@ -375,11 +375,13 @@ export function generateFrameContextOps(
     const usage = String(plate.stick.usage ?? "").toLowerCase();
     const isBottom = usage === "bottomplate" || usage === "bottomchord";
     const innerY = isBottom ? plate.box.yMax : plate.box.yMin;
-    // Use FJ +2mm offset for all plates. Agent's lip-inset formula didn't
-    // verify well against full corpus — wall LBW W stiffeners are sparse
-    // and the dominant notches come from stud crossings (separate loop).
+    // Use the active machine setup's toolClearance for the +offset on truss-
+    // web LipNotches. Per .sups: 2 for HYTEK 70/89mm setups, 6 for 75/78mm,
+    // 8 for 104mm. Agent's lip-inset formula didn't verify well against full
+    // corpus — wall LBW W stiffeners are sparse and the dominant notches come
+    // from stud crossings (separate loop).
     const offsetSign = +1;
-    const offsetMagnitudeBase = 2.0;
+    const offsetMagnitudeBase = resolvedSetup.toolClearance;
 
     // Build per-web crossing data: edge_lo, edge_hi, offset, center
     interface WebCrossing {

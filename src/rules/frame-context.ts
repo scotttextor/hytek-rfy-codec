@@ -14,6 +14,12 @@
  * are where the rectangles overlap.
  */
 import type { RfyToolingOp, RfyFrame, RfyStick, RfyPoint } from "../format.js";
+import {
+  type MachineSetup,
+  getMachineSetupForProfile,
+  getDefaultMachineSetup,
+  lipNotchToolLength,
+} from "../machine-setups.js";
 import { profileOffsets } from "./table.js";
 
 export interface BoundingBox {
@@ -138,10 +144,30 @@ function studLocalPosition(stud: StickWithBox, crossingY: number): number {
  * The per-stick base rules (table.ts) handle end-anchored ops. Frame-context
  * rules add LIP NOTCH + DIMPLE pairs at crossings.
  */
-export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyToolingOp[]> {
+export function generateFrameContextOps(
+  frame: RfyFrame,
+  setup?: MachineSetup,
+): Map<string, RfyToolingOp[]> {
   const layout = layoutFrame(frame);
   const result = new Map<string, RfyToolingOp[]>();
   for (const sb of layout) result.set(sb.stick.name, []);
+
+  // Resolve the active machine setup for this frame. Caller may pass an
+  // explicit setup; otherwise auto-resolve from the first stick's profile
+  // web (HYTEK F325iT 70mm vs 89mm vs 75/78/104mm). Falls back to the
+  // default 70mm setup when the profile isn't recognised. Per audit
+  // Section 4 (#3, #4), the resolved setup drives:
+  //   - `internalSpan` = lipNotchToolLength(setup) - 3
+  //     (= 45 for 70/89mm, 57 for 75/78mm, 72 for 104mm)
+  //   - `offsetMagnitudeBase` = setup.toolClearance
+  //     (= 2 for 70/89mm, 6 for 75/78mm, 8 for 104mm)
+  const resolvedSetup: MachineSetup =
+    setup ??
+    (frame.sticks[0]?.profile?.web !== undefined
+      ? (getMachineSetupForProfile(frame.sticks[0]!.profile!.web) ?? getDefaultMachineSetup())
+      : getDefaultMachineSetup());
+  const internalSpanFromSetup = lipNotchToolLength(resolvedSetup) - 3;
+  const internalDimpleOffsetFromSetup = internalSpanFromSetup / 2;
 
   // Studs: narrow vertical members (S, J). Filter out wide outlines (Kb/H).
   const studs = layout.filter(sb =>
@@ -222,16 +248,13 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
   for (const plate of plates) {
     const offsets = profileOffsets(plate.stick.profile.metricLabel.replace(/\s/g, ""));
     const span = offsets.span;
-    // TODO(rules-coverage): `internalSpan = 45` should derive from the machine
-    // setup's LipNotch tool length plus a small clearance. Per .sups:
-    //   70/89mm setups: LipNotch.length = 48mm → internal span ≈ 45 (-3 for tool clearance)
-    //   75/78mm setups: LipNotch.length = 60mm → internal span should be ~57
-    //   104mm setup:    LipNotch.length = 75mm → internal span should be ~72
-    // Currently hardcoded for 70/89 — wrong for 75/78/104. Use:
-    //   import { lipNotchToolLength } from "../machine-setups.js";
-    //   const internalSpan = lipNotchToolLength(setup) - 3;
-    const internalSpan = 45;        // width of internal lip notches (vs 39 at edges)
-    const internalDimpleOffset = 22.5;  // internal lip notch midpoint offset
+    // Width of internal lip notches (vs `span` at edges). Resolved from
+    // `setup.toolSetup.LipNotch.length - 3mm tool clearance` via
+    // `lipNotchToolLength(setup) - 3` at the top of generateFrameContextOps.
+    // Evaluates to 45 for 70/89mm setups (LipNotch.length=48), 57 for 75/78mm
+    // (LipNotch.length=60), 72 for 104mm (LipNotch.length=75).
+    const internalSpan = internalSpanFromSetup;
+    const internalDimpleOffset = internalDimpleOffsetFromSetup;
 
     const stickOps = result.get(plate.stick.name)!;
     const seenPositions = new Set<number>();  // dedupe crossings at same localPos
@@ -680,7 +703,7 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       if (localPos > stud.stick.length - 50) continue;
 
       const nogWidth = nog.box.yMax - nog.box.yMin;
-      const lipSpan = Math.max(45, nogWidth + 4);
+      const lipSpan = Math.max(internalSpanFromSetup, nogWidth + 4);
       const startPos = localPos - lipSpan / 2;
       const endPos = startPos + lipSpan;
 
@@ -717,7 +740,7 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
         stickOps.push({ kind: "point", type: "InnerDimple", pos: round(localPos) });
       } else {
         stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
-        stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+        stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + internalDimpleOffsetFromSetup) });
       }
 
       // Iter 5: B2B partner studs ALSO get InnerNotch at nog crossings.
@@ -746,7 +769,7 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       if (localPos > stud.stick.length - 50) continue;
 
       const memberWidth = h.box.yMax - h.box.yMin;
-      const lipSpan = Math.max(45, memberWidth + 4);
+      const lipSpan = Math.max(internalSpanFromSetup, memberWidth + 4);
       const startPos = localPos - lipSpan / 2;
       const endPos = startPos + lipSpan;
       const useSwage = lipNeighbor || !isWallEndStud;
@@ -755,7 +778,7 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
         stickOps.push({ kind: "point", type: "InnerDimple", pos: round(localPos) });
       } else {
         stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
-        stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + 22.5) });
+        stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + internalDimpleOffsetFromSetup) });
       }
     }
 
@@ -998,7 +1021,7 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       if (localPos < 50) continue;
       if (localPos > nog.stick.length - 50) continue;
       const studWidth = stud.box.xMax - stud.box.xMin;
-      const lipSpan = Math.max(45, studWidth + 4);
+      const lipSpan = Math.max(internalSpanFromSetup, studWidth + 4);
       nogCrossings.push({ localPos, lipSpan });
     }
     nogCrossings.sort((a, b) => a.localPos - b.localPos);

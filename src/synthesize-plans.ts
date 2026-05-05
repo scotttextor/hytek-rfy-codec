@@ -486,7 +486,17 @@ export function synthesizeRfyFromPlans(
       //   4. Call it → Map<stickName, ops[]>
       //   5. Merge those ops into each stick's tooling array (keeping the
       //      per-stick rules-engine ops the caller already populated)
-      const contextOps = computeFrameContextOps(frame, basis);
+      //
+      // Per-frame setup resolution (Agent Z, 2026-05-05): pick the machine
+      // setup matching this frame's profile so frame-context helpers
+      // (`internalSpan`, `offsetMagnitudeBase`) compute against the right
+      // tool dimensions for 70/89/75/78/104mm setups. Falls back to the
+      // project-level `setup` resolved at the top of this function.
+      const frameStickWeb = frame.sticks?.[0]?.profile?.web;
+      const frameSetup =
+        (frameStickWeb !== undefined ? getMachineSetupForProfile(frameStickWeb) : undefined) ??
+        setup;
+      const contextOps = computeFrameContextOps(frame, basis, frameSetup);
 
       // TB2B truss frames: the simplifier above (`simplifyTb2bTrussFramesInProject`)
       // has already replaced each truss-member stick's tooling with the
@@ -608,6 +618,7 @@ export function synthesizeRfyFromPlans(
 function computeFrameContextOps(
   frame: ParsedFrame,
   basis: FrameBasis,
+  setup?: MachineSetup,
 ): Map<string, RfyToolingOp[]> {
   const empty = new Map<string, RfyToolingOp[]>();
   if (!frame.sticks || frame.sticks.length === 0) return empty;
@@ -680,7 +691,7 @@ function computeFrameContextOps(
   };
 
   try {
-    return generateFrameContextOps(syntheticFrame);
+    return generateFrameContextOps(syntheticFrame, setup);
   } catch (e) {
     console.warn(`Frame "${frame.name}": frame-context generation failed — ${(e as Error).message}`);
     return empty;

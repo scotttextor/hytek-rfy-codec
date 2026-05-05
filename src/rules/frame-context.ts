@@ -693,6 +693,18 @@ export function generateFrameContextOps(frame: RfyFrame): Map<string, RfyTooling
       // Swage at most nog crossings, regardless of nog continuity.
       // Wall-end studs keep LipNotch (lip clearance for perpendicular wall
       // interlock). Lip-neighbor rule (B2B partner stud) also forces Swage.
+      //
+      // 2026-05-05 (Agent P) — investigated narrowing back to
+      // (isContinuousNog && !isWallEndStud) to fix 80+ Swage-where-LipNotch
+      // cases at mid-wall nog crossings on HG260001 PK4 + HG260023 PK4.
+      // Outcome: HG260001 dropped 83.53% -> 83.08% (-0.45pp). Per-plan:
+      // PK4-LBW 88.2% -> 87.5%, PK5-LBW 86.9% -> 85.9%, PK1-NLBW 90.5% ->
+      // 89.9%. Bigger Swage-correctly-emitted losses than LipNotch wins,
+      // because the broadening DOES capture the majority of nog crossings
+      // correctly. The 80 swap cases at z~1325 on 2757mm studs need a
+      // narrower discriminator (NOT continuous-nog detection — likely the
+      // specific structural-role of the nog at that height vs. other nog
+      // rows). Reverted. See docs/lbw-gap-research.md for details.
       const useSwage =
         lipNeighbor ||
         (!isWallEndStud) ||

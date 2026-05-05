@@ -39,9 +39,17 @@ import {
   projectToFrameLocal,
 } from "../dist/index.js";
 
-const [, , inputXmlPath, referenceRfyPath, outPrefix = "/tmp/diff"] = process.argv;
+// Strip --include-clean flag from argv before positional destructure.
+// When set, every stick (including ones with zero missing/extras) is emitted
+// in byFrame[].sticks[]. Default off — existing callers (raw/ baselines, ad-hoc
+// runs) keep gap-only output. Used by diff-all-*-full.mjs wrappers so future
+// rule-change agents can see the cleanly-matched cohort their proposed change
+// would break, not just the gappy sticks where the cohort is filtered out.
+const INCLUDE_CLEAN = process.argv.includes("--include-clean");
+const POSITIONAL = process.argv.filter(a => a !== "--include-clean");
+const [, , inputXmlPath, referenceRfyPath, outPrefix = "/tmp/diff"] = POSITIONAL;
 if (!inputXmlPath || !referenceRfyPath) {
-  console.error("Usage: node scripts/diff-vs-detailer.mjs <input.xml> <reference.rfy> [out-prefix]");
+  console.error("Usage: node scripts/diff-vs-detailer.mjs <input.xml> <reference.rfy> [out-prefix] [--include-clean]");
   process.exit(1);
 }
 
@@ -1782,7 +1790,7 @@ for (const ourFrame of ourDoc.project.plans[0].frames) {
     for (const m of missing) bumpOpType(opKey(m), "missing");
     for (const e of extras) bumpOpType(opKey(e), "extras");
 
-    if (extras.length || missing.length) {
+    if (INCLUDE_CLEAN || extras.length || missing.length) {
       frameRecord.sticks.push({
         name: ourStick.name,
         oursLength: ourStick.length,
@@ -1790,11 +1798,12 @@ for (const ourFrame of ourDoc.project.plans[0].frames) {
         matchedCount: matched.length,
         extras: extras.map(opLabel),
         missing: missing.map(opLabel),
+        ...(INCLUDE_CLEAN ? { matchedOps: matched.map(m => opLabel(m.ours)) } : {}),
       });
     }
   }
 
-  if (frameRecord.sticks.length > 0) report.byFrame.push(frameRecord);
+  if (INCLUDE_CLEAN || frameRecord.sticks.length > 0) report.byFrame.push(frameRecord);
 }
 
 // ---------------------------------------------------------------------------

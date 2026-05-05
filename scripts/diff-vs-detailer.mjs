@@ -13,6 +13,12 @@
  * Usage:
  *   node scripts/diff-vs-detailer.mjs <input.xml> <reference.rfy> [out-prefix]
  *
+ * Corpus-agnostic: pass any XML/RFY pair. For full per-corpus baselines, use
+ * the wrappers (which iterate this script over every plan):
+ *   - HG260001: scripts/diff-all-hg260001.mjs    (Y: drive)
+ *   - HG260044: scripts/diff-all-hg260044.mjs    (OneDrive cache)
+ *   - HG260023: scripts/diff-all-hg260023.mjs    (Y: drive)
+ *
  * Examples:
  *   # Compare our LBW output vs Detailer reference
  *   node scripts/diff-vs-detailer.mjs \

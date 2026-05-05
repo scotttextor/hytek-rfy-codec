@@ -1814,11 +1814,15 @@ for (const plan of ourDoc.project.plans) {
           //   + Web @60 (start cap bolt)
           //   Web @(L-60) + LeftFlange (L-156.7)..L + LipNotch (L-32.3)..L
           //   + RightFlange (L-8.2)..L
-          // Verified vs HG260001 PK6/TT6-1 B1, TT7-1 B1, TT8-1 B1, TT9-1 B1
-          // (all L=10930 horizontal bottom chords).
+          // Verified vs HG260001:
+          //   - PK6/TT6-1 B1, TT7-1 B1, TT8-1 B1, TT9-1 B1 (all L=10930)
+          //   - PK8/TN7-1 B1 (L=5870), TN10-1 B1 (L=4930), TN13/B1 (L=4270)
+          // Threshold lowered from 5000 → 1000 so shorter horizontal
+          // B-chords between TT apexes also get caps. Detection is
+          // "horizontal B-chord (zSpan < 5)", not absolute length.
           const meta3D = meta.sticks.find(s => s.name === stick.name);
           const meta3DZSpan = meta3D ? Math.abs(meta3D.end3D.z - meta3D.start3D.z) : 0;
-          const isLongHorizB = /^B\d/.test(stick.name) && meta3DLen > 5000 && meta3DZSpan < 5;
+          const isLongHorizB = /^B\d/.test(stick.name) && meta3DLen > 1000 && meta3DZSpan < 5;
           if (isLongHorizB) {
             const L = meta3DLen;
             const RF_SPAN = 8.19;

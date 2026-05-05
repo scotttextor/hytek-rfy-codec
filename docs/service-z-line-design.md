@@ -230,3 +230,83 @@ plus L26 similar studs. Estimated +50 ops on PK5-LBW alone.
    diff across the 3 corpora. Tweak tolerances if required.
 
 Push to master only on green at commit 3 (and 4 if substantive).
+
+---
+
+## 8 · Outcome (2026-05-05)
+
+**Shipped:** C2/C3 + C4 (gate-lift). Final cross-corpus parity:
+
+| Corpus     | Baseline | After  | Δ        | Ops gained |
+|------------|---------:|-------:|---------:|----------:|
+| HG260001   |  83.53%  | 84.26% | +0.73pp  | +130      |
+| HG260044   |  82.37%  | 82.89% | +0.52pp  |  +89      |
+| HG260023   |  78.39%  | 79.75% | +1.36pp  | +264      |
+| **Total**  |          |        | +2.61pp  | +483      |
+
+L23 evidence verification (Agent R's canonical case) — PK5-LBW 88.53%:
+  - S8 (x=72537, OUTSIDE z-line span 70537..72496):
+    pre  → extras [InnerService @296, @446]
+    post → NO InnerService ops (matches ref empty)
+  - S1/S2/S3 (inside span, z_start=-43, z=300/450 lines):
+    post → emit [@341, @491], matches ref EXACTLY
+
+## 9 · What's left on the table (deferred)
+
+Even with the dynamic rule shipped, ~30-40 InnerService ops remain
+mismatched per corpus. Two patterns to follow up:
+
+### 9.1 — "Closest stud wins" for narrow runs (NOT shipped, regressed)
+
+Some narrow Service runs (perp-span < 150mm) clearly target ONE stud
+even when 1-2 adjacent studs are within their perp-range. Tested rule:
+"closest stud to the run's perp-center wins, others lose this z-line."
+
+Result: regressed -0.10pp on HG260001. Specifically:
+  - L34/S5+S6 PAIR: ref includes S5 (closest) but EXCLUDES S6 (33mm).
+    My rule correctly excludes S6 (-9 extras gained).
+  - L34/S2+S3 PAIR: ref includes BOTH (S2 closest, S3 32mm away).
+    My rule wrongly excludes S3 (-2 matches lost).
+
+So the rule is NOT purely "closest wins" — there's an additional
+feature distinguishing the L34/S2-S3 case (both included) from the
+L34/S5-S6 case (only S5). Hypothesised candidates:
+  - flange direction (flipped flag): S5 false, S6 true (opposite);
+    S2 true, S3 false (also opposite). Doesn't discriminate.
+  - usage role: S2 TrimStud + S3 Stud; S5 TrimStud + S6 Stud. Same.
+  - spacing: S2-S3 = 42mm; S5-S6 = 43mm. Same.
+  - frame-level architectural intent (e.g. opening jamb vs. plain
+    column) — not visible in current XML parse.
+
+Estimated recovery if this is solved correctly: +1-2pp combined.
+**Code committed but reverted; see git history for the experimental
+implementation. Document this trail for the next agent.**
+
+### 9.2 — Position offset cases (PK2-NLBW N38/S1/S3, N39/S8)
+
+Mine: @66.4/@216.4. Ref: @74.0/@224.0. Δ = +7.6mm uniform.
+Suggests the stud's effective z_start is OFFSET by 7.6mm relative
+to the trimmed stud's start.z. Possibly a different start trim
+applied to studs sitting on a NLBW raised plate. Ungated for now;
+estimated +6-10 ops if pinned down.
+
+## 10 · Production parity follow-up (Agent T)
+
+The codec's production XML import lives in `hytek-rfy-tools/lib/
+framecad-import.ts` (separate repo). The harness `buildOurProject` is
+the test-only parser. **The Agent S code lives entirely in
+`scripts/diff-vs-detailer.mjs` (the test harness)**, NOT in the
+production-side parser.
+
+For production parity, `hytek-rfy-tools/lib/framecad-import.ts` would
+need:
+
+1. The same `<tool_action name="Service">` parse it likely already has
+   (or doesn't — Agent T to confirm).
+2. The static InnerService rule in `src/rules/table.ts` lines 106-118
+   and 136-149 needs the same "strip + dynamic emit" treatment.
+3. The same per-stud projection logic, which is ~80 LOC of pure
+   geometric code.
+
+Same migration template Agent Q used for TB2B trim guards. **Out of
+scope for this dispatch.** Flagged for Agent T.

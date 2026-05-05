@@ -30,6 +30,7 @@ import { generateFrameContextOps } from "./rules/index.js";
 import { joinAdjacentLipNotches } from "./rules/frame-context.js";
 import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
 import { simplifyRpFramesInProject } from "./simplify-rp.js";
+import { simplifyTb2bTrussFramesInProject, isTb2bPlanName } from "./simplify-tb2b-truss.js";
 const COPLANARITY_TOLERANCE_MM = 1.0;
 const ORTHOGONALITY_TOLERANCE = 1e-6;
 const STICK_PLANAR_TOLERANCE_MM = 1.0;
@@ -256,6 +257,14 @@ export function synthesizeRfyFromPlans(project, options = {}) {
     // where horizontals (T/B/N) are continuous and verticals (S) get notched.
     // See `src/simplify-rp.ts` for the rewrite scope.
     simplifyRpFramesInProject(project.plans);
+    // Post-pass: TB2B (Back-to-Back truss) simplifier. Replaces the codec's
+    // wall/joist tooling vocabulary on truss-member sticks (T/B/W/R/H) with
+    // the centerline-intersection Web@pt + box-piece InnerDimple + cap-stack
+    // vocabulary FrameCAD Detailer emits for back-to-back trusses.
+    // Originally lived as post-decode patches in `scripts/diff-vs-detailer.mjs`;
+    // migrated here 2026-05-05 by Agent O for production parity. See
+    // `src/simplify-tb2b-truss.ts` for the rewrite scope.
+    simplifyTb2bTrussFramesInProject(project.plans);
     for (const plan of project.plans) {
         planCount++;
         const frameNodes = [];
@@ -302,10 +311,21 @@ export function synthesizeRfyFromPlans(project, options = {}) {
             //   5. Merge those ops into each stick's tooling array (keeping the
             //      per-stick rules-engine ops the caller already populated)
             const contextOps = computeFrameContextOps(frame, basis);
+            // TB2B truss frames: the simplifier above (`simplifyTb2bTrussFramesInProject`)
+            // has already replaced each truss-member stick's tooling with the
+            // centerline-intersection Web@pt vocabulary that Detailer emits. Adding
+            // frame-context crossing ops here would re-pollute those sticks with
+            // wall-style LipNotch/Swage panels. Suppress contextOps merge on
+            // truss-member sticks (T/B/W/R/H prefix) of TB2B truss frames.
+            const isTb2bTrussFrame = isTb2bPlanName(plan.name) && frame.type === "Truss";
             const sticks = [];
             for (const stick of frame.sticks) {
                 stickCount++;
-                const merged = mergeStickTooling(stick.tooling, contextOps.get(stick.name) ?? [], stick.usage);
+                const isTb2bTrussMember = isTb2bTrussFrame &&
+                    /^[TBWRH]\d/.test(stick.name) &&
+                    !/\(Box\d+\)/.test(stick.name);
+                const ctx = isTb2bTrussMember ? [] : (contextOps.get(stick.name) ?? []);
+                const merged = mergeStickTooling(stick.tooling, ctx, stick.usage);
                 const stickWithMerged = { ...stick, tooling: merged };
                 sticks.push(buildStickXml(stickWithMerged, basis, frame.name, options.lenient ?? false));
             }

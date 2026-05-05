@@ -47,6 +47,23 @@ interface MetaStick {
   flipped: boolean;
 }
 
+/** Module-level chord arc-reversal helper (subset of the in-function
+ *  `needsArcReversal` in `computeTb2bWebPositions`, restricted to the
+ *  chord cases — topchord and bottomchord — which is all we need for
+ *  box-dimple ops since the rule only fires on same-usage chord pairs).
+ *  When this returns true, positions emitted in the chord's "start→end"
+ *  arc parameterisation should be reflected to L-p so they line up with
+ *  Detailer's heel-end measurement. */
+function chordArcReversal(s: MetaStick): boolean {
+  if (s.usage === "topchord" && s.flipped) return true;
+  if (s.usage === "bottomchord" && !s.flipped) {
+    const zSpan = Math.abs(s.end3D.z - s.start3D.z);
+    if (s.start3D.z > s.end3D.z + 0.1) return true;
+    if (zSpan < 5 && s.start3D.y > s.end3D.y + 0.1) return true;
+  }
+  return false;
+}
+
 /** Pairwise centerline-intersection rule for TB2B (back-to-back) trusses.
  *  Mirrors `simplify-linear-truss.ts` but works in whichever 2D plane the
  *  truss lies in (TB2B is typically YZ — sticks share a constant X — while
@@ -513,12 +530,15 @@ export function simplifyTb2bTrussFrame(frame: ParsedFrame): SimplifyTb2bDecision
   //
   // Per-instance occurrence counter mirrors `computeTb2bWebPositions` and
   // `computeBoxDimples`: each duplicate-name stick gets a unique key
-  // `name#occurrence`. The `occurrence` counts ALL occurrences of `name`
-  // across `frame.sticks` in iteration order — including box-piece sticks
-  // whose full name is "T4 (Box1)" (those don't collide with the bare
-  // "T4" key because the regex match is on the full name string).
+  // `name#occurrence`. The full-name regex skip (`\(Box\d+\)`) means
+  // "T4 (Box1)" doesn't share an occurrence counter with bare "T4".
+  // metaSticks[stickIdx] gives us the per-instance MetaStick for arc-
+  // reversal lookups (cap-stack rules previously used `find` by name
+  // which returned only the FIRST instance — that bug is fixed below by
+  // tracking `stickIdx` and using `metaSticks[stickIdx]`).
   const stickOccByName = new Map<string, number>();
-  for (const stick of frame.sticks) {
+  for (let stickIdx = 0; stickIdx < frame.sticks.length; stickIdx++) {
+    const stick = frame.sticks[stickIdx]!;
     if (/\(Box\d+\)/.test(stick.name)) continue;
     if (!/^[TBWRH]\d/.test(stick.name)) continue;
     const stOcc = stickOccByName.get(stick.name) ?? 0;
@@ -544,10 +564,27 @@ export function simplifyTb2bTrussFrame(frame: ParsedFrame): SimplifyTb2bDecision
       stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(p * 100) / 100 });
     }
 
-    // Box-piece InnerDimple ops (chord-on-chord overlap rule).
+    // Per-instance MetaStick (used for both box-dimple arc-reversal and
+    // cap-stack rules below). Indexed by stick array index — frame.sticks
+    // and metaSticks are 1:1 in iteration order, so metaSticks[stickIdx]
+    // is the right instance even when stick.name has duplicates.
+    const meta3D = metaSticks[stickIdx]!;
+    const meta3DLen = Math.hypot(
+      meta3D.end3D.y - meta3D.start3D.y,
+      meta3D.end3D.z - meta3D.start3D.z,
+    );
+
+    // Box-piece InnerDimple ops (chord-on-chord overlap rule). The raw
+    // dimple positions from `computeBoxDimples` are in the chord's
+    // start→end arc parameterisation; the same `chordArcReversal` rule
+    // applied to chord Web@pt above is also needed here so that a chord
+    // entered with apex-at-start (XML order) reports its heel-end IDs
+    // measured from the arc=0 (heel) end, not the arc=L (apex) end.
     const boxDimples = dimplesByKey.get(stKey);
     if (boxDimples && boxDimples.length > 0) {
-      for (const p of boxDimples) {
+      const reverse = chordArcReversal(meta3D);
+      for (const pRaw of boxDimples) {
+        const p = reverse ? meta3DLen - pRaw : pRaw;
         const dup = stick.tooling.some(
           (o) =>
             o.kind === "point" &&
@@ -559,14 +596,6 @@ export function simplifyTb2bTrussFrame(frame: ParsedFrame): SimplifyTb2bDecision
         }
       }
     }
-
-    // Stick length — used by cap-stack thresholds. Computed in the YZ plane
-    // (same convention as `len2D` above). Could be re-derived from the
-    // already-built metaSticks, but recomputing is cheaper than searching.
-    const meta3D = metaSticks.find((s) => s.name === stick.name);
-    const meta3DLen = meta3D
-      ? Math.hypot(meta3D.end3D.y - meta3D.start3D.y, meta3D.end3D.z - meta3D.start3D.z)
-      : 0;
 
     // R-rail short-cap rule: short rails (~382mm) between truss apex and
     // webs get a fixed end-cap pattern at BOTH ends.

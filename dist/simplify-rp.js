@@ -10,33 +10,23 @@ function rolePrefix(stickName) {
     return stickName.replace(/[0-9_].*$/, "");
 }
 /** Decide if this stick is a HORIZONTAL CONTINUOUS member under Reversed
- *  Tooling. Role is one of the wall horizontals (T/B/N) AND its world-space
- *  centerline is more horizontal than vertical. RP frames sometimes contain
- *  sloped rake-plates whose horizontal extent still dominates — those are
- *  still horizontal continuous. */
+ *  Tooling. Detection is by role prefix only — RP plans use the same role
+ *  conventions as walls (T=top plate, B=bottom plate, N=nog) and the role
+ *  prefix carries the IN-FRAME orientation correctly even when the frame
+ *  itself is a sloped panel-roof rake (where world-space orientation is
+ *  meaningless because the frame plane is tilted). Verified empirically:
+ *  in HG260001 GF-RP R1, S1 has world-space horizontal extent 1494mm
+ *  vs vertical 697mm because the rake plane is sloped — but in the frame's
+ *  own elevation S1 is a vertical stud. */
 function isHorizontalContinuous(stick) {
     const role = rolePrefix(stick.name);
-    if (!/^(T|Tp|B|Bp|Bh|N|Nog)$/i.test(role))
-        return false;
-    const dx = stick.end.x - stick.start.x;
-    const dy = stick.end.y - stick.start.y;
-    const dz = stick.end.z - stick.start.z;
-    const horiz = Math.sqrt(dx * dx + dy * dy);
-    const vert = Math.abs(dz);
-    return horiz >= vert;
+    return /^(T|Tp|B|Bp|Bh|N|Nog)$/i.test(role);
 }
 /** Decide if this stick is a VERTICAL NOTCHED member under Reversed Tooling.
- *  Role is wall-stud-like (S/J) AND z-extent dominates xy-extent. */
+ *  Same role-only detection rationale as `isHorizontalContinuous`. */
 function isVerticalNotched(stick) {
     const role = rolePrefix(stick.name);
-    if (!/^(S|J)$/i.test(role))
-        return false;
-    const dx = stick.end.x - stick.start.x;
-    const dy = stick.end.y - stick.start.y;
-    const dz = stick.end.z - stick.start.z;
-    const horiz = Math.sqrt(dx * dx + dy * dy);
-    const vert = Math.abs(dz);
-    return vert > horiz;
+    return /^(S|J)$/i.test(role);
 }
 /** Tolerance (mm) within which a spanned op is considered to be the
  *  end-cap span (anchored at startPos≈0 or endPos≈stickLength). */
@@ -53,6 +43,14 @@ const STD_END_SPAN_MM = 39;
 const STD_DIMPLE_OFFSET_MM = 16.5;
 /** RP horizontal end-cap dimple offset (10 mm — chord-style cap). */
 const RP_HORIZONTAL_DIMPLE_OFFSET_MM = 10;
+/** RP vertical NOTCHED start-cap dimple offset (78.5 mm) — InnerDimple
+ *  centred at 78.5mm = 16.5mm wall offset + 62mm horizontal-plate clearance.
+ *  62mm = 70mm web - 8mm tab clearance. */
+const RP_STUD_START_DIMPLE_OFFSET_MM = 78.5;
+/** RP vertical NOTCHED start-cap span — Swage|LipNotch from 56..101 mm
+ *  (45mm-wide tool, centred on the 78.5mm dimple). */
+const RP_STUD_START_SPAN_LO_MM = 56;
+const RP_STUD_START_SPAN_HI_MM = 101;
 /** Compute stick centerline length from world coords. The codec's per-stick
  *  rule emits ops anchored to this length (e.g. end-Swage at L-39). */
 function computeStickLength(stick) {
@@ -61,15 +59,17 @@ function computeStickLength(stick) {
     const dz = stick.end.z - stick.start.z;
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
-/** Strip start-anchored ops the standard wall rule emits on every stud:
- *    Swage 0..39  +  InnerDimple @16.5
- *  Returns the number of ops removed (mostly used for diagnostics). */
+/** Strip start-anchored ops the standard wall rule emits on every stud / plate:
+ *    {Swage|LipNotch} 0..39  +  InnerDimple @16.5
+ *  Returns the number of ops removed (mostly used for diagnostics).
+ *  We accept BOTH Swage and LipNotch since `table.ts` emits Swage on stud
+ *  roles (S/J) and LipNotch on plate roles (T/Tp/B/Bp/Bh/N). */
 function stripStandardStartCap(tooling) {
     let removed = 0;
     for (let i = tooling.length - 1; i >= 0; i--) {
         const op = tooling[i];
         if (op.kind === "spanned"
-            && op.type === "Swage"
+            && (op.type === "Swage" || op.type === "LipNotch")
             && Math.abs(op.startPos - 0) < END_ANCHOR_TOL_MM
             && Math.abs(op.endPos - STD_END_SPAN_MM) < END_ANCHOR_TOL_MM) {
             tooling.splice(i, 1);
@@ -86,15 +86,15 @@ function stripStandardStartCap(tooling) {
     }
     return removed;
 }
-/** Strip end-anchored ops the standard wall rule emits on every stud:
- *    Swage (L-39)..L  +  InnerDimple @(L-16.5)
+/** Strip end-anchored ops the standard wall rule emits on every stud / plate:
+ *    {Swage|LipNotch} (L-39)..L  +  InnerDimple @(L-16.5)
  *  Returns the number of ops removed. */
 function stripStandardEndCap(tooling, stickLen) {
     let removed = 0;
     for (let i = tooling.length - 1; i >= 0; i--) {
         const op = tooling[i];
         if (op.kind === "spanned"
-            && op.type === "Swage"
+            && (op.type === "Swage" || op.type === "LipNotch")
             && Math.abs(op.endPos - stickLen) < END_ANCHOR_TOL_MM
             && Math.abs((op.endPos - op.startPos) - STD_END_SPAN_MM) < END_ANCHOR_TOL_MM) {
             tooling.splice(i, 1);
@@ -137,6 +137,28 @@ function applyHorizontalCaps(stick) {
     modified = true;
     return modified;
 }
+/** Replace the codec's standard wall-stud start-cap on a vertical-notched
+ *  RP stick with the plate-over-plate notch pattern:
+ *
+ *    OUT:  Swage 0..39      (start)        IN:  Swage 56..101     (start)
+ *          InnerDimple @16.5 (start)            InnerDimple @78.5 (start)
+ *
+ *  End-side ops are NOT touched here (handled by the chamfer pass in the
+ *  next stage).
+ *
+ *  Tool choice — Swage vs LipNotch — depends on which of the two C-section
+ *  lip orientations the stud has. We don't have access to per-stud lip
+ *  orientation here, so we pick the cross-corpus majority (Swage 78 vs
+ *  LipNotch 38 across HG260001+HG260044) by default. The minority cases
+ *  produce a "Swage 56..101 vs LipNotch 56..101" mismatch — same span, same
+ *  position, different tool. That's still a 1-op miss (vs the previous
+ *  ~3-op miss for the standard wall caps), so net positive. */
+function applyStudStartCap(stick) {
+    const removed = stripStandardStartCap(stick.tooling);
+    // Insert RP plate-over-plate notch at start.
+    stick.tooling.push({ kind: "spanned", type: "Swage", startPos: RP_STUD_START_SPAN_LO_MM, endPos: RP_STUD_START_SPAN_HI_MM }, { kind: "point", type: "InnerDimple", pos: RP_STUD_START_DIMPLE_OFFSET_MM });
+    return removed > 0;
+}
 /** Run the RP Reversed-Tooling simplifier on a single frame.  Mutates
  *  `frame.sticks[].tooling[]` in place.  Caller is responsible for the
  *  plan-name gate; this function blindly applies the rewrite when called. */
@@ -151,8 +173,8 @@ export function simplifyRpFrame(frame) {
             }
         }
         else if (isVerticalNotched(stick)) {
-            // commit 3 will rewrite start cap here
-            void stick;
+            applyStudStartCap(stick);
+            studStartsRewritten.push(stick.name);
         }
     }
     if (horizontalsRewritten.length === 0

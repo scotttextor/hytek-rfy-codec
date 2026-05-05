@@ -318,6 +318,19 @@ export function synthesizeRfyFromPlans(project, options = {}) {
             // wall-style LipNotch/Swage panels. Suppress contextOps merge on
             // truss-member sticks (T/B/W/R/H prefix) of TB2B truss frames.
             const isTb2bTrussFrame = isTb2bPlanName(plan.name) && frame.type === "Truss";
+            // B-plate slab-anchor pruning (Agent U, 2026-05-05).
+            //
+            // Manual §7.10.2 ("Bottom Plate Bolt Holes") + §4.2.4 (Web Hole To
+            // End) describe slab-anchor ops (Web@8 + Bolt@62) as features of the
+            // SLAB-BEARING bottom plate. The codec's per-stick rule fires on every
+            // B-plate (B1, B2, B3, ...), but Detailer only emits these on the
+            // plate that physically rests on the slab. Sub-plates above doors/
+            // windows get only the standard end-cap LipNotches.
+            //
+            // Detection: any B-plate sitting 100mm+ above the lowest B-plate in
+            // the frame is a sub-plate (above-opening header B). Verified vs
+            // HG260001 PK1 N3/N14/N19/N29 (NLBW) + PK4-PK5 LBW corpus.
+            const nonPrimaryBPlateNames = computeNonPrimaryBPlateNames(frame, plan.name);
             const sticks = [];
             for (const stick of frame.sticks) {
                 stickCount++;
@@ -325,7 +338,10 @@ export function synthesizeRfyFromPlans(project, options = {}) {
                     /^[TBWRH]\d/.test(stick.name) &&
                     !/\(Box\d+\)/.test(stick.name);
                 const ctx = isTb2bTrussMember ? [] : (contextOps.get(stick.name) ?? []);
-                const merged = mergeStickTooling(stick.tooling, ctx, stick.usage);
+                const perStickOps = nonPrimaryBPlateNames.has(stick.name)
+                    ? stripSlabAnchorOps(stick.tooling)
+                    : stick.tooling;
+                const merged = mergeStickTooling(perStickOps, ctx, stick.usage);
                 const stickWithMerged = { ...stick, tooling: merged };
                 sticks.push(buildStickXml(stickWithMerged, basis, frame.name, options.lenient ?? false));
             }

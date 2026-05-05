@@ -167,3 +167,44 @@ For each wiring:
 3. If any corpus drops below floor (HG260001 84.71%, HG260044 83.44%,
    HG260023 80.33%), revert and investigate root cause.
 4. Push.
+
+## Commit log
+
+| Wiring | Commit | Notes |
+|---|---|---|
+| design doc | `67fa48f` | Agent Z: design doc for setup-data wiring (Top 5) |
+| #1 + #2 | `bcf3aa4` | SPAN_70/89 + DIMPLE_OFFSET_70/89 → helpers (single commit, same constants) |
+| #3 | `40ce761` | internalSpan / internalDimpleOffset → lipNotchToolLength(setup) - 3 |
+| #4 | `a2386e0` | offsetMagnitudeBase 2.0 → setup.toolClearance |
+| #5 | `20ed4e6` | BOX_DIMPLE_SPACING 1200 → setup.boxDimpleSpacing — author intent was a dedicated "Agent Z #5" commit; an automated auto-save commit absorbed the source change with a generic message before manual commit could land. Content is correct. |
+
+All 5 wirings in the audit's Top 5 landed neutrally on the 70/89mm corpora:
+HG260001 84.71% / HG260044 83.44% / HG260023 80.33% — exactly at the floors.
+Architectural improvements (wirings #3, #4, #5) deliver setup-correct values
+on 75/78/104mm setups; wirings #1 + #2 are module-load constants for
+profile-locked rule groups so no per-call setup propagation was required.
+
+## Skipped: wiring #6 (minimumTagLength)
+
+Audit Section 4 #6 explicitly flags wall LipNotch merge gap (hardcoded 12)
+vs `setup.minimumTagLength = 20` as risky — flipping wall=20 will MERGE more
+LipNotches and likely regress wall corpus parity since the 12 is empirically
+tuned. Skipped per dispatch instructions.
+
+## Bonus #7 candidate (`W_END_ANCHOR = 35` ↔ Tab.size1)
+
+Audit Section 4 #7: `simplify-tb2b-truss.ts:367 W_END_ANCHOR = 35` could be
+wired to `findTool(setup, "Tab").size1`. All HYTEK setups have Tab.size1=35
+(invariant) so this is a pure rename — no parity gain or risk. Not landed
+in this dispatch but trivial to add later.
+
+## Bonus #10 candidate (per-stick setup resolution)
+
+Audit Section 4 #10: today the project-level `setup` in
+`synthesize-plans.ts:397` was dead code (audit Section 5.I). Wiring #3
+landed the per-frame resolution at the call site of
+`computeFrameContextOps`, which makes the project-level `setup` no longer
+dead — it's the explicit fallback when a frame's first stick has no
+profile.web. This partially addresses #10. Per-stick (not per-frame)
+resolution would require threading setup through `mergeStickTooling` and
+each rule-engine call site; not in scope for this dispatch.

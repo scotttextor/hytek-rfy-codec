@@ -1190,7 +1190,16 @@ function buildOurProject(xmlText) {
         }
         TB2B_META.set(tb2bFrameKey(plan.name, String(f["@_name"])), { sticks: frameMetaSticks });
       }
-      plan.frames.push({ name: String(f["@_name"]), envelope: env, sticks, type: String(f["@_type"] ?? "") });
+      // Carry serviceActions through to the codec so the wall-service
+      // simplifier (src/simplify-wall-service.ts) can run inside
+      // synthesizeRfyFromPlans. Mirrors hytek-rfy-tools' production importer.
+      plan.frames.push({
+        name: String(f["@_name"]),
+        envelope: env,
+        sticks,
+        type: String(f["@_type"] ?? ""),
+        serviceActions: serviceActions.map(svc => ({ start: svc.start, end: svc.end })),
+      });
     }
     plans.push(plan);
   }

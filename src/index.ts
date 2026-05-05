@@ -13,8 +13,15 @@ export {
   transformationMatrixString,
   type ParsedProject, type ParsedPlan, type ParsedFrame, type ParsedStick, type ParsedStickProfile,
   type FrameBasis, type Vec2, type Vec3,
+  type ServiceAction,
   type SynthesizePlansOptions, type SynthesizePlansResult,
 } from "./synthesize-plans.js";
+export {
+  simplifyWallServiceFrame,
+  simplifyWallServiceInProject,
+  isWallServicePlanName,
+  applicableZLinePositions,
+} from "./simplify-wall-service.js";
 export {
   MACHINE_SETUPS,
   SETUP_BY_PROFILE_WEB,

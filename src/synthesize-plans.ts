@@ -36,6 +36,7 @@ import { joinAdjacentLipNotches } from "./rules/frame-context.js";
 import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
 import { simplifyRpFramesInProject } from "./simplify-rp.js";
 import { simplifyTb2bTrussFramesInProject, isTb2bPlanName } from "./simplify-tb2b-truss.js";
+import { simplifyWallServiceInProject } from "./simplify-wall-service.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -68,6 +69,27 @@ export interface ParsedStick {
   gauge?: string;
 }
 
+/**
+ * Service tool-action — derived from `<tool_action name="Service">` in the
+ * input XML. Used by `simplify-wall-service.ts` to emit per-stud InnerService
+ * ops on wall plans.
+ *
+ * There are two geometric kinds Detailer emits (see
+ * `docs/service-z-line-design.md` §1):
+ *   - **Vertical drop:** start.x==end.x && start.y==end.y, varying z. Marks
+ *     a single stud's electrical conduit run. Consumed by the importer's
+ *     existing T-plate / N-nog InnerService logic.
+ *   - **Horizontal run:** start.z==end.z, varying x or y. Marks a wiring run
+ *     at a constant height across multiple studs. Consumed by the wall-
+ *     service simplifier to project per-stud InnerService positions.
+ *
+ * Coordinates are world-3D (the same frame as `ParsedStick.start/end`).
+ */
+export interface ServiceAction {
+  start: Vec3;
+  end: Vec3;
+}
+
 export interface ParsedFrame {
   name: string;                              // "L1"
   envelope: [Vec3, Vec3, Vec3, Vec3];        // V0=BL, V1=BR, V2=TR, V3=TL in world 3D
@@ -80,6 +102,17 @@ export interface ParsedFrame {
   fastenerCount?: number;
   /** Optional pre-computed tool actions — populated when frame is a downstream-augmented copy. */
   toolActions?: unknown[];
+  /**
+   * Parsed `<tool_action name="Service">` z-lines for this frame, in
+   * world-3D. Populated by upstream importers (e.g.
+   * `hytek-rfy-tools/lib/framecad-import.ts`). Consumed by
+   * `simplifyWallServiceInProject` to emit dynamic InnerService ops on
+   * wall studs that the static @296/@446 rule cannot represent. Optional
+   * — when absent or empty, the wall-service simplifier still strips the
+   * static rule's output on wall plans (because no z-line covers any
+   * stud → empty result is the correct answer).
+   */
+  serviceActions?: ServiceAction[];
   /** Optional frame length (mm). */
   length?: number;
   /** Optional frame built height (mm). */
@@ -393,6 +426,17 @@ export function synthesizeRfyFromPlans(
   // migrated here 2026-05-05 by Agent O for production parity. See
   // `src/simplify-tb2b-truss.ts` for the rewrite scope.
   simplifyTb2bTrussFramesInProject(project.plans);
+
+  // Post-pass: Wall InnerService z-line simplifier. Replaces the static
+  // InnerService @296/@446 rule (`src/rules/table.ts`) with per-stud
+  // projections of the frame's <tool_action name="Service"> horizontal
+  // z-lines. Active only on wall plans (`-(N?LBW)-`); operates on wall
+  // studs (Stud/TrimStud/EndStud/JackStud).
+  // Originally lived as post-decode patches in `scripts/diff-vs-detailer.mjs`
+  // (Agent S, 2026-05-05); migrated here 2026-05-05 by Agent V for
+  // production parity. See `src/simplify-wall-service.ts` and
+  // `docs/simplify-wall-service-design.md`.
+  simplifyWallServiceInProject(project.plans);
 
   for (const plan of project.plans) {
     planCount++;

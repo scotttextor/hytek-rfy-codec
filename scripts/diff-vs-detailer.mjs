@@ -697,117 +697,13 @@ function buildOurProject(xmlText) {
           }
         }
 
-        // [Agent S] InnerService for vertical wall studs from horizontal
-        // <tool_action name="Service"> z-lines. Replaces the static @296/@446
-        // rule with a per-stud projection of the actual XML z-line schedule.
-        //
-        // The static @296/@446 rule (src/rules/table.ts) over-emits on studs
-        // outside the z-line's wall-axis span (e.g. HG260001 L23/S8 — codec
-        // wrongly emits, ref empty), and under-emits on frames whose Detailer
-        // service schedule shifts the height (e.g. L23/S9: ref @341/@491
-        // because z=300/450 + stud_start_z=-43 → 343-2/493-2).
-        //
-        // Selection rule (per design doc docs/service-z-line-design.md §3):
-        //   - stick is vertical (|dz|/length > 0.99)
-        //   - svc is horizontal (|svc.dz| < 0.01)
-        //   - same-wall perpendicular (perp coord match within 5mm)
-        //   - stick wall-axis pos within svc wall-axis span (5mm tolerance)
-        //   - z_h within stud's vertical extent
-        //   - 30 ≤ local_pos ≤ length - 30
-        // Position formula:
-        //   local_pos = z_h - z_stud_start - 2mm
-        // Verified across HG260001/HG260023/HG260044 LBW/NLBW corpora.
-        // Outer gate is the wall-plan check (not serviceActions.length) so
-        // wall plans whose frames have NO Service tool_actions still strip
-        // the static @296/@446 (e.g. HG260001 PK1-NLBW N14: ref has zero
-        // InnerService on its studs but the static rule emits @296/@446).
-        const isWallPlanForSvc = /-(N?LBW)-/i.test(plan.name);
-        if (isWallPlanForSvc) {
-          const u = String(stick.usage ?? "").toLowerCase();
-          const isWallStud = u === "stud" || u === "trimstud" ||
-                             u === "endstud" || u === "jackstud";
-          const sStartS = stick.start, sEndS = stick.end;
-          const dxS = sEndS.x - sStartS.x;
-          const dyS = sEndS.y - sStartS.y;
-          const dzS = sEndS.z - sStartS.z;
-          const studLen = Math.sqrt(dxS*dxS + dyS*dyS + dzS*dzS);
-          const isVertical = studLen > 0 && Math.abs(dzS) / studLen > 0.99;
-          if (isWallStud && isVertical) {
-            // Wall axis is whichever of x/y the stick run is perpendicular to —
-            // for a vertical stud, both x and y are constant; perpendicular is
-            // both. We match the wall via the z-line's run axis.
-            const studStartZ = Math.min(sStartS.z, sEndS.z);
-            const studEndZ = Math.max(sStartS.z, sEndS.z);
-            const studX = (sStartS.x + sEndS.x) / 2;
-            const studY = (sStartS.y + sEndS.y) / 2;
-            const dynamicPositions = [];
-            for (const svc of serviceActions) {
-              // Horizontal z-lines only (Service runs at constant z, varying x or y)
-              const svcDz = Math.abs(svc.start.z - svc.end.z);
-              if (svcDz > 0.01) continue;
-              const z_h = svc.start.z;
-              // z_h must be within the stud's vertical extent
-              if (z_h < studStartZ - 0.5 || z_h > studEndZ + 0.5) continue;
-              // Run axis: whichever of x/y the z-line varies in
-              const svcDx = Math.abs(svc.end.x - svc.start.x);
-              const svcDy = Math.abs(svc.end.y - svc.start.y);
-              const runAxis = svcDx >= svcDy ? "x" : "y";
-              if (runAxis === "x") {
-                // Wall plane: stud Y must match svc Y
-                if (Math.abs(studY - svc.start.y) > 5) continue;
-                // Stud X must lie within svc X span
-                const sxLo = Math.min(svc.start.x, svc.end.x);
-                const sxHi = Math.max(svc.start.x, svc.end.x);
-                if (studX < sxLo - 5 || studX > sxHi + 5) continue;
-              } else {
-                if (Math.abs(studX - svc.start.x) > 5) continue;
-                const syLo = Math.min(svc.start.y, svc.end.y);
-                const syHi = Math.max(svc.start.y, svc.end.y);
-                if (studY < syLo - 5 || studY > syHi + 5) continue;
-              }
-              // Project: local_pos along the stud (start to end direction).
-              // The stud's start/end has already received a 2mm/end trim
-              // (see the isFullStud trim block above), so we don't double-
-              // count it here — the formula reduces to (z_h - z_start_trimmed).
-              // Verified vs L23/S9 (z_start_trimmed=-41): 300-(-41)=341 ✓ ref @341.
-              const localPos = (sStartS.z <= sEndS.z)
-                ? (z_h - sStartS.z)
-                : (sStartS.z - z_h);
-              if (localPos < 30 || localPos > length - 30) continue;
-              dynamicPositions.push(Math.round(localPos * 10) / 10);
-            }
-            if (process.env.DBG_SERVICE === "1" && dynamicPositions.length > 0) {
-              console.error(
-                `[svc-z] ${plan.name} ${String(f["@_name"])}/${stick.name} ` +
-                `(len=${length}, z=${studStartZ.toFixed(1)}..${studEndZ.toFixed(1)}, ` +
-                `x=${studX.toFixed(1)}, y=${studY.toFixed(1)}) → ` +
-                `[${dynamicPositions.sort((a,b)=>a-b).join(", ")}]`
-              );
-            }
-            // Replace any static InnerService ops emitted by the rule engine
-            // (table.ts @296/@446) with the per-stud projected positions.
-            // Whether dynamicPositions is empty (no z-line covers this stud)
-            // or larger (multi-z-line schedule), the dynamic set is the
-            // ground truth — drop the static ones unconditionally.
-            for (let i = stick.tooling.length - 1; i >= 0; i--) {
-              const op = stick.tooling[i];
-              if (op.kind === "point" && op.type === "InnerService") {
-                stick.tooling.splice(i, 1);
-              }
-            }
-            const seen = new Set();
-            for (const p of dynamicPositions) {
-              if (seen.has(p)) continue;
-              seen.add(p);
-              stick.tooling.push({ kind: "point", type: "InnerService", pos: p });
-            }
-            stick.tooling.sort((a, b) => {
-              const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? 0 : length));
-              const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? 0 : length));
-              return pa - pb;
-            });
-          }
-        }
+        // [Agent V, 2026-05-05] InnerService z-line consumption (Agent S's
+        // 2026-05-05 patch) was MIGRATED INTO src/simplify-wall-service.ts.
+        // The harness now populates frame.serviceActions (see frames.push
+        // below) and synthesizeRfyFromPlans calls
+        // simplifyWallServiceInProject — production callers
+        // (hytek-rfy-tools) get the same fix.
+        // See docs/simplify-wall-service-design.md for the migration audit.
 
         // Web tool_actions: emit Web@pt on T plates only. Same selection
         // logic as Services (vertical line, z-range reaches/contains plate z).

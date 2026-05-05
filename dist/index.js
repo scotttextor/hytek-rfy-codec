@@ -6,6 +6,7 @@ export { parseXmlTree, buildXml, encodeXml, encodeTree } from "./encode.js";
 export { applyCsvToRfy } from "./apply.js";
 export { synthesizeRfyFromCsv } from "./synthesize.js";
 export { synthesizeRfyFromPlans, deriveFrameBasis, coerceEnvelopeToRect, projectToFrameLocal, transformationMatrixString, } from "./synthesize-plans.js";
+export { simplifyWallServiceFrame, simplifyWallServiceInProject, isWallServicePlanName, applicableZLinePositions, } from "./simplify-wall-service.js";
 export { MACHINE_SETUPS, SETUP_BY_PROFILE_WEB, getMachineSetupForProfile, getDefaultMachineSetup, findSectionSetup, findTool, endClearanceSpan, dimpleEndOffset, lipNotchToolLength, } from "./machine-setups.js";
 export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findGroup, RULE_TABLE, profileOffsets, generateFrameContextOps, layoutFrame, computeBox, roleFromName, } from "./rules/index.js";
 export { STICK_TYPES, TOOL_TYPES, } from "./format.js";

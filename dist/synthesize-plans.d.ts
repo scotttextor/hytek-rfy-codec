@@ -31,6 +31,26 @@ export interface ParsedStick {
     /** Sheet gauge as XML string, e.g. "0.75" / "0.95". Optional — used by simplify-linear-truss profile gate. */
     gauge?: string;
 }
+/**
+ * Service tool-action — derived from `<tool_action name="Service">` in the
+ * input XML. Used by `simplify-wall-service.ts` to emit per-stud InnerService
+ * ops on wall plans.
+ *
+ * There are two geometric kinds Detailer emits (see
+ * `docs/service-z-line-design.md` §1):
+ *   - **Vertical drop:** start.x==end.x && start.y==end.y, varying z. Marks
+ *     a single stud's electrical conduit run. Consumed by the importer's
+ *     existing T-plate / N-nog InnerService logic.
+ *   - **Horizontal run:** start.z==end.z, varying x or y. Marks a wiring run
+ *     at a constant height across multiple studs. Consumed by the wall-
+ *     service simplifier to project per-stud InnerService positions.
+ *
+ * Coordinates are world-3D (the same frame as `ParsedStick.start/end`).
+ */
+export interface ServiceAction {
+    start: Vec3;
+    end: Vec3;
+}
 export interface ParsedFrame {
     name: string;
     envelope: [Vec3, Vec3, Vec3, Vec3];
@@ -43,6 +63,17 @@ export interface ParsedFrame {
     fastenerCount?: number;
     /** Optional pre-computed tool actions — populated when frame is a downstream-augmented copy. */
     toolActions?: unknown[];
+    /**
+     * Parsed `<tool_action name="Service">` z-lines for this frame, in
+     * world-3D. Populated by upstream importers (e.g.
+     * `hytek-rfy-tools/lib/framecad-import.ts`). Consumed by
+     * `simplifyWallServiceInProject` to emit dynamic InnerService ops on
+     * wall studs that the static @296/@446 rule cannot represent. Optional
+     * — when absent or empty, the wall-service simplifier still strips the
+     * static rule's output on wall plans (because no z-line covers any
+     * stud → empty result is the correct answer).
+     */
+    serviceActions?: ServiceAction[];
     /** Optional frame length (mm). */
     length?: number;
     /** Optional frame built height (mm). */

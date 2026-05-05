@@ -31,6 +31,7 @@ import { joinAdjacentLipNotches } from "./rules/frame-context.js";
 import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
 import { simplifyRpFramesInProject } from "./simplify-rp.js";
 import { simplifyTb2bTrussFramesInProject, isTb2bPlanName } from "./simplify-tb2b-truss.js";
+import { simplifyWallServiceInProject } from "./simplify-wall-service.js";
 const COPLANARITY_TOLERANCE_MM = 1.0;
 const ORTHOGONALITY_TOLERANCE = 1e-6;
 const STICK_PLANAR_TOLERANCE_MM = 1.0;
@@ -265,6 +266,16 @@ export function synthesizeRfyFromPlans(project, options = {}) {
     // migrated here 2026-05-05 by Agent O for production parity. See
     // `src/simplify-tb2b-truss.ts` for the rewrite scope.
     simplifyTb2bTrussFramesInProject(project.plans);
+    // Post-pass: Wall InnerService z-line simplifier. Replaces the static
+    // InnerService @296/@446 rule (`src/rules/table.ts`) with per-stud
+    // projections of the frame's <tool_action name="Service"> horizontal
+    // z-lines. Active only on wall plans (`-(N?LBW)-`); operates on wall
+    // studs (Stud/TrimStud/EndStud/JackStud).
+    // Originally lived as post-decode patches in `scripts/diff-vs-detailer.mjs`
+    // (Agent S, 2026-05-05); migrated here 2026-05-05 by Agent V for
+    // production parity. See `src/simplify-wall-service.ts` and
+    // `docs/simplify-wall-service-design.md`.
+    simplifyWallServiceInProject(project.plans);
     for (const plan of project.plans) {
         planCount++;
         const frameNodes = [];

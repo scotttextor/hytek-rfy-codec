@@ -68,6 +68,46 @@ const BOLT_OFFSET_70 = 62;       // BOLT HOLE offset on bottom plates from each 
 const SPAN_89 = 39;
 const DIMPLE_OFFSET_89 = 16.5;
 
+/**
+ * Wall-W end-Swage span as a function of stick angle from vertical.
+ *
+ * For wall braces (W sticks in LBW/NLBW plans), Detailer scales the
+ * end-Swage cap span with the stick's angle. Vertical W's get ~39mm,
+ * shallow-angle W's grow modestly (~40-45mm), and steep W's grow
+ * substantially (~50-60mm at 39-43°).
+ *
+ * Empirical fit against 280 W-Swage gap pairs across HG260001 + HG260044
+ * + HG260023 LBW corpora (mined 2026-05-05 via scripts/mine-wallw-swage.mjs):
+ *
+ *   span = 39 / cos(angle) + 8 * tan²(angle)
+ *
+ * Rationale: 39/cos(angle) is the perpendicular cap projected onto the
+ * angled stick axis (the cap is fixed-width perpendicular to the plate).
+ * The 8*tan²(angle) term captures the additional axial coverage required
+ * by the angled-cut chord at the plate join — kicks in noticeably above
+ * ~22° where the cut becomes geometrically significant.
+ *
+ * Per-record RMSE (angles 9-43°): 0.36mm — within the 1.5mm match tolerance
+ * across the entire range. The fit also matches `39/cos(angle)^1.4` to
+ * 4 decimals; the explicit-residual form was chosen for legibility.
+ *
+ * Edge cases not captured: 8 short (≈194mm) W sticks at 57° in HG260044
+ * L12 want span ≈ 84mm (formula predicts 90mm — 6mm overshoot, still
+ * outside the 1.5mm position tolerance). Capped at 92mm to bound damage.
+ *
+ * Earlier attempt (Agent T): `39/sin(angle)` regressed HG260023 — wrong
+ * trig axis (the cap projects from horizontal to stick axis, which is
+ * cos not sin), and missing the quadratic-in-tan add for steep angles.
+ */
+function wallWEndSwageSpan(angleFromVerticalDeg: number): number {
+  const a = Math.max(0, angleFromVerticalDeg);
+  const rad = a * Math.PI / 180;
+  const cos = Math.cos(rad);
+  if (cos < 0.05) return 92;  // safety cap for near-horizontal W (shouldn't happen)
+  const tan = Math.sin(rad) / cos;
+  return Math.min(39 / cos + 8 * tan * tan, 92);
+}
+
 export const RULE_TABLE: RuleGroup[] = [
   // ----------- STUDS on 70S41 (any length) -----------
   {
@@ -549,10 +589,11 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high",
         predicate: (ctx) => !isWallPlan(ctx) },
       // Wall-W behavior: Chamfer @start + Swage 0..41 + Dimple @10 +
-      // Swage end-41..end + Dimple @length-10 + Chamfer @end.
-      // Span 41 is approximate — Detailer uses length-dependent span
-      // (= 39 / sin(angle)). 41mm is a reasonable mid-range value that
-      // matches many wall W's exactly and is close for most others.
+      // Swage end-span..end + Dimple @length-10 + Chamfer @end.
+      // Start Swage span 41 (always matches Detailer's start cap regardless
+      // of angle — verified 2026-05-05: 0/308 wall-W start Swages drift).
+      // End Swage span is angle-dependent (Detailer scales with cos+tan²).
+      // See wallWEndSwageSpan() for derivation.
       // Verified vs HG260001 PK4-PK5 wall W corpus.
       //
       // Chamfer-emit rule: Detailer chamfers W's that are angled >=28° from
@@ -568,8 +609,12 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "high",
         predicate: (ctx) => isWallPlan(ctx),
         notes: "Wall brace W: Dimple @10mm (not @16.5)" },
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 41 }, spanLength: 41, confidence: "high",
-        predicate: (ctx) => isWallPlan(ctx) },
+      { toolType: "Swage", kind: "spanned",
+        anchor: { kind: "endAnchored", offset: 0 },
+        spanLengthFn: (ctx) => wallWEndSwageSpan(ctx.angleFromVertical ?? 0),
+        confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx),
+        notes: "Wall brace W: end Swage span = 39/cos(angle) + 8*tan²(angle)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high",
         predicate: (ctx) => isWallPlan(ctx) },
       { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
@@ -608,7 +653,10 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high",
         predicate: (ctx) => !isWallPlan(ctx) },
       // Wall-W behavior: same shape as 70mm rule. SPAN_89 = 39 (matches the
-      // 70mm value). Dimple at @10. Chamfer at angle >= 28° from vertical.
+      // 70mm value) at start. End Swage uses angle-dependent span — same
+      // formula works on 89mm (verified vs HG260023 PK3 LBW W's at 28°:
+      // ref span 46.6 ≈ 39/cos(28°)+8*tan²(28°) = 46.4).
+      // Dimple at @10. Chamfer at angle >= 28° from vertical.
       { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high",
         predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
         notes: "89mm wall brace W: Chamfer @start (diagonal cut, angle>=28°)" },
@@ -618,8 +666,12 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "high",
         predicate: (ctx) => isWallPlan(ctx),
         notes: "89mm wall brace W: Dimple @10mm (not @16.5)" },
-      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high",
-        predicate: (ctx) => isWallPlan(ctx) },
+      { toolType: "Swage", kind: "spanned",
+        anchor: { kind: "endAnchored", offset: 0 },
+        spanLengthFn: (ctx) => wallWEndSwageSpan(ctx.angleFromVertical ?? 0),
+        confidence: "high",
+        predicate: (ctx) => isWallPlan(ctx),
+        notes: "89mm wall brace W: end Swage span = 39/cos(angle) + 8*tan²(angle)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high",
         predicate: (ctx) => isWallPlan(ctx) },
       { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",

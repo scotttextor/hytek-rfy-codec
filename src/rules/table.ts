@@ -32,6 +32,11 @@
  * offsets scale with profile width (≈ flange/2 + small fixed offset).
  */
 import type { RuleGroup } from "./types.js";
+import {
+  MACHINE_SETUPS,
+  endClearanceSpan,
+  dimpleEndOffset,
+} from "../machine-setups.js";
 
 const STUD_ROLES = /^(S|J)$/;          // S=full stud, J=jack stud (door/window jamb)
 const CRIPPLE_ROLES = /^Kb$/;          // Kb=king brace/cripple stud
@@ -40,33 +45,36 @@ const PLATE_ROLES = /^(T|B|Tp|Bp)$/;   // T/Tp=top plate, B/Bp=bottom plate
 const NOG_ROLES = /^(N|Nog)$/;
 const BRACE_ROLES = /^(Br|W|R|L)$/;    // W=web brace, R=ribbon, L=lintel — sticks-as-bracing
 
-// 70S41 profile constants (most common — derived empirically from fixture)
+// Per-profile end-anchored constants — derived from the canonical HYTEK
+// machine-setup .sups data via helpers in `../machine-setups.ts`.
 //
-// TODO(rules-coverage): these hardcoded values are derivable from the
-// machine-setup .sups data, now exposed via:
-//   import { endClearanceSpan, dimpleEndOffset } from "../machine-setups.js";
-//   SPAN_70 = endClearanceSpan(setup70)        // = TabSize(35) + EndClearance(4) = 39
-//   DIMPLE_OFFSET_70 = dimpleEndOffset(setup70) // = EndClearance(4) + (TabSize-Dimple1.Size1)/2 = 16.5
-//   BOLT_OFFSET_70 = setup70.boltHoleToEnd      // = 20 (NOT 62 — needs investigation)
-// Verified 2026-05-04 against HYTEK MACHINE TYPES 20260402.sups setup[2] (F325iT 70mm).
-// When the rules engine threads a `setup` through the StickContext it can
-// use these helpers and per-section data (e.g. dimple Y-position from
-// SectionSetup.SectionOptions.Fastener1) to handle 75/78/104mm correctly.
-const SPAN_70 = 39;     // start/end spanned-tool length
-const DIMPLE_OFFSET_70 = 16.5;  // INNER DIMPLE offset from each end
-const BOLT_OFFSET_70 = 62;       // BOLT HOLE offset on bottom plates from each end
-
-// 89S41 profile constants. Values verified 2026-05-01 against HG260044
-// GF-NLBW-89.075 reference: Detailer uses the SAME end-anchored offsets
-// for 89mm sticks as 70mm sticks (Dimple @16.5, Swage span 39). The
-// previous values (20.5, 44) were wrong — they came from a tentative
-// fixture with limited samples.
+// Each rule group below has a `profilePattern` of either `^70S41$` or
+// `^89S41$`, so by construction the 70-group only fires on 70mm sticks and
+// the 89-group only fires on 89mm sticks. We resolve the constants once at
+// module load using the setup that matches each profile (setup[2] = F325iT
+// 70mm, setup[6] = F325iT 89mm). The helpers compute:
 //
-// TODO(rules-coverage): identical formulas as 70mm — see helpers above.
-// machine-setup setup[6] (F325iT 89mm) gives: EndClearance=4, TabSize=35,
-// Dimple1.Size1=10 → SPAN=39 + DIMPLE_OFFSET=16.5 (matches the values here).
-const SPAN_89 = 39;
-const DIMPLE_OFFSET_89 = 16.5;
+//   SPAN          = TabSize + EndClearance                       (= 39)
+//   DIMPLE_OFFSET = EndClearance + (TabSize - Dimple1.Size1) / 2 (= 16.5)
+//
+// For HYTEK F325iT 70mm + 89mm both setups have Tab=35, EndClearance=4,
+// Dimple1=10, so SPAN=39 and DIMPLE_OFFSET=16.5 — identical to the previous
+// hardcoded values. The architectural improvement: the helpers are now the
+// single source of truth, so a future setup edit (or a new 75/78/104mm rule
+// group keyed off MACHINE_SETUPS["1"|"4"|"5"]) automatically picks up the
+// right values.
+//
+// BOLT_OFFSET_70 stays a hardcoded HYTEK construction-detail constant — see
+// audit Section 5.A. `setup.boltHoleToEnd = 20` does NOT match the 62mm
+// slab-anchor offset; the audit concluded that field applies to TB2B truss
+// bolts, not slab anchors, and 62 has no direct setup-field source.
+const _SETUP_70 = MACHINE_SETUPS["2"]!;  // F325iT 70mm
+const _SETUP_89 = MACHINE_SETUPS["6"]!;  // F325iT 89mm
+const SPAN_70 = endClearanceSpan(_SETUP_70);              // = 39 (Tab.size1 + endClearance)
+const DIMPLE_OFFSET_70 = dimpleEndOffset(_SETUP_70);      // = 16.5
+const BOLT_OFFSET_70 = 62;                                // HYTEK slab-anchor constant — not setup-derived
+const SPAN_89 = endClearanceSpan(_SETUP_89);              // = 39
+const DIMPLE_OFFSET_89 = dimpleEndOffset(_SETUP_89);      // = 16.5
 
 /**
  * Wall-W end-Swage span as a function of stick angle from vertical.

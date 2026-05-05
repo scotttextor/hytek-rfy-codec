@@ -321,11 +321,26 @@ function computeTB2BWebPositions(sticks) {
         const sign = posB_arc < inter.L2 / 2 ? +1 : -1;
         posB = Math.max(0, Math.min(inter.L2, posB_arc + sign * offset));
       }
-      // Push centerline crossings normally. Bolt-pair logic happens in a
-      // post-loop pass (see chordWebCrossings processing below) — we record
-      // chord-vs-web crossings there to enable panel-point pair-emission.
-      push(sA.name, posA);
-      push(sB.name, posB);
+      // For chord-vs-web crossings, DEFER the chord-side push: the
+      // post-loop pass decides whether to emit the centerline crossing
+      // (always for PERP webs; suppressed for PAR webs that share a panel
+      // point with a PERP neighbor — Detailer emits the PERP+98 pair
+      // there instead of the PAR centerline). Web-side push happens
+      // immediately. For chord-vs-chord and web-vs-web (filtered above),
+      // both sides push immediately as before.
+      const isChordWeb = (aIsChord && sB.usage === "web") || (bIsChord && sA.usage === "web");
+      if (!isChordWeb) {
+        push(sA.name, posA);
+        push(sB.name, posB);
+      } else {
+        // Push web-side now, defer chord-side until after we see PERP/PAR
+        // neighbors (post-loop pass below).
+        if (aIsChord) {
+          push(sB.name, posB);  // web-side
+        } else {
+          push(sA.name, posA);  // web-side
+        }
+      }
       // Record chord-vs-web crossings for post-loop panel-point pair
       // emission. The pair fires only when the PERP web has a PAR neighbor
       // within PANEL_RANGE on the same chord.
@@ -388,16 +403,28 @@ function computeTB2BWebPositions(sticks) {
     }
   }
 
-  // Panel-point bolt-pair rule. For each chord, find each PERP web crossing
-  // and check if there's a PAR (diagonal) web crossing within PANEL_RANGE
-  // along the chord. If so, emit a +98 pair toward that PAR's direction.
-  // Verified vs HG260001 PK10/TN6-1 T4:
-  //   W14 PERP @855, W15 PAR @935 (dist 80) → emit W14+98 = 953 ≈ ref @952.72
-  //   W19 PERP @2628, W18 PAR @2540 (dist 88) → emit W19-98 = 2530 ≈ ref @2530.46
-  //   W21 PERP @3570, W20 PAR @3486 (dist 84) → emit W21-98 = 3472 ≈ ref @3472.33
-  //   W23 PERP @4663, W22 PAR @4595 (dist 68) → emit W23-98 = 4565 ≈ ref @4565.45
-  //   W25 PERP @5191, W24 PAR @5113 (dist 78) → emit W25-98 = 5093 ≈ ref @5093.75
-  // PERP webs without PAR neighbors (W13/W16/W17 in PK10 TN6-1 T4) get NO pair.
+  // Panel-point bolt-pair rule. For each chord, decide which web crossings
+  // to emit as Web@pt and where to emit the +98 pair.
+  //
+  // Rules (verified vs HG260001):
+  //  - PERP web (|dot| < 0.5) crossing chord: ALWAYS emit centerline.
+  //  - PAR web (|dot| > 0.5) crossing chord:
+  //    - If a PERP neighbor exists within PANEL_RANGE on the same chord,
+  //      SUPPRESS the PAR centerline (Detailer emits the PERP+98 pair
+  //      instead). The PERP+98 pair fires below.
+  //    - Otherwise, emit the PAR centerline.
+  //  - PERP web with PAR neighbor: emit centerline + emit +98 toward PAR
+  //    direction.
+  //  - PERP web without PAR neighbor: emit centerline only.
+  //
+  // PK10/TN6-1 T4 panel-points (verified):
+  //   W14 PERP @855, W15 PAR @935 (dist 80) → emit W14 + W14+98=953 (ref @952.72)
+  //   W19 PERP @2628, W18 PAR @2540 (dist 88) → emit W19 + W19-98=2530 (ref @2530.46)
+  //   ... etc. PAR neighbors W15/W18/W20/W22/W24 are SUPPRESSED.
+  //
+  // PK8/TN10-1 B1 panel-points (verified — was 3 extras):
+  //   W6 PAR @2397, W7 PERP @2465 (dist 68) → emit W7 + W7-98=2367 (ref both)
+  //   PAR W6 centerline @2397 SUPPRESSED (was extra @2408).
   const PAIR_OFFSET = 98;
   const PANEL_RANGE = 130;  // PAR neighbor must be within this many mm
   const PERP_GATE = 0.5;
@@ -409,21 +436,40 @@ function computeTB2BWebPositions(sticks) {
     if (!chordStick) continue;
     const chordL = len2D(chordStick);
     for (const c of crossings) {
-      if (Math.abs(c.dot) >= PERP_GATE) continue;  // not PERP
-      // Find nearest PAR neighbor.
-      let bestPar = null;
+      const isPerp = Math.abs(c.dot) < PERP_GATE;
+      const isPar = Math.abs(c.dot) > PAR_GATE;
+      // Find nearest opposite-class neighbor.
+      let bestNeighbor = null;
       for (const o of crossings) {
         if (o === c) continue;
-        if (Math.abs(o.dot) <= PAR_GATE) continue;  // not PAR
+        const oIsPerp = Math.abs(o.dot) < PERP_GATE;
+        const oIsPar = Math.abs(o.dot) > PAR_GATE;
+        // We want PAR neighbor (when c is PERP) or PERP neighbor (when c is PAR).
+        if (isPerp && !oIsPar) continue;
+        if (isPar && !oIsPerp) continue;
         const dist = Math.abs(o.pos - c.pos);
         if (dist > PANEL_RANGE) continue;
-        if (!bestPar || dist < Math.abs(bestPar.pos - c.pos)) bestPar = o;
+        if (!bestNeighbor || dist < Math.abs(bestNeighbor.pos - c.pos)) bestNeighbor = o;
       }
-      if (!bestPar) continue;
-      // Emit +98 toward the PAR neighbor (sign = direction of neighbor).
-      const sign = bestPar.pos > c.pos ? +1 : -1;
-      const pair = c.pos + sign * PAIR_OFFSET;
-      if (pair >= 0 && pair <= chordL) push(chordName, pair);
+      if (isPerp) {
+        // PERP centerline always emitted.
+        push(chordName, c.pos);
+        // Plus +98 pair toward PAR neighbor if exists.
+        if (bestNeighbor) {
+          const sign = bestNeighbor.pos > c.pos ? +1 : -1;
+          const pair = c.pos + sign * PAIR_OFFSET;
+          if (pair >= 0 && pair <= chordL) push(chordName, pair);
+        }
+      } else if (isPar) {
+        // PAR centerline emitted only if NO PERP neighbor at panel point.
+        if (!bestNeighbor) {
+          push(chordName, c.pos);
+        }
+        // Else: suppressed — the PERP neighbor's +98 pair covers this.
+      } else {
+        // Neither pure PERP nor pure PAR — just emit centerline (rare edge).
+        push(chordName, c.pos);
+      }
     }
   }
 

@@ -297,6 +297,23 @@ function applyStudStartCap(stick: ParsedStick): boolean {
   return removed > 0;
 }
 
+/** Add Chamfer @end on a vertical-notched RP stud (the rake-end cut where
+ *  the stud meets the sloped chord). Cross-corpus evidence: 51 missing
+ *  Chamfer @end on HG260001 RP studs + 75 on HG260044 RP studs (126 total)
+ *  vs only 26+0 emitted as extras. The previous diff harness post-decode
+ *  patch (`scripts/diff-vs-detailer.mjs:2161`) stripped Chamfer from every
+ *  S stud unconditionally — that patch was based on HG260012 alone and is
+ *  now overzealous. We emit Chamfer @end here and the harness patch is
+ *  loosened in the same commit so emissions survive the round-trip. */
+function applyStudEndChamfer(stick: ParsedStick): boolean {
+  // Don't double-emit if the codec or another simplifier already added it.
+  for (const op of stick.tooling) {
+    if (op.kind === "end" && op.type === "Chamfer") return false;
+  }
+  stick.tooling.push({ kind: "end", type: "Chamfer" });
+  return true;
+}
+
 /** Run the RP Reversed-Tooling simplifier on a single frame.  Mutates
  *  `frame.sticks[].tooling[]` in place.  Caller is responsible for the
  *  plan-name gate; this function blindly applies the rewrite when called. */
@@ -312,6 +329,9 @@ export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
     } else if (isVerticalNotched(stick)) {
       applyStudStartCap(stick);
       studStartsRewritten.push(stick.name);
+      if (applyStudEndChamfer(stick)) {
+        studEndsChamfered.push(stick.name);
+      }
     }
   }
   if (

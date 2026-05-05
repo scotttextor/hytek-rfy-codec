@@ -2155,12 +2155,18 @@ for (const plan of ourDoc.project.plans) {
         }
       }
       if (isRPPlan) {
-        // RP frames: remove Chamfer on S/Stud sticks only. Chords (T/B) keep
-        // their Chamfers — ref has Chamfer@end on rafter chord ends meeting
-        // a hip/ridge (12 such ops on U1-GF-RP-70.075 ref).
+        // RP S/Stud Chamfer policy (2026-05-05, Agent L):
+        //   keep Chamfer @end (ref has 126 across HG260001+HG260044 studs;
+        //   the simplify-rp.ts post-pass emits these as part of Reversed
+        //   Tooling stud caps).
+        //   strip Chamfer @start (codec rules don't emit it on studs anyway,
+        //   but if any other source does, ref has only 41 + 4 = 45 of those
+        //   vs 25 + 0 emitted by the codec — strip is net negative).
+        // The previous unconditional strip was based on HG260012 (single
+        // corpus) and over-fit. See simplify-rp.ts:applyStudEndChamfer.
         if (/^S\d/.test(stick.name)) {
           stick.tooling = stick.tooling.filter(op =>
-            !(op.kind === "start" || op.kind === "end") || op.type !== "Chamfer"
+            !(op.kind === "start") || op.type !== "Chamfer"
           );
         }
         // RP edge studs (S1, S11 etc — at chord ymin or ymax): caps are

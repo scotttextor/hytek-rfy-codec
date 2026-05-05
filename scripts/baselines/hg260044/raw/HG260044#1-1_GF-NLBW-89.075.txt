@@ -3,10 +3,10 @@ OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-NLBW-
 Setup:    F325iT 89mm
 Frames:   our 1 | ref 1
 
-OPS:      our 106 | ref 97
+OPS:      our 105 | ref 97
 MATCHED:  87  (89.7% of ref)
 MISSING:  10  (ops Detailer has, we don't)
-EXTRAS:   19   (ops we have, Detailer doesn't)
+EXTRAS:   18   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
@@ -16,14 +16,14 @@ Swage@span                16         4        2   (80% ref-coverage)
 InnerService@pt            4         2        4   (67% ref-coverage)
 InnerDimple@pt            42         2        2   (95% ref-coverage)
 InnerNotch@span            4         0        4   (100% ref-coverage)
-Web@pt                     1         0        1   (100% ref-coverage)
+Web@pt                     1         0        0   (100% ref-coverage)
 Bolt@pt                    2         0        0   (100% ref-coverage)
 
 FRAMES WITH GAPS:
 
   N28 (7 sticks with gaps)
     T1       EXTRAS  (1): LipNotch 1673.0..1712.0
-    B3       EXTRAS  (2): Web @8.0 | LipNotch 58.0..97.0
+    B3       EXTRAS  (1): LipNotch 58.0..97.0
     H1       EXTRAS  (2): InnerDimple @58.5 | InnerDimple @1515.5
     N1       MISSING (2): Swage 0.0..39.0 | Swage 68.0..107.0
     N1       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 68.0..107.0 | LipNotch 68.0..107.0

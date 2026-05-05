@@ -378,16 +378,22 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- SHORT NOGS (length < 200) on 70S41 -----------
-  // 2026-05-04: Verified vs HG260001 PK1+PK2+PK4: short cross-noggin
-  // sticks (length < 200mm, sitting between two studs) want
-  // InnerNotch+LipNotch caps at start AND end. Net positive change overall
-  // (PK1: +0.6pp, PK4: +0.3pp). Some PK5 short nogs prefer Swage but the
-  // PK1+PK4 wins outweigh.
+  // ----------- SHORT NOGS (length < 200) on 70S41 — SPECIAL 164mm CASE -----------
+  // 2026-05-05 (Agent T): The original "<200mm short nog wants Notches" rule
+  // was empirically WRONG on 91 of 105 short N sticks across HG260001/044/023.
+  // Cross-corpus length-bucket analysis (LBW + NLBW + RP):
+  //   70-150mm:  Detailer wants Swage @start + Swage @end (89/91 mismatched)
+  //   164mm:     Detailer wants InnerNotch + LipNotch caps   (14/14 perfect)
+  //   170-190mm: Detailer wants Swage @start + Swage @end (14/14 mismatched)
+  // The 164mm case is a DOOR-HEAD CRIPPLE block — Detailer treats it as a
+  // header sub-piece and puts Notch caps on it. All other short nogs are
+  // regular cross-noggins and get Swage caps like long nogs.
+  // Narrowing the lengthRange to [162, 168] keeps the 164mm Notch behavior
+  // and lets every other short nog fall through to the LONG_NOG rule below.
   {
     rolePattern: NOG_ROLES,
     profilePattern: /^70S41$/,
-    lengthRange: [0, 200],
+    lengthRange: [162, 168],
     rules: [
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
@@ -398,11 +404,14 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- LONG NOGS (length >= 200) on 70S41 -----------
+  // ----------- ALL OTHER NOGS on 70S41 (cross-noggins, both short and long) -----------
+  // Length range starts at 0 — short nogs <162mm and >=168mm match here too.
+  // Verified across all 3 corpora 2026-05-05: 91/91 short nogs (excluding
+  // 164mm header-cripples) get Swage @start + Swage @end like long nogs.
   {
     rolePattern: NOG_ROLES,
     profilePattern: /^70S41$/,
-    lengthRange: [200, Infinity],
+    lengthRange: [0, Infinity],
     rules: [
       { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },

@@ -1,7 +1,7 @@
 # HG260001 Baseline — Per-Plan Op-Level Diff vs Detailer
 
-**Overall: 83.53% matched** (15036/18000 ops)
-Missing: 2964 (Detailer has, we lack) | Extras: 3115 (we emit, Detailer doesn't)
+**Overall: 83.66% matched** (15059/18000 ops)
+Missing: 2941 (Detailer has, we lack) | Extras: 3022 (we emit, Detailer doesn't)
 
 ## Per-plan parity
 | RFY | Parity | Matched | Ref | Missing | Extras |
@@ -9,14 +9,14 @@ Missing: 2964 (Detailer has, we lack) | Extras: 3115 (we emit, Detailer doesn't)
 | HG260001_GF-RP-70.075.rfy | 35.0% | 349 | 997 | 648 | 545 |
 | HG260001_GF-TIN-70.075.rfy | 67.0% | 676 | 1009 | 333 | 218 |
 | HG260001_GF-TIN-70.095.rfy | 95.5% | 84 | 88 | 4 | 4 |
-| HG260001_PK1-GF-NLBW-70.075.rfy | 90.5% | 2400 | 2652 | 252 | 277 |
+| HG260001_PK1-GF-NLBW-70.075.rfy | 90.6% | 2403 | 2652 | 249 | 258 |
 | HG260001_PK10-GF-TB2B-70.075.rfy | 83.0% | 498 | 600 | 102 | 120 |
 | HG260001_PK11-GF-TB2B-70.075.rfy | 77.7% | 227 | 292 | 65 | 62 |
 | HG260001_PK12-GF-TB2B-70.075.rfy | 84.6% | 670 | 792 | 122 | 237 |
-| HG260001_PK2-GF-NLBW-70.075.rfy | 90.0% | 1899 | 2109 | 210 | 262 |
+| HG260001_PK2-GF-NLBW-70.075.rfy | 90.5% | 1909 | 2109 | 200 | 235 |
 | HG260001_PK3-GF-NLBW-89.075.rfy | — | — | — | — | — |
-| HG260001_PK4-GF-LBW-70.075.rfy | 88.2% | 4201 | 4762 | 561 | 551 |
-| HG260001_PK5-GF-LBW-70.075.rfy | 86.9% | 3100 | 3567 | 467 | 455 |
+| HG260001_PK4-GF-LBW-70.075.rfy | 88.4% | 4210 | 4762 | 552 | 521 |
+| HG260001_PK5-GF-LBW-70.075.rfy | 86.9% | 3101 | 3567 | 466 | 438 |
 | HG260001_PK6-GF-TB2B-70.075.rfy | 85.1% | 354 | 416 | 62 | 150 |
 | HG260001_PK7-GF-TB2B-70.075.rfy | 81.9% | 194 | 237 | 43 | 101 |
 | HG260001_PK8-GF-TB2B-70.075.rfy | 96.1% | 198 | 206 | 8 | 35 |
@@ -26,11 +26,11 @@ Missing: 2964 (Detailer has, we lack) | Extras: 3115 (we emit, Detailer doesn't)
 | Tool | Missing (Detailer has) | Extras (we emit) | Net we lack |
 |---|---:|---:|---:|
 | InnerDimple | 807 | 651 | 156 |
-| Web | 617 | 777 | -160 |
-| Swage | 492 | 540 | -48 |
-| LipNotch | 521 | 515 | 6 |
+| Web | 618 | 754 | -136 |
+| Swage | 454 | 548 | -94 |
+| LipNotch | 528 | 476 | 52 |
 | InnerService | 237 | 341 | -104 |
-| InnerNotch | 122 | 133 | -11 |
+| InnerNotch | 129 | 94 | 35 |
 | Chamfer | 47 | 108 | -61 |
 | ScrewHoles | 49 | 2 | 47 |
 | RightFlange | 41 | 15 | 26 |

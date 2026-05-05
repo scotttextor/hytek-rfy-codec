@@ -3,17 +3,17 @@ OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-LBW-89.075.
 Setup:    F325iT 89mm
 Frames:   our 1 | ref 1
 
-OPS:      our 187 | ref 192
+OPS:      our 186 | ref 192
 MATCHED:  163  (84.9% of ref)
 MISSING:  29  (ops Detailer has, we don't)
-EXTRAS:   24   (ops we have, Detailer doesn't)
+EXTRAS:   23   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 Swage@span                28         9        9   (76% ref-coverage)
 LipNotch@span             25         6        7   (81% ref-coverage)
-Web@pt                     3         8        1   (27% ref-coverage)
+Web@pt                     3         8        0   (27% ref-coverage)
 InnerService@pt            6         1        6   (86% ref-coverage)
 InnerDimple@pt            76         5        0   (94% ref-coverage)
 InnerNotch@span            6         0        1   (100% ref-coverage)
@@ -25,7 +25,7 @@ FRAMES WITH GAPS:
 
   L21 (17 sticks with gaps)
     T1       MISSING (1): InnerService @49.5
-    B3       EXTRAS  (2): Web @8.0 | LipNotch 36.0..81.0
+    B3       EXTRAS  (1): LipNotch 36.0..81.0
     H1       MISSING (5): LipNotch 230.9..282.3 | LipNotch 660.3..711.8 | LipNotch 1089.8..1141.3 | LipNotch 1519.3..1570.8 | LipNotch 1793.0..1874.0
     H1       EXTRAS  (5): LipNotch 232.4..282.4 | LipNotch 661.9..711.9 | LipNotch 1091.4..1141.4 | LipNotch 1520.9..1570.9 | LipNotch 1835.0..1874.0
     N1       MISSING (1): Swage 0.0..39.0

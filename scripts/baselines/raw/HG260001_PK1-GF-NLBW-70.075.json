@@ -1,17 +1,17 @@
 {
   "inputXml": "Y:/(17) 2026 HYTEK PROJECTS/CORAL HOMES/HG260001 LOT 289 (29) COORA CRESENT CURRIMUNDI/03 DETAILING/03 FRAMECAD DETAILER/01 XML OUTPUT/HG260001 LOT 289 COORA CRESCENT CURRIMUNDI 4551-GF-NLBW-70.075.xml",
   "reference": "Y:/(17) 2026 HYTEK PROJECTS/CORAL HOMES/HG260001 LOT 289 (29) COORA CRESENT CURRIMUNDI/06 MANUFACTURING/04 ROLLFORMER FILES/Split_HG260001/HG260001_PK1-GF-NLBW-70.075.rfy",
-  "generated": "2026-05-05T09:14:24.281Z",
+  "generated": "2026-05-05T09:30:47.311Z",
   "setup": {
     "id": "2",
     "name": "F325iT 70mm"
   },
   "totals": {
-    "ours": 2677,
+    "ours": 2661,
     "ref": 2652,
-    "matched": 2400,
-    "missing": 252,
-    "extras": 277
+    "matched": 2403,
+    "missing": 249,
+    "extras": 258
   },
   "byFrame": [
     {
@@ -101,7 +101,6 @@
           "refLength": 33,
           "matchedCount": 1,
           "extras": [
-            "Web @8.0",
             "InnerDimple @16.5",
             "LipNotch 0.0..33.0"
           ],
@@ -261,12 +260,14 @@
           "name": "B2",
           "oursLength": 33,
           "refLength": 33,
-          "matchedCount": 2,
+          "matchedCount": 1,
           "extras": [
             "InnerDimple @16.5",
             "LipNotch 0.0..33.0"
           ],
-          "missing": []
+          "missing": [
+            "Web @8.0"
+          ]
         },
         {
           "name": "B3",
@@ -274,7 +275,6 @@
           "refLength": 153,
           "matchedCount": 6,
           "extras": [
-            "Web @8.0",
             "LipNotch 36.0..81.0"
           ],
           "missing": []
@@ -300,7 +300,6 @@
           "refLength": 33,
           "matchedCount": 1,
           "extras": [
-            "Web @8.0",
             "InnerDimple @16.5",
             "LipNotch 0.0..33.0"
           ],
@@ -317,22 +316,6 @@
           ],
           "missing": [
             "Swage 994.0..1033.0"
-          ]
-        },
-        {
-          "name": "N1",
-          "oursLength": 153,
-          "refLength": 153,
-          "matchedCount": 5,
-          "extras": [
-            "InnerNotch 0.0..39.0",
-            "LipNotch 0.0..39.0",
-            "InnerNotch 114.0..153.0",
-            "LipNotch 114.0..153.0"
-          ],
-          "missing": [
-            "Swage 0.0..39.0",
-            "Swage 114.0..153.0"
           ]
         },
         {
@@ -542,7 +525,6 @@
           "refLength": 33,
           "matchedCount": 1,
           "extras": [
-            "Web @8.0",
             "InnerDimple @16.5",
             "LipNotch 0.0..33.0"
           ],
@@ -559,22 +541,6 @@
           ],
           "missing": [
             "Swage 974.0..1013.0"
-          ]
-        },
-        {
-          "name": "N1",
-          "oursLength": 112,
-          "refLength": 111.999996185303,
-          "matchedCount": 2,
-          "extras": [
-            "InnerNotch 0.0..39.0",
-            "LipNotch 0.0..39.0",
-            "InnerNotch 73.0..112.0",
-            "LipNotch 73.0..112.0"
-          ],
-          "missing": [
-            "Swage 0.0..39.0",
-            "Swage 73.0..112.0"
           ]
         },
         {
@@ -826,22 +792,6 @@
             "LipNotch 583.5..628.5",
             "InnerNotch 904.0..943.0",
             "LipNotch 904.0..943.0"
-          ]
-        },
-        {
-          "name": "N6",
-          "oursLength": 153,
-          "refLength": 153,
-          "matchedCount": 2,
-          "extras": [
-            "InnerNotch 0.0..39.0",
-            "LipNotch 0.0..39.0",
-            "InnerNotch 114.0..153.0",
-            "LipNotch 114.0..153.0"
-          ],
-          "missing": [
-            "Swage 0.0..39.0",
-            "Swage 114.0..153.0"
           ]
         },
         {
@@ -1101,7 +1051,6 @@
           "refLength": 33,
           "matchedCount": 1,
           "extras": [
-            "Web @8.0",
             "InnerDimple @16.5",
             "LipNotch 0.0..33.0"
           ],
@@ -1118,22 +1067,6 @@
           ],
           "missing": [
             "Swage 984.0..1023.0"
-          ]
-        },
-        {
-          "name": "N1",
-          "oursLength": 122,
-          "refLength": 122.000003814697,
-          "matchedCount": 2,
-          "extras": [
-            "InnerNotch 0.0..39.0",
-            "LipNotch 0.0..39.0",
-            "InnerNotch 83.0..122.0",
-            "LipNotch 83.0..122.0"
-          ],
-          "missing": [
-            "Swage 0.0..39.0",
-            "Swage 83.0..122.0"
           ]
         },
         {
@@ -1207,6 +1140,22 @@
     {
       "name": "N45",
       "sticks": [
+        {
+          "name": "N1",
+          "oursLength": 122,
+          "refLength": 122,
+          "matchedCount": 2,
+          "extras": [
+            "Swage 0.0..39.0",
+            "Swage 83.0..122.0"
+          ],
+          "missing": [
+            "InnerNotch 0.0..39.0",
+            "LipNotch 0.0..39.0",
+            "InnerNotch 83.0..122.0",
+            "LipNotch 83.0..122.0"
+          ]
+        },
         {
           "name": "N2",
           "oursLength": 2832,

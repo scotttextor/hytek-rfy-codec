@@ -47,6 +47,23 @@ interface MetaStick {
   flipped: boolean;
 }
 
+/** Module-level chord arc-reversal helper (subset of the in-function
+ *  `needsArcReversal` in `computeTb2bWebPositions`, restricted to the
+ *  chord cases — topchord and bottomchord — which is all we need for
+ *  box-dimple ops since the rule only fires on same-usage chord pairs).
+ *  When this returns true, positions emitted in the chord's "start→end"
+ *  arc parameterisation should be reflected to L-p so they line up with
+ *  Detailer's heel-end measurement. */
+function chordArcReversal(s: MetaStick): boolean {
+  if (s.usage === "topchord" && s.flipped) return true;
+  if (s.usage === "bottomchord" && !s.flipped) {
+    const zSpan = Math.abs(s.end3D.z - s.start3D.z);
+    if (s.start3D.z > s.end3D.z + 0.1) return true;
+    if (zSpan < 5 && s.start3D.y > s.end3D.y + 0.1) return true;
+  }
+  return false;
+}
+
 /** Pairwise centerline-intersection rule for TB2B (back-to-back) trusses.
  *  Mirrors `simplify-linear-truss.ts` but works in whichever 2D plane the
  *  truss lies in (TB2B is typically YZ — sticks share a constant X — while

@@ -1506,7 +1506,7 @@ function buildOurProject(xmlText) {
         }
         TB2B_META.set(tb2bFrameKey(plan.name, String(f["@_name"])), { sticks: frameMetaSticks });
       }
-      plan.frames.push({ name: String(f["@_name"]), envelope: env, sticks });
+      plan.frames.push({ name: String(f["@_name"]), envelope: env, sticks, type: String(f["@_type"] ?? "") });
     }
     plans.push(plan);
   }

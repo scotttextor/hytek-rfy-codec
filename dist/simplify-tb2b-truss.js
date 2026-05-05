@@ -8,6 +8,25 @@ export function isTb2bPlanName(planName) {
 function isTb2bTrussFrame(frame) {
     return frame.type === "Truss";
 }
+/** Module-level chord arc-reversal helper (subset of the in-function
+ *  `needsArcReversal` in `computeTb2bWebPositions`, restricted to the
+ *  chord cases — topchord and bottomchord — which is all we need for
+ *  box-dimple ops since the rule only fires on same-usage chord pairs).
+ *  When this returns true, positions emitted in the chord's "start→end"
+ *  arc parameterisation should be reflected to L-p so they line up with
+ *  Detailer's heel-end measurement. */
+function chordArcReversal(s) {
+    if (s.usage === "topchord" && s.flipped)
+        return true;
+    if (s.usage === "bottomchord" && !s.flipped) {
+        const zSpan = Math.abs(s.end3D.z - s.start3D.z);
+        if (s.start3D.z > s.end3D.z + 0.1)
+            return true;
+        if (zSpan < 5 && s.start3D.y > s.end3D.y + 0.1)
+            return true;
+    }
+    return false;
+}
 /** Pairwise centerline-intersection rule for TB2B (back-to-back) trusses.
  *  Mirrors `simplify-linear-truss.ts` but works in whichever 2D plane the
  *  truss lies in (TB2B is typically YZ — sticks share a constant X — while
@@ -22,7 +41,18 @@ function isTb2bTrussFrame(frame) {
  *    only the two end-caps; W14 (which crosses R9 mid-stick) has 3 Webs.
  *  - Chord/rail members (T/B/R/H): emit Web@pt at every web/rail
  *    centerline crossing, end-zone filtered.
- *  Returns Map<stickName, sortedPositions[]>. */
+ *
+ *  Per-instance keying: a single TB2B truss frame can contain multiple
+ *  sticks with the SAME name (e.g. apex-pair top chords both named `T2`,
+ *  heel webs `W7`/`W8` repeated across left/right halves). The 2D
+ *  centerline-intersection logic respects each instance's coordinates, so
+ *  we key the position map by `name#occurrence_index` (0-based count of
+ *  prior MetaSticks with the same name, in the order they appear in
+ *  `sticks`). Each chord instance receives only the bolt-pairs at its
+ *  OWN geometric web crossings, eliminating the union-emit bug that was
+ *  inflating T-chord Web@pt by ~3× on HG260044/HG260023 PK# TB2B plans
+ *  (~1340 extras total — see frida-mined-gaps.md Gap #2). Callers must
+ *  rebuild the same per-instance key when reading positions back out. */
 export function computeTb2bWebPositions(sticks) {
     // Detect the constant-axis: compute per-axis range across ALL endpoints.
     // The axis with min range (within 1mm) is the "out-of-plane" axis.
@@ -116,29 +146,42 @@ export function computeTb2bWebPositions(sticks) {
     }
     const CHORD_HALF_DEPTH = 35;
     const WEB_VS_RAIL_OFFSET = 15;
-    const rawByName = new Map();
-    function push(name, pos) {
-        const arr = rawByName.get(name);
+    // Build per-instance keys: `${name}#${occurrence_in_sticks}` so duplicate-
+    // name sticks (apex-pair T-chords, heel-pair Ws) each get a unique key.
+    // Caller must rebuild the same key when reading positions back out.
+    const stickKeys = [];
+    {
+        const occByName = new Map();
+        for (const s of sticks) {
+            const occ = occByName.get(s.name) ?? 0;
+            occByName.set(s.name, occ + 1);
+            stickKeys.push(`${s.name}#${occ}`);
+        }
+    }
+    const rawByKey = new Map();
+    function push(key, pos) {
+        const arr = rawByKey.get(key);
         if (arr)
             arr.push(pos);
         else
-            rawByName.set(name, [pos]);
+            rawByKey.set(key, [pos]);
     }
-    // Per-chord list of (web, posA, dot). After the main loop we use this to
-    // decide which PERP webs have a PAR neighbor on the same chord — gates
-    // the +98 bolt-pair emission.
+    // Per-chord-instance list of (web-key, posA, dot). After the main loop we
+    // use this to decide which PERP webs have a PAR neighbor on the same chord
+    // — gates the +98 bolt-pair emission. Keyed by per-instance chord key.
     const chordWebCrossings = new Map();
-    function recordChordWeb(chordName, webName, pos, dot) {
-        let arr = chordWebCrossings.get(chordName);
+    function recordChordWeb(chordKey, webKey, pos, dot) {
+        let arr = chordWebCrossings.get(chordKey);
         if (!arr) {
             arr = [];
-            chordWebCrossings.set(chordName, arr);
+            chordWebCrossings.set(chordKey, arr);
         }
-        arr.push({ webName, pos, dot });
+        arr.push({ webKey, pos, dot });
     }
     for (let i = 0; i < sticks.length; i++) {
         for (let j = i + 1; j < sticks.length; j++) {
             const sA = sticks[i], sB = sticks[j];
+            const keyA = stickKeys[i], keyB = stickKeys[j];
             // Web-to-web: skip (TB2B trusses fasten webs to chords, not web-to-web).
             if (sA.usage === "web" && sB.usage === "web")
                 continue;
@@ -198,22 +241,22 @@ export function computeTb2bWebPositions(sticks) {
             // point with a PERP neighbor).
             const isChordWeb = (aIsChord && sB.usage === "web") || (bIsChord && sA.usage === "web");
             if (!isChordWeb) {
-                push(sA.name, posA);
-                push(sB.name, posB);
+                push(keyA, posA);
+                push(keyB, posB);
             }
             else {
                 if (aIsChord) {
-                    push(sB.name, posB); // web-side
+                    push(keyB, posB); // web-side
                 }
                 else {
-                    push(sA.name, posA); // web-side
+                    push(keyA, posA); // web-side
                 }
             }
             if (aIsChord && sB.usage === "web") {
-                recordChordWeb(sA.name, sB.name, posA, dot);
+                recordChordWeb(keyA, keyB, posA, dot);
             }
             else if (bIsChord && sA.usage === "web") {
-                recordChordWeb(sB.name, sA.name, posB, dot);
+                recordChordWeb(keyB, keyA, posB, dot);
             }
             // Chord-chord apex 2-bolt pair rule.
             const APEX_PAIR_OFFSET = 153.4;
@@ -231,9 +274,9 @@ export function computeTb2bWebPositions(sticks) {
                     const pairA = posA + sign_a * APEX_PAIR_OFFSET;
                     const pairB = posB + sign_b * APEX_PAIR_OFFSET;
                     if (pairA >= 0 && pairA <= inter.L1)
-                        push(sA.name, pairA);
+                        push(keyA, pairA);
                     if (pairB >= 0 && pairB <= inter.L2)
-                        push(sB.name, pairB);
+                        push(keyB, pairB);
                 }
                 else if (isTApex && (aAtEnd || bAtEnd)) {
                     if (aAtEnd && !bAtEnd && sB.usage === "topchord") {
@@ -241,14 +284,14 @@ export function computeTb2bWebPositions(sticks) {
                         const sign_b = bNearStart ? +1 : -1;
                         const pairB = posB + sign_b * APEX_PAIR_OFFSET;
                         if (pairB >= 0 && pairB <= inter.L2)
-                            push(sB.name, pairB);
+                            push(keyB, pairB);
                     }
                     if (bAtEnd && !aAtEnd && sA.usage === "topchord") {
                         const aNearStart = posA < inter.L1 / 2;
                         const sign_a = aNearStart ? +1 : -1;
                         const pairA = posA + sign_a * APEX_PAIR_OFFSET;
                         if (pairA >= 0 && pairA <= inter.L1)
-                            push(sA.name, pairA);
+                            push(keyA, pairA);
                     }
                 }
             }
@@ -262,11 +305,12 @@ export function computeTb2bWebPositions(sticks) {
     const PANEL_RANGE = 130;
     const PERP_GATE = 0.5;
     const PAR_GATE = 0.5;
-    for (const [chordName, crossings] of chordWebCrossings) {
+    for (const [chordKey, crossings] of chordWebCrossings) {
         crossings.sort((a, b) => a.pos - b.pos);
-        const chordStick = sticks.find((s) => s.name === chordName);
-        if (!chordStick)
+        const chordIdx = stickKeys.indexOf(chordKey);
+        if (chordIdx < 0)
             continue;
+        const chordStick = sticks[chordIdx];
         const chordL = len2D(chordStick);
         for (const c of crossings) {
             const isPerp = Math.abs(c.dot) < PERP_GATE;
@@ -288,21 +332,21 @@ export function computeTb2bWebPositions(sticks) {
                     bestNeighbor = o;
             }
             if (isPerp) {
-                push(chordName, c.pos);
+                push(chordKey, c.pos);
                 if (bestNeighbor) {
                     const sign = bestNeighbor.pos > c.pos ? +1 : -1;
                     const pair = c.pos + sign * PAIR_OFFSET;
                     if (pair >= 0 && pair <= chordL)
-                        push(chordName, pair);
+                        push(chordKey, pair);
                 }
             }
             else if (isPar) {
                 if (!bestNeighbor) {
-                    push(chordName, c.pos);
+                    push(chordKey, c.pos);
                 }
             }
             else {
-                push(chordName, c.pos);
+                push(chordKey, c.pos);
             }
         }
     }
@@ -311,10 +355,11 @@ export function computeTb2bWebPositions(sticks) {
     const W_END_ANCHOR = 35;
     const W_MID_BUFFER = 5;
     const out = new Map();
-    for (const [name, raw] of rawByName) {
-        const stick = sticks.find((s) => s.name === name);
-        if (!stick)
+    for (const [key, raw] of rawByKey) {
+        const idx = stickKeys.indexOf(key);
+        if (idx < 0)
             continue;
+        const stick = sticks[idx];
         const L = len2D(stick);
         const isWeb = stick.usage === "web";
         const sorted = raw.slice().sort((a, b) => a - b);
@@ -333,14 +378,14 @@ export function computeTb2bWebPositions(sticks) {
                     result.push(p);
             }
             result.sort((a, b) => a - b);
-            out.set(name, result);
+            out.set(key, result);
         }
         else {
             let filtered = dedup.filter((p) => p >= END_ZONE - 0.5 && p <= L - END_ZONE + 0.5);
             if (needsArcReversal(stick)) {
                 filtered = filtered.map((p) => L - p).sort((a, b) => a - b);
             }
-            out.set(name, filtered);
+            out.set(key, filtered);
         }
     }
     return out;
@@ -450,14 +495,24 @@ export function simplifyTb2bTrussFrame(frame) {
         usage: (s.usage ?? "").toLowerCase(),
         flipped: !!s.flipped,
     }));
-    const positionsByName = computeTb2bWebPositions(metaSticks);
+    const positionsByKey = computeTb2bWebPositions(metaSticks);
     const { dimplesByKey } = computeBoxDimples(metaSticks);
     const rewritten = [];
     // Rewrite each truss member stick. Box-piece sticks (e.g. "T4 (Box1)")
     // are NOT touched — their InnerDimple ops are pre-derived by the codec/
     // rules at the right positions for snap-fit.
+    //
+    // Per-instance occurrence counter mirrors `computeTb2bWebPositions` and
+    // `computeBoxDimples`: each duplicate-name stick gets a unique key
+    // `name#occurrence`. The full-name regex skip (`\(Box\d+\)`) means
+    // "T4 (Box1)" doesn't share an occurrence counter with bare "T4".
+    // metaSticks[stickIdx] gives us the per-instance MetaStick for arc-
+    // reversal lookups (cap-stack rules previously used `find` by name
+    // which returned only the FIRST instance — that bug is fixed below by
+    // tracking `stickIdx` and using `metaSticks[stickIdx]`).
     const stickOccByName = new Map();
-    for (const stick of frame.sticks) {
+    for (let stickIdx = 0; stickIdx < frame.sticks.length; stickIdx++) {
+        const stick = frame.sticks[stickIdx];
         if (/\(Box\d+\)/.test(stick.name))
             continue;
         if (!/^[TBWRH]\d/.test(stick.name))
@@ -465,7 +520,7 @@ export function simplifyTb2bTrussFrame(frame) {
         const stOcc = stickOccByName.get(stick.name) ?? 0;
         stickOccByName.set(stick.name, stOcc + 1);
         const stKey = `${stick.name}#${stOcc}`;
-        const positions = positionsByName.get(stick.name) ?? [];
+        const positions = positionsByKey.get(stKey) ?? [];
         // Strip codec's wrong ops (Swage/Chamfer/mid-stick InnerDimple/mid-stick
         // LipNotch). Keep only ops we explicitly want to retain (none for now —
         // the cap-stack rules below re-add what's needed).
@@ -487,10 +542,23 @@ export function simplifyTb2bTrussFrame(frame) {
         for (const p of positions) {
             stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(p * 100) / 100 });
         }
-        // Box-piece InnerDimple ops (chord-on-chord overlap rule).
+        // Per-instance MetaStick (used for both box-dimple arc-reversal and
+        // cap-stack rules below). Indexed by stick array index — frame.sticks
+        // and metaSticks are 1:1 in iteration order, so metaSticks[stickIdx]
+        // is the right instance even when stick.name has duplicates.
+        const meta3D = metaSticks[stickIdx];
+        const meta3DLen = Math.hypot(meta3D.end3D.y - meta3D.start3D.y, meta3D.end3D.z - meta3D.start3D.z);
+        // Box-piece InnerDimple ops (chord-on-chord overlap rule). The raw
+        // dimple positions from `computeBoxDimples` are in the chord's
+        // start→end arc parameterisation; the same `chordArcReversal` rule
+        // applied to chord Web@pt above is also needed here so that a chord
+        // entered with apex-at-start (XML order) reports its heel-end IDs
+        // measured from the arc=0 (heel) end, not the arc=L (apex) end.
         const boxDimples = dimplesByKey.get(stKey);
         if (boxDimples && boxDimples.length > 0) {
-            for (const p of boxDimples) {
+            const reverse = chordArcReversal(meta3D);
+            for (const pRaw of boxDimples) {
+                const p = reverse ? meta3DLen - pRaw : pRaw;
                 const dup = stick.tooling.some((o) => o.kind === "point" &&
                     o.type === "InnerDimple" &&
                     Math.abs(o.pos - p) < 1);
@@ -499,13 +567,6 @@ export function simplifyTb2bTrussFrame(frame) {
                 }
             }
         }
-        // Stick length — used by cap-stack thresholds. Computed in the YZ plane
-        // (same convention as `len2D` above). Could be re-derived from the
-        // already-built metaSticks, but recomputing is cheaper than searching.
-        const meta3D = metaSticks.find((s) => s.name === stick.name);
-        const meta3DLen = meta3D
-            ? Math.hypot(meta3D.end3D.y - meta3D.start3D.y, meta3D.end3D.z - meta3D.start3D.z)
-            : 0;
         // R-rail short-cap rule: short rails (~382mm) between truss apex and
         // webs get a fixed end-cap pattern at BOTH ends.
         const isShortRail = /^R\d/.test(stick.name) && meta3DLen > 378 && meta3DLen < 387;

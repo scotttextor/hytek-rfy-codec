@@ -32,7 +32,18 @@ interface MetaStick {
  *    only the two end-caps; W14 (which crosses R9 mid-stick) has 3 Webs.
  *  - Chord/rail members (T/B/R/H): emit Web@pt at every web/rail
  *    centerline crossing, end-zone filtered.
- *  Returns Map<stickName, sortedPositions[]>. */
+ *
+ *  Per-instance keying: a single TB2B truss frame can contain multiple
+ *  sticks with the SAME name (e.g. apex-pair top chords both named `T2`,
+ *  heel webs `W7`/`W8` repeated across left/right halves). The 2D
+ *  centerline-intersection logic respects each instance's coordinates, so
+ *  we key the position map by `name#occurrence_index` (0-based count of
+ *  prior MetaSticks with the same name, in the order they appear in
+ *  `sticks`). Each chord instance receives only the bolt-pairs at its
+ *  OWN geometric web crossings, eliminating the union-emit bug that was
+ *  inflating T-chord Web@pt by ~3× on HG260044/HG260023 PK# TB2B plans
+ *  (~1340 extras total — see frida-mined-gaps.md Gap #2). Callers must
+ *  rebuild the same per-instance key when reading positions back out. */
 export declare function computeTb2bWebPositions(sticks: ReadonlyArray<MetaStick>): Map<string, number[]>;
 export interface SimplifyTb2bDecision {
     frame: string;

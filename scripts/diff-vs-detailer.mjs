@@ -1636,7 +1636,16 @@ for (const plan of ourDoc.project.plans) {
             // Round overlap to integer mm before deriving N — avoids float
             // precision flips (e.g. 2099.96 vs 2100.04 giving N=2 vs N=3).
             const overlapMm = Math.round(overlapLen);
-            const N = Math.max(2, Math.floor((overlapMm - 100) / 1000) + 1);
+            // N = number of evenly-spaced InnerDimple positions across the box
+            // overlap. Per manual section 4.2.5, max spacing = boxDimpleSpacing
+            // (F325iT 70mm setup: 1200mm). N must give actual spacing ≤ that
+            // limit. So N - 1 ≥ ceil(overlap / boxDimpleSpacing) → N ≥ ceil + 1.
+            // Verified vs HG260044 PK2/TT15-1 T2 (1500mm overlap → 3 dimples,
+            // not 2 as old formula gave) and PK3/TT6-1 (1700mm → 3 dimples).
+            // Old formula `floor((overlap-100)/1000)+1` was hardcoded to 1000mm
+            // spacing — wrong for non-1000 setups.
+            const BOX_DIMPLE_SPACING = 1200;  // TODO: read from active setup
+            const N = Math.max(2, Math.ceil(overlapMm / BOX_DIMPLE_SPACING) + 1);
             const startPos = boxA + 50;
             const endPos = boxB - 50;
             const positions = [];

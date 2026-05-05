@@ -5,9 +5,21 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { spawnSync } from "node:child_process";
 
-const REF_DIR = "C:/Users/ScottTextor/OneDrive - Textor Metal Industries/CLAUDE DATA FILE/memory/reference_data/HG260044";
+// Path-portable across home/work PCs
+const HOME = os.homedir();
+const CANDIDATE_REF_DIRS = [
+  `${HOME}/OneDrive - Textor Metal Industries/CLAUDE DATA FILE/memory/reference_data/HG260044`,
+  "C:/Users/ScottTextor/OneDrive - Textor Metal Industries/CLAUDE DATA FILE/memory/reference_data/HG260044",
+  "C:/Users/Scott/OneDrive - Textor Metal Industries/CLAUDE DATA FILE/memory/reference_data/HG260044",
+];
+const REF_DIR = CANDIDATE_REF_DIRS.find(p => { try { return fs.statSync(p).isDirectory(); } catch { return false; } });
+if (!REF_DIR) {
+  console.error("Could not locate HG260044 ref dir. Tried:\n" + CANDIDATE_REF_DIRS.join("\n"));
+  process.exit(2);
+}
 const OUT_DIR = "scripts/baselines/hg260044";
 fs.mkdirSync(OUT_DIR, { recursive: true });
 fs.mkdirSync(`${OUT_DIR}/raw`, { recursive: true });

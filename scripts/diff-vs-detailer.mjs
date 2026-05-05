@@ -1847,6 +1847,37 @@ for (const plan of ourDoc.project.plans) {
             stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_SPAN, endPos: L });
             stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
           }
+          // T-chord end-cap bolt rule (TB2B trusses).
+          // Verified vs HG260044 PK1 (TT3-1, TT4-1, TT2-1, TT1-1, TTI1-1):
+          // every TopChord T# stick (NOT box pieces, NOT T5 stiffeners) has
+          // two fixed end-cap bolts:
+          //   - Web @53.90 from the HEEL end
+          //   - Web @91.21 from the APEX end
+          // Direction inferred from z-coordinates: apex = higher z, heel =
+          // lower z. Mid-sloped chords have one apex and one heel end.
+          // Applies to T# sticks where /^T\d/ matches and meta3D has
+          // |zSpan| > 5mm (sloped chord). Skip box pieces (already filtered
+          // out at line 1681) and T5/T6/T7 stiffeners (matched-only inside
+          // box-piece overlaps; their parent T# gets the bolt instead).
+          // Skip horizontal T (no apex/heel distinction).
+          const isTChordCap = /^T\d/.test(stick.name) && meta3D &&
+            Math.abs(meta3D.end3D.z - meta3D.start3D.z) > 5;
+          if (isTChordCap) {
+            const apexAtEnd = meta3D.end3D.z > meta3D.start3D.z;
+            const HEEL_BOLT = 53.90;
+            const APEX_BOLT = 91.21;
+            const startBolt = apexAtEnd ? HEEL_BOLT : APEX_BOLT;
+            const endBolt = apexAtEnd ? APEX_BOLT : HEEL_BOLT;
+            // Avoid duplicating an existing Web at near-same position (e.g.
+            // apex-pair rule may have already emitted one).
+            const APPROX = 2.0;
+            const startExists = stick.tooling.some(o => o.kind === "point" &&
+              o.type === "Web" && Math.abs(o.pos - startBolt) < APPROX);
+            const endExists = stick.tooling.some(o => o.kind === "point" &&
+              o.type === "Web" && Math.abs(o.pos - (meta3DLen - endBolt)) < APPROX);
+            if (!startExists) stick.tooling.push({ kind: "point", type: "Web", pos: startBolt });
+            if (!endExists) stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((meta3DLen - endBolt) * 100) / 100 });
+          }
           stick.tooling.sort((a, b) => {
             const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? -1 : 1e9));
             const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? -1 : 1e9));

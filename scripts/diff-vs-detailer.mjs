@@ -709,7 +709,12 @@ function buildOurProject(xmlText) {
         // Position formula:
         //   local_pos = z_h - z_stud_start - 2mm
         // Verified across HG260001/HG260023/HG260044 LBW/NLBW corpora.
-        if (serviceActions.length > 0) {
+        // Outer gate is the wall-plan check (not serviceActions.length) so
+        // wall plans whose frames have NO Service tool_actions still strip
+        // the static @296/@446 (e.g. HG260001 PK1-NLBW N14: ref has zero
+        // InnerService on its studs but the static rule emits @296/@446).
+        const isWallPlanForSvc = /-(N?LBW)-/i.test(plan.name);
+        if (isWallPlanForSvc) {
           const u = String(stick.usage ?? "").toLowerCase();
           const isWallStud = u === "stud" || u === "trimstud" ||
                              u === "endstud" || u === "jackstud";
@@ -773,38 +778,26 @@ function buildOurProject(xmlText) {
             }
             // Replace any static InnerService ops emitted by the rule engine
             // (table.ts @296/@446) with the per-stud projected positions.
-            // The static rule fires on wall plans, so it produced 0-2 ops here.
             // Whether dynamicPositions is empty (no z-line covers this stud)
             // or larger (multi-z-line schedule), the dynamic set is the
             // ground truth — drop the static ones unconditionally.
-            //
-            // Only trigger replacement on wall plans (LBW/NLBW). Non-wall
-            // plans (TIN/TB2B/RP/CP/etc.) don't get the static rule fired
-            // anyway because of the isWallPlan(ctx) gate, but we double-
-            // gate here for safety in case other rules emit InnerService.
-            const isWallPlanForSvc = /-(N?LBW)-/i.test(plan.name);
-            if (isWallPlanForSvc) {
-              // Strip existing InnerService point ops on this stud
-              for (let i = stick.tooling.length - 1; i >= 0; i--) {
-                const op = stick.tooling[i];
-                if (op.kind === "point" && op.type === "InnerService") {
-                  stick.tooling.splice(i, 1);
-                }
+            for (let i = stick.tooling.length - 1; i >= 0; i--) {
+              const op = stick.tooling[i];
+              if (op.kind === "point" && op.type === "InnerService") {
+                stick.tooling.splice(i, 1);
               }
-              // Emit dynamic ones
-              const seen = new Set();
-              for (const p of dynamicPositions) {
-                if (seen.has(p)) continue;
-                seen.add(p);
-                stick.tooling.push({ kind: "point", type: "InnerService", pos: p });
-              }
-              // Re-sort tooling so InnerService ops slot in properly
-              stick.tooling.sort((a, b) => {
-                const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? 0 : length));
-                const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? 0 : length));
-                return pa - pb;
-              });
             }
+            const seen = new Set();
+            for (const p of dynamicPositions) {
+              if (seen.has(p)) continue;
+              seen.add(p);
+              stick.tooling.push({ kind: "point", type: "InnerService", pos: p });
+            }
+            stick.tooling.sort((a, b) => {
+              const pa = a.kind === "spanned" ? a.startPos : (a.kind === "point" ? a.pos : (a.kind === "start" ? 0 : length));
+              const pb = b.kind === "spanned" ? b.startPos : (b.kind === "point" ? b.pos : (b.kind === "start" ? 0 : length));
+              return pa - pb;
+            });
           }
         }
 

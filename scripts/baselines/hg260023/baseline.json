@@ -1,17 +1,17 @@
 {
   "totals": {
     "ref": 19312,
-    "matched": 15402,
-    "missing": 3910,
-    "extras": 3788,
-    "parity": 79.75352112676056
+    "matched": 15445,
+    "missing": 3867,
+    "extras": 3569,
+    "parity": 79.9761806130903
   },
   "byFrameType": {
     "RP": {
       "ref": 1718,
       "matched": 394,
       "missing": 1324,
-      "extras": 951,
+      "extras": 947,
       "plans": 1,
       "parity": 22.933643771827704
     },
@@ -25,11 +25,11 @@
     },
     "NLBW": {
       "ref": 5831,
-      "matched": 5117,
-      "missing": 714,
-      "extras": 825,
+      "matched": 5145,
+      "missing": 686,
+      "extras": 657,
       "plans": 2,
-      "parity": 87.75510204081633
+      "parity": 88.23529411764706
     },
     "TB2B": {
       "ref": 2536,
@@ -41,47 +41,47 @@
     },
     "LBW": {
       "ref": 8263,
-      "matched": 7080,
-      "missing": 1183,
-      "extras": 1115,
+      "matched": 7095,
+      "missing": 1168,
+      "extras": 1068,
       "plans": 4,
-      "parity": 85.68316592036791
+      "parity": 85.86469805155512
     }
   },
   "aggMissing": {
     "InnerDimple": 1172,
-    "LipNotch": 727,
-    "Web": 670,
-    "Swage": 759,
-    "InnerNotch": 177,
+    "LipNotch": 733,
+    "Web": 676,
+    "Swage": 695,
+    "InnerNotch": 183,
     "Chamfer": 113,
-    "Bolt": 8,
+    "Bolt": 11,
     "InnerService": 195,
     "LeftFlange": 40,
     "RightFlange": 49
   },
   "aggExtras": {
     "InnerDimple": 933,
-    "LipNotch": 725,
+    "LipNotch": 655,
     "Chamfer": 147,
-    "InnerNotch": 203,
-    "Swage": 675,
-    "Web": 757,
+    "InnerNotch": 129,
+    "Swage": 687,
     "InnerService": 233,
+    "Web": 714,
     "LeftFlange": 25,
     "RightFlange": 17,
-    "Bolt": 73
+    "Bolt": 29
   },
   "perPlan": [
     {
       "rfy": "HG260023_GF-RP-70.075.rfy",
       "xml": "HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-RP-70.075.xml",
       "totals": {
-        "ours": 1345,
+        "ours": 1341,
         "ref": 1718,
         "matched": 394,
         "missing": 1324,
-        "extras": 951
+        "extras": 947
       },
       "parity": 22.933643771827704,
       "missing": {
@@ -96,7 +96,7 @@
         "InnerDimple": 464,
         "LipNotch": 138,
         "Chamfer": 109,
-        "InnerNotch": 21,
+        "InnerNotch": 17,
         "Swage": 219
       }
     },
@@ -148,11 +148,11 @@
       "rfy": "HG260023_PK1-GF-NLBW-89.075.rfy",
       "xml": "HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-NLBW-89.075.xml",
       "totals": {
-        "ours": 397,
+        "ours": 394,
         "ref": 394,
         "matched": 361,
         "missing": 33,
-        "extras": 36
+        "extras": 33
       },
       "parity": 91.6243654822335,
       "missing": {
@@ -165,7 +165,6 @@
       "extras": {
         "InnerNotch": 4,
         "LipNotch": 5,
-        "Web": 3,
         "InnerDimple": 8,
         "InnerService": 8,
         "Swage": 8
@@ -226,29 +225,30 @@
       "rfy": "HG260023_PK2-GF-NLBW-70.075.rfy",
       "xml": "HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-NLBW-70.075.xml",
       "totals": {
-        "ours": 5545,
+        "ours": 5408,
         "ref": 5437,
-        "matched": 4756,
-        "missing": 681,
-        "extras": 789
+        "matched": 4784,
+        "missing": 653,
+        "extras": 624
       },
-      "parity": 87.47471031819018,
+      "parity": 87.98970020231745,
       "missing": {
         "InnerService": 71,
-        "Swage": 154,
         "InnerDimple": 232,
-        "LipNotch": 115,
-        "InnerNotch": 67,
+        "LipNotch": 119,
+        "Swage": 109,
+        "InnerNotch": 71,
         "Chamfer": 38,
-        "Bolt": 4
+        "Web": 6,
+        "Bolt": 7
       },
       "extras": {
-        "Bolt": 73,
-        "InnerNotch": 109,
-        "LipNotch": 204,
+        "Bolt": 29,
+        "InnerNotch": 61,
         "InnerService": 61,
-        "Web": 40,
-        "Swage": 118,
+        "LipNotch": 156,
+        "Web": 8,
+        "Swage": 125,
         "InnerDimple": 178,
         "Chamfer": 6
       }
@@ -257,11 +257,11 @@
       "rfy": "HG260023_PK3-GF-LBW-89.075.rfy",
       "xml": "HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-LBW-89.075.xml",
       "totals": {
-        "ours": 183,
+        "ours": 182,
         "ref": 192,
         "matched": 163,
         "missing": 29,
-        "extras": 20
+        "extras": 19
       },
       "parity": 84.89583333333334,
       "missing": {
@@ -272,7 +272,6 @@
         "Web": 8
       },
       "extras": {
-        "Web": 1,
         "LipNotch": 7,
         "InnerNotch": 1,
         "Swage": 9,
@@ -283,31 +282,31 @@
       "rfy": "HG260023_PK4-GF-LBW-70.095.rfy",
       "xml": "HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-LBW-70.095.xml",
       "totals": {
-        "ours": 6000,
+        "ours": 5983,
         "ref": 6063,
-        "matched": 5033,
-        "missing": 1030,
-        "extras": 967
+        "matched": 5041,
+        "missing": 1022,
+        "extras": 942
       },
-      "parity": 83.01171037440211,
+      "parity": 83.14365825498928,
       "missing": {
-        "LipNotch": 222,
+        "LipNotch": 223,
         "InnerDimple": 266,
-        "Swage": 180,
+        "Swage": 170,
         "InnerService": 107,
-        "InnerNotch": 35,
+        "InnerNotch": 36,
         "Chamfer": 20,
         "Web": 199,
         "Bolt": 1
       },
       "extras": {
-        "LipNotch": 280,
+        "LipNotch": 267,
         "InnerDimple": 201,
-        "InnerNotch": 55,
-        "Swage": 232,
+        "InnerNotch": 42,
+        "Swage": 236,
         "InnerService": 149,
         "Chamfer": 20,
-        "Web": 30
+        "Web": 27
       }
     },
     {
@@ -338,28 +337,27 @@
       "rfy": "HG260023_PK6-GF-LBW-70.075.rfy",
       "xml": "HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-LBW-70.075.xml",
       "totals": {
-        "ours": 1916,
+        "ours": 1902,
         "ref": 1912,
-        "matched": 1817,
-        "missing": 95,
-        "extras": 99
+        "matched": 1824,
+        "missing": 88,
+        "extras": 78
       },
-      "parity": 95.03138075313807,
+      "parity": 95.39748953974896,
       "missing": {
-        "InnerNotch": 1,
-        "LipNotch": 19,
+        "InnerNotch": 2,
+        "LipNotch": 20,
         "InnerService": 8,
-        "Swage": 25,
+        "Swage": 16,
         "InnerDimple": 8,
         "Web": 32,
         "Chamfer": 2
       },
       "extras": {
-        "Swage": 27,
+        "Swage": 28,
         "InnerService": 13,
-        "LipNotch": 41,
-        "Web": 4,
-        "InnerNotch": 12,
+        "LipNotch": 32,
+        "InnerNotch": 3,
         "Chamfer": 2
       }
     },

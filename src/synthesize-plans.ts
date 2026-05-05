@@ -452,6 +452,20 @@ export function synthesizeRfyFromPlans(
       // truss-member sticks (T/B/W/R/H prefix) of TB2B truss frames.
       const isTb2bTrussFrame = isTb2bPlanName(plan.name) && frame.type === "Truss";
 
+      // B-plate slab-anchor pruning (Agent U, 2026-05-05).
+      //
+      // Manual §7.10.2 ("Bottom Plate Bolt Holes") + §4.2.4 (Web Hole To
+      // End) describe slab-anchor ops (Web@8 + Bolt@62) as features of the
+      // SLAB-BEARING bottom plate. The codec's per-stick rule fires on every
+      // B-plate (B1, B2, B3, ...), but Detailer only emits these on the
+      // plate that physically rests on the slab. Sub-plates above doors/
+      // windows get only the standard end-cap LipNotches.
+      //
+      // Detection: any B-plate sitting 100mm+ above the lowest B-plate in
+      // the frame is a sub-plate (above-opening header B). Verified vs
+      // HG260001 PK1 N3/N14/N19/N29 (NLBW) + PK4-PK5 LBW corpus.
+      const nonPrimaryBPlateNames = computeNonPrimaryBPlateNames(frame, plan.name);
+
       const sticks: XmlNode[] = [];
       for (const stick of frame.sticks) {
         stickCount++;
@@ -460,7 +474,10 @@ export function synthesizeRfyFromPlans(
           /^[TBWRH]\d/.test(stick.name) &&
           !/\(Box\d+\)/.test(stick.name);
         const ctx = isTb2bTrussMember ? [] : (contextOps.get(stick.name) ?? []);
-        const merged = mergeStickTooling(stick.tooling, ctx, stick.usage);
+        const perStickOps = nonPrimaryBPlateNames.has(stick.name)
+          ? stripSlabAnchorOps(stick.tooling)
+          : stick.tooling;
+        const merged = mergeStickTooling(perStickOps, ctx, stick.usage);
         const stickWithMerged = { ...stick, tooling: merged };
         sticks.push(buildStickXml(stickWithMerged, basis, frame.name, options.lenient ?? false));
       }
@@ -624,6 +641,89 @@ function computeFrameContextOps(
     console.warn(`Frame "${frame.name}": frame-context generation failed — ${(e as Error).message}`);
     return empty;
   }
+}
+
+/**
+ * Identify B-plates in a frame that are NOT the slab-bearing primary plate.
+ *
+ * Manual §7.10.2: "Bottom Plate Bolt Holes" applies to the slab-bearing
+ * bottom plate. In LBW/NLBW ground-floor frames Detailer emits Web@8 +
+ * Bolt@62 only on the B-plate(s) that physically rest on the slab.
+ * Sub-plates above doors/windows (B2/B3/B4) get only the standard end-cap
+ * LipNotches.
+ *
+ * Detection: a slab-bearing B-plate sits at the BOTTOM of the frame's
+ * elevation envelope (z near min envelope z). Sub-plates sit higher, above
+ * door/window head-heights.
+ *
+ * Returns names of B-plates whose slab-anchor ops should be stripped.
+ *
+ * Scoping rules (conservative — only trigger on plans where the manual
+ * unambiguously applies):
+ *   - Plan name must be LBW or NLBW (slab-anchored wall plans).
+ *   - Skip 1F/2F/3F (upper floors — slab anchors only on ground floor).
+ *   - Frame has 2+ B-plates.
+ *   - "Slab-bearing": plate's mid-z within 100mm of frame envelope's min z.
+ *   - "Sub-plate" candidates for stripping: plate's mid-z is 100mm+ ABOVE
+ *     the lowest plate (i.e. above door/window opening height).
+ */
+function computeNonPrimaryBPlateNames(
+  frame: ParsedFrame,
+  planName: string,
+): Set<string> {
+  const out = new Set<string>();
+  // Only LBW/NLBW plans (slab-anchored wall types).
+  if (!/-(LBW|NLBW)-/i.test(planName)) return out;
+  // Skip upper floors — slab anchors only on ground floor.
+  if (/-(1F|2F|3F)-/i.test(planName)) return out;
+  if (!frame.sticks || frame.sticks.length === 0) return out;
+
+  // Collect B-plate sticks (B1, B2, ..., excluding Bh raised B-plates).
+  type BPlate = { name: string; midZ: number };
+  const bPlates: BPlate[] = [];
+  for (const s of frame.sticks) {
+    if (!/^B\d/.test(s.name)) continue;
+    if (/^Bh/.test(s.name)) continue;  // raised B-plates handled separately
+    const u = (s.usage ?? "").toLowerCase();
+    if (u === "bottomchord") continue;  // truss chords aren't slab plates
+    const midZ = (s.start.z + s.end.z) / 2;
+    bPlates.push({ name: s.name, midZ });
+  }
+  if (bPlates.length < 2) return out;
+
+  // Find the lowest B-plate (slab-bearing).
+  let lowestZ = Infinity;
+  for (const p of bPlates) if (p.midZ < lowestZ) lowestZ = p.midZ;
+
+  // Strip slab-anchor ops from any B-plate whose mid-z is 100mm+ above the
+  // lowest plate (i.e. clearly a sub-plate above an opening). 100mm is
+  // chosen to safely exclude floor-level variations while catching all
+  // real sub-plates (door head heights are 2000mm+; min lintel sub-plate
+  // sits at >= 60mm above slab plate per Bh rule above).
+  const SUBPLATE_Z_THRESHOLD = 100;
+  for (const p of bPlates) {
+    if (p.midZ - lowestZ > SUBPLATE_Z_THRESHOLD) out.add(p.name);
+  }
+  return out;
+}
+
+/**
+ * Strip slab-anchor ops (Web @8 / Bolt @62 / etc) from a tooling list.
+ * Used to clean up non-primary B-plates emitted by the per-stick rule
+ * engine.
+ *
+ * Preserves all other ops. Returns a new array (does NOT mutate input).
+ */
+function stripSlabAnchorOps(ops: RfyToolingOp[]): RfyToolingOp[] {
+  return ops.filter(op => {
+    if (op.kind !== "point") return true;
+    // Web @8 (slab-attach Web) at the start. Use a small tolerance.
+    if (op.type === "Web" && Math.abs(op.pos - 8) < 0.5) return false;
+    // Bolt anchors — only slab-attachment use is on B plates today.
+    // Drop ALL Bolt ops on non-primary B plates.
+    if (op.type === "Bolt") return false;
+    return true;
+  });
 }
 
 /**

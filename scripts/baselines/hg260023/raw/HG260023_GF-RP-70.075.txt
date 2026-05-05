@@ -3,10 +3,10 @@ OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-RP-70.075.x
 Setup:    F325iT 70mm
 Frames:   our 19 | ref 19
 
-OPS:      our 1345 | ref 1718
+OPS:      our 1341 | ref 1718
 MATCHED:  394  (22.9% of ref)
 MISSING:  1324  (ops Detailer has, we don't)
-EXTRAS:   951   (ops we have, Detailer doesn't)
+EXTRAS:   947   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
@@ -14,8 +14,8 @@ Op                  Matched   Missing   Extras
 InnerDimple@pt           139       559      464   (20% ref-coverage)
 Swage@span                32       317      219   (9% ref-coverage)
 LipNotch@span             44       289      138   (13% ref-coverage)
-InnerNotch@span           19        68       21   (22% ref-coverage)
 Chamfer@start             47        47       38   (50% ref-coverage)
+InnerNotch@span           19        68       17   (22% ref-coverage)
 Chamfer@end              113         0       71   (100% ref-coverage)
 Web@pt                     0        44        0   (0% ref-coverage)
 
@@ -179,7 +179,7 @@ FRAMES WITH GAPS:
     N2       MISSING (4): InnerDimple @16.5 | InnerDimple @2486.5 | Swage 0.0..39.0 | Swage 2437.6..2496.5
     N2       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @2484.6
     N3       MISSING (4): InnerDimple @16.5 | InnerDimple @124.2 | LipNotch 0.0..39.0 | LipNotch 111.7..134.2
-    N3       EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @122.3 | InnerNotch 0.0..39.0 | InnerNotch 93.3..132.3
+    N3       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @122.3
     S1       MISSING (8): InnerDimple @16.5 | InnerDimple @2623.1 | InnerDimple @4443.2 | InnerDimple @5188.4 | Swage 0.0..39.0 ... +3
     S1       EXTRAS  (8): InnerDimple @78.5 | InnerDimple @2625.1 | InnerDimple @4445.2 | InnerDimple @5176.8 | Swage 56.0..101.0 ... +3
     S2       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @1865.3 | InnerDimple @3685.4 | InnerDimple @5214.5 ... +4
@@ -205,7 +205,7 @@ FRAMES WITH GAPS:
     N2       MISSING (3): InnerDimple @16.5 | Swage 0.0..39.0 | Swage 1045.8..1108.1
     N2       EXTRAS  (2): Chamfer @start | InnerDimple @10.0
     N3       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    N3       EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @89.0 | InnerNotch 0.0..39.0 | InnerNotch 60.0..99.0 ... +1
+    N3       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @89.0 | Chamfer @end
     S1       MISSING (6): InnerDimple @16.5 | InnerDimple @476.5 | InnerDimple @1053.0 | LipNotch 0.0..39.0 | LipNotch 454.0..499.0 ... +1
     S1       EXTRAS  (3): InnerDimple @78.5 | Swage 56.0..101.0 | Chamfer @end
     S2       MISSING (6): InnerDimple @16.5 | InnerDimple @476.5 | InnerDimple @1053.0 | Swage 0.0..39.0 | Swage 454.0..499.0 ... +1

@@ -149,7 +149,8 @@ const result = {
 };
 
 let currentSection = null;
-let currentFields = null; // last <field=index> header within section
+let currentFields = null; // active per-rule-type schema
+let seenDataInCurrentSchema = false;
 let preambleDone = false;
 
 for (let lineNo = 0; lineNo < lines.length; lineNo++) {
@@ -163,6 +164,7 @@ for (let lineNo = 0; lineNo < lines.length; lineNo++) {
     preambleDone = true;
     currentSection = sectionMatch[1].trim();
     currentFields = null;
+    seenDataInCurrentSchema = false;
     if (!result.sections[currentSection]) {
       result.sections[currentSection] = {
         startLine: lineNo,
@@ -175,33 +177,48 @@ for (let lineNo = 0; lineNo < lines.length; lineNo++) {
     continue;
   }
 
-  // Field-label header (only meaningful inside a section). Multiple
-  // consecutive `<...>` lines may carry overlapping field-index ranges (e.g.
-  // TRUSS GEOMETRY DATA spans 4 header lines covering fields 0..39). Merge
-  // them into a single dense array per section by union-of-indices, with
-  // later names overriding earlier ones (FrameCAD's pattern: label headers
-  // are paginated, not exclusive). When a new label header appears AFTER
-  // data lines have been seen (i.e. mid-section), we treat it as a NEW
-  // sub-section: this only occurs in WALL DEFAULT DATA where each rule type
-  // (WDEFAULTS, WBUILD, WNOGGS, WHEADS) has its own header line.
+  // Field-label header (only meaningful inside a section). Two patterns:
+  //
+  //  (A) Some sections have ONE label header that spans 1+ wrapped lines —
+  //      e.g. TRUSS GEOMETRY DATA's 4 consecutive `<...>` lines covering
+  //      fields 0..39, all defining the same rule schema. Adjacent label
+  //      lines (no data lines between them) UNION their fields.
+  //
+  //  (B) Other sections have MULTIPLE label headers separated by data
+  //      blocks, each header introducing a new rule-type schema — e.g.
+  //      WALL DEFAULT DATA: WDEFAULTS, WBUILD, WNOGGS, WHEADS each have
+  //      their own preceding `<...>`. When a label header appears AFTER
+  //      data lines, it RESETS the schema for subsequent rules in the
+  //      same section.
+  //
+  // We track this by `seenDataInCurrentSchema`: if a data line has been
+  // recorded under the current schema, the next `<...>` resets, otherwise
+  // it merges. `currentFields` is the active per-rule schema; we also
+  // store `fieldsByRuleType` keyed by the next data line's KEY when we
+  // need post-hoc lookup.
   if (stripped.startsWith("<")) {
     if (currentSection) {
       const parsed = parseFieldLabel(stripped);
       if (parsed) {
         const sec = result.sections[currentSection];
-        if (!sec.fields) {
-          sec.fields = parsed.fields.slice();
+        // Reset schema when moving past a data block
+        if (seenDataInCurrentSchema) {
+          currentFields = null;
+          seenDataInCurrentSchema = false;
+        }
+        if (!currentFields) {
+          currentFields = parsed.fields.slice();
         } else {
-          // Merge by index — extend if longer, override named slots
           for (let i = 0; i < parsed.fields.length; i++) {
             if (parsed.fields[i] && !parsed.fields[i].startsWith("_field")) {
-              sec.fields[i] = parsed.fields[i];
-            } else if (sec.fields[i] === undefined) {
-              sec.fields[i] = parsed.fields[i];
+              currentFields[i] = parsed.fields[i];
+            } else if (currentFields[i] === undefined) {
+              currentFields[i] = parsed.fields[i];
             }
           }
         }
-        currentFields = sec.fields;
+        // Persist sec.fields as the "primary" schema (first seen)
+        if (!sec.fields) sec.fields = currentFields.slice();
       }
     }
     continue;
@@ -226,6 +243,7 @@ for (let lineNo = 0; lineNo < lines.length; lineNo++) {
   if (!data) continue;
 
   const sec = result.sections[currentSection];
+  seenDataInCurrentSchema = true;
   if (data.key) {
     const rec = buildRecord(currentFields, data.values);
     rec._active = data.active;

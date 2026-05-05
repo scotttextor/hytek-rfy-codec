@@ -321,7 +321,16 @@ export function synthesizeRfyFromPlans(project, options = {}) {
             //   4. Call it → Map<stickName, ops[]>
             //   5. Merge those ops into each stick's tooling array (keeping the
             //      per-stick rules-engine ops the caller already populated)
-            const contextOps = computeFrameContextOps(frame, basis);
+            //
+            // Per-frame setup resolution (Agent Z, 2026-05-05): pick the machine
+            // setup matching this frame's profile so frame-context helpers
+            // (`internalSpan`, `offsetMagnitudeBase`) compute against the right
+            // tool dimensions for 70/89/75/78/104mm setups. Falls back to the
+            // project-level `setup` resolved at the top of this function.
+            const frameStickWeb = frame.sticks?.[0]?.profile?.web;
+            const frameSetup = (frameStickWeb !== undefined ? getMachineSetupForProfile(frameStickWeb) : undefined) ??
+                setup;
+            const contextOps = computeFrameContextOps(frame, basis, frameSetup);
             // TB2B truss frames: the simplifier above (`simplifyTb2bTrussFramesInProject`)
             // has already replaced each truss-member stick's tooling with the
             // centerline-intersection Web@pt vocabulary that Detailer emits. Adding
@@ -429,7 +438,7 @@ export function synthesizeRfyFromPlans(project, options = {}) {
  *
  * Returns an empty Map if the frame has no sticks or the projection fails.
  */
-function computeFrameContextOps(frame, basis) {
+function computeFrameContextOps(frame, basis, setup) {
     const empty = new Map();
     if (!frame.sticks || frame.sticks.length === 0)
         return empty;
@@ -493,7 +502,7 @@ function computeFrameContextOps(frame, basis) {
         sticks: syntheticSticks,
     };
     try {
-        return generateFrameContextOps(syntheticFrame);
+        return generateFrameContextOps(syntheticFrame, setup);
     }
     catch (e) {
         console.warn(`Frame "${frame.name}": frame-context generation failed — ${e.message}`);

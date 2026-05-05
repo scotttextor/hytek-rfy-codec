@@ -1,3 +1,4 @@
+import { getMachineSetupForProfile, getDefaultMachineSetup, } from "./machine-setups.js";
 /** True iff the plan name marks this as a TB2B (Back-to-Back) truss plan. */
 export function isTb2bPlanName(planName) {
     return /-TB2B-/i.test(planName);
@@ -415,7 +416,7 @@ function projArc2D(P, A, B) {
     const t = ((P.y - A.y) * dy + (P.z - A.z) * dz) / lenSq;
     return t * Math.sqrt(lenSq);
 }
-function computeBoxDimples(metaSticks) {
+function computeBoxDimples(metaSticks, setup) {
     const dimplesByKey = new Map();
     const stickKeyBySrc = new Map();
     const chordSticks = [];
@@ -462,7 +463,10 @@ function computeBoxDimples(metaSticks) {
             if (overlapLen < 100)
                 continue;
             const overlapMm = Math.round(overlapLen);
-            const BOX_DIMPLE_SPACING = 1200; // TODO: read from active machine setup
+            // Box-piece InnerDimple max spacing on chord-on-chord overlaps. Per
+            // .sups: 1200 for HYTEK 70/89mm setups, 600 for 78mm + 104mm setups.
+            // Wired from the active MachineSetup 2026-05-05 (Agent Z #5).
+            const BOX_DIMPLE_SPACING = setup.boxDimpleSpacing;
             const N = Math.max(2, Math.ceil(overlapMm / BOX_DIMPLE_SPACING) + 1);
             const startPos = boxA + 50;
             const endPos = boxB - 50;
@@ -485,7 +489,7 @@ function computeBoxDimples(metaSticks) {
 /** Rewrite tooling on a single TB2B truss frame in place. Caller must have
  *  already verified the plan/frame gate (`isTb2bPlanName` AND
  *  `frame.type === "Truss"`). */
-export function simplifyTb2bTrussFrame(frame) {
+export function simplifyTb2bTrussFrame(frame, setup) {
     // Build meta.sticks from the parsed sticks. The simplifier consumes the
     // 3D world coords (start.x/y/z, end.x/y/z) directly.
     const metaSticks = frame.sticks.map((s) => ({
@@ -495,8 +499,17 @@ export function simplifyTb2bTrussFrame(frame) {
         usage: (s.usage ?? "").toLowerCase(),
         flipped: !!s.flipped,
     }));
+    // Resolve the active machine setup for this frame: caller-supplied first,
+    // else from the first stick's profile web (Agent Z #5, 2026-05-05).
+    // Drives box-piece InnerDimple spacing for chord-on-chord overlaps via
+    // setup.boxDimpleSpacing (1200 for 70/89mm, 600 for 78mm/104mm).
+    const firstStickWeb = frame.sticks[0]?.profile?.web;
+    const resolvedSetup = setup ??
+        (firstStickWeb !== undefined
+            ? (getMachineSetupForProfile(firstStickWeb) ?? getDefaultMachineSetup())
+            : getDefaultMachineSetup());
     const positionsByKey = computeTb2bWebPositions(metaSticks);
-    const { dimplesByKey } = computeBoxDimples(metaSticks);
+    const { dimplesByKey } = computeBoxDimples(metaSticks, resolvedSetup);
     const rewritten = [];
     // Rewrite each truss member stick. Box-piece sticks (e.g. "T4 (Box1)")
     // are NOT touched — their InnerDimple ops are pre-derived by the codec/

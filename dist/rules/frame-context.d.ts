@@ -14,6 +14,7 @@
  * are where the rectangles overlap.
  */
 import type { RfyToolingOp, RfyFrame, RfyStick } from "../format.js";
+import { type MachineSetup } from "../machine-setups.js";
 export interface BoundingBox {
     xMin: number;
     xMax: number;
@@ -42,7 +43,7 @@ export declare function layoutFrame(frame: RfyFrame): StickWithBox[];
  * The per-stick base rules (table.ts) handle end-anchored ops. Frame-context
  * rules add LIP NOTCH + DIMPLE pairs at crossings.
  */
-export declare function generateFrameContextOps(frame: RfyFrame): Map<string, RfyToolingOp[]>;
+export declare function generateFrameContextOps(frame: RfyFrame, setup?: MachineSetup): Map<string, RfyToolingOp[]>;
 /**
  * Mutates `stickOps` in-place: merges any LipNotch ops whose endPos is within
  * `gap` mm of the next LipNotch's startPos into a single wider notch.

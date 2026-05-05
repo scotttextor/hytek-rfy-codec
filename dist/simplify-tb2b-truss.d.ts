@@ -1,4 +1,5 @@
 import type { ParsedFrame } from "./synthesize-plans.js";
+import { type MachineSetup } from "./machine-setups.js";
 /** True iff the plan name marks this as a TB2B (Back-to-Back) truss plan. */
 export declare function isTb2bPlanName(planName: string): boolean;
 /** Stick metadata used by the centerline-intersection rule. Mirrors the
@@ -54,7 +55,7 @@ export interface SimplifyTb2bDecision {
 /** Rewrite tooling on a single TB2B truss frame in place. Caller must have
  *  already verified the plan/frame gate (`isTb2bPlanName` AND
  *  `frame.type === "Truss"`). */
-export declare function simplifyTb2bTrussFrame(frame: ParsedFrame): SimplifyTb2bDecision;
+export declare function simplifyTb2bTrussFrame(frame: ParsedFrame, setup?: MachineSetup): SimplifyTb2bDecision;
 /** Public entry point for the TB2B simplifier post-pass. Walks every plan
  *  and frame in the project; for each TB2B truss frame matching the gate
  *  (plan `/-TB2B-/i` AND `frame.type === "Truss"`), runs

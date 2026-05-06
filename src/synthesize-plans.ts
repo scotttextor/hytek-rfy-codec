@@ -412,31 +412,17 @@ export function synthesizeRfyFromPlans(
   // See `src/simplify-tin-truss.ts` for the rewrite scope.
   simplifyTinTrussFramesInProject(project.plans);
 
-  // Post-pass: RP (Roof-Panel) Reversed-Tooling simplifier. Mutates
-  // `frame.sticks[].tooling[]` in place for frames inside `-RP-` plans
-  // where horizontals (T/B/N) are continuous and verticals (S) get notched.
-  // See `src/simplify-rp.ts` for the rewrite scope.
-  simplifyRpFramesInProject(project.plans);
-
-  // Post-pass: TB2B (Back-to-Back truss) simplifier. Replaces the codec's
-  // wall/joist tooling vocabulary on truss-member sticks (T/B/W/R/H) with
-  // the centerline-intersection Web@pt + box-piece InnerDimple + cap-stack
-  // vocabulary FrameCAD Detailer emits for back-to-back trusses.
-  // Originally lived as post-decode patches in `scripts/diff-vs-detailer.mjs`;
-  // migrated here 2026-05-05 by Agent O for production parity. See
-  // `src/simplify-tb2b-truss.ts` for the rewrite scope.
-  simplifyTb2bTrussFramesInProject(project.plans);
-
-  // Post-pass: Wall InnerService z-line simplifier. Replaces the static
-  // InnerService @296/@446 rule (`src/rules/table.ts`) with per-stud
-  // projections of the frame's <tool_action name="Service"> horizontal
-  // z-lines. Active only on wall plans (`-(N?LBW)-`); operates on wall
-  // studs (Stud/TrimStud/EndStud/JackStud).
-  // Originally lived as post-decode patches in `scripts/diff-vs-detailer.mjs`
-  // (Agent S, 2026-05-05); migrated here 2026-05-05 by Agent V for
-  // production parity. See `src/simplify-wall-service.ts` and
-  // `docs/simplify-wall-service-design.md`.
-  simplifyWallServiceInProject(project.plans);
+  // Post-pass simplifiers. Each can be disabled via env var for A/B testing
+  // (e.g. CODEC_DISABLE_RP=1, CODEC_DISABLE_TB2B=1, CODEC_DISABLE_WALL_SERVICE=1).
+  if (typeof process === "undefined" || process.env?.CODEC_DISABLE_RP !== "1") {
+    simplifyRpFramesInProject(project.plans);
+  }
+  if (typeof process === "undefined" || process.env?.CODEC_DISABLE_TB2B !== "1") {
+    simplifyTb2bTrussFramesInProject(project.plans);
+  }
+  if (typeof process === "undefined" || process.env?.CODEC_DISABLE_WALL_SERVICE !== "1") {
+    simplifyWallServiceInProject(project.plans);
+  }
 
   for (const plan of project.plans) {
     planCount++;

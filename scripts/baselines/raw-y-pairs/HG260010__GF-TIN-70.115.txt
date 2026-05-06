@@ -1,0 +1,45 @@
+OP-LEVEL DIFF — HG260010 LOT 11 SUNVIEW PLACE SAMFORD VALLEY-GF-TIN-70.115.xml vs HG260010_GF-TIN-70.115.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 341 | ref 458
+MATCHED:  159  (34.7% of ref)
+MISSING:  299  (ops Detailer has, we don't)
+EXTRAS:   182   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            80       106       70   (43% ref-coverage)
+Swage@span                40        41       48   (49% ref-coverage)
+LipNotch@span             23        55       24   (29% ref-coverage)
+Web@pt                     0        37       17   (0% ref-coverage)
+ScrewHoles@pt             13        36        2   (27% ref-coverage)
+InnerNotch@span            0        23        0   (0% ref-coverage)
+Chamfer@start              0         1       12   (0% ref-coverage)
+Chamfer@end                3         0        9   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TTI2-1 (52 sticks with gaps)
+    T6       MISSING (46): InnerDimple @10.0 | ScrewHoles @53.9 | InnerDimple @61.3 | ScrewHoles @71.9 | ScrewHoles @244.7 ... +41
+    T6       EXTRAS  (27): InnerDimple @16.5 | InnerDimple @1441.9 | InnerDimple @1488.1 | InnerDimple @1741.9 | InnerDimple @1957.1 ... +22
+    T7       MISSING (12): Web @43.4 | Web @75.0 | Web @100.9 | Web @324.1 | Web @573.1 ... +7
+    T7       EXTRAS  (5): InnerDimple @16.5 | Web @501.9 | InnerDimple @1072.1 | LipNotch 0.0..39.0 | LipNotch 1049.6..1088.6
+    W22      MISSING (2): ScrewHoles @612.9 | Swage 644.7..669.9
+    W22      EXTRAS  (1): Swage 637.4..676.4
+    W23      MISSING (4): InnerDimple @11.8 | ScrewHoles @14.0 | InnerDimple @689.0 | Swage 662.2..701.9
+    W23      EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @687.2 | Swage 651.4..697.2 | Chamfer @end
+    W24      MISSING (2): ScrewHoles @747.9 | Swage 730.5..774.9
+    W24      EXTRAS  (1): Swage 742.4..781.4
+    W25      MISSING (3): InnerDimple @13.7 | InnerDimple @933.1 | Swage 892.9..943.1
+    W25      EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @929.4 | Swage 885.7..939.4
+    W26      MISSING (2): ScrewHoles @1027.7 | Swage 1010.3..1054.6
+    W26      EXTRAS  (1): Swage 1022.1..1061.1
+    W27      MISSING (3): InnerDimple @16.0 | InnerDimple @1162.3 | Swage 1128.8..1172.3
+    W27      EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @1156.3 | Swage 1117.2..1166.3 | Chamfer @end
+    T7       MISSING (12): Web @43.4 | Web @75.0 | Web @100.9 | Web @324.1 | Web @573.1 ... +7
+    T7       EXTRAS  (5): InnerDimple @16.5 | Web @461.8 | InnerDimple @1071.7 | LipNotch 0.0..39.0 | LipNotch 1049.2..1088.2
+    B1       MISSING (5): InnerDimple @4854.3 | Swage 4961.8..5008.3 | Swage 5019.0..5064.0 | Swage 5114.0..5159.0 | Swage 5163.0..5202.0
+    B1       EXTRAS  (2): LipNotch 4961.8..5064.0 | LipNotch 5114.0..5202.0

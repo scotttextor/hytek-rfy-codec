@@ -1,0 +1,43 @@
+OP-LEVEL DIFF — HG250125 LOT 2 (26) PENVY CLOSE UPPER CABOOLTURE-GF-TIN-89.075.xml vs HG250125_GF-TIN-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 1 | ref 1
+
+OPS:      our 153 | ref 175
+MATCHED:  94  (53.7% of ref)
+MISSING:  81  (ops Detailer has, we don't)
+EXTRAS:   59   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            51        40       27   (56% ref-coverage)
+Swage@span                24        22       18   (52% ref-coverage)
+LipNotch@span             13        14       13   (48% ref-coverage)
+Chamfer@start              2         2        1   (50% ref-coverage)
+Chamfer@end                4         2        0   (67% ref-coverage)
+InnerNotch@span            0         1        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  HN1-1 (22 sticks with gaps)
+    T2       MISSING (29): InnerDimple @11.6 | InnerDimple @62.8 | InnerDimple @556.3 | InnerDimple @607.6 | InnerDimple @1101.1 ... +24
+    T2       EXTRAS  (21): InnerDimple @16.5 | InnerDimple @2121.4 | InnerDimple @2178.5 | InnerDimple @2647.6 | InnerDimple @2765.9 ... +16
+    W5       MISSING (1): Swage 242.5..271.9
+    W5       EXTRAS  (1): Swage 225.9..270.3
+    W6       MISSING (1): Swage 429.6..517.1
+    W6       EXTRAS  (1): Swage 437.1..517.1
+    W7       MISSING (1): Swage 372.5..412.9
+    W7       EXTRAS  (1): Swage 366.9..411.3
+    W9       MISSING (1): Swage 513.5..553.8
+    W9       EXTRAS  (1): Swage 507.9..552.3
+    W10      MISSING (1): Swage 651.8..706.7
+    W10      EXTRAS  (2): Chamfer @start | Swage 649.4..706.7
+    W11      MISSING (1): Swage 654.5..694.8
+    W11      EXTRAS  (1): Swage 648.8..693.2
+    W13      MISSING (1): Swage 795.4..835.8
+    W13      EXTRAS  (1): Swage 789.8..834.2
+    W14      MISSING (2): InnerDimple @12.4 | InnerDimple @937.1
+    W14      EXTRAS  (2): InnerDimple @10.0 | InnerDimple @934.7
+    W15      MISSING (1): Swage 936.4..976.8
+    W15      EXTRAS  (1): Swage 930.8..975.2

@@ -1,0 +1,43 @@
+OP-LEVEL DIFF — HG260012 [Akam] 23 Springwood Street -TH01-02-TH02-GF-FJ-70.075.xml vs HG260012#1-1_TH02-GF-FJ-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 155 | ref 155
+MATCHED:  114  (73.5% of ref)
+MISSING:  41  (ops Detailer has, we don't)
+EXTRAS:   41   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            50        14       14   (78% ref-coverage)
+Swage@span                18        14       14   (56% ref-coverage)
+LipNotch@span             17        13       13   (57% ref-coverage)
+Chamfer@start             14         0        0   (100% ref-coverage)
+Chamfer@end               14         0        0   (100% ref-coverage)
+Web@pt                     1         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  J2013-1 (16 sticks with gaps)
+    T2       MISSING (6): LipNotch 644.7..748.9 | LipNotch 1233.4..1337.6 | LipNotch 1822.1..1926.2 | LipNotch 2410.7..2514.9 | LipNotch 2999.4..3103.5 ... +1
+    T2       EXTRAS  (6): LipNotch 646.3..748.9 | LipNotch 1234.9..1337.6 | LipNotch 1823.6..1926.2 | LipNotch 2412.2..2514.9 | LipNotch 3000.9..3103.5 ... +1
+    W4       MISSING (2): InnerDimple @281.4 | Swage 188.1..291.4
+    W4       EXTRAS  (2): InnerDimple @283.4 | Swage 213.4..293.4
+    B1       MISSING (7): LipNotch 350.4..454.6 | LipNotch 939.1..1043.2 | LipNotch 1527.7..1631.9 | LipNotch 2116.4..2220.5 | LipNotch 2705.0..2809.2 ... +2
+    B1       EXTRAS  (7): LipNotch 352.0..454.6 | LipNotch 940.6..1043.2 | LipNotch 1529.3..1631.9 | LipNotch 2117.9..2220.5 | LipNotch 2706.6..2809.2 ... +2
+    W4       MISSING (2): InnerDimple @281.4 | Swage 188.1..291.4
+    W4       EXTRAS  (2): InnerDimple @283.4 | Swage 213.4..293.4
+    W4       MISSING (2): InnerDimple @281.4 | Swage 188.1..291.4
+    W4       EXTRAS  (2): InnerDimple @283.4 | Swage 213.4..293.4
+    W4       MISSING (2): InnerDimple @281.4 | Swage 188.1..291.4
+    W4       EXTRAS  (2): InnerDimple @283.4 | Swage 213.4..293.4
+    W4       MISSING (2): InnerDimple @281.4 | Swage 188.1..291.4
+    W4       EXTRAS  (2): InnerDimple @283.4 | Swage 213.4..293.4
+    W4       MISSING (2): InnerDimple @281.4 | Swage 188.1..291.4
+    W4       EXTRAS  (2): InnerDimple @283.4 | Swage 213.4..293.4
+    W4       MISSING (2): InnerDimple @281.4 | Swage 188.1..291.4
+    W4       EXTRAS  (2): InnerDimple @283.4 | Swage 213.4..293.4
+    W4       MISSING (2): InnerDimple @281.4 | Swage 188.1..291.4
+    W4       EXTRAS  (2): InnerDimple @283.4 | Swage 213.4..293.4

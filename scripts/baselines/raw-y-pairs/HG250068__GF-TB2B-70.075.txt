@@ -1,0 +1,48 @@
+OP-LEVEL DIFF — HG250068 SE28 LOT 71 SHARMAN STREET REDBANK PLAINS - REV 5-GF-TB2B-70.075.xml vs HG250068_PK10-GF-TB2B-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 30 | ref 3
+
+OPS:      our 131 | ref 152
+MATCHED:  115  (75.7% of ref)
+MISSING:  37  (ops Detailer has, we don't)
+EXTRAS:   16   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                   115        23       16   (83% ref-coverage)
+InnerDimple@pt             0        14        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  HN10-1 (7 sticks with gaps)
+    T4       MISSING (2): Web @1620.2 | Web @2663.8
+    T4       EXTRAS  (1): Web @2833.1
+    W5       MISSING (1): Web @805.0
+    W5       EXTRAS  (1): Web @775.0
+    B1       MISSING (2): Web @771.0 | Web @1811.4
+    W8       MISSING (2): Web @35.0 | Web @899.8
+    B3       MISSING (8): InnerDimple @50.0 | Web @133.0 | InnerDimple @644.9 | InnerDimple @1239.8 | InnerDimple @1834.7 ... +3
+    B3       EXTRAS  (2): Web @119.8 | Web @3705.3
+    W10      MISSING (2): Web @35.0 | Web @884.2
+    W12      MISSING (1): Web @134.2
+    W12      EXTRAS  (1): Web @172.8
+
+  HN11-1 (2 sticks with gaps)
+    T2       EXTRAS  (1): Web @3392.2
+    B1       EXTRAS  (3): Web @104.0 | Web @1247.9 | Web @2391.2
+
+  HN12-1 (9 sticks with gaps)
+    T4       MISSING (2): Web @2651.9 | Web @3695.7
+    W7       MISSING (1): Web @805.0
+    W7       EXTRAS  (1): Web @775.0
+    B1       MISSING (9): Web @133.0 | InnerDimple @890.0 | InnerDimple @1438.0 | InnerDimple @1986.1 | InnerDimple @2534.1 ... +4
+    B1       EXTRAS  (3): Web @115.6 | Web @954.9 | Web @3870.7
+    B2       MISSING (2): Web @959.0 | Web @1999.2
+    W10      MISSING (2): Web @35.0 | Web @899.6
+    W12      MISSING (2): Web @35.0 | Web @884.4
+    W13      EXTRAS  (1): Web @775.0
+    W13      EXTRAS  (1): Web @775.0
+    W14      MISSING (1): Web @805.0
+    W14      EXTRAS  (1): Web @775.0

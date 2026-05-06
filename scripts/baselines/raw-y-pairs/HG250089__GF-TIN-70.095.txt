@@ -1,0 +1,39 @@
+OP-LEVEL DIFF — HG250089 SE06 LOT 75 SHARMAN STREET REDBANK PLAINS - REV 4-GF-TIN-70.095.xml vs HG250089_GF-TIN-70.095.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 292 | ref 315
+MATCHED:  216  (68.6% of ref)
+MISSING:  99  (ops Detailer has, we don't)
+EXTRAS:   76   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                     1        65       65   (2% ref-coverage)
+ScrewHoles@pt             66        31        0   (68% ref-coverage)
+Swage@span                35         3        3   (92% ref-coverage)
+InnerDimple@pt            76         0        4   (100% ref-coverage)
+LipNotch@span             20         0        4   (100% ref-coverage)
+Chamfer@start              9         0        0   (100% ref-coverage)
+Chamfer@end                9         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  PC28-1 (11 sticks with gaps)
+    T3       MISSING (33): Web @20.5 | Web @75.0 | Web @220.5 | Web @290.5 | Web @366.5 ... +28
+    T3       EXTRAS  (37): InnerDimple @16.5 | Web @16.5 | Web @71.0 | Web @216.5 | Web @286.5 ... +32
+    W6       MISSING (4): ScrewHoles @5.2 | ScrewHoles @33.7 | ScrewHoles @273.1 | Swage 278.4..328.4
+    W6       EXTRAS  (1): Swage 274.8..328.4
+    B1       MISSING (32): Web @20.5 | Web @75.0 | Web @90.5 | Web @290.5 | Web @366.5 ... +27
+    B1       EXTRAS  (36): InnerDimple @16.5 | Web @16.5 | Web @71.0 | Web @86.5 | Web @286.5 ... +31
+    W7       MISSING (4): ScrewHoles @52.3 | ScrewHoles @59.1 | ScrewHoles @382.8 | ScrewHoles @426.4
+    W7       MISSING (4): ScrewHoles @52.3 | ScrewHoles @59.1 | ScrewHoles @382.8 | ScrewHoles @426.4
+    W8       MISSING (3): ScrewHoles @43.2 | ScrewHoles @323.4 | ScrewHoles @358.1
+    W8       MISSING (3): ScrewHoles @43.2 | ScrewHoles @323.4 | ScrewHoles @358.1
+    W9       MISSING (4): ScrewHoles @67.0 | ScrewHoles @488.2 | ScrewHoles @552.5 | Swage 467.9..562.8
+    W9       EXTRAS  (1): Swage 482.8..562.8
+    W9       MISSING (4): ScrewHoles @67.0 | ScrewHoles @488.2 | ScrewHoles @552.5 | Swage 467.9..562.8
+    W9       EXTRAS  (1): Swage 482.8..562.8
+    W7       MISSING (4): ScrewHoles @52.3 | ScrewHoles @59.1 | ScrewHoles @382.8 | ScrewHoles @426.4

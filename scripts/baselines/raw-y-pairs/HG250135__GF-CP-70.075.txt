@@ -1,0 +1,24 @@
+OP-LEVEL DIFF — HG250135 LOT 80 (42) CAMBRIDGE CIRCUIT LAWNTON-GF-CP-70.075.xml vs HG250135_GF-CP-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 6 | ref 6
+
+OPS:      our 208 | ref 208
+MATCHED:  192  (92.3% of ref)
+MISSING:  16  (ops Detailer has, we don't)
+EXTRAS:   16   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            96         8        8   (92% ref-coverage)
+LipNotch@span             44         8        8   (85% ref-coverage)
+Swage@span                52         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  C1 (2 sticks with gaps)
+    T1       MISSING (8): InnerDimple @186.0 | InnerDimple @786.0 | InnerDimple @1386.0 | InnerDimple @1965.5 | LipNotch 163.5..208.5 ... +3
+    T1       EXTRAS  (8): InnerDimple @184.0 | InnerDimple @784.0 | InnerDimple @1384.0 | InnerDimple @1963.5 | LipNotch 161.5..206.5 ... +3
+    B1       MISSING (8): InnerDimple @186.0 | InnerDimple @786.0 | InnerDimple @1386.0 | InnerDimple @1965.5 | LipNotch 163.5..208.5 ... +3
+    B1       EXTRAS  (8): InnerDimple @183.9 | InnerDimple @783.9 | InnerDimple @1383.9 | InnerDimple @1963.4 | LipNotch 161.4..206.4 ... +3

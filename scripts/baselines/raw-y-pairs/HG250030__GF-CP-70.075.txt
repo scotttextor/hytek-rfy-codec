@@ -1,0 +1,62 @@
+OP-LEVEL DIFF — HG250030 24 BAYVIEW STREET WELLINGTON POINT Rev 6-GF-CP-70.075.xml vs HG250030_GF-CP-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 9 | ref 9
+
+OPS:      our 512 | ref 528
+MATCHED:  488  (92.4% of ref)
+MISSING:  40  (ops Detailer has, we don't)
+EXTRAS:   24   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt           238        14       12   (94% ref-coverage)
+Swage@span               114        12       12   (90% ref-coverage)
+Chamfer@end                0        12        0   (0% ref-coverage)
+LipNotch@span            124         2        0   (98% ref-coverage)
+Chamfer@start             12         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  C1 (1 sticks with gaps)
+    Kb1      MISSING (3): InnerDimple @597.8 | Swage 553.8..607.8 | Chamfer @end
+    Kb1      EXTRAS  (2): InnerDimple @601.1 | Swage 566.1..611.1
+
+  C2 (1 sticks with gaps)
+    Kb1      MISSING (3): InnerDimple @597.8 | Swage 553.8..607.8 | Chamfer @end
+    Kb1      EXTRAS  (2): InnerDimple @601.1 | Swage 566.1..611.1
+
+  C3 (3 sticks with gaps)
+    T1       MISSING (2): InnerDimple @1181.0 | LipNotch 1168.6..1230.5
+    B1       MISSING (2): InnerDimple @1610.7 | LipNotch 1561.3..1623.1
+    Kb1      MISSING (3): InnerDimple @644.6 | Swage 595.2..654.6 | Chamfer @end
+    Kb1      EXTRAS  (2): InnerDimple @648.0 | Swage 613.0..658.0
+
+  C4 (2 sticks with gaps)
+    Kb1      MISSING (3): InnerDimple @734.9 | Swage 695.8..744.9 | Chamfer @end
+    Kb1      EXTRAS  (2): InnerDimple @738.0 | Swage 703.0..748.0
+    Kb2      MISSING (3): InnerDimple @734.9 | Swage 695.8..744.9 | Chamfer @end
+    Kb2      EXTRAS  (2): InnerDimple @738.0 | Swage 703.0..748.0
+
+  C5 (2 sticks with gaps)
+    Kb1      MISSING (3): InnerDimple @648.7 | Swage 598.8..658.7 | Chamfer @end
+    Kb1      EXTRAS  (2): InnerDimple @652.0 | Swage 617.0..662.0
+    Kb2      MISSING (3): InnerDimple @648.7 | Swage 598.8..658.7 | Chamfer @end
+    Kb2      EXTRAS  (2): InnerDimple @652.0 | Swage 617.0..662.0
+
+  C6 (2 sticks with gaps)
+    Kb1      MISSING (3): InnerDimple @622.1 | Swage 575.3..632.1 | Chamfer @end
+    Kb1      EXTRAS  (2): InnerDimple @625.5 | Swage 590.5..635.5
+    Kb2      MISSING (3): InnerDimple @622.1 | Swage 575.3..632.1 | Chamfer @end
+    Kb2      EXTRAS  (2): InnerDimple @625.5 | Swage 590.5..635.5
+
+  C8 (2 sticks with gaps)
+    Kb1      MISSING (3): InnerDimple @613.5 | Swage 567.7..623.5 | Chamfer @end
+    Kb1      EXTRAS  (2): InnerDimple @616.8 | Swage 581.8..626.8
+    Kb2      MISSING (3): InnerDimple @613.5 | Swage 567.7..623.5 | Chamfer @end
+    Kb2      EXTRAS  (2): InnerDimple @616.8 | Swage 581.8..626.8
+
+  C9 (1 sticks with gaps)
+    Kb1      MISSING (3): InnerDimple @669.9 | Swage 617.8..679.9 | Chamfer @end
+    Kb1      EXTRAS  (2): InnerDimple @673.3 | Swage 638.3..683.3

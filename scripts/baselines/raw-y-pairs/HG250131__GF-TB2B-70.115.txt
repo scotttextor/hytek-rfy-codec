@@ -1,0 +1,41 @@
+OP-LEVEL DIFF — HG250131 LOT 41 (27) WATT STREET REDCLIFFE-GF-TB2B-70.115.xml vs HG250131_PK17-GF-TB2B-70.115.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 178 | ref 211
+MATCHED:  123  (58.3% of ref)
+MISSING:  88  (ops Detailer has, we don't)
+EXTRAS:   55   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                   119        52       55   (70% ref-coverage)
+InnerDimple@pt             0        31        0   (0% ref-coverage)
+LeftFlange@span            2         2        0   (50% ref-coverage)
+RightFlange@span           0         2        0   (0% ref-coverage)
+LipNotch@span              2         1        0   (67% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TT15-1 (22 sticks with gaps)
+    T6       MISSING (5): InnerDimple @50.0 | Web @92.5 | Web @161.0 | Web @169.8 | InnerDimple @201.2
+    T6       EXTRAS  (2): Web @81.8 | Web @159.1
+    W16      MISSING (3): Web @42.4 | Web @914.2 | Web @947.9
+    W16      EXTRAS  (2): Web @35.0 | Web @951.8
+    H11      MISSING (2): Web @27.0 | LeftFlange 0.0..122.0
+    B1       MISSING (7): Web @30.9 | Web @103.3 | Web @210.5 | Web @700.4 | Web @1248.5 ... +2
+    B1       EXTRAS  (9): Web @22.3 | Web @94.8 | Web @187.3 | Web @192.8 | Web @691.8 ... +4
+    T8       MISSING (1): Web @31.9
+    T8       EXTRAS  (1): Web @14.9
+    W20      MISSING (2): Web @585.1 | Web @719.2
+    W20      EXTRAS  (2): Web @600.1 | Web @712.2
+    W21      MISSING (1): Web @208.2
+    W21      EXTRAS  (1): Web @548.6
+    W22      MISSING (1): Web @494.2
+    W22      EXTRAS  (1): Web @509.2
+    T9       MISSING (7): InnerDimple @2433.5 | InnerDimple @3284.9 | InnerDimple @4136.3 | Web @6344.8 | RightFlange 0.0..35.8 ... +2
+    T9       EXTRAS  (1): Web @3434.2
+    B2       MISSING (23): InnerDimple @50.0 | Web @406.2 | Web @504.2 | Web @602.2 | InnerDimple @1211.4 ... +18
+    B2       EXTRAS  (21): Web @239.0 | Web @561.5 | Web @787.8 | Web @1100.7 | Web @1330.6 ... +16

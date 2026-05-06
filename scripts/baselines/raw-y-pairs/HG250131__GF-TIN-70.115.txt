@@ -1,0 +1,42 @@
+OP-LEVEL DIFF — HG250131 LOT 41 (27) WATT STREET REDCLIFFE-GF-TIN-70.115.xml vs HG250131_GF-TIN-70.115.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 2 | ref 2
+
+OPS:      our 354 | ref 360
+MATCHED:  292  (81.1% of ref)
+MISSING:  68  (ops Detailer has, we don't)
+EXTRAS:   62   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt           152        31       26   (83% ref-coverage)
+Swage@span                72        18       18   (80% ref-coverage)
+LipNotch@span             35        15       11   (70% ref-coverage)
+Chamfer@end               15         1        5   (94% ref-coverage)
+Chamfer@start             18         3        2   (86% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TTI2-1 (21 sticks with gaps)
+    T2       MISSING (14): Chamfer @start | InnerDimple @10.0 | InnerDimple @70.2 | InnerDimple @344.5 | InnerDimple @395.7 ... +9
+    T2       EXTRAS  (15): InnerDimple @16.5 | InnerDimple @73.3 | InnerDimple @144.3 | InnerDimple @356.8 | InnerDimple @439.3 ... +10
+    W4       MISSING (1): Swage 44.7..69.9
+    W4       EXTRAS  (1): Swage 37.4..76.4
+    W5       MISSING (1): Swage 157.8..221.7
+    W5       EXTRAS  (1): Swage 142.2..222.2
+    W6       MISSING (1): Swage 160.1..204.5
+    W6       EXTRAS  (1): Swage 172.3..211.3
+    W7       MISSING (3): InnerDimple @13.9 | InnerDimple @223.2 | Swage 193.3..234.1
+    W7       EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @219.4 | Swage 182.3..229.4 | Chamfer @end
+    W8       MISSING (1): Swage 234.9..279.3
+    W8       EXTRAS  (1): Swage 246.8..285.8
+    W9       MISSING (1): Swage 382.8..422.0
+    W9       EXTRAS  (2): Swage 351.3..416.3 | Chamfer @end
+    W10      MISSING (1): Swage 413.8..458.1
+    W10      EXTRAS  (1): Swage 425.6..464.6
+    W11      MISSING (1): Swage 433.3..477.7
+    W11      EXTRAS  (1): Swage 445.2..484.2
+    H3       MISSING (18): Chamfer @start | InnerDimple @10.0 | InnerDimple @484.2 | InnerDimple @535.4 | InnerDimple @901.2 ... +13
+    H3       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @2246.4 | LipNotch 2223.9..2262.9

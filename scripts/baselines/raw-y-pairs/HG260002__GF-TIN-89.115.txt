@@ -1,0 +1,41 @@
+OP-LEVEL DIFF — HG260002 5 MOSSIP COURT WELLINGTON POINT-GF-TIN-89.115.xml vs HG260002#1-1_GF-TIN-89.115.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 1 | ref 1
+
+OPS:      our 234 | ref 271
+MATCHED:  149  (55.0% of ref)
+MISSING:  122  (ops Detailer has, we don't)
+EXTRAS:   85   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            83        64       28   (56% ref-coverage)
+Swage@span                42        30       22   (58% ref-coverage)
+LipNotch@span             22        22       11   (50% ref-coverage)
+Chamfer@start              0         1       13   (0% ref-coverage)
+Chamfer@end                2         1       11   (67% ref-coverage)
+InnerNotch@span            0         4        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  HB1-1 (29 sticks with gaps)
+    T3       MISSING (21): InnerDimple @10.0 | InnerDimple @61.3 | InnerDimple @242.4 | InnerDimple @293.7 | InnerDimple @636.3 ... +16
+    T3       EXTRAS  (14): InnerDimple @16.5 | InnerDimple @1174.9 | InnerDimple @1245.9 | InnerDimple @1774.9 | InnerDimple @1884.6 ... +9
+    W7       MISSING (1): Swage 74.6..99.4
+    W7       EXTRAS  (1): Swage 66.9..105.9
+    W8       EXTRAS  (1): Chamfer @start
+    B1       MISSING (3): InnerDimple @918.0 | InnerNotch 710.4..755.4 | Swage 888.3..929.0
+    B1       EXTRAS  (2): InnerDimple @912.7 | LipNotch 890.2..929.2
+    W9       MISSING (1): Swage 159.3..205.0
+    W9       EXTRAS  (1): Swage 172.5..211.5
+    W10      EXTRAS  (1): Chamfer @start
+    W11      MISSING (1): Swage 338.1..383.8
+    W11      EXTRAS  (1): Swage 351.3..390.3
+    W12      MISSING (1): Swage 396.9..442.6
+    W12      EXTRAS  (1): Swage 410.1..449.1
+    W13      MISSING (3): InnerDimple @695.5 | Swage 673.0..718.0 | Swage 1097.8..1143.5
+    W13      EXTRAS  (1): Swage 1111.0..1150.0
+    W14      MISSING (5): InnerDimple @13.1 | InnerDimple @494.9 | InnerDimple @1204.3 | LipNotch 465.2..512.6 | Swage 1174.6..1215.3
+    W14      EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @1201.2 | Swage 1164.2..1211.2 | Chamfer @end

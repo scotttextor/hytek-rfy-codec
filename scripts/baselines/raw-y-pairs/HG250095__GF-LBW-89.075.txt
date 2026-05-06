@@ -1,0 +1,34 @@
+OP-LEVEL DIFF — HG250095 SE20 LOT 73 SHARMAN STREET REDBANK PLAINS-GF-LBW-89.075.xml vs HG250095_PK4-GF-LBW-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 3 | ref 1
+
+OPS:      our 52 | ref 46
+MATCHED:  36  (78.3% of ref)
+MISSING:  10  (ops Detailer has, we don't)
+EXTRAS:   16   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerService@pt            0         4        4   (0% ref-coverage)
+LipNotch@span             10         0        6   (100% ref-coverage)
+Swage@span                 4         6        0   (40% ref-coverage)
+InnerNotch@span            0         0        6   (- ref-coverage)
+InnerDimple@pt            20         0        0   (100% ref-coverage)
+Web@pt                     1         0        0   (100% ref-coverage)
+Bolt@pt                    1         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  L18 (5 sticks with gaps)
+    N1       MISSING (2): Swage 0.0..39.0 | Swage 118.0..157.0
+    N1       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 118.0..157.0 | LipNotch 118.0..157.0
+    N2       MISSING (2): Swage 0.0..39.0 | Swage 118.0..157.0
+    N2       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 118.0..157.0 | LipNotch 118.0..157.0
+    N3       MISSING (2): Swage 0.0..39.0 | Swage 118.0..157.0
+    N3       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 118.0..157.0 | LipNotch 118.0..157.0
+    S1       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S1       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S2       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S2       EXTRAS  (2): InnerService @296.0 | InnerService @446.0

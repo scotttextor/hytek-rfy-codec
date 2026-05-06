@@ -1,0 +1,31 @@
+OP-LEVEL DIFF — HG260024 LOT 18 JOEITH COURT MIAMI-GF-NLBW-70.075.xml vs HG260024#1-1_GF-NLBW-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 3 | ref 3
+
+OPS:      our 218 | ref 218
+MATCHED:  211  (96.8% of ref)
+MISSING:  7  (ops Detailer has, we don't)
+EXTRAS:   7   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Swage@span                43         0        5   (100% ref-coverage)
+InnerDimple@pt            86         2        2   (98% ref-coverage)
+LipNotch@span             40         3        0   (93% ref-coverage)
+InnerNotch@span            2         2        0   (50% ref-coverage)
+InnerService@pt           26         0        0   (100% ref-coverage)
+Web@pt                     3         0        0   (100% ref-coverage)
+Bolt@pt                   11         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  N7 (4 sticks with gaps)
+    N2       MISSING (3): InnerDimple @466.5 | InnerNotch 444.0..483.0 | LipNotch 444.0..483.0
+    N2       EXTRAS  (2): InnerDimple @472.5 | Swage 450.0..489.0
+    N3       MISSING (3): InnerDimple @466.5 | InnerNotch 444.0..483.0 | LipNotch 444.0..483.0
+    N3       EXTRAS  (2): InnerDimple @472.5 | Swage 450.0..489.0
+    S2       MISSING (1): LipNotch 752.8..839.3
+    S2       EXTRAS  (2): Swage 752.8..797.8 | Swage 794.3..839.3
+    S3       EXTRAS  (1): Swage 794.3..839.3

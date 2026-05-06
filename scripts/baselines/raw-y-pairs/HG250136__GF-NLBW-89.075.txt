@@ -1,0 +1,55 @@
+OP-LEVEL DIFF — HG250136 18 AGATE STREET CAMP HILL-GF-NLBW-89.075.xml vs HG250136_PK1-GF-NLBW-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 32 | ref 8
+
+OPS:      our 54 | ref 16
+MATCHED:  0  (0.0% of ref)
+MISSING:  16  (ops Detailer has, we don't)
+EXTRAS:   54   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerService@pt            0        14       14   (0% ref-coverage)
+InnerDimple@pt             0         0       18   (- ref-coverage)
+Swage@span                 0         0       14   (- ref-coverage)
+Web@pt                     0         2        2   (0% ref-coverage)
+LipNotch@span              0         0        4   (- ref-coverage)
+Bolt@pt                    0         0        2   (- ref-coverage)
+
+FRAMES WITH GAPS:
+
+  N24 (1 sticks with gaps)
+    S1       MISSING (2): InnerService @300.0 | InnerService @450.0
+    S1       EXTRAS  (6): InnerDimple @16.5 | InnerService @296.0 | InnerService @446.0 | InnerDimple @2969.5 | Swage 0.0..39.0 ... +1
+
+  N26 (1 sticks with gaps)
+    S1       MISSING (2): InnerService @300.0 | InnerService @450.0
+    S1       EXTRAS  (6): InnerDimple @16.5 | InnerService @296.0 | InnerService @446.0 | InnerDimple @2969.5 | Swage 0.0..39.0 ... +1
+
+  N28 (1 sticks with gaps)
+    S1       MISSING (2): InnerService @300.0 | InnerService @450.0
+    S1       EXTRAS  (6): InnerDimple @16.5 | InnerService @296.0 | InnerService @446.0 | InnerDimple @2969.5 | Swage 0.0..39.0 ... +1
+
+  N30 (1 sticks with gaps)
+    S1       MISSING (2): InnerService @300.0 | InnerService @450.0
+    S1       EXTRAS  (6): InnerDimple @16.5 | InnerService @296.0 | InnerService @446.0 | InnerDimple @2969.5 | Swage 0.0..39.0 ... +1
+
+  N32 (1 sticks with gaps)
+    S1       MISSING (2): InnerService @300.0 | InnerService @450.0
+    S1       EXTRAS  (6): InnerDimple @16.5 | InnerService @296.0 | InnerService @446.0 | InnerDimple @2969.5 | Swage 0.0..39.0 ... +1
+
+  N34 (1 sticks with gaps)
+    S1       MISSING (2): InnerService @300.0 | InnerService @450.0
+    S1       EXTRAS  (6): InnerDimple @16.5 | InnerService @296.0 | InnerService @446.0 | InnerDimple @2969.5 | Swage 0.0..39.0 ... +1
+
+  N36 (1 sticks with gaps)
+    S1       MISSING (2): InnerService @300.0 | InnerService @450.0
+    S1       EXTRAS  (6): InnerDimple @16.5 | InnerService @296.0 | InnerService @446.0 | InnerDimple @2969.5 | Swage 0.0..39.0 ... +1
+
+  N42 (2 sticks with gaps)
+    T1       MISSING (1): Web @12.0
+    T1       EXTRAS  (5): Web @8.0 | InnerDimple @16.5 | InnerDimple @4433.0 | LipNotch 0.0..39.0 | LipNotch 4410.5..4449.5
+    B1       MISSING (1): Web @12.0
+    B1       EXTRAS  (7): Web @8.0 | InnerDimple @16.5 | Bolt @62.0 | Bolt @4387.5 | InnerDimple @4433.0 ... +2

@@ -1,0 +1,30 @@
+OP-LEVEL DIFF — HG250076 SE21 LOT 72 SHARMAN STREET REDBANK PLAINS-GF-LBW-89.075.xml vs HG250076_PK5-GF-LBW-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 3 | ref 1
+
+OPS:      our 35 | ref 34
+MATCHED:  27  (79.4% of ref)
+MISSING:  7  (ops Detailer has, we don't)
+EXTRAS:   8   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt             8         4        4   (67% ref-coverage)
+LipNotch@span              5         1        1   (83% ref-coverage)
+InnerService@pt            5         1        1   (83% ref-coverage)
+Swage@span                 5         1        1   (83% ref-coverage)
+Chamfer@start              0         0        1   (- ref-coverage)
+Web@pt                     1         0        0   (100% ref-coverage)
+Bolt@pt                    3         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  L47 (3 sticks with gaps)
+    T1       MISSING (4): InnerDimple @13.1 | InnerService @115.6 | InnerDimple @225.4 | LipNotch 206.0..238.5
+    T1       EXTRAS  (5): Chamfer @start | InnerDimple @16.5 | InnerService @117.5 | InnerDimple @222.1 | LipNotch 199.6..238.6
+    S1       MISSING (1): InnerDimple @2755.7
+    S1       EXTRAS  (1): InnerDimple @2752.3
+    S2       MISSING (2): InnerDimple @2718.8 | Swage 2699.6..2731.9
+    S2       EXTRAS  (2): InnerDimple @2715.5 | Swage 2693.0..2732.0

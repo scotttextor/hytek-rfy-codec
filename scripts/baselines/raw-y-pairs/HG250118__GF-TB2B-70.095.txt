@@ -1,0 +1,42 @@
+OP-LEVEL DIFF — HG250118 LOT 3 (9) MYE PLACE STOCKLEIGH Rev 4-GF-TB2B-70.095.xml vs HG250118_PK19-GF-TB2B-70.095.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 2 | ref 1
+
+OPS:      our 133 | ref 149
+MATCHED:  61  (40.9% of ref)
+MISSING:  88  (ops Detailer has, we don't)
+EXTRAS:   72   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                    61        67       72   (48% ref-coverage)
+InnerDimple@pt             0        15        0   (0% ref-coverage)
+RightFlange@span           0         3        0   (0% ref-coverage)
+LipNotch@span              0         2        0   (0% ref-coverage)
+LeftFlange@span            0         1        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TT27-1 (25 sticks with gaps)
+    T6       MISSING (20): Web @30.0 | InnerDimple @50.0 | InnerDimple @1088.7 | Web @1259.4 | Web @1332.4 ... +15
+    T6       EXTRAS  (13): Web @18.5 | Web @116.5 | Web @264.5 | Web @341.1 | Web @417.7 ... +8
+    W14      MISSING (2): Web @335.0 | Web @1073.1
+    W14      EXTRAS  (2): Web @320.0 | Web @1058.1
+    W15      MISSING (2): Web @386.3 | Web @1215.5
+    W15      EXTRAS  (2): Web @368.8 | Web @1233.1
+    H11      MISSING (1): Web @747.4
+    H11      EXTRAS  (1): Web @638.6
+    T8       MISSING (4): Web @19.1 | Web @92.1 | Web @190.1 | RightFlange 0.0..286.9
+    T8       EXTRAS  (2): Web @96.3 | Web @195.3
+    W16      MISSING (2): Web @335.0 | Web @1043.1
+    W16      EXTRAS  (2): Web @320.0 | Web @1058.1
+    H12      MISSING (20): Web @35.0 | Web @315.8 | Web @1351.0 | Web @1681.8 | Web @2617.0 ... +15
+    H12      EXTRAS  (19): Web @251.3 | Web @595.0 | Web @675.0 | Web @907.9 | Web @1338.4 ... +14
+    B1       MISSING (4): InnerDimple @50.0 | InnerDimple @300.0 | InnerDimple @4450.7 | InnerDimple @4573.0
+    B1       EXTRAS  (4): Web @114.8 | Web @1426.6 | Web @2684.3 | Web @3958.8
+    W17      MISSING (1): Web @414.7
+    W17      EXTRAS  (1): Web @395.7
+    W18      MISSING (1): Web @335.0
+    W18      EXTRAS  (1): Web @320.0

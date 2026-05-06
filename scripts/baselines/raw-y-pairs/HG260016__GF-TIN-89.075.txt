@@ -1,0 +1,28 @@
+OP-LEVEL DIFF — HG260016 LOT 6 (10) DAVENPORT PLACE KURABY-GF-TIN-89.075.xml vs HG260016_GF-TIN-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 1 | ref 1
+
+OPS:      our 56 | ref 54
+MATCHED:  51  (94.4% of ref)
+MISSING:  3  (ops Detailer has, we don't)
+EXTRAS:   5   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Swage@span                11         3        3   (79% ref-coverage)
+Chamfer@start              2         0        1   (100% ref-coverage)
+Chamfer@end                2         0        1   (100% ref-coverage)
+InnerDimple@pt            28         0        0   (100% ref-coverage)
+LipNotch@span              8         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  PC2-1 (3 sticks with gaps)
+    W4       MISSING (1): Swage 641.7..684.7
+    W4       EXTRAS  (3): Chamfer @start | Swage 635.9..684.7 | Chamfer @end
+    W5       MISSING (1): Swage 726.5..779.4
+    W5       EXTRAS  (1): Swage 723.6..779.4
+    W5       MISSING (1): Swage 726.5..779.4
+    W5       EXTRAS  (1): Swage 723.6..779.4

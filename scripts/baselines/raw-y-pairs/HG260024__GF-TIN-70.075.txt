@@ -1,0 +1,64 @@
+OP-LEVEL DIFF — HG260024 LOT 18 JOEITH COURT MIAMI-GF-TIN-70.075.xml vs HG260024#1-1_GF-TIN-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 2 | ref 2
+
+OPS:      our 214 | ref 227
+MATCHED:  147  (64.8% of ref)
+MISSING:  80  (ops Detailer has, we don't)
+EXTRAS:   67   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            80        40       28   (67% ref-coverage)
+Swage@span                37        23       23   (62% ref-coverage)
+LipNotch@span             18        15       14   (55% ref-coverage)
+Chamfer@start              4         0        2   (100% ref-coverage)
+Chamfer@end                8         2        0   (80% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  HN1-1 (14 sticks with gaps)
+    T2       MISSING (22): InnerDimple @13.1 | InnerDimple @64.4 | InnerDimple @566.7 | InnerDimple @617.9 | InnerDimple @1120.2 ... +17
+    T2       EXTRAS  (16): InnerDimple @16.5 | InnerDimple @2197.1 | InnerDimple @2280.5 | InnerDimple @2742.3 | InnerDimple @2871.3 ... +11
+    W3       MISSING (1): Swage 372.1..404.4
+    W3       EXTRAS  (1): Swage 356.9..401.3
+    W5       MISSING (1): Swage 460.9..500.6
+    W5       EXTRAS  (1): Swage 453.0..497.4
+    W6       MISSING (1): Swage 613.7..673.3
+    W6       EXTRAS  (1): Swage 612.0..673.3
+    W7       MISSING (1): Swage 557.1..596.7
+    W7       EXTRAS  (1): Swage 549.1..593.5
+    W8       MISSING (1): Swage 692.7..746.9
+    W8       EXTRAS  (2): Chamfer @start | Swage 690.1..746.9
+    W9       MISSING (1): Swage 653.2..692.8
+    W9       EXTRAS  (1): Swage 645.3..689.7
+    W10      MISSING (1): Swage 774.7..825.2
+    W10      EXTRAS  (1): Swage 777.3..831.2
+    W11      MISSING (1): Swage 749.3..788.9
+    W11      EXTRAS  (1): Swage 741.4..785.8
+    W12      MISSING (2): Swage 859.3..907.1 | Chamfer @end
+    W12      EXTRAS  (1): Swage 861.0..913.0
+
+  HN6-1 (14 sticks with gaps)
+    T2       MISSING (23): InnerDimple @13.1 | InnerDimple @64.4 | InnerDimple @566.7 | InnerDimple @616.2 | InnerDimple @1014.9 ... +18
+    T2       EXTRAS  (16): InnerDimple @16.5 | InnerDimple @2197.1 | InnerDimple @2280.8 | InnerDimple @2742.3 | InnerDimple @2871.6 ... +11
+    W3       MISSING (1): Swage 372.1..404.4
+    W3       EXTRAS  (1): Swage 356.9..401.3
+    W5       MISSING (1): Swage 460.9..500.6
+    W5       EXTRAS  (1): Swage 453.0..497.4
+    W6       MISSING (2): InnerDimple @599.4 | Swage 557.1..609.4
+    W6       EXTRAS  (3): Chamfer @start | InnerDimple @597.7 | Swage 552.4..607.7
+    W7       MISSING (2): InnerDimple @565.2 | Swage 538.8..578.4
+    W7       EXTRAS  (2): InnerDimple @559.8 | Swage 525.4..569.8
+    W8       MISSING (2): InnerDimple @758.7 | Swage 710.1..768.7
+    W8       EXTRAS  (2): InnerDimple @753.7 | Swage 703.2..763.7
+    W9       MISSING (1): InnerDimple @671.0
+    W9       EXTRAS  (1): InnerDimple @679.7
+    W10      MISSING (2): InnerDimple @833.0 | Swage 790.2..843.0
+    W10      EXTRAS  (2): InnerDimple @843.1 | Swage 803.4..859.1
+    W11      MISSING (1): Swage 749.3..788.9
+    W11      EXTRAS  (1): Swage 741.4..785.8
+    W12      MISSING (2): Swage 859.3..907.1 | Chamfer @end
+    W12      EXTRAS  (1): Swage 861.0..913.0

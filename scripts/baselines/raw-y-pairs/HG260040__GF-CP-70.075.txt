@@ -1,0 +1,37 @@
+OP-LEVEL DIFF — HG260040 LOT 7581 (3) MURRAY STREET BANYA-GF-CP-70.075.xml vs HG260040#1-1_GF-CP-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 4 | ref 4
+
+OPS:      our 188 | ref 204
+MATCHED:  164  (80.4% of ref)
+MISSING:  40  (ops Detailer has, we don't)
+EXTRAS:   24   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+LipNotch@span             38        12       12   (76% ref-coverage)
+Swage@span                37        13        5   (74% ref-coverage)
+InnerDimple@pt            89        11        3   (89% ref-coverage)
+InnerNotch@span            0         4        4   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  MH (9 sticks with gaps)
+    T2       MISSING (4): Swage 0.0..39.0 | Swage 70.5..115.5 | Swage 676.5..721.5 | Swage 753.0..792.0
+    T2       EXTRAS  (4): LipNotch 0.0..39.0 | LipNotch 70.5..115.5 | LipNotch 676.5..721.5 | LipNotch 753.0..792.0
+    T3       MISSING (2): Swage 0.0..39.0 | Swage 70.5..109.5
+    T3       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 70.5..109.5 | LipNotch 70.5..109.5
+    T4       MISSING (2): Swage 0.0..39.0 | Swage 70.5..109.5
+    T4       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 70.5..109.5 | LipNotch 70.5..109.5
+    B1       MISSING (4): Swage 0.0..39.0 | Swage 70.5..115.5 | Swage 676.5..721.5 | Swage 753.0..792.0
+    B1       EXTRAS  (4): LipNotch 0.0..39.0 | LipNotch 70.5..115.5 | LipNotch 676.5..721.5 | LipNotch 753.0..792.0
+    S1       MISSING (6): InnerDimple @272.5 | InnerDimple @575.5 | InnerDimple @878.5 | LipNotch 250.0..295.0 | LipNotch 553.0..598.0 ... +1
+    S2       MISSING (7): InnerDimple @319.5 | InnerDimple @622.5 | LipNotch 0.0..39.0 | InnerNotch 0.0..39.0 | LipNotch 297.0..342.0 ... +2
+    S2       EXTRAS  (3): InnerDimple @624.5 | Swage 0.0..39.0 | Swage 602.0..641.0
+    S3       MISSING (2): InnerDimple @272.5 | Swage 250.0..289.0
+    S3       EXTRAS  (2): InnerDimple @276.5 | Swage 254.0..293.0
+    S4       MISSING (6): InnerDimple @272.5 | InnerDimple @575.5 | InnerDimple @878.5 | LipNotch 250.0..295.0 | LipNotch 553.0..598.0 ... +1
+    S5       MISSING (7): InnerDimple @319.5 | InnerDimple @622.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | LipNotch 297.0..342.0 ... +2
+    S5       EXTRAS  (3): InnerDimple @624.5 | Swage 0.0..39.0 | Swage 602.0..641.0

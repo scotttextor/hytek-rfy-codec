@@ -1,0 +1,45 @@
+OP-LEVEL DIFF — HG260045 LOT 38 (11) NEEDLEWOOD ROAD CABOOLTURE (3)-GF-TIN-70.095.xml vs HG260045#1-1_GF-TIN-70.095.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 166 | ref 184
+MATCHED:  100  (54.3% of ref)
+MISSING:  84  (ops Detailer has, we don't)
+EXTRAS:   66   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            46        29       23   (61% ref-coverage)
+Swage@span                16        21       16   (43% ref-coverage)
+LipNotch@span             13        10       12   (57% ref-coverage)
+Web@pt                     1        10       10   (9% ref-coverage)
+Chamfer@end                6        11        0   (35% ref-coverage)
+InnerNotch@span            1         0        5   (100% ref-coverage)
+ScrewHoles@pt             11         3        0   (79% ref-coverage)
+Chamfer@start              6         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  HA1-1 (21 sticks with gaps)
+    T3       MISSING (24): InnerDimple @10.0 | InnerDimple @61.3 | InnerDimple @429.1 | InnerDimple @550.7 | InnerDimple @638.9 ... +19
+    T3       EXTRAS  (20): InnerDimple @16.5 | InnerDimple @1451.4 | InnerDimple @1519.8 | InnerDimple @1973.9 | InnerDimple @2103.3 ... +15
+    W7       MISSING (1): Swage 676.5..701.7
+    W7       EXTRAS  (1): Swage 669.2..708.2
+    W8       MISSING (1): Swage 738.2..777.3
+    W8       EXTRAS  (1): Swage 723.3..771.8
+    W9       MISSING (2): Swage 834.5..878.8 | Chamfer @end
+    W9       EXTRAS  (1): Swage 846.3..885.3
+    W10      MISSING (2): Swage 885.8..930.2 | Chamfer @end
+    W10      EXTRAS  (1): Swage 897.7..936.7
+    W11      MISSING (2): Swage 923.2..967.5 | Chamfer @end
+    W11      EXTRAS  (1): Swage 935.0..974.0
+    W12      MISSING (1): Swage 992.1..1031.4
+    W12      EXTRAS  (1): Swage 979.6..1026.7
+    W13      MISSING (2): Swage 1105.9..1150.3 | Chamfer @end
+    W13      EXTRAS  (1): Swage 1117.8..1156.8
+    W14      MISSING (1): Swage 1190.8..1230.0
+    W14      EXTRAS  (1): Swage 1177.8..1225.2
+    W15      MISSING (2): Swage 1326.3..1370.7 | Chamfer @end
+    W15      EXTRAS  (1): Swage 1338.2..1377.2

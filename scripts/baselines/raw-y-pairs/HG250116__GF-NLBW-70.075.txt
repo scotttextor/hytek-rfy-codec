@@ -1,0 +1,60 @@
+OP-LEVEL DIFF — HG250116 LOT 5 22A TURNER COURT CABOOLTURE 1-GF-NLBW-70.075.xml vs HG250116_PK1-GF-NLBW-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 62 | ref 25
+
+OPS:      our 780 | ref 775
+MATCHED:  751  (96.9% of ref)
+MISSING:  24  (ops Detailer has, we don't)
+EXTRAS:   29   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerService@pt          110        19       12   (85% ref-coverage)
+Bolt@pt                   26         0       10   (100% ref-coverage)
+Swage@span               146         2        4   (99% ref-coverage)
+InnerDimple@pt           294         2        2   (99% ref-coverage)
+LipNotch@span            145         1        1   (99% ref-coverage)
+Web@pt                    18         0        0   (100% ref-coverage)
+InnerNotch@span           12         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  N7 (5 sticks with gaps)
+    N2       MISSING (2): InnerDimple @356.0 | Swage 333.5..372.5
+    N2       EXTRAS  (2): InnerDimple @362.0 | Swage 339.5..378.5
+    N3       MISSING (2): InnerDimple @356.0 | Swage 333.5..372.5
+    N3       EXTRAS  (2): InnerDimple @362.0 | Swage 339.5..378.5
+    S1       MISSING (2): InnerService @341.0 | InnerService @491.0
+    S1       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S2       MISSING (3): InnerService @341.0 | InnerService @491.0 | LipNotch 697.5..784.5
+    S2       EXTRAS  (4): InnerService @296.0 | InnerService @446.0 | Swage 697.5..742.5 | Swage 739.5..784.5
+    S3       MISSING (2): InnerService @341.0 | InnerService @491.0
+    S3       EXTRAS  (3): InnerService @296.0 | InnerService @446.0 | LipNotch 739.5..784.5
+
+  N10 (3 sticks with gaps)
+    S1       MISSING (2): InnerService @341.0 | InnerService @491.0
+    S1       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S2       MISSING (2): InnerService @341.0 | InnerService @491.0
+    S2       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S3       MISSING (2): InnerService @341.0 | InnerService @491.0
+    S3       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+
+  N11 (1 sticks with gaps)
+    B1       EXTRAS  (2): Bolt @62.0 | Bolt @1000.0
+
+  N19 (1 sticks with gaps)
+    B1       EXTRAS  (2): Bolt @62.0 | Bolt @1090.0
+
+  N28 (1 sticks with gaps)
+    B1       EXTRAS  (2): Bolt @62.0 | Bolt @1150.0
+
+  N30 (1 sticks with gaps)
+    B1       EXTRAS  (2): Bolt @62.0 | Bolt @980.0
+
+  N33 (1 sticks with gaps)
+    B1       EXTRAS  (2): Bolt @62.0 | Bolt @980.0
+
+  N39 (1 sticks with gaps)
+    S1       MISSING (7): InnerService @146.0 | InnerService @546.0 | InnerService @946.0 | InnerService @1346.0 | InnerService @1746.0 ... +2

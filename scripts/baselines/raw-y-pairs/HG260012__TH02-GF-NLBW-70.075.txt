@@ -1,0 +1,27 @@
+OP-LEVEL DIFF — HG260012 [Akam] 23 Springwood Street -TH01-02-TH02-GF-NLBW-70.075.xml vs HG260012#1-1_TH02-GF-NLBW-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 2 | ref 2
+
+OPS:      our 66 | ref 62
+MATCHED:  60  (96.8% of ref)
+MISSING:  2  (ops Detailer has, we don't)
+EXTRAS:   6   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerNotch@span            0         0        4   (- ref-coverage)
+LipNotch@span             12         0        2   (100% ref-coverage)
+Swage@span                10         2        0   (83% ref-coverage)
+InnerDimple@pt            24         0        0   (100% ref-coverage)
+InnerService@pt           10         0        0   (100% ref-coverage)
+Web@pt                     2         0        0   (100% ref-coverage)
+Bolt@pt                    2         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  N2007 (2 sticks with gaps)
+    T1       EXTRAS  (2): InnerNotch 0.0..39.0 | InnerNotch 123.0..162.0
+    N1       MISSING (2): Swage 0.0..39.0 | Swage 123.0..162.0
+    N1       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 123.0..162.0 | LipNotch 123.0..162.0

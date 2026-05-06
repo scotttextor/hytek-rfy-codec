@@ -1,0 +1,42 @@
+OP-LEVEL DIFF — HG260003 69 GUROMAN DRIVE GREENBANK-GF-TB2B-70.115.xml vs HG260003_PK11-GF-TB2B-70.115.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 146 | ref 173
+MATCHED:  85  (49.1% of ref)
+MISSING:  88  (ops Detailer has, we don't)
+EXTRAS:   61   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                    82        55       58   (60% ref-coverage)
+InnerDimple@pt             0        22        0   (0% ref-coverage)
+LipNotch@span              1         4        1   (20% ref-coverage)
+LeftFlange@span            1         4        1   (20% ref-coverage)
+RightFlange@span           1         3        1   (25% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TT7-1 (19 sticks with gaps)
+    T3       MISSING (7): InnerDimple @50.0 | Web @713.0 | InnerDimple @943.0 | Web @1052.9 | Web @1641.1 ... +2
+    T3       EXTRAS  (4): Web @183.7 | Web @245.3 | Web @337.1 | Web @833.5
+    T5       MISSING (2): Web @3918.9 | RightFlange 4078.8..4111.3
+    T5       EXTRAS  (1): Web @3937.1
+    B1       MISSING (37): InnerDimple @60.4 | Web @67.9 | InnerDimple @226.7 | Web @925.3 | Web @1023.3 ... +32
+    B1       EXTRAS  (30): Web @60.0 | Web @1282.5 | Web @1290.1 | Web @1380.5 | Web @2388.9 ... +25
+    H8       MISSING (12): Web @92.4 | InnerDimple @268.4 | InnerDimple @993.8 | Web @1463.3 | InnerDimple @1719.2 ... +7
+    H8       EXTRAS  (6): Web @17.0 | Web @1455.7 | Web @2916.8 | Web @4321.4 | Web @5028.0 ... +1
+    W17      MISSING (1): Web @415.0
+    W17      EXTRAS  (1): Web @430.0
+    W18      MISSING (1): Web @415.0
+    W18      EXTRAS  (1): Web @430.0
+    W19      MISSING (1): Web @415.0
+    W19      EXTRAS  (1): Web @430.0
+    W20      MISSING (1): Web @421.4
+    W20      EXTRAS  (1): Web @738.8
+    W21      MISSING (1): Web @445.0
+    W21      EXTRAS  (1): Web @430.0
+    W22      MISSING (1): Web @636.5
+    W22      EXTRAS  (1): Web @614.5

@@ -1,0 +1,35 @@
+OP-LEVEL DIFF — HG250135 LOT 80 (42) CAMBRIDGE CIRCUIT LAWNTON-GF-MH-70.075.xml vs HG250135_GF-MH-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 82 | ref 85
+MATCHED:  68  (80.0% of ref)
+MISSING:  17  (ops Detailer has, we don't)
+EXTRAS:   14   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Swage@span                17         3        9   (85% ref-coverage)
+LipNotch@span             13         7        1   (65% ref-coverage)
+InnerNotch@span            0         5        2   (0% ref-coverage)
+InnerDimple@pt            38         2        2   (95% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  MH1 (7 sticks with gaps)
+    N1       MISSING (5): LipNotch 0.0..39.0 | InnerNotch 0.0..39.0 | Swage 291.3..336.3 | InnerNotch 600.0..639.0 | LipNotch 600.0..639.0
+    N1       EXTRAS  (4): Swage 0.0..39.0 | InnerNotch 291.3..336.3 | LipNotch 291.3..336.3 | Swage 600.0..639.0
+    N2       MISSING (2): InnerDimple @278.3 | Swage 255.8..294.8
+    N2       EXTRAS  (2): InnerDimple @281.3 | Swage 258.8..297.8
+    N3       MISSING (4): LipNotch 0.0..39.0 | InnerNotch 0.0..39.0 | InnerNotch 600.0..639.0 | LipNotch 600.0..639.0
+    N3       EXTRAS  (3): Swage 0.0..39.0 | InnerNotch 291.3..336.3 | Swage 600.0..639.0
+    N4       MISSING (2): InnerDimple @266.8 | Swage 244.3..283.3
+    N4       EXTRAS  (2): InnerDimple @269.8 | Swage 247.3..286.3
+    S2       MISSING (1): LipNotch 456.0..501.0
+    S2       EXTRAS  (1): Swage 456.0..501.0
+    S3       MISSING (2): LipNotch 0.0..39.0 | InnerNotch 0.0..39.0
+    S3       EXTRAS  (1): Swage 0.0..39.0
+    S4       MISSING (1): LipNotch 456.0..501.0
+    S4       EXTRAS  (1): Swage 456.0..501.0

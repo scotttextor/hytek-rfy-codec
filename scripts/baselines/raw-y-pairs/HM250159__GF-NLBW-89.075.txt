@@ -1,0 +1,39 @@
+OP-LEVEL DIFF — 2512151 42 MACQUARIE AVE MOLENDINAR [A2]-GF-NLBW-89.075.xml vs HM250159_GF-NLBW-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 1 | ref 1
+
+OPS:      our 67 | ref 70
+MATCHED:  48  (68.6% of ref)
+MISSING:  22  (ops Detailer has, we don't)
+EXTRAS:   19   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            19         7        7   (73% ref-coverage)
+Swage@span                 7         6        4   (54% ref-coverage)
+LipNotch@span              9         4        4   (69% ref-coverage)
+InnerService@pt           10         4        0   (71% ref-coverage)
+Chamfer@start              1         0        2   (100% ref-coverage)
+Bolt@pt                    0         0        2   (- ref-coverage)
+Chamfer@end                0         1        0   (0% ref-coverage)
+Web@pt                     1         0        0   (100% ref-coverage)
+InnerNotch@span            1         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  N11 (7 sticks with gaps)
+    T1       MISSING (6): InnerDimple @14.8 | InnerDimple @534.4 | InnerDimple @907.2 | LipNotch 504.6..552.0 | LipNotch 575.6..620.9 ... +1
+    T1       EXTRAS  (7): Chamfer @start | InnerDimple @16.5 | InnerDimple @536.7 | InnerDimple @905.5 | LipNotch 488.5..536.9 ... +2
+    B1       EXTRAS  (2): Bolt @62.0 | Bolt @860.0
+    S1       MISSING (1): InnerDimple @2760.7
+    S1       EXTRAS  (1): InnerDimple @2759.0
+    S2       MISSING (2): InnerDimple @2710.0 | Swage 1324.0..1369.0
+    S2       EXTRAS  (2): InnerDimple @2708.3 | LipNotch 1324.0..1369.0
+    S3       MISSING (3): InnerDimple @2682.9 | LipNotch 1324.0..1369.0 | Swage 2662.1..2697.7
+    S3       EXTRAS  (3): InnerDimple @2681.2 | Swage 1324.0..1369.0 | Swage 2658.7..2697.7
+    Kb1      MISSING (4): InnerService @848.8 | InnerDimple @1416.2 | Swage 0.0..122.9 | Swage 1386.6..1427.3
+    Kb1      EXTRAS  (2): InnerDimple @1417.7 | Swage 1377.7..1427.7
+    Kb2      MISSING (6): InnerService @303.5 | InnerService @465.6 | InnerService @663.1 | Swage 0.0..42.7 | Swage 1269.5..1389.2 ... +1
+    Kb2      EXTRAS  (2): Chamfer @start | Swage 1340.6..1390.6

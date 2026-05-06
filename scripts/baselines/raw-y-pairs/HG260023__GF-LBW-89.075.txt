@@ -1,0 +1,44 @@
+OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-LBW-89.075.xml vs HG260023_PK3-GF-LBW-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 1 | ref 1
+
+OPS:      our 171 | ref 192
+MATCHED:  131  (68.2% of ref)
+MISSING:  61  (ops Detailer has, we don't)
+EXTRAS:   40   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            60        21       16   (74% ref-coverage)
+Swage@span                28         9        9   (76% ref-coverage)
+LipNotch@span             25         6        7   (81% ref-coverage)
+Web@pt                     3         8        1   (27% ref-coverage)
+Chamfer@start              0         8        0   (0% ref-coverage)
+Chamfer@end                0         8        0   (0% ref-coverage)
+InnerService@pt            6         1        6   (86% ref-coverage)
+InnerNotch@span            6         0        1   (100% ref-coverage)
+Bolt@pt                    3         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  L21 (17 sticks with gaps)
+    T1       MISSING (1): InnerService @49.5
+    B3       EXTRAS  (2): Web @8.0 | LipNotch 36.0..81.0
+    H1       MISSING (5): LipNotch 230.9..282.3 | LipNotch 660.3..711.8 | LipNotch 1089.8..1141.3 | LipNotch 1519.3..1570.8 | LipNotch 1793.0..1874.0
+    H1       EXTRAS  (5): LipNotch 232.4..282.4 | LipNotch 661.9..711.9 | LipNotch 1091.4..1141.4 | LipNotch 1520.9..1570.9 | LipNotch 1835.0..1874.0
+    N1       MISSING (1): Swage 0.0..39.0
+    N1       EXTRAS  (2): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0
+    W1       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @355.0 | Swage 318.4..365.0 | Chamfer @end
+    W1       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @347.3 | Swage 324.8..363.8
+    W2       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @355.4 | Swage 318.8..365.4 | Chamfer @end
+    W2       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @347.8 | Swage 325.3..364.3
+    W3       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @355.4 | Swage 318.8..365.4 | Chamfer @end
+    W3       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @347.8 | Swage 325.3..364.3
+    W4       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @355.4 | Swage 318.8..365.4 | Chamfer @end
+    W4       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @347.8 | Swage 325.3..364.3
+    W5       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @355.4 | Swage 318.8..365.4 | Chamfer @end
+    W5       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @347.8 | Swage 325.3..364.3
+    W6       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @355.4 | Swage 318.8..365.4 | Chamfer @end
+    W6       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @347.8 | Swage 325.3..364.3

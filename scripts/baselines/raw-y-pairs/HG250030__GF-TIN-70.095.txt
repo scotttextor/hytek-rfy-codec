@@ -1,0 +1,44 @@
+OP-LEVEL DIFF — HG250030 24 BAYVIEW STREET WELLINGTON POINT Rev 6-GF-TIN-70.095.xml vs HG250030_GF-TIN-70.095.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 196 | ref 171
+MATCHED:  140  (81.9% of ref)
+MISSING:  31  (ops Detailer has, we don't)
+EXTRAS:   56   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            75        11       10   (87% ref-coverage)
+Swage@span                29        11        9   (73% ref-coverage)
+LipNotch@span             20         5        9   (80% ref-coverage)
+ScrewHoles@pt              0         0       13   (- ref-coverage)
+Web@pt                     0         0       13   (- ref-coverage)
+Chamfer@start              8         1        1   (89% ref-coverage)
+Chamfer@end                8         1        1   (89% ref-coverage)
+InnerNotch@span            0         2        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  PC9-1 (12 sticks with gaps)
+    T5       EXTRAS  (13): ScrewHoles @16.5 | ScrewHoles @71.0 | ScrewHoles @94.4 | ScrewHoles @318.4 | ScrewHoles @540.5 ... +8
+    T4       MISSING (3): InnerDimple @50.0 | InnerDimple @693.4 | InnerDimple @1336.8
+    T4       EXTRAS  (17): InnerDimple @16.5 | Web @16.5 | Web @71.0 | Web @94.4 | Web @318.4 ... +12
+    W7       MISSING (3): InnerDimple @228.6 | LipNotch 216.0..278.0 | Swage 583.8..643.2
+    W7       EXTRAS  (1): Swage 582.1..643.2
+    B1       MISSING (13): Chamfer @start | InnerDimple @10.0 | InnerDimple @334.9 | InnerDimple @493.7 | InnerDimple @544.9 ... +8
+    B1       EXTRAS  (15): InnerDimple @16.5 | InnerDimple @215.6 | InnerDimple @540.5 | InnerDimple @739.6 | InnerDimple @1064.5 ... +10
+    W7       MISSING (3): InnerDimple @228.6 | LipNotch 216.0..278.0 | Swage 583.8..643.2
+    W7       EXTRAS  (1): Swage 582.1..643.2
+    W8       MISSING (1): Swage 162.8..213.6
+    W8       EXTRAS  (1): Swage 159.5..213.6
+    W9       MISSING (3): InnerDimple @348.1 | LipNotch 311.6..363.2 | Swage 494.3..540.8
+    W9       EXTRAS  (1): Swage 489.7..540.8
+    W10      MISSING (1): Swage 590.7..651.0
+    W10      EXTRAS  (1): Swage 589.1..651.0
+    W10      MISSING (1): Swage 590.7..651.0
+    W10      EXTRAS  (1): Swage 589.1..651.0
+    W10      MISSING (1): Swage 590.7..651.0
+    W10      EXTRAS  (1): Swage 589.1..651.0

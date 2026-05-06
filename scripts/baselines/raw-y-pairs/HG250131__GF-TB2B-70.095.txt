@@ -1,0 +1,42 @@
+OP-LEVEL DIFF — HG250131 LOT 41 (27) WATT STREET REDCLIFFE-GF-TB2B-70.095.xml vs HG250131_PK16-GF-TB2B-70.095.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 131 | ref 135
+MATCHED:  78  (57.8% of ref)
+MISSING:  57  (ops Detailer has, we don't)
+EXTRAS:   53   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                    74        39       53   (65% ref-coverage)
+InnerDimple@pt             0         8        0   (0% ref-coverage)
+RightFlange@span           0         4        0   (0% ref-coverage)
+LipNotch@span              2         3        0   (40% ref-coverage)
+LeftFlange@span            2         3        0   (40% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TT14-1 (16 sticks with gaps)
+    T4       MISSING (7): InnerDimple @50.0 | Web @579.0 | InnerDimple @1146.9 | InnerDimple @2243.8 | InnerDimple @3340.7 ... +2
+    T4       EXTRAS  (7): Web @153.4 | Web @400.2 | Web @553.6 | Web @1886.0 | Web @3295.5 ... +2
+    B1       MISSING (17): Web @174.5 | Web @375.3 | Web @1328.0 | Web @2539.7 | Web @2637.7 ... +12
+    B1       EXTRAS  (15): Web @361.9 | Web @1314.6 | Web @2624.3 | Web @3836.0 | Web @3891.8 ... +10
+    H8       MISSING (9): Web @84.3 | Web @1321.6 | Web @2292.8 | RightFlange 0.0..31.2 | LipNotch 0.0..54.9 ... +4
+    H8       EXTRAS  (3): Web @16.7 | Web @1318.7 | Web @2360.4
+    T6       MISSING (1): Web @442.1
+    T6       EXTRAS  (1): Web @459.1
+    W20      MISSING (1): Web @841.8
+    W20      EXTRAS  (1): Web @856.8
+    W21      MISSING (1): Web @302.8
+    W21      EXTRAS  (2): Web @287.8 | Web @850.9
+    W22      MISSING (1): Web @469.8
+    W22      EXTRAS  (2): Web @484.8 | Web @751.0
+    W24      MISSING (1): Web @1130.2
+    W24      EXTRAS  (1): Web @360.8
+    B2       MISSING (8): Web @1161.6 | Web @1259.6 | Web @1357.6 | Web @2020.9 | Web @2186.6 ... +3
+    B2       EXTRAS  (9): Web @1089.0 | Web @1133.5 | Web @1187.0 | Web @1352.7 | Web @2037.9 ... +4
+    T7       MISSING (2): Web @91.2 | Web @2442.3
+    T7       EXTRAS  (3): Web @166.3 | Web @319.7 | Web @2459.2

@@ -1,0 +1,68 @@
+OP-LEVEL DIFF — HG250089 SE06 LOT 75 SHARMAN STREET REDBANK PLAINS - REV 4-GF-LBW-70.095.xml vs HG250089_PK4-GF-LBW-70.095.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 11 | ref 2
+
+OPS:      our 349 | ref 359
+MATCHED:  295  (82.2% of ref)
+MISSING:  64  (ops Detailer has, we don't)
+EXTRAS:   54   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerService@pt           32        34       26   (48% ref-coverage)
+LipNotch@span             53        11        9   (83% ref-coverage)
+InnerDimple@pt           120         8        9   (94% ref-coverage)
+Swage@span                58         6        9   (91% ref-coverage)
+Chamfer@end                0         3        0   (0% ref-coverage)
+InnerNotch@span           16         2        0   (89% ref-coverage)
+Chamfer@start              5         0        1   (100% ref-coverage)
+Web@pt                     2         0        0   (100% ref-coverage)
+Bolt@pt                    9         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  L7 (12 sticks with gaps)
+    T1       MISSING (1): LipNotch 1660.0..1699.0
+    T1       EXTRAS  (1): LipNotch 1654.0..1699.0
+    B1       MISSING (1): LipNotch 1660.0..1699.0
+    B1       EXTRAS  (1): LipNotch 1654.0..1699.0
+    N2       MISSING (2): InnerNotch 211.0..250.0 | LipNotch 211.0..250.0
+    N2       EXTRAS  (1): Swage 211.0..250.0
+    S1       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S1       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S2       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S2       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S3       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S3       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S4       MISSING (4): InnerService @371.0 | InnerService @521.0 | InnerDimple @2768.0 | LipNotch 2603.2..2777.1
+    S4       EXTRAS  (4): InnerService @296.0 | InnerService @446.0 | InnerDimple @2621.5 | LipNotch 2612.5..2785.9
+    S5       MISSING (4): InnerService @371.0 | InnerService @521.0 | InnerDimple @1412.0 | LipNotch 1102.1..1297.5
+    S5       EXTRAS  (4): InnerService @296.0 | InnerService @446.0 | InnerDimple @1565.5 | LipNotch 1105.3..1296.8
+    S6       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S6       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    Kb1      MISSING (2): InnerService @646.4 | Swage 931.0..972.1
+    Kb1      EXTRAS  (1): Swage 829.4..972.9
+
+  L31 (12 sticks with gaps)
+    T1       MISSING (2): LipNotch 283.4..382.6 | LipNotch 1660.0..1699.0
+    T1       EXTRAS  (2): LipNotch 285.2..382.6 | LipNotch 1654.0..1699.0
+    B1       MISSING (1): LipNotch 1660.0..1699.0
+    B1       EXTRAS  (1): LipNotch 1654.0..1699.0
+    N2       MISSING (2): InnerNotch 211.0..250.0 | LipNotch 211.0..250.0
+    N2       EXTRAS  (1): Swage 211.0..250.0
+    S1       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S1       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S2       MISSING (3): InnerService @371.0 | InnerService @521.0 | InnerDimple @1337.0
+    S2       EXTRAS  (3): InnerService @296.0 | InnerService @446.0 | InnerDimple @1465.3
+    S3       MISSING (6): InnerService @371.0 | InnerService @521.0 | InnerDimple @2693.0 | InnerDimple @2817.0 | LipNotch 2554.6..2701.9 ... +1
+    S3       EXTRAS  (8): InnerService @296.0 | InnerService @446.0 | InnerDimple @2571.7 | InnerDimple @2805.9 | InnerDimple @2914.0 ... +3
+    S4       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S4       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S5       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S5       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S6       MISSING (2): InnerService @371.0 | InnerService @521.0
+    S6       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    Kb1      MISSING (2): InnerService @174.2 | Swage 392.6..438.7
+    Kb1      EXTRAS  (1): Swage 388.9..439.6

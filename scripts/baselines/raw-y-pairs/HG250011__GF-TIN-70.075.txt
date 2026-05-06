@@ -1,0 +1,63 @@
+OP-LEVEL DIFF — HG250011 LOT 57 (5) NEVIS COURT D AGUILAR Rev 1-GF-TIN-70.075.xml vs HG250011_GF-TIN-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 3 | ref 3
+
+OPS:      our 300 | ref 306
+MATCHED:  227  (74.2% of ref)
+MISSING:  79  (ops Detailer has, we don't)
+EXTRAS:   73   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Swage@span                50        30       28   (63% ref-coverage)
+InnerDimple@pt           128        34       20   (79% ref-coverage)
+LipNotch@span             32        10       10   (76% ref-coverage)
+Chamfer@start              7         2        9   (78% ref-coverage)
+Chamfer@end               10         2        6   (83% ref-coverage)
+InnerNotch@span            0         1        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  PC1-1 (22 sticks with gaps)
+    T2       MISSING (16): InnerDimple @10.0 | InnerDimple @64.1 | InnerDimple @562.3 | InnerDimple @613.5 | InnerDimple @1165.8 ... +11
+    T2       EXTRAS  (11): InnerDimple @16.5 | InnerDimple @1110.9 | InnerDimple @1550.6 | InnerDimple @1657.9 | InnerDimple @2181.4 ... +6
+    W5       MISSING (1): Swage 1284.3..1343.8
+    W5       EXTRAS  (2): Chamfer @start | Swage 1295.7..1342.9
+    W6       MISSING (1): Swage 1010.6..1055.0
+    W6       EXTRAS  (1): Swage 1021.5..1060.5
+    W7       MISSING (1): Swage 1032.5..1076.9
+    W7       EXTRAS  (1): Swage 1044.4..1083.4
+    W8       MISSING (1): Swage 1544.1..1602.3
+    W8       EXTRAS  (2): Chamfer @start | Swage 1554.3..1601.2
+    W9       MISSING (1): Swage 1264.7..1309.1
+    W9       EXTRAS  (1): Swage 1276.6..1315.6
+    W10      MISSING (3): InnerDimple @11.8 | InnerDimple @1839.0 | Swage 1793.2..1849.0
+    W10      EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @1837.2 | Swage 1800.8..1847.2
+    W11      MISSING (1): Swage 1519.8..1564.2
+    W11      EXTRAS  (1): Swage 1531.7..1570.7
+    W12      MISSING (1): Swage 1774.8..1819.2
+    W12      EXTRAS  (1): Swage 1786.7..1825.7
+    W13      MISSING (3): InnerDimple @12.6 | InnerDimple @1876.3 | Swage 1848.3..1888.4
+    W13      EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @1873.7 | Swage 1837.5..1883.7 | Chamfer @end
+
+  PC4-1 (7 sticks with gaps)
+    W4       MISSING (1): Swage 774.7..829.1
+    W4       EXTRAS  (1): Swage 772.1..829.1
+    W4       MISSING (1): Swage 774.7..829.1
+    W4       EXTRAS  (1): Swage 772.1..829.1
+    W4       MISSING (1): Swage 774.7..829.1
+    W4       EXTRAS  (1): Swage 772.1..829.1
+    W4       MISSING (1): Swage 774.7..829.1
+    W4       EXTRAS  (1): Swage 772.1..829.1
+    W4       MISSING (1): Swage 774.7..829.1
+    W4       EXTRAS  (1): Swage 772.1..829.1
+    W4       MISSING (1): Swage 774.7..829.1
+    W4       EXTRAS  (1): Swage 772.1..829.1
+    W4       MISSING (1): Swage 774.7..829.1
+    W4       EXTRAS  (1): Swage 772.1..829.1
+
+  PC7-1 (1 sticks with gaps)
+    W4       MISSING (3): InnerDimple @12.4 | InnerDimple @666.3 | Swage 638.8..678.7
+    W4       EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @663.8 | Swage 627.8..673.8 | Chamfer @end

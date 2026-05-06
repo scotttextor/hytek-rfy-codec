@@ -1,0 +1,52 @@
+OP-LEVEL DIFF — HG250086 SE02 LOT 76 SHARMAN STREET REDBANK PLAINS Rev 4-GF-TIN-70.075.xml vs HG250086_GF-TIN-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 4 | ref 4
+
+OPS:      our 260 | ref 254
+MATCHED:  242  (95.3% of ref)
+MISSING:  12  (ops Detailer has, we don't)
+EXTRAS:   18   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Swage@span                50        12       12   (81% ref-coverage)
+InnerNotch@span            0         0        6   (- ref-coverage)
+InnerDimple@pt           124         0        0   (100% ref-coverage)
+LipNotch@span             44         0        0   (100% ref-coverage)
+Chamfer@start             12         0        0   (100% ref-coverage)
+Chamfer@end               12         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  PC9-1 (12 sticks with gaps)
+    W4       MISSING (1): Swage 670.5..724.6
+    W4       EXTRAS  (1): Swage 667.9..724.6
+    W4       MISSING (1): Swage 670.5..724.6
+    W4       EXTRAS  (1): Swage 667.9..724.6
+    W5       MISSING (1): Swage 666.1..719.7
+    W5       EXTRAS  (1): Swage 664.4..720.7
+    W6       MISSING (1): Swage 653.8..706.0
+    W6       EXTRAS  (1): Swage 651.7..706.9
+    W7       MISSING (1): Swage 658.1..710.8
+    W7       EXTRAS  (1): Swage 655.2..710.8
+    W6       MISSING (1): Swage 653.8..706.0
+    W6       EXTRAS  (1): Swage 651.7..706.9
+    W8       MISSING (1): Swage 660.7..713.6
+    W8       EXTRAS  (1): Swage 658.0..713.8
+    W9       MISSING (1): Swage 664.3..717.7
+    W9       EXTRAS  (1): Swage 661.5..717.7
+    W8       MISSING (1): Swage 660.7..713.6
+    W8       EXTRAS  (1): Swage 658.0..713.8
+    W10      MISSING (1): Swage 656.4..708.9
+    W10      EXTRAS  (1): Swage 654.4..709.8
+
+  PC10-1 (1 sticks with gaps)
+    T2       EXTRAS  (2): InnerNotch 0.0..39.0 | InnerNotch 123.0..162.0
+
+  PC11-1 (1 sticks with gaps)
+    T2       EXTRAS  (2): InnerNotch 0.0..39.0 | InnerNotch 123.0..162.0
+
+  PC12-1 (1 sticks with gaps)
+    T2       EXTRAS  (2): InnerNotch 0.0..39.0 | InnerNotch 123.0..162.0

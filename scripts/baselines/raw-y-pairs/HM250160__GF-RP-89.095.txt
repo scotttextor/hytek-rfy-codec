@@ -1,0 +1,34 @@
+OP-LEVEL DIFF — 2512179 53 BIRRALEE CLOSE CLOSEBURN [A1]-GF-RP-89.095.xml vs HM250160_GF-RP-89.095.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 1 | ref 1
+
+OPS:      our 130 | ref 138
+MATCHED:  122  (88.4% of ref)
+MISSING:  16  (ops Detailer has, we don't)
+EXTRAS:   8   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Swage@span                24         8        4   (75% ref-coverage)
+InnerDimple@pt            62         2        2   (97% ref-coverage)
+LipNotch@span             30         2        2   (94% ref-coverage)
+Chamfer@start              0         4        0   (0% ref-coverage)
+InnerNotch@span            6         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  R1 (6 sticks with gaps)
+    T1       MISSING (1): LipNotch 3043.0..3082.0
+    T1       EXTRAS  (1): LipNotch 3037.0..3082.0
+    B1       MISSING (1): LipNotch 3043.0..3082.0
+    B1       EXTRAS  (1): LipNotch 3037.0..3082.0
+    Kb1      MISSING (3): Chamfer @start | Swage 0.0..119.8 | Swage 1006.2..1048.8
+    Kb1      EXTRAS  (1): Swage 1000.3..1050.3
+    Kb2      MISSING (4): Chamfer @start | InnerDimple @1037.9 | Swage 0.0..119.7 | Swage 1005.2..1047.9
+    Kb2      EXTRAS  (2): InnerDimple @1040.4 | Swage 1000.4..1050.4
+    Kb3      MISSING (3): Chamfer @start | Swage 0.0..119.8 | Swage 1006.2..1048.8
+    Kb3      EXTRAS  (1): Swage 1000.3..1050.3
+    Kb4      MISSING (4): Chamfer @start | InnerDimple @1037.9 | Swage 0.0..119.7 | Swage 1005.2..1047.9
+    Kb4      EXTRAS  (2): InnerDimple @1040.4 | Swage 1000.4..1050.4

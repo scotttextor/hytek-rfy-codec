@@ -1,0 +1,24 @@
+OP-LEVEL DIFF — HG250113 LOT 80 (25) HOTHAM COURT D AGUILAR-GF-RT-70.075.xml vs HG250113_GF-RT-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 2 | ref 2
+
+OPS:      our 8 | ref 3
+MATCHED:  0  (0.0% of ref)
+MISSING:  3  (ops Detailer has, we don't)
+EXTRAS:   8   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt             0         3        4   (0% ref-coverage)
+LipNotch@span              0         0        4   (- ref-coverage)
+
+FRAMES WITH GAPS:
+
+  V1-1 (1 sticks with gaps)
+    T1       MISSING (3): InnerDimple @150.0 | InnerDimple @641.0 | InnerDimple @1132.0
+    T1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1257.5 | LipNotch 0.0..39.0 | LipNotch 1235.0..1274.0
+
+  V2-1 (1 sticks with gaps)
+    T1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @2513.7 | LipNotch 0.0..39.0 | LipNotch 2491.2..2530.2

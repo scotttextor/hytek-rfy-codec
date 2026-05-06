@@ -1,0 +1,100 @@
+OP-LEVEL DIFF — HG250118 LOT 3 (9) MYE PLACE STOCKLEIGH Rev 4-GF-TIN-89.075.xml vs HG250118_GF-TIN-89.075.rfy
+================================================================================
+Setup:    F325iT 89mm
+Frames:   our 4 | ref 4
+
+OPS:      our 708 | ref 714
+MATCHED:  663  (92.9% of ref)
+MISSING:  51  (ops Detailer has, we don't)
+EXTRAS:   45   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Swage@span               137        41       39   (77% ref-coverage)
+InnerDimple@pt           348         8        6   (98% ref-coverage)
+InnerNotch@span            0         2        0   (0% ref-coverage)
+LipNotch@span             98         0        0   (100% ref-coverage)
+Chamfer@start             40         0        0   (100% ref-coverage)
+Chamfer@end               40         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  PC3-1 (10 sticks with gaps)
+    W4       MISSING (1): Swage 338.3..508.3
+    W4       EXTRAS  (1): Swage 428.3..508.3
+    W4       MISSING (1): Swage 338.3..508.3
+    W4       EXTRAS  (1): Swage 428.3..508.3
+    W4       MISSING (1): Swage 338.3..508.3
+    W4       EXTRAS  (1): Swage 428.3..508.3
+    W4       MISSING (1): Swage 338.3..508.3
+    W4       EXTRAS  (1): Swage 428.3..508.3
+    W4       MISSING (1): Swage 338.3..508.3
+    W4       EXTRAS  (1): Swage 428.3..508.3
+    W5       MISSING (1): Swage 333.2..500.6
+    W5       EXTRAS  (1): Swage 420.6..500.6
+    W5       MISSING (1): Swage 333.2..500.6
+    W5       EXTRAS  (1): Swage 420.6..500.6
+    W5       MISSING (1): Swage 333.2..500.6
+    W5       EXTRAS  (1): Swage 420.6..500.6
+    W5       MISSING (1): Swage 333.2..500.6
+    W5       EXTRAS  (1): Swage 420.6..500.6
+    W5       MISSING (1): Swage 333.2..500.6
+    W5       EXTRAS  (1): Swage 420.6..500.6
+
+  PC2-1 (15 sticks with gaps)
+    W4       MISSING (2): InnerDimple @245.5 | Swage 223.0..262.0
+    W4       EXTRAS  (2): InnerDimple @255.0 | Swage 232.5..271.5
+    T2       MISSING (1): InnerNotch 0.0..39.0
+    W5       MISSING (4): InnerDimple @245.5 | InnerDimple @295.5 | Swage 223.0..268.0 | Swage 273.0..312.0
+    W5       EXTRAS  (2): InnerDimple @314.5 | Swage 292.0..331.0
+    W6       MISSING (2): InnerDimple @346.8 | Swage 305.8..356.8
+    W6       EXTRAS  (2): InnerDimple @343.7 | Swage 299.4..353.7
+    W10      MISSING (1): Swage 497.8..590.4
+    W10      EXTRAS  (1): Swage 510.4..590.4
+    W10      MISSING (1): Swage 497.8..590.4
+    W10      EXTRAS  (1): Swage 510.4..590.4
+    W11      MISSING (1): Swage 444.4..526.3
+    W11      EXTRAS  (1): Swage 446.3..526.3
+    W11      MISSING (1): Swage 444.4..526.3
+    W11      EXTRAS  (1): Swage 446.3..526.3
+    W13      MISSING (1): Swage 458.8..543.5
+    W13      EXTRAS  (1): Swage 463.5..543.5
+    W13      MISSING (1): Swage 458.8..543.5
+    W13      EXTRAS  (1): Swage 463.5..543.5
+
+  PC4-1 (10 sticks with gaps)
+    W4       MISSING (1): Swage 215.3..321.0
+    W4       EXTRAS  (1): Swage 241.0..321.0
+    W4       MISSING (1): Swage 215.3..321.0
+    W4       EXTRAS  (1): Swage 241.0..321.0
+    W5       MISSING (1): Swage 355.3..534.0
+    W5       EXTRAS  (1): Swage 454.0..534.0
+    W5       MISSING (1): Swage 355.3..534.0
+    W5       EXTRAS  (1): Swage 454.0..534.0
+    W6       MISSING (1): Swage 224.5..335.1
+    W6       EXTRAS  (1): Swage 255.1..335.1
+    W6       MISSING (1): Swage 224.5..335.1
+    W6       EXTRAS  (1): Swage 255.1..335.1
+    W6       MISSING (1): Swage 224.5..335.1
+    W6       EXTRAS  (1): Swage 255.1..335.1
+    W6       MISSING (1): Swage 224.5..335.1
+    W6       EXTRAS  (1): Swage 255.1..335.1
+    W7       MISSING (1): Swage 195.4..290.3
+    W7       EXTRAS  (1): Swage 210.3..290.3
+    W7       MISSING (1): Swage 195.4..290.3
+    W7       EXTRAS  (1): Swage 210.3..290.3
+
+  PC1-1 (6 sticks with gaps)
+    W4       MISSING (1): Swage 195.4..290.3
+    W4       EXTRAS  (1): Swage 210.3..290.3
+    W4       MISSING (1): Swage 195.4..290.3
+    W4       EXTRAS  (1): Swage 210.3..290.3
+    W5       MISSING (1): Swage 355.2..533.9
+    W5       EXTRAS  (1): Swage 454.0..534.0
+    W5       MISSING (1): Swage 355.2..533.9
+    W5       EXTRAS  (1): Swage 454.0..534.0
+    W6       MISSING (1): Swage 345.3..519.0
+    W6       EXTRAS  (1): Swage 439.0..519.0
+    W6       MISSING (1): Swage 345.3..519.0
+    W6       EXTRAS  (1): Swage 439.0..519.0

@@ -1,0 +1,29 @@
+OP-LEVEL DIFF — HG250086 SE02 LOT 76 SHARMAN STREET REDBANK PLAINS Rev 4-GF-TB2B-70.075.xml vs HG250086_PK12-GF-TB2B-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 40 | ref 2
+
+OPS:      our 65 | ref 82
+MATCHED:  53  (64.6% of ref)
+MISSING:  29  (ops Detailer has, we don't)
+EXTRAS:   12   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt             0        26        0   (0% ref-coverage)
+Web@pt                    53         3       12   (95% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TN30-1 (2 sticks with gaps)
+    T3       MISSING (10): InnerDimple @50.0 | InnerDimple @621.7 | InnerDimple @1193.5 | InnerDimple @1765.2 | InnerDimple @2336.9 ... +5
+    T3       EXTRAS  (4): Web @153.4 | Web @258.0 | Web @1792.2 | Web @3320.1
+    B1       MISSING (5): Web @1437.0 | InnerDimple @2853.6 | InnerDimple @3397.4 | InnerDimple @3941.2 | InnerDimple @4485.0
+    B1       EXTRAS  (2): Web @2987.4 | Web @4439.5
+
+  TN31-1 (2 sticks with gaps)
+    T3       MISSING (9): InnerDimple @121.1 | InnerDimple @692.8 | InnerDimple @1264.5 | InnerDimple @1836.3 | InnerDimple @2408.0 ... +4
+    T3       EXTRAS  (4): Web @1448.7 | Web @2964.6 | Web @4486.7 | Web @4591.5
+    B2       MISSING (5): InnerDimple @50.0 | InnerDimple @601.4 | InnerDimple @1152.8 | InnerDimple @1704.1 | Web @3109.7
+    B2       EXTRAS  (2): Web @94.9 | Web @1571.1

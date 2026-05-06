@@ -1,0 +1,75 @@
+OP-LEVEL DIFF — HG260002 5 MOSSIP COURT WELLINGTON POINT-GF-CP-70.075.xml vs HG260002#1-1_GF-CP-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 14 | ref 14
+
+OPS:      our 638 | ref 731
+MATCHED:  608  (83.2% of ref)
+MISSING:  123  (ops Detailer has, we don't)
+EXTRAS:   30   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+LipNotch@span            125        44        8   (74% ref-coverage)
+InnerDimple@pt           313        45        0   (87% ref-coverage)
+Swage@span               158        21       22   (88% ref-coverage)
+Chamfer@end                0        12        0   (0% ref-coverage)
+InnerNotch@span            0         1        0   (0% ref-coverage)
+Chamfer@start             12         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  MH (2 sticks with gaps)
+    S2       MISSING (1): LipNotch 553.0..598.0
+    S2       EXTRAS  (1): Swage 553.0..598.0
+    S3       MISSING (1): LipNotch 553.0..598.0
+    S3       EXTRAS  (1): Swage 553.0..598.0
+
+  C1 (10 sticks with gaps)
+    T1       MISSING (19): InnerDimple @63.7 | InnerDimple @616.1 | InnerDimple @663.3 | InnerDimple @1215.7 | InnerDimple @1262.9 ... +14
+    T1       EXTRAS  (2): LipNotch 0.0..39.0 | LipNotch 3591.5..3630.5
+    B1       MISSING (24): InnerDimple @562.1 | InnerDimple @616.1 | InnerDimple @1161.7 | InnerDimple @1215.7 | InnerDimple @1761.2 ... +19
+    B1       EXTRAS  (2): LipNotch 0.0..39.0 | LipNotch 3591.5..3630.5
+    S1       MISSING (2): LipNotch 0.0..39.0 | LipNotch 399.6..438.6
+    S1       EXTRAS  (2): Swage 0.0..39.0 | Swage 399.6..438.6
+    S7       MISSING (2): LipNotch 0.0..39.0 | LipNotch 399.6..438.6
+    S7       EXTRAS  (2): Swage 0.0..39.0 | Swage 399.6..438.6
+    Kb1      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb1      EXTRAS  (1): Swage 616.8..663.0
+    Kb2      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb2      EXTRAS  (1): Swage 616.8..663.0
+    Kb3      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb3      EXTRAS  (1): Swage 616.8..663.0
+    Kb4      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb4      EXTRAS  (1): Swage 616.8..663.0
+    Kb5      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb5      EXTRAS  (1): Swage 616.8..663.0
+    Kb6      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb6      EXTRAS  (1): Swage 616.8..663.0
+
+  C2 (10 sticks with gaps)
+    T1       MISSING (24): InnerDimple @70.5 | InnerDimple @616.1 | InnerDimple @670.1 | InnerDimple @1215.7 | InnerDimple @1269.7 ... +19
+    T1       EXTRAS  (2): LipNotch 0.0..39.0 | LipNotch 3591.5..3630.5
+    B1       MISSING (19): InnerDimple @568.9 | InnerDimple @616.1 | InnerDimple @1168.5 | InnerDimple @1215.7 | InnerDimple @1768.1 ... +14
+    B1       EXTRAS  (2): LipNotch 0.0..39.0 | LipNotch 3591.5..3630.5
+    S1       MISSING (2): LipNotch 0.0..39.0 | LipNotch 399.6..438.6
+    S1       EXTRAS  (2): Swage 0.0..39.0 | Swage 399.6..438.6
+    S7       MISSING (2): LipNotch 0.0..39.0 | LipNotch 399.6..438.6
+    S7       EXTRAS  (2): Swage 0.0..39.0 | Swage 399.6..438.6
+    Kb1      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb1      EXTRAS  (1): Swage 616.8..663.0
+    Kb2      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb2      EXTRAS  (1): Swage 616.8..663.0
+    Kb3      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb3      EXTRAS  (1): Swage 616.8..663.0
+    Kb4      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb4      EXTRAS  (1): Swage 616.8..663.0
+    Kb5      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb5      EXTRAS  (1): Swage 616.8..663.0
+    Kb6      MISSING (2): Swage 591.7..662.6 | Chamfer @end
+    Kb6      EXTRAS  (1): Swage 616.8..663.0
+
+  C4 (2 sticks with gaps)
+    T2       MISSING (1): InnerNotch 0.0..39.0
+    S4       MISSING (2): InnerDimple @483.5 | Swage 461.0..506.0

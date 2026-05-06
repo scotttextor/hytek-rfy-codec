@@ -1,0 +1,117 @@
+OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-TIN-70.075.xml vs HG260044#1-1_GF-TIN-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 7 | ref 7
+
+OPS:      our 846 | ref 958
+MATCHED:  781  (81.5% of ref)
+MISSING:  177  (ops Detailer has, we don't)
+EXTRAS:   65   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Swage@span               164        65       44   (72% ref-coverage)
+InnerDimple@pt           407        63       20   (87% ref-coverage)
+InnerNotch@span            0        26        0   (0% ref-coverage)
+LipNotch@span            120        23        1   (84% ref-coverage)
+Chamfer@start             45         0        0   (100% ref-coverage)
+Chamfer@end               45         0        0   (100% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  PC7-1 (5 sticks with gaps)
+    W4       MISSING (1): Swage 660.9..710.4
+    W4       EXTRAS  (1): Swage 657.2..710.4
+    W5       MISSING (1): Swage 685.5..737.8
+    W5       EXTRAS  (1): Swage 682.5..737.8
+    W5       MISSING (1): Swage 685.5..737.8
+    W5       EXTRAS  (1): Swage 682.5..737.8
+    W5       MISSING (1): Swage 685.5..737.8
+    W5       EXTRAS  (1): Swage 682.5..737.8
+    W4       MISSING (1): Swage 660.9..710.4
+    W4       EXTRAS  (1): Swage 657.2..710.4
+
+  TGI2-1 (6 sticks with gaps)
+    W4       MISSING (3): InnerDimple @12.0 | InnerDimple @1054.1 | Swage 1026.0..1066.1
+    W4       EXTRAS  (3): InnerDimple @10.0 | InnerDimple @1052.1 | Swage 1015.8..1062.1
+    W4       MISSING (3): InnerDimple @12.0 | InnerDimple @1054.1 | Swage 1026.0..1066.1
+    W4       EXTRAS  (3): InnerDimple @10.0 | InnerDimple @1052.1 | Swage 1015.8..1062.1
+    W5       MISSING (3): InnerDimple @12.2 | InnerDimple @1051.7 | Swage 1023.9..1063.9
+    W5       EXTRAS  (3): InnerDimple @10.0 | InnerDimple @1049.5 | Swage 1013.3..1059.5
+    W6       MISSING (3): InnerDimple @15.5 | InnerDimple @1029.7 | Swage 1006.2..1045.2
+    W6       EXTRAS  (3): InnerDimple @10.0 | InnerDimple @1024.1 | Swage 995.1..1034.1
+    W7       MISSING (1): Swage 1053.4..1094.8
+    W7       EXTRAS  (1): Swage 1046.5..1094.2
+    W8       MISSING (1): Swage 1042.2..1083.1
+    W8       EXTRAS  (1): Swage 1034.2..1081.3
+
+  PC2-1 (17 sticks with gaps)
+    W4       MISSING (2): InnerDimple @725.5 | LipNotch 703.0..748.0
+    W5       MISSING (3): InnerDimple @752.9 | Swage 723.1..782.8 | Swage 1465.1..1505.9
+    W5       EXTRAS  (1): Swage 1456.9..1504.0
+    W4       MISSING (2): InnerDimple @725.5 | LipNotch 703.0..748.0
+    W5       MISSING (3): InnerDimple @752.9 | Swage 723.1..782.8 | Swage 1465.1..1505.9
+    W5       EXTRAS  (1): Swage 1456.9..1504.0
+    R3       MISSING (45): InnerDimple @16.5 | InnerDimple @286.6 | InnerDimple @556.6 | InnerDimple @826.7 | InnerDimple @1096.8 ... +40
+    R3       EXTRAS  (3): InnerDimple @11.0 | InnerDimple @3811.0 | Swage 3781.0..3822.0
+    W4       MISSING (2): InnerDimple @725.5 | LipNotch 703.0..748.0
+    W5       MISSING (3): InnerDimple @752.9 | Swage 723.1..782.8 | Swage 1465.1..1505.9
+    W5       EXTRAS  (1): Swage 1456.9..1504.0
+    W4       MISSING (2): InnerDimple @725.5 | LipNotch 703.0..748.0
+    W5       MISSING (3): InnerDimple @752.9 | Swage 723.1..782.8 | Swage 1465.1..1505.9
+    W5       EXTRAS  (1): Swage 1456.9..1504.0
+    W4       MISSING (2): InnerDimple @725.5 | LipNotch 703.0..748.0
+
+  PC4-1 (5 sticks with gaps)
+    W4       MISSING (1): Swage 338.8..383.3
+    W4       EXTRAS  (1): Swage 333.6..383.3
+    W5       MISSING (1): Swage 534.7..616.4
+    W5       EXTRAS  (1): Swage 536.4..616.4
+    W5       MISSING (1): Swage 534.7..616.4
+    W5       EXTRAS  (1): Swage 536.4..616.4
+    W5       MISSING (1): Swage 534.7..616.4
+    W5       EXTRAS  (1): Swage 536.4..616.4
+    W6       MISSING (1): Swage 545.1..628.6
+    W6       EXTRAS  (1): Swage 548.6..628.6
+
+  PC5-1 (3 sticks with gaps)
+    W5       MISSING (1): Swage 534.7..616.4
+    W5       EXTRAS  (1): Swage 536.4..616.4
+    W5       MISSING (1): Swage 534.7..616.4
+    W5       EXTRAS  (1): Swage 536.4..616.4
+    W6       MISSING (1): Swage 335.1..378.5
+    W6       EXTRAS  (1): Swage 329.5..378.5
+
+  PC3-1 (7 sticks with gaps)
+    W4       MISSING (1): Swage 465.5..555.5
+    W4       EXTRAS  (1): Swage 475.5..555.5
+    W4       MISSING (1): Swage 465.5..555.5
+    W4       EXTRAS  (1): Swage 475.5..555.5
+    W4       MISSING (1): Swage 465.5..555.5
+    W4       EXTRAS  (1): Swage 475.5..555.5
+    W4       MISSING (1): Swage 465.5..555.5
+    W4       EXTRAS  (1): Swage 475.5..555.5
+    W4       MISSING (1): Swage 465.5..555.5
+    W4       EXTRAS  (1): Swage 475.5..555.5
+    W4       MISSING (1): Swage 465.5..555.5
+    W4       EXTRAS  (1): Swage 475.5..555.5
+    W4       MISSING (1): Swage 465.5..555.5
+    W4       EXTRAS  (1): Swage 475.5..555.5
+
+  TGI1-1 (18 sticks with gaps)
+    W4       MISSING (2): InnerDimple @421.5 | Swage 399.0..444.0
+    W5       MISSING (3): InnerDimple @436.1 | Swage 405.9..466.3 | Swage 1469.9..1510.9
+    W5       EXTRAS  (1): Swage 1462.1..1509.4
+    W4       MISSING (2): InnerDimple @421.5 | Swage 399.0..444.0
+    W5       MISSING (3): InnerDimple @436.1 | Swage 405.9..466.3 | Swage 1469.9..1510.9
+    W5       EXTRAS  (1): Swage 1462.1..1509.4
+    B1       MISSING (13): Swage 0.0..39.0 | InnerNotch 375.9..423.4 | InnerNotch 552.0..597.0 | InnerNotch 933.9..981.4 | InnerNotch 1110.0..1155.0 ... +8
+    B1       EXTRAS  (1): LipNotch 0.0..39.0
+    W4       MISSING (2): InnerDimple @421.5 | Swage 399.0..444.0
+    W6       MISSING (5): InnerDimple @11.5 | InnerDimple @431.1 | InnerDimple @1480.5 | Swage 402.2..460.0 | Swage 1451.6..1492.0
+    W6       EXTRAS  (3): InnerDimple @10.0 | InnerDimple @1478.9 | Swage 1442.3..1488.9
+    W4       MISSING (2): InnerDimple @421.5 | Swage 399.0..444.0
+    W7       MISSING (5): InnerDimple @13.5 | InnerDimple @423.4 | InnerDimple @1448.6 | Swage 397.4..449.3 | Swage 1422.6..1462.1
+    W7       EXTRAS  (3): InnerDimple @10.0 | InnerDimple @1445.1 | Swage 1409.6..1455.1
+    W4       MISSING (2): InnerDimple @421.5 | Swage 399.0..444.0

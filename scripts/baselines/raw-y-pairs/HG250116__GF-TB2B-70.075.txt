@@ -1,0 +1,50 @@
+OP-LEVEL DIFF — HG250116 LOT 5 22A TURNER COURT CABOOLTURE 1-GF-TB2B-70.075.xml vs HG250116_PK10-GF-TB2B-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 45 | ref 4
+
+OPS:      our 207 | ref 214
+MATCHED:  159  (74.3% of ref)
+MISSING:  55  (ops Detailer has, we don't)
+EXTRAS:   48   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                   150        22       39   (87% ref-coverage)
+InnerDimple@pt             0        18        0   (0% ref-coverage)
+RightFlange@span           3         5        3   (38% ref-coverage)
+LipNotch@span              3         5        3   (38% ref-coverage)
+LeftFlange@span            3         5        3   (38% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TT4-1 (3 sticks with gaps)
+    T2       MISSING (7): InnerDimple @50.0 | InnerDimple @600.0 | Web @715.9 | InnerDimple @1150.0 | InnerDimple @1700.0 ... +2
+    T2       EXTRAS  (3): Web @153.4 | Web @5572.4 | Web @5725.8
+    B1       MISSING (5): Web @60.0 | Web @4445.1 | RightFlange 0.0..8.2 | LipNotch 0.0..30.5 | LeftFlange 0.0..156.7
+    B1       EXTRAS  (3): Web @2560.9 | Web @3852.4 | Web @4452.6
+    H4       MISSING (4): Web @84.3 | RightFlange 0.0..30.8 | LipNotch 0.0..54.9 | LeftFlange 0.0..179.3
+    H4       EXTRAS  (1): Web @16.7
+
+  TT5-1 (3 sticks with gaps)
+    T2       MISSING (7): InnerDimple @50.0 | InnerDimple @575.0 | Web @715.9 | InnerDimple @1100.0 | InnerDimple @1625.0 ... +2
+    T2       EXTRAS  (3): Web @153.4 | Web @4249.7 | Web @4403.1
+    B1       MISSING (6): Web @60.0 | Web @3442.3 | Web @4023.0 | RightFlange 0.0..8.2 | LipNotch 0.0..30.5 ... +1
+    B1       EXTRAS  (4): Web @2172.8 | Web @3271.1 | Web @3434.4 | Web @4008.4
+    H4       EXTRAS  (5): Web @16.7 | LeftFlange 1370.8..1550.1 | Web @1465.8 | LipNotch 1495.2..1550.1 | RightFlange 1519.3..1550.1
+
+  TT6-1 (3 sticks with gaps)
+    T2       MISSING (7): InnerDimple @50.0 | InnerDimple @575.0 | Web @715.9 | InnerDimple @1100.0 | InnerDimple @1625.0 ... +2
+    T2       EXTRAS  (3): Web @153.4 | Web @2924.7 | Web @3078.1
+    B1       MISSING (6): Web @60.0 | Web @2241.4 | Web @3827.0 | RightFlange 0.0..8.2 | LipNotch 0.0..30.5 ... +1
+    B1       EXTRAS  (4): Web @2086.4 | Web @2221.0 | Web @3847.4 | Web @4001.5
+    H4       EXTRAS  (5): Web @16.7 | LeftFlange 2571.7..2751.0 | Web @2666.7 | LipNotch 2696.1..2751.0 | RightFlange 2720.2..2751.0
+
+  TT7-1 (3 sticks with gaps)
+    T2       MISSING (7): InnerDimple @50.0 | Web @715.9 | InnerDimple @959.6 | Web @1024.2 | Web @1689.7 ... +2
+    T2       EXTRAS  (4): Web @166.3 | Web @230.0 | Web @319.7 | Web @895.4
+    B1       MISSING (5): Web @60.0 | Web @4023.0 | RightFlange 0.0..8.2 | LipNotch 0.0..30.5 | LeftFlange 0.0..156.7
+    B1       EXTRAS  (4): Web @997.9 | Web @1992.1 | Web @3869.5 | Web @3982.8
+    H4       MISSING (1): Web @1849.3
+    H4       EXTRAS  (9): Web @16.7 | Web @867.0 | Web @1861.2 | Web @2033.4 | LeftFlange 3772.6..3951.9 ... +4

@@ -29,6 +29,7 @@ import {
   getMachineSetupForProfile,
   getDefaultMachineSetup,
 } from "./machine-setups.js";
+import { HYTEK_SHORTEN_DBLES_WB_MM } from "./fc-dat-rules.js";
 
 /** True iff the plan name marks this as a TB2B (Back-to-Back) truss plan. */
 export function isTb2bPlanName(planName: string): boolean {
@@ -491,8 +492,13 @@ function computeBoxDimples(
       // Wired from the active MachineSetup 2026-05-05 (Agent Z #5).
       const BOX_DIMPLE_SPACING = setup.boxDimpleSpacing;
       const N = Math.max(2, Math.ceil(overlapMm / BOX_DIMPLE_SPACING) + 1);
-      const startPos = boxA + 50;
-      const endPos = boxB - 50;
+      // Box-piece InnerDimple range is inset 50mm from each end of the
+      // chord-on-chord overlap. Cited from FC_Textor_Qld.dat:
+      //   GEOMETRY_TRUC{0..4}.shorten_dbles_wb = 50
+      // (Linear truss = -50, but TB2B simplifier never runs on Linear.)
+      // See docs/fc-dat-wirings.md (Agent FINAL, 2026-05-05).
+      const startPos = boxA + HYTEK_SHORTEN_DBLES_WB_MM;
+      const endPos = boxB - HYTEK_SHORTEN_DBLES_WB_MM;
       const positions: number[] = [];
       for (let k = 0; k < N; k++) {
         const t = N === 1 ? 0 : k / (N - 1);

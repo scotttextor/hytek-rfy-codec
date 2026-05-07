@@ -3,19 +3,19 @@ OP-LEVEL DIFF — HG250129 LOT 206 (46) ZEUS STREET LILLYWOOD-GF-RP-70.075.xml v
 Setup:    F325iT 70mm
 Frames:   our 17 | ref 17
 
-OPS:      our 845 | ref 1081
+OPS:      our 843 | ref 1081
 MATCHED:  237  (21.9% of ref)
 MISSING:  844  (ops Detailer has, we don't)
-EXTRAS:   608   (ops we have, Detailer doesn't)
+EXTRAS:   606   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt            95       357      316   (21% ref-coverage)
-Swage@span                89       137      194   (39% ref-coverage)
-LipNotch@span             39       182       89   (18% ref-coverage)
+Swage@span                89       137      196   (39% ref-coverage)
+LipNotch@span             39       182       87   (18% ref-coverage)
 Chamfer@end                0        73        0   (0% ref-coverage)
-InnerNotch@span           14        46        9   (23% ref-coverage)
+InnerNotch@span           14        46        7   (23% ref-coverage)
 Chamfer@start              0        45        0   (0% ref-coverage)
 Web@pt                     0         4        0   (0% ref-coverage)
 
@@ -129,7 +129,7 @@ FRAMES WITH GAPS:
     N2       MISSING (3): InnerDimple @1168.5 | Swage 1116.2..1178.5 | Chamfer @end
     N2       EXTRAS  (2): InnerDimple @1158.2 | Swage 1135.7..1174.7
     N3       MISSING (3): InnerDimple @80.5 | LipNotch 58.0..97.0 | InnerNotch 58.0..97.0
-    N3       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @82.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 60.0..99.0 ... +1
+    N3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @82.5 | Swage 0.0..39.0 | Swage 60.0..99.0
     S1       MISSING (2): InnerDimple @536.5 | LipNotch 514.0..559.0
 
   R8 (9 sticks with gaps)

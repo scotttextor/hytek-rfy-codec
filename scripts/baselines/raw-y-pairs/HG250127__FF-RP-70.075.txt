@@ -3,19 +3,19 @@ OP-LEVEL DIFF — HG250127 176 FORT ROAD OXLEY Rev 3-FF-RP-70.075.xml vs HG25012
 Setup:    F325iT 70mm
 Frames:   our 5 | ref 5
 
-OPS:      our 768 | ref 1123
+OPS:      our 756 | ref 1123
 MATCHED:  196  (17.5% of ref)
 MISSING:  927  (ops Detailer has, we don't)
-EXTRAS:   572   (ops we have, Detailer doesn't)
+EXTRAS:   560   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt            78       418      299   (16% ref-coverage)
-LipNotch@span              9       201      156   (4% ref-coverage)
-Swage@span               109       139      103   (44% ref-coverage)
-InnerNotch@span            0        41       14   (0% ref-coverage)
+LipNotch@span              9       201      144   (4% ref-coverage)
+Swage@span               109       139      115   (44% ref-coverage)
 Chamfer@end                0        51        0   (0% ref-coverage)
+InnerNotch@span            0        41        2   (0% ref-coverage)
 Chamfer@start              0        43        0   (0% ref-coverage)
 Web@pt                     0        34        0   (0% ref-coverage)
 
@@ -87,15 +87,15 @@ FRAMES WITH GAPS:
     B1       MISSING (16): InnerDimple @80.5 | InnerDimple @121.5 | InnerDimple @600.7 | InnerDimple @1181.0 | InnerDimple @1761.2 ... +11
     B1       EXTRAS  (20): InnerDimple @16.5 | InnerDimple @2917.6 | Swage 0.0..39.0 | Swage 2895.1..2934.1 | InnerDimple @2857.6 ... +15
     N1       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    N1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @82.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 60.0..99.0 ... +1
+    N1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @82.5 | Swage 0.0..39.0 | Swage 60.0..99.0
     N2       MISSING (3): InnerDimple @317.5 | Swage 265.2..327.5 | Chamfer @end
     N2       EXTRAS  (2): InnerDimple @311.5 | Swage 289.0..328.0
     N3       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    N3       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @82.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 60.0..99.0 ... +1
+    N3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @82.5 | Swage 0.0..39.0 | Swage 60.0..99.0
     N4       MISSING (6): InnerDimple @495.7 | InnerDimple @638.5 | LipNotch 473.2..518.2 | InnerNotch 473.2..518.2 | Swage 586.2..648.5 ... +1
     N4       EXTRAS  (2): InnerDimple @632.5 | Swage 610.0..649.0
     N5       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    N5       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @82.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 60.0..99.0 ... +1
+    N5       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @82.5 | Swage 0.0..39.0 | Swage 60.0..99.0
     N6       MISSING (9): InnerDimple @495.7 | InnerDimple @1076.0 | InnerDimple @1238.5 | LipNotch 473.2..518.2 | InnerNotch 473.2..518.2 ... +4
     N6       EXTRAS  (2): InnerDimple @1232.5 | Swage 1210.0..1249.0
     N7       MISSING (13): Chamfer @start | InnerDimple @10.0 | InnerDimple @389.5 | InnerDimple @969.7 | InnerDimple @1549.9 ... +8
@@ -118,8 +118,8 @@ FRAMES WITH GAPS:
     N5       MISSING (3): InnerDimple @317.5 | Swage 265.2..327.5 | Chamfer @end
     N5       EXTRAS  (2): InnerDimple @311.5 | Swage 289.0..328.0
     N6       MISSING (2): InnerDimple @77.5 | Swage 55.0..94.0
-    N6       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @79.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 57.0..96.0 ... +1
+    N6       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @79.5 | Swage 0.0..39.0 | Swage 57.0..96.0
     N7       MISSING (2): InnerDimple @77.5 | Swage 55.0..94.0
-    N7       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @79.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 57.0..96.0 ... +1
+    N7       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @79.5 | Swage 0.0..39.0 | Swage 57.0..96.0
     N8       MISSING (2): InnerDimple @77.5 | Swage 55.0..94.0
-    N8       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @79.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 57.0..96.0 ... +1
+    N8       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @79.5 | Swage 0.0..39.0 | Swage 57.0..96.0

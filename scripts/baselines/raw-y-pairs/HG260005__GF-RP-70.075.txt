@@ -3,21 +3,21 @@ OP-LEVEL DIFF — HG260005 LOT 4 (60) HILAS CIRCUIT SUNNYBANK HILLS-GF-RP-70.075
 Setup:    F325iT 70mm
 Frames:   our 5 | ref 5
 
-OPS:      our 298 | ref 324
+OPS:      our 296 | ref 324
 MATCHED:  176  (54.3% of ref)
 MISSING:  148  (ops Detailer has, we don't)
-EXTRAS:   122   (ops we have, Detailer doesn't)
+EXTRAS:   120   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt            86        72       62   (54% ref-coverage)
-LipNotch@span             26        45       44   (37% ref-coverage)
-Swage@span                64        15       14   (81% ref-coverage)
-InnerNotch@span            0         4        2   (0% ref-coverage)
+LipNotch@span             26        45       42   (37% ref-coverage)
+Swage@span                64        15       16   (81% ref-coverage)
 Chamfer@end                0         4        0   (0% ref-coverage)
 Chamfer@start              0         4        0   (0% ref-coverage)
 Web@pt                     0         4        0   (0% ref-coverage)
+InnerNotch@span            0         4        0   (0% ref-coverage)
 
 FRAMES WITH GAPS:
 
@@ -33,7 +33,7 @@ FRAMES WITH GAPS:
     B1       MISSING (17): InnerDimple @80.5 | InnerDimple @122.5 | InnerDimple @163.5 | InnerDimple @222.5 | InnerDimple @602.0 ... +12
     B1       EXTRAS  (22): InnerDimple @16.5 | InnerDimple @3226.3 | Swage 0.0..39.0 | Swage 3203.8..3242.8 | InnerDimple @3166.3 ... +17
     N1       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    N1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @82.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 60.0..99.0 ... +1
+    N1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @82.5 | Swage 0.0..39.0 | Swage 60.0..99.0
     N2       MISSING (3): InnerDimple @466.5 | Swage 414.2..476.5 | Chamfer @end
     N2       EXTRAS  (2): InnerDimple @460.5 | Swage 438.0..477.0
     N3       MISSING (12): Chamfer @start | InnerDimple @10.0 | InnerDimple @468.9 | InnerDimple @1003.9 | InnerDimple @1538.9 ... +7

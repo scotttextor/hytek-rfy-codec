@@ -3,18 +3,18 @@ OP-LEVEL DIFF — HG250104 LOT 51 (14) WARNING COURT D AGUILAR - Rev2-GF-RP-70.0
 Setup:    F325iT 70mm
 Frames:   our 20 | ref 20
 
-OPS:      our 1470 | ref 1843
+OPS:      our 1466 | ref 1843
 MATCHED:  500  (27.1% of ref)
 MISSING:  1343  (ops Detailer has, we don't)
-EXTRAS:   970   (ops we have, Detailer doesn't)
+EXTRAS:   966   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt           225       589      491   (28% ref-coverage)
-LipNotch@span             69       314      197   (18% ref-coverage)
-Swage@span               194       213      256   (48% ref-coverage)
-InnerNotch@span           12        77       26   (13% ref-coverage)
+LipNotch@span             69       314      193   (18% ref-coverage)
+Swage@span               194       213      260   (48% ref-coverage)
+InnerNotch@span           12        77       22   (13% ref-coverage)
 Chamfer@end                0        91        0   (0% ref-coverage)
 Chamfer@start              0        59        0   (0% ref-coverage)
 
@@ -26,11 +26,11 @@ FRAMES WITH GAPS:
     B1       MISSING (23): InnerDimple @80.5 | InnerDimple @122.5 | InnerDimple @166.7 | InnerDimple @226.1 | InnerDimple @656.3 ... +18
     B1       EXTRAS  (28): InnerDimple @16.5 | InnerDimple @4968.7 | Swage 0.0..39.0 | Swage 4946.2..4985.2 | InnerDimple @4908.7 ... +23
     N1       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    N1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @82.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 60.0..99.0 ... +1
+    N1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @82.5 | Swage 0.0..39.0 | Swage 60.0..99.0
     N2       MISSING (9): InnerDimple @550.3 | InnerDimple @1015.0 | InnerDimple @1097.2 | LipNotch 527.8..572.8 | InnerNotch 527.8..572.8 ... +4
     N2       EXTRAS  (2): InnerDimple @1092.2 | Swage 1069.7..1108.7
     N3       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    N3       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @82.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 60.0..99.0 ... +1
+    N3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @82.5 | Swage 0.0..39.0 | Swage 60.0..99.0
     N4       MISSING (3): InnerDimple @520.7 | Swage 468.4..530.7 | Chamfer @end
     N4       EXTRAS  (2): InnerDimple @515.7 | Swage 493.2..532.2
     N5       MISSING (25): Chamfer @start | InnerDimple @10.0 | InnerDimple @444.9 | InnerDimple @995.2 | InnerDimple @1545.4 ... +20

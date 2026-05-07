@@ -3,19 +3,19 @@ OP-LEVEL DIFF — HG250132 LOT 83 (37) HOTHAM COURT D AGUILAR-GF-RP-70.075.xml v
 Setup:    F325iT 70mm
 Frames:   our 29 | ref 29
 
-OPS:      our 1693 | ref 2160
-MATCHED:  469  (21.7% of ref)
-MISSING:  1691  (ops Detailer has, we don't)
-EXTRAS:   1224   (ops we have, Detailer doesn't)
+OPS:      our 1689 | ref 2160
+MATCHED:  470  (21.8% of ref)
+MISSING:  1690  (ops Detailer has, we don't)
+EXTRAS:   1219   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt           208       703      613   (23% ref-coverage)
-Swage@span               166       289      399   (36% ref-coverage)
-LipNotch@span             71       363      185   (16% ref-coverage)
+Swage@span               167       288      402   (37% ref-coverage)
+LipNotch@span             71       363      181   (16% ref-coverage)
 Chamfer@end                0       137        0   (0% ref-coverage)
-InnerNotch@span           24        99       27   (20% ref-coverage)
+InnerNotch@span           24        99       23   (20% ref-coverage)
 Chamfer@start              0        90        0   (0% ref-coverage)
 Web@pt                     0        10        0   (0% ref-coverage)
 
@@ -372,10 +372,9 @@ FRAMES WITH GAPS:
     N2       EXTRAS  (3): InnerDimple @1215.7 | Swage 0.0..39.0 | Swage 1193.2..1232.2
     N3       MISSING (3): InnerDimple @568.6 | Swage 516.2..578.6 | Chamfer @end
     N3       EXTRAS  (2): InnerDimple @562.6 | Swage 540.1..579.1
-    N4       MISSING (1): Swage 56.5..95.5
-    N4       EXTRAS  (5): InnerDimple @16.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 55.5..94.5 | LipNotch 55.5..94.5
+    N4       EXTRAS  (2): InnerDimple @16.5 | Swage 0.0..39.0
     N5       MISSING (2): InnerDimple @77.5 | Swage 55.0..94.0
-    N5       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @79.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 57.0..96.0 ... +1
+    N5       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @79.5 | Swage 0.0..39.0 | Swage 57.0..96.0
     S1       MISSING (2): InnerDimple @526.5 | LipNotch 504.0..549.0
     S2       MISSING (2): InnerDimple @526.5 | Swage 504.0..549.0
     S3       MISSING (2): InnerDimple @526.5 | Swage 504.0..549.0

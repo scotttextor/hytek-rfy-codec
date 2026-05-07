@@ -3,19 +3,19 @@ OP-LEVEL DIFF — HG250089 SE06 LOT 75 SHARMAN STREET REDBANK PLAINS - REV 4-GF-
 Setup:    F325iT 70mm
 Frames:   our 5 | ref 3
 
-OPS:      our 368 | ref 432
-MATCHED:  188  (43.5% of ref)
-MISSING:  244  (ops Detailer has, we don't)
-EXTRAS:   180   (ops we have, Detailer doesn't)
+OPS:      our 366 | ref 432
+MATCHED:  189  (43.8% of ref)
+MISSING:  243  (ops Detailer has, we don't)
+EXTRAS:   177   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt            89       107       86   (45% ref-coverage)
-Swage@span                61        37       68   (62% ref-coverage)
-LipNotch@span             25        63       21   (28% ref-coverage)
-InnerNotch@span           13         7        5   (65% ref-coverage)
+Swage@span                62        36       69   (63% ref-coverage)
+LipNotch@span             25        63       19   (28% ref-coverage)
 Web@pt                     0        12        0   (0% ref-coverage)
+InnerNotch@span           13         7        3   (65% ref-coverage)
 Chamfer@end                0        10        0   (0% ref-coverage)
 Chamfer@start              0         8        0   (0% ref-coverage)
 
@@ -54,8 +54,8 @@ FRAMES WITH GAPS:
     N5       EXTRAS  (2): InnerDimple @854.7 | Swage 832.2..871.2
     N6       MISSING (3): InnerDimple @263.0 | Swage 210.7..273.0 | Chamfer @end
     N6       EXTRAS  (2): InnerDimple @256.0 | Swage 233.5..272.5
-    N7       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @179.7 | Swage 0.0..62.3 | Swage 157.2..196.2
-    N7       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @177.2 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 154.7..193.7 ... +1
+    N7       MISSING (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @179.7 | Swage 157.2..196.2
+    N7       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @177.2 | Swage 154.7..193.7
     N8       MISSING (2): InnerDimple @717.8 | Swage 695.3..734.3
     N8       EXTRAS  (2): InnerDimple @720.8 | Swage 698.3..737.3
     S1       MISSING (19): InnerDimple @78.5 | InnerDimple @121.5 | InnerDimple @162.8 | InnerDimple @224.2 | InnerDimple @470.7 ... +14

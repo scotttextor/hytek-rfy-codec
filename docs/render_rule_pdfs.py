@@ -23,7 +23,7 @@ OUT.mkdir(exist_ok=True)
 # Per-rule example: (jobnum, plan_name, frame_name, stick_name, headline)
 # headline = the specific issue I want this PDF to illustrate.
 EXAMPLES = {
-    5: ("HG260001", "GF-LBW-70.075", "PK1-L1", "S1", "Service hole @296 — emitted on every wall stud, but Detailer is selective about WHICH studs."),
+    5: ("HG260001", "GF-LBW-70.075", "L4", "S11", "Service hole @296 — emitted on every wall stud, but Detailer is selective about WHICH studs."),
     6: ("HG260001", "GF-LBW-70.075", "PK1-L1", "S1", "Same selective behaviour as #5 — paired hole at 446."),
     7: ("HG260001", "GF-LBW-70.075", "PK1-L1", "S1", "Web access holes emitted by post-process — count/spacing not corpus-verified."),
     8: ("HG260012", "TH01-GF-LBW-89.075", "L1101", "S1", "89mm wall stud — same 39/16.5 pattern copied from 70mm. Confirm or correct."),
@@ -59,7 +59,7 @@ EXAMPLES = {
     83: ("HG260002", "GF-RP-70.075", "R1", "T1", "Crossings on plate from stud — position usually right, tool TYPE drifts on RP."),
     84: ("HG260001", "GF-LBW-70.075", "PK4-L4", "S5", "Crossings on stud from nog — same kind of bleed."),
     85: ("HG260001", "GF-LBW-70.075", "PK4-L4", "N1", "Crossings on nog from stud — Web+LipNotch+Dimple combination."),
-    86: ("HG260002", "GF-RP-70.075", "R1", "T1", "Truss panel-points NOT EMITTED. Worth +13pp on TIN. Show what's missing."),
+    86: ("HG250011", "GF-TIN-70.075", "PC1-1", "T2", "Truss panel-points NOT EMITTED. Worth +13pp on TIN. The bottom strip's red ops show every InnerDimple/LipNotch the codec is missing at each Web-stick projection."),
     87: ("HG260006", "GF-RP-70.075", "R1", "T1", "RP simplifier HURTS this case (33% → 69% if disabled). Stud-style caps not chord-style."),
     89: ("HG260001", "GF-TB2B-70.075", "L1", "T1", "TB2B simplifier — untested at scale. Show the cap pattern."),
     90: ("HG260043", "GF-RP-89.115", "R1", "T1", "Linear-truss simplifier — bolt-hole at every web crossing. 1-job tuning."),

@@ -29,6 +29,39 @@ with open(os.path.join(PDFS, "_affected.json"), encoding="utf-8") as f:
 # (rule_num) -> (frame_name, stick_name) — must match the EXAMPLES in
 # render_rule_pdfs.py so the diff PDF and the lookup label refer to the
 # same frame/stick.
+# Rules whose answer was found in HYTEK config / docs (move from "No" -> "Spec'd").
+# Each entry: (source_file_or_concept, what to implement in the codec).
+SPEC_FOUND = {
+    5: ("docs/service-z-line-design.md",
+        "Read <tool_action name=Service> elements per frame. For each horizontal z-line (same z, varying x or y), project onto each stud. Emit InnerService at local_pos = z_line - z_stud_start - 2mm. See doc §1.2 + §3 for selection rule."),
+    6: ("docs/service-z-line-design.md",
+        "Same per-stud z-line projection as rule 5 — paired hole follows automatically when 2 horizontal z-lines (typically z=300 + z=450) cover the same stud."),
+    9: ("machine-setups.ts: chamferTolerance + automaticChamfer",
+        "Replace 'Chamfer @start ONLY' with auto-chamfer collision check per-end. Fires when stick end protrudes into adjacent stick within chamferTolerance (4mm in HYTEK setup). Use chamferDetail triangle (14.5×11.5mm) for the cut. endToEndChamfers=false so only protruding end gets chamfered."),
+    12: ("machine-setups.ts: chamferDetail + chamferTolerance",
+        "Replace '45/cos(angle)' formula with cap span derived from the chamfer triangle's max-x (14.5mm) projected onto the angled stick axis. Once the chamfer cuts, the end-cap follows the cut edge."),
+    14: ("machine-setups.ts: chamferTolerance + chamferDetail (89mm setup)",
+        "Same auto-chamfer rule as rule 9, applied to 89mm Kb. Setup 6 (F325iT 89mm) has identical chamfer constants to setup 2 (70mm)."),
+    29: ("docs/service-z-line-design.md",
+        "Same z-line projection rule as rule 5, applied to top plates. Existing post-decode block at scripts/diff-vs-detailer.mjs:642 already does this for T+N nogs — extends to all wall-plan T plates."),
+    50: ("machine-setups.ts: setup 6 (89mm) constants identical to setup 2 (70mm) for the relevant fields",
+        "Confirmed mirror of 70mm rule. 162-168mm length bucket applies to 89mm too. Already implemented; just verify against 89mm corpus."),
+    61: ("machine-setups.ts: chamferTolerance + automaticChamfer",
+        "Same auto-chamfer geometric check as rule 9. Replace 'angle >= 28 deg' threshold with collision detection. Wall braces with truly steep angles will fire chamfer; near-vertical wall studs won't."),
+    64: ("machine-setups.ts: chamferDetail",
+        "Replace '39/cos(a) + 8*tan^2(a)' empirical curve with cap-span derived from the chamfered cut edge. End Swage span = chamferDetail.maxX projected onto stick axis + endClearance."),
+    66: ("machine-setups.ts: chamferTolerance + automaticChamfer",
+        "Same as rule 61 — auto-chamfer per-end."),
+    86: ("fc-dat-rules.ts: cenCenWbHole + bcDistCenHole + webIncrements + horizChdCenHole (per-profile)",
+        "Implement panel-point detector: for each Web stick endpoint, project onto the chord centerline. Emit paired InnerDimples at +/- bcDistCenHole (50mm for 70mm normal-axis, 45mm for 89mm) and a LipNotch perpendicular to the chord. Suppress if two panel-points are within cenCenWbHole=120mm."),
+    89: ("docs/tb2b-patch-audit.md (14 patches catalogued)",
+        "Port 14 patches from scripts/diff-vs-detailer.mjs to src/. Each is documented in tb2b-patch-audit.md with line refs (Web@pt rewrite, box-piece InnerDimple, R-rail short-cap, H4/H7 cap-stacks, T-chord end-cap bolts). Currently TB2B is at 1.34% production parity, 82% with these patches in the harness."),
+    90: ("fc-dat-rules.ts: profile-2 (Linear) constants",
+        "Linear-truss profile has shortenDblesWb=-50, endWbSetback=50, kpTruncated=90 (vs 0 for STD). Rewire src/simplify-linear-truss.ts to read these from fc-dat-rules.ts instead of hardcoded values."),
+    91: ("docs/service-z-line-design.md",
+        "Replace blind 'fire InnerService on every wall stud >=500mm' with per-stud z-line projection. Bimodal behaviour disappears when each stud only emits ops for the lines that actually cross it."),
+}
+
 EXAMPLE_LOC = {
     5: ("L4", "S11"),
     6: ("L4", "S11"),
@@ -94,7 +127,9 @@ ROWS = [
         "Do 89mm wall studs really use the same 39mm cap and 16.5mm dimple as 70mm?",
         "small (corpus already aligns)"),
 
-    (9, "B", "Cripple/king studs (Kb)", "70mm", "Kb only", "Chamfer at start ONLY", "Yes", None, None, None, "", "—"),
+    (9, "B", "Cripple/king studs (Kb)", "70mm", "Kb only", "Chamfer at start ONLY (codec shortcut — actually wrong, real rule is auto-chamfer per-end)", "No", "HG260001", "GF-LBW-70.075", "construction_details",
+        "Replaces the always-@start shortcut with auto-chamfer geometric check.",
+        "small (covered by auto-chamfer rewrite)"),
     (10, "B", "Cripple/king studs (Kb)", "70mm", "Kb only", "Start Swage 0..42mm", "Yes", None, None, None, "", "—"),
     (11, "B", "Cripple/king studs (Kb)", "70mm", "Kb only", "Start InnerDimple at 10mm (NOT 16.5)", "Yes", None, None, None, "", "—"),
     (12, "B", "Cripple/king studs (Kb)", "70mm", "Kb only, angle-dependent", "End Swage span = 45 / cos(angle from horizontal)", "No", "HG260001", "GF-LBW-70.075", "construction_details",
@@ -378,7 +413,8 @@ HEADERS = [
     "Profile",
     "When (gate / condition)",
     "What we emit (plain English)",
-    "100% sure?",
+    "Status",
+    "Source / what to implement",
     "Look up in Detailer (job / plan / frame / stick)",
     "Specific question",
     "Affected (sticks / pairs in 388-pair corpus)",
@@ -397,6 +433,7 @@ font_header = Font(name="Arial", bold=True, color="FFFFFF", size=11)
 fill_header = PatternFill("solid", start_color="231F20")
 align_header = Alignment(horizontal="center", vertical="center", wrap_text=True)
 fill_yes = PatternFill("solid", start_color="C8E6C9")
+fill_specd = PatternFill("solid", start_color="FFE0B2")  # orange/amber for Spec'd
 fill_no = PatternFill("solid", start_color="FFCDD2")
 fill_correction = PatternFill("solid", start_color="FFF9C4")
 align_wrap = Alignment(vertical="top", wrap_text=True)
@@ -451,36 +488,51 @@ def diff_pdf_path(rule_num):
 NOT_100_GET_TEMPLATE = True
 
 for row_idx, row in enumerate(ROWS, start=2):
-    rule_num, section, role, profile, when, what_we_emit, sure, ex_job, ex_plan, arch_key, specific_q, unlocks = row
+    rule_num, section, role, profile, when, what_we_emit, sure_orig, ex_job, ex_plan, arch_key, specific_q, unlocks = row
     long = LONG.get(rule_num, "")
     affected = AFFECTED.get(str(rule_num)) or AFFECTED.get(rule_num)
     affected_str = ""
     if affected:
         affected_str = f"{affected['sticks']:,} sticks / {affected['pairs']} pairs"
-    elif sure == "Yes":
+    elif sure_orig == "Yes":
         affected_str = "—"
-    correction_seed = TEMPLATE if (sure == "No" and NOT_100_GET_TEMPLATE) else ""
 
-    diff_pdf = diff_pdf_path(rule_num) if sure == "No" else None
-    manuf = manuf_pdf(ex_job, ex_plan) if (ex_job and ex_plan) else None
-    arch = arch_pdf_path(ex_job, arch_key) if (ex_job and arch_key) else None
-    fcp = fcp_path(ex_job) if ex_job else None
-    xml = xml_path(ex_job, ex_plan) if (ex_job and ex_plan) else None
+    # 3-state status:
+    #   "Yes"    = codec emits correctly today (verified across corpora)
+    #   "Spec'd" = rule found in HYTEK config / docs; needs implementation
+    #   "No"     = rule still unknown; need Scott's domain answer
+    spec = SPEC_FOUND.get(rule_num)
+    if spec is not None:
+        status = "Spec'd"
+        source_text = f"{spec[0]}\n\n{spec[1]}"
+    else:
+        status = sure_orig
+        source_text = "" if sure_orig == "Yes" else ""
+
+    correction_seed = TEMPLATE if (status == "No" and NOT_100_GET_TEMPLATE) else ""
+
+    show_pdf_links = (status != "Yes")
+    diff_pdf = diff_pdf_path(rule_num) if show_pdf_links else None
+    manuf = manuf_pdf(ex_job, ex_plan) if (ex_job and ex_plan and show_pdf_links) else None
+    arch = arch_pdf_path(ex_job, arch_key) if (ex_job and arch_key and show_pdf_links) else None
+    fcp = fcp_path(ex_job) if (ex_job and show_pdf_links) else None
+    xml = xml_path(ex_job, ex_plan) if (ex_job and ex_plan and show_pdf_links) else None
 
     # Build the lookup label
     lookup_label = ""
     loc = EXAMPLE_LOC.get(rule_num)
-    if sure == "No" and loc and ex_job and ex_plan:
+    if show_pdf_links and loc and ex_job and ex_plan:
         frame, stick = loc
         lookup_label = f"{ex_job}\n{ex_plan}\nframe {frame}\nstick {stick}"
 
     cells = [
-        rule_num, section, role, profile, when, what_we_emit, sure,
+        rule_num, section, role, profile, when, what_we_emit, status,
+        source_text,
         lookup_label,
-        specific_q if sure == "No" else "",
+        specific_q if status == "No" else ("(see Source col)" if status == "Spec'd" else ""),
         affected_str,
-        unlocks if sure == "No" else "—",
-        long if sure == "No" else "",
+        unlocks if status != "Yes" else "—",
+        long if status == "No" else "",
         correction_seed,
         hyperlink(diff_pdf, f"rule-{rule_num:02d}.pdf") if diff_pdf else "",
         hyperlink(manuf, os.path.basename(manuf)[:50]) if manuf else "",
@@ -493,39 +545,51 @@ for row_idx, row in enumerate(ROWS, start=2):
         c.font = Font(name="Arial", size=10)
         c.alignment = align_wrap
         c.border = border
-    # Color the 100%? cell
+    # Color the Status cell
     sure_cell = ws.cell(row=row_idx, column=7)
     sure_cell.alignment = align_center
-    if sure == "Yes":
+    if status == "Yes":
         sure_cell.fill = fill_yes
         sure_cell.font = Font(name="Arial", size=10, bold=True, color="2E7D32")
         ws.row_dimensions[row_idx].height = 22
-    else:
+    elif status == "Spec'd":
+        sure_cell.fill = fill_specd
+        sure_cell.font = Font(name="Arial", size=10, bold=True, color="E65100")
+        # Make the lookup cell stand out
+        if lookup_label:
+            lookup_cell = ws.cell(row=row_idx, column=9)
+            lookup_cell.font = Font(name="Arial", size=10, bold=True, color="231F20")
+            lookup_cell.fill = PatternFill("solid", start_color="FFF3CD")
+        # Tall row to fit the source/implementation text
+        line_count = source_text.count("\n") + max(1, len(source_text) // 70)
+        ws.row_dimensions[row_idx].height = max(70, min(line_count * 14, 200))
+    else:  # No
         sure_cell.fill = fill_no
         sure_cell.font = Font(name="Arial", size=10, bold=True, color="C62828")
-        # Highlight correction cell (now col 13 after inserting lookup col 8)
-        ws.cell(row=row_idx, column=13).fill = fill_correction
-        # Make the lookup cell stand out — bold + slight background
-        lookup_cell = ws.cell(row=row_idx, column=8)
-        lookup_cell.font = Font(name="Arial", size=10, bold=True, color="231F20")
-        lookup_cell.fill = PatternFill("solid", start_color="FFF3CD")
+        # Highlight correction cell (now col 14 after inserting Source col 8 + lookup col 9)
+        ws.cell(row=row_idx, column=14).fill = fill_correction
+        if lookup_label:
+            lookup_cell = ws.cell(row=row_idx, column=9)
+            lookup_cell.font = Font(name="Arial", size=10, bold=True, color="231F20")
+            lookup_cell.fill = PatternFill("solid", start_color="FFF3CD")
         line_count = long.count("\n") + max(1, len(long) // 90)
         ws.row_dimensions[row_idx].height = max(120, min(line_count * 13, 320))
 
-    # Make hyperlink cells render as blue underlined (cols 14-18 now)
-    for col in (14, 15, 16, 17, 18):
+    # Make hyperlink cells render as blue underlined (cols 15-19 now)
+    for col in (15, 16, 17, 18, 19):
         cell = ws.cell(row=row_idx, column=col)
         if cell.value:
             cell.font = font_link
 
-widths = {1: 5, 2: 9, 3: 26, 4: 11, 5: 32, 6: 42, 7: 11,
-          8: 22,  # Look up in Detailer (multi-line)
-          9: 50, 10: 18, 11: 22, 12: 70, 13: 50,
-          14: 22, 15: 30, 16: 30, 17: 30, 18: 30}
+widths = {1: 5, 2: 9, 3: 26, 4: 11, 5: 32, 6: 42, 7: 10,
+          8: 60,  # Source / what to implement
+          9: 22,  # Look up in Detailer
+          10: 50, 11: 18, 12: 22, 13: 70, 14: 50,
+          15: 22, 16: 30, 17: 30, 18: 30, 19: 30}
 for col, w in widths.items():
     ws.column_dimensions[get_column_letter(col)].width = w
 
-ws.freeze_panes = "C2"
+ws.freeze_panes = "B2"
 
 # Summary sheet
 ws2 = wb.create_sheet("Summary")
@@ -535,17 +599,23 @@ ws2["A1"].font = Font(name="Arial", bold=True, size=14)
 ws2["A3"] = "Total rules"
 ws2["B3"] = f'=COUNTA(\'Codec rules\'!A2:A{1 + len(ROWS)})'
 
-ws2["A4"] = "100% sure (no input needed)"
+ws2["A4"] = "Yes — codec emits correctly today"
 ws2["B4"] = f'=COUNTIF(\'Codec rules\'!G2:G{1 + len(ROWS)},"Yes")'
 ws2["B4"].font = Font(name="Arial", bold=True, color="2E7D32")
 
-ws2["A5"] = "Not 100% (need Scott's input)"
-ws2["B5"] = f'=COUNTIF(\'Codec rules\'!G2:G{1 + len(ROWS)},"No")'
-ws2["B5"].font = Font(name="Arial", bold=True, color="C62828")
+ws2["A5"] = "Spec'd — rule found, needs implementation"
+ws2["B5"] = f"=COUNTIF('Codec rules'!G2:G{1 + len(ROWS)},\"Spec'd\")"
+ws2["B5"].font = Font(name="Arial", bold=True, color="E65100")
 
-ws2["A7"] = "Columns explained"
-ws2["A7"].font = Font(name="Arial", bold=True, size=12)
+ws2["A6"] = "No — rule unknown, need Scott"
+ws2["B6"] = f'=COUNTIF(\'Codec rules\'!G2:G{1 + len(ROWS)},"No")'
+ws2["B6"].font = Font(name="Arial", bold=True, color="C62828")
+
+ws2["A8"] = "Columns explained"
+ws2["A8"].font = Font(name="Arial", bold=True, size=12)
 explainers = [
+    ("Status", "Yes (green) = working today. Spec'd (orange) = rule found, codec needs the implementation. No (red) = rule still unknown, needs Scott."),
+    ("Source / what to implement", "For Spec'd rows: cites the source file (machine-setups.ts, fc-dat-rules.ts, design doc) and describes what code change is needed."),
     ("Look up in Detailer", "Job + plan + frame label + stick name. Use this to navigate to the same stick in Detailer or in the Manufacturing PDF."),
     ("Specific question", "The bottom-line question I need answered, lifted out of the long-form text."),
     ("Affected (sticks / pairs)", "How many sticks across the 388-pair corpus this rule's gate would fire on. High count = high stakes."),
@@ -559,19 +629,24 @@ explainers = [
     ("Source XML", "Raw XML the codec receives. Inspect to see what input data we have."),
 ]
 for i, (col, desc) in enumerate(explainers):
-    ws2.cell(row=8 + i, column=1, value=col).font = Font(name="Arial", bold=True)
-    ws2.cell(row=8 + i, column=2, value=desc)
+    ws2.cell(row=9 + i, column=1, value=col).font = Font(name="Arial", bold=True)
+    ws2.cell(row=9 + i, column=2, value=desc)
 ws2.column_dimensions["A"].width = 35
 ws2.column_dimensions["B"].width = 110
 
-ws2.cell(row=20, column=1, value="How to fill the correction").font = Font(name="Arial", bold=True, size=12)
-ws2.cell(row=21, column=1, value="1. Sort or filter '100% sure?' to see only 'No' rows.")
-ws2.cell(row=22, column=1, value="2. Click the Diff PDF link to see the issue, the Manufacturing PDF to see the frame in context, the Architectural PDF for building plans.")
-ws2.cell(row=23, column=1, value="3. Read the Specific question (column H) — most are answerable in 1-2 lines.")
-ws2.cell(row=24, column=1, value="4. Fill the yellow correction cell using the template scaffold.")
-ws2.cell(row=25, column=1, value="5. When done, hand back to Claude — the codec will be updated to match.")
+ws2.cell(row=23, column=1, value="How to use this workbook").font = Font(name="Arial", bold=True, size=12)
+ws2.cell(row=24, column=1, value="1. Filter Status column to 'No' (red) — those are the rules where I genuinely need your domain knowledge.")
+ws2.cell(row=25, column=1, value="2. For each No row: click the Diff PDF / Manufacturing PDF / Architectural PDF links to see the issue in context.")
+ws2.cell(row=26, column=1, value="3. Read the Specific question — most are answerable in 1-2 lines.")
+ws2.cell(row=27, column=1, value="4. Fill the yellow correction cell using the template scaffold.")
+ws2.cell(row=28, column=1, value="5. Spec'd rows (orange) are already answered — read Source col if you want the detail. Claude implements them next.")
+ws2.cell(row=29, column=1, value="")
+ws2.cell(row=30, column=1, value="Path to 90%+ codec parity").font = Font(name="Arial", bold=True, size=12)
+ws2.cell(row=31, column=1, value="Current codec parity: 77.46% across 388-pair corpus.")
+ws2.cell(row=32, column=1, value="Implementing the 15 Spec'd rules (orange): estimated +15-25pp -> 90%+.")
+ws2.cell(row=33, column=1, value="Answering the 25 No rules (red): closes the rest.")
 
-OUT = os.path.join(ROOT, "docs", "rules-review-v2.xlsx")
+OUT = os.path.join(ROOT, "docs", "rules-review-v3.xlsx")
 wb.save(OUT)
 print(f"Wrote: {OUT}")
 print(f"Rules: {len(ROWS)}")

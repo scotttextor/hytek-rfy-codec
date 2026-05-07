@@ -26,6 +26,53 @@ with open(os.path.join(PDFS, "_arch_pdfs.json"), encoding="utf-8") as f:
 with open(os.path.join(PDFS, "_affected.json"), encoding="utf-8") as f:
     AFFECTED = json.load(f)
 
+# (rule_num) -> (frame_name, stick_name) — must match the EXAMPLES in
+# render_rule_pdfs.py so the diff PDF and the lookup label refer to the
+# same frame/stick.
+EXAMPLE_LOC = {
+    5: ("L4", "S11"),
+    6: ("L4", "S11"),
+    7: ("L4", "S11"),
+    8: ("L1101", "S1"),
+    12: ("PK4-L4", "Kb1"),
+    14: ("L24", "Kb2"),
+    15: ("PK4-L4", "H1"),
+    19: ("PK4-L4", "T2"),
+    20: ("PK4-L4", "T2"),
+    28: ("PK4-L4", "T1"),
+    29: ("PK4-L4", "T1"),
+    30: ("L1101", "T1"),
+    32: ("PK1-N1", "B1"),
+    33: ("PK1-N1", "B1"),
+    34: ("PK1-N1", "B1"),
+    36: ("PK1-N1", "B1"),
+    38: ("N3", "B2"),
+    42: ("PK1-N14", "B1"),
+    43: ("PK1-N14", "B1"),
+    50: ("L1001", "N1"),
+    54: ("PK4-L4", "H1"),
+    55: ("PK4-L4", "H1"),
+    59: ("PK4-L4", "H1"),
+    60: ("L1001", "H1"),
+    61: ("PK4-L27", "W2"),
+    64: ("PK4-L27", "W2"),
+    66: ("PK4-L27", "W2"),
+    74: ("L24", "L3"),
+    75: ("L24", "L3"),
+    79: ("PC2-1", "R3"),
+    80: ("PC2-1", "R3"),
+    81: ("PC2-1", "R3"),
+    82: ("PC2-1", "R3"),
+    83: ("R1", "T1"),
+    84: ("PK4-L4", "S5"),
+    85: ("PK4-L4", "N1"),
+    86: ("PC1-1", "T2"),
+    87: ("R1", "T1"),
+    89: ("TN6-6", "T4"),
+    90: ("R1", "T1"),
+    91: ("L39", "S7"),
+}
+
 # ----- per-rule data -----
 # (#, section, role, profile, when, what_we_emit, sure?, example_job, example_plan,
 #  arch_pdf_key, specific_question, unlocks)
@@ -332,6 +379,7 @@ HEADERS = [
     "When (gate / condition)",
     "What we emit (plain English)",
     "100% sure?",
+    "Look up in Detailer (job / plan / frame / stick)",
     "Specific question",
     "Affected (sticks / pairs in 388-pair corpus)",
     "Unlocks if fixed",
@@ -419,8 +467,16 @@ for row_idx, row in enumerate(ROWS, start=2):
     fcp = fcp_path(ex_job) if ex_job else None
     xml = xml_path(ex_job, ex_plan) if (ex_job and ex_plan) else None
 
+    # Build the lookup label
+    lookup_label = ""
+    loc = EXAMPLE_LOC.get(rule_num)
+    if sure == "No" and loc and ex_job and ex_plan:
+        frame, stick = loc
+        lookup_label = f"{ex_job}\n{ex_plan}\nframe {frame}\nstick {stick}"
+
     cells = [
         rule_num, section, role, profile, when, what_we_emit, sure,
+        lookup_label,
         specific_q if sure == "No" else "",
         affected_str,
         unlocks if sure == "No" else "—",
@@ -447,20 +503,25 @@ for row_idx, row in enumerate(ROWS, start=2):
     else:
         sure_cell.fill = fill_no
         sure_cell.font = Font(name="Arial", size=10, bold=True, color="C62828")
-        # Highlight correction cell
-        ws.cell(row=row_idx, column=12).fill = fill_correction
+        # Highlight correction cell (now col 13 after inserting lookup col 8)
+        ws.cell(row=row_idx, column=13).fill = fill_correction
+        # Make the lookup cell stand out — bold + slight background
+        lookup_cell = ws.cell(row=row_idx, column=8)
+        lookup_cell.font = Font(name="Arial", size=10, bold=True, color="231F20")
+        lookup_cell.fill = PatternFill("solid", start_color="FFF3CD")
         line_count = long.count("\n") + max(1, len(long) // 90)
         ws.row_dimensions[row_idx].height = max(120, min(line_count * 13, 320))
 
-    # Make hyperlink cells render as blue underlined
-    for col in (13, 14, 15, 16, 17):
+    # Make hyperlink cells render as blue underlined (cols 14-18 now)
+    for col in (14, 15, 16, 17, 18):
         cell = ws.cell(row=row_idx, column=col)
         if cell.value:
             cell.font = font_link
 
 widths = {1: 5, 2: 9, 3: 26, 4: 11, 5: 32, 6: 42, 7: 11,
-          8: 50, 9: 18, 10: 22, 11: 70, 12: 50,
-          13: 22, 14: 30, 15: 30, 16: 30, 17: 30}
+          8: 22,  # Look up in Detailer (multi-line)
+          9: 50, 10: 18, 11: 22, 12: 70, 13: 50,
+          14: 22, 15: 30, 16: 30, 17: 30, 18: 30}
 for col, w in widths.items():
     ws.column_dimensions[get_column_letter(col)].width = w
 
@@ -485,6 +546,7 @@ ws2["B5"].font = Font(name="Arial", bold=True, color="C62828")
 ws2["A7"] = "Columns explained"
 ws2["A7"].font = Font(name="Arial", bold=True, size=12)
 explainers = [
+    ("Look up in Detailer", "Job + plan + frame label + stick name. Use this to navigate to the same stick in Detailer or in the Manufacturing PDF."),
     ("Specific question", "The bottom-line question I need answered, lifted out of the long-form text."),
     ("Affected (sticks / pairs)", "How many sticks across the 388-pair corpus this rule's gate would fire on. High count = high stakes."),
     ("Unlocks if fixed", "Approximate parity gain if the rule lands correctly. 'small' / 'moderate' / specific pp where known."),

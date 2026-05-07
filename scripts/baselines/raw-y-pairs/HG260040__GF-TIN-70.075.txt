@@ -3,43 +3,43 @@ OP-LEVEL DIFF — HG260040 LOT 7581 (3) MURRAY STREET BANYA-GF-TIN-70.075.xml vs
 Setup:    F325iT 70mm
 Frames:   our 2 | ref 2
 
-OPS:      our 200 | ref 207
-MATCHED:  157  (75.8% of ref)
-MISSING:  50  (ops Detailer has, we don't)
+OPS:      our 200 | ref 208
+MATCHED:  157  (75.5% of ref)
+MISSING:  51  (ops Detailer has, we don't)
 EXTRAS:   43   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Swage@span                31        17       17   (65% ref-coverage)
+Swage@span                32        17       16   (65% ref-coverage)
 InnerDimple@pt            85        12       14   (88% ref-coverage)
-LipNotch@span             25        10       12   (71% ref-coverage)
-Chamfer@end                8         9        0   (47% ref-coverage)
-Chamfer@start              8         2        0   (80% ref-coverage)
+LipNotch@span             24        11       13   (69% ref-coverage)
+Chamfer@end                8        10        0   (44% ref-coverage)
+Chamfer@start              8         1        0   (89% ref-coverage)
 
 FRAMES WITH GAPS:
 
-  S1-1 (13 sticks with gaps)
+  S1-1 (12 sticks with gaps)
     T2       MISSING (12): Chamfer @start | InnerDimple @10.0 | InnerDimple @580.1 | InnerDimple @1149.8 | InnerDimple @1719.5 ... +7
     T2       EXTRAS  (13): InnerDimple @16.5 | InnerDimple @530.0 | InnerDimple @1046.3 | InnerDimple @1213.3 | InnerDimple @1729.6 ... +8
     W3       MISSING (2): Swage 158.6..202.9 | Chamfer @end
     W3       EXTRAS  (1): Swage 170.4..209.4
-    W4       MISSING (1): Swage 317.0..364.8
-    W4       EXTRAS  (1): Swage 286.5..364.8
     W5       MISSING (2): Swage 335.7..380.1 | Chamfer @end
     W5       EXTRAS  (1): Swage 347.6..386.6
     W6       MISSING (2): Swage 576.5..620.9 | Chamfer @end
     W6       EXTRAS  (1): Swage 588.4..627.4
     W7       MISSING (2): Swage 817.2..861.6 | Chamfer @end
     W7       EXTRAS  (1): Swage 829.1..868.1
-    T2       MISSING (12): Chamfer @start | InnerDimple @10.0 | InnerDimple @580.1 | InnerDimple @1149.8 | InnerDimple @1719.5 ... +7
-    T2       EXTRAS  (13): InnerDimple @16.5 | InnerDimple @530.0 | InnerDimple @1046.3 | InnerDimple @1213.3 | InnerDimple @1729.6 ... +8
+    T2       MISSING (14): InnerDimple @344.3 | InnerDimple @395.5 | InnerDimple @763.5 | InnerDimple @1333.2 | InnerDimple @1902.9 ... +9
+    T2       EXTRAS  (14): InnerDimple @16.5 | InnerDimple @530.0 | InnerDimple @1046.3 | InnerDimple @1213.3 | InnerDimple @1729.6 ... +9
     W8       MISSING (2): Swage 1058.2..1102.6 | Chamfer @end
     W8       EXTRAS  (1): Swage 1070.1..1109.1
     W7       MISSING (2): Swage 817.2..861.6 | Chamfer @end
     W7       EXTRAS  (1): Swage 829.1..868.1
     W6       MISSING (2): Swage 576.5..620.9 | Chamfer @end
     W6       EXTRAS  (1): Swage 588.4..627.4
+    W5       MISSING (2): Swage 335.7..380.1 | Chamfer @end
+    W5       EXTRAS  (1): Swage 347.6..386.6
 
   PC2-1 (6 sticks with gaps)
     W4       MISSING (1): Swage 382.2..476.6

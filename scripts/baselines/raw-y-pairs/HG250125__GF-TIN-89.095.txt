@@ -3,24 +3,23 @@ OP-LEVEL DIFF — HG250125 LOT 2 (26) PENVY CLOSE UPPER CABOOLTURE-GF-TIN-89.095
 Setup:    F325iT 89mm
 Frames:   our 1 | ref 1
 
-OPS:      our 156 | ref 174
-MATCHED:  100  (57.5% of ref)
-MISSING:  74  (ops Detailer has, we don't)
+OPS:      our 156 | ref 170
+MATCHED:  100  (58.8% of ref)
+MISSING:  70  (ops Detailer has, we don't)
 EXTRAS:   56   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt            57        37       21   (61% ref-coverage)
-LipNotch@span             18        16       14   (53% ref-coverage)
+InnerDimple@pt            57        35       21   (62% ref-coverage)
+LipNotch@span             18        14       14   (56% ref-coverage)
 Swage@span                25        21        7   (54% ref-coverage)
 Chamfer@start              0         0        7   (- ref-coverage)
 Chamfer@end                0         0        7   (- ref-coverage)
 
 FRAMES WITH GAPS:
 
-  TGI1-1 (23 sticks with gaps)
-    W9       MISSING (2): InnerDimple @1073.1 | LipNotch 1050.6..1095.6
+  TGI1-1 (21 sticks with gaps)
     W9       MISSING (2): InnerDimple @1073.1 | LipNotch 1050.6..1095.6
     W10      MISSING (4): InnerDimple @981.5 | InnerDimple @2077.2 | LipNotch 952.6..999.5 | Swage 2048.3..2088.7
     W10      EXTRAS  (4): Chamfer @start | InnerDimple @2075.7 | Swage 2039.0..2085.7 | Chamfer @end
@@ -34,4 +33,7 @@ FRAMES WITH GAPS:
     W12      EXTRAS  (3): Chamfer @start | Swage 2041.8..2088.5 | Chamfer @end
     H4       MISSING (3): InnerDimple @278.1 | Swage 0.0..39.0 | Swage 250.5..290.4
     H4       EXTRAS  (3): InnerDimple @272.0 | LipNotch 0.0..39.0 | LipNotch 249.5..288.5
-    W9       MISSING (2): InnerDimple @1073.1 | LipNotch 1050.6..1095.6
+    W13      MISSING (5): InnerDimple @12.4 | InnerDimple @1094.1 | InnerDimple @2051.9 | LipNotch 1075.4..1121.7 | Swage 2024.3..2064.3
+    W13      EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @2049.5 | Swage 2013.4..2059.5 | Chamfer @end
+    H5       MISSING (3): InnerDimple @329.5 | Swage 0.0..39.0 | Swage 300.4..340.9
+    H5       EXTRAS  (3): InnerDimple @322.6 | LipNotch 0.0..39.0 | LipNotch 300.1..339.1

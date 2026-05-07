@@ -3,35 +3,35 @@ OP-LEVEL DIFF — HG250112 LOT 5156 (41) ARLINGTON DRIVE PELICAN WATERS - Rev2-G
 Setup:    F325iT 70mm
 Frames:   our 10 | ref 10
 
-OPS:      our 610 | ref 618
-MATCHED:  484  (78.3% of ref)
-MISSING:  134  (ops Detailer has, we don't)
-EXTRAS:   126   (ops we have, Detailer doesn't)
+OPS:      our 610 | ref 619
+MATCHED:  482  (77.9% of ref)
+MISSING:  137  (ops Detailer has, we don't)
+EXTRAS:   128   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           251        58       58   (81% ref-coverage)
-Swage@span               115        35       29   (77% ref-coverage)
+InnerDimple@pt           249        60       60   (81% ref-coverage)
+Swage@span               115        36       29   (76% ref-coverage)
 LipNotch@span             68        24       29   (74% ref-coverage)
-Chamfer@start             23        11        7   (68% ref-coverage)
+Chamfer@start             23        10        7   (70% ref-coverage)
+Chamfer@end               27         2        3   (93% ref-coverage)
 InnerNotch@span            0         5        0   (0% ref-coverage)
-Chamfer@end               27         1        3   (96% ref-coverage)
 
 FRAMES WITH GAPS:
 
   TG1-1 (20 sticks with gaps)
-    T3       MISSING (16): Chamfer @start | InnerDimple @10.0 | InnerDimple @10.0 | InnerDimple @131.6 | InnerDimple @211.4 ... +11
+    T3       MISSING (17): InnerDimple @10.0 | InnerDimple @61.2 | InnerDimple @618.7 | InnerDimple @664.7 | InnerDimple @1227.4 ... +12
     T3       EXTRAS  (19): InnerDimple @16.5 | InnerDimple @188.8 | InnerDimple @195.8 | InnerDimple @467.6 | InnerDimple @564.9 ... +14
     W6       MISSING (1): Swage 270.4..295.6
     W6       EXTRAS  (1): Swage 263.1..302.1
-    W7       MISSING (1): Swage 509.1..558.7
+    W7       MISSING (1): Swage 475.4..559.1
     W7       EXTRAS  (1): Swage 479.1..559.1
-    W8       MISSING (1): Swage 508.3..552.7
+    W8       MISSING (1): Swage 508.5..552.9
     W8       EXTRAS  (1): Swage 520.4..559.4
     W9       MISSING (3): InnerDimple @11.6 | InnerDimple @724.6 | Swage 677.9..734.6
     W9       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @723.0 | Swage 674.2..733.0
-    W10      MISSING (1): Swage 765.5..809.9
+    W10      MISSING (1): Swage 765.7..810.1
     W10      EXTRAS  (1): Swage 777.6..816.6
     W11      MISSING (1): Swage 835.2..874.4
     W11      EXTRAS  (3): Chamfer @start | Swage 822.2..869.7 | Chamfer @end

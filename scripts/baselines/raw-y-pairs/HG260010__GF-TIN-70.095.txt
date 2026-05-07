@@ -3,43 +3,43 @@ OP-LEVEL DIFF — HG260010 LOT 11 SUNVIEW PLACE SAMFORD VALLEY-GF-TIN-70.095.xml
 Setup:    F325iT 70mm
 Frames:   our 9 | ref 9
 
-OPS:      our 1120 | ref 1205
-MATCHED:  784  (65.1% of ref)
+OPS:      our 1120 | ref 1206
+MATCHED:  785  (65.1% of ref)
 MISSING:  421  (ops Detailer has, we don't)
-EXTRAS:   336   (ops we have, Detailer doesn't)
+EXTRAS:   335   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           415       195      130   (68% ref-coverage)
-Swage@span               184       120       98   (61% ref-coverage)
+InnerDimple@pt           416       194      129   (68% ref-coverage)
+Swage@span               184       122       98   (60% ref-coverage)
 LipNotch@span            111        82       54   (58% ref-coverage)
-Chamfer@start             37         7       24   (84% ref-coverage)
-Chamfer@end               35         5       26   (88% ref-coverage)
-InnerNotch@span            2        12        4   (14% ref-coverage)
+Chamfer@end               36         6       25   (86% ref-coverage)
+Chamfer@start             36         6       25   (86% ref-coverage)
+InnerNotch@span            2        11        4   (15% ref-coverage)
 
 FRAMES WITH GAPS:
 
   TN1-1 (27 sticks with gaps)
-    T2       MISSING (24): Chamfer @start | InnerDimple @10.0 | InnerDimple @32.6 | InnerDimple @217.9 | InnerDimple @497.6 ... +19
+    T2       MISSING (25): InnerDimple @10.0 | InnerDimple @61.3 | InnerDimple @549.4 | InnerDimple @600.7 | InnerDimple @1088.3 ... +20
     T2       EXTRAS  (19): InnerDimple @16.5 | InnerDimple @86.6 | InnerDimple @501.7 | InnerDimple @741.6 | InnerDimple @990.1 ... +14
-    B1       MISSING (22): InnerDimple @10.0 | InnerDimple @31.2 | InnerDimple @82.5 | InnerDimple @515.6 | InnerDimple @566.9 ... +17
-    B1       EXTRAS  (10): InnerDimple @16.5 | InnerDimple @519.1 | InnerDimple @993.9 | InnerDimple @1471.9 | InnerDimple @1946.7 ... +5
-    W4       MISSING (1): Swage 289.0..413.8
+    B1       MISSING (21): InnerDimple @11.6 | InnerDimple @466.5 | InnerDimple @972.1 | InnerDimple @1023.4 | InnerDimple @1477.7 ... +16
+    B1       EXTRAS  (9): InnerDimple @16.5 | InnerDimple @993.9 | InnerDimple @1471.9 | InnerDimple @1946.7 | InnerDimple @2525.4 ... +4
+    W4       MISSING (1): Swage 185.3..413.8
     W4       EXTRAS  (1): Swage 374.8..413.8
     W5       MISSING (3): InnerDimple @11.6 | InnerDimple @81.9 | Swage 66.6..91.9
     W5       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @86.8 | Swage 52.4..96.8
     W6       MISSING (3): InnerDimple @11.6 | InnerDimple @178.9 | Swage 144.5..188.9
     W6       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @183.8 | Swage 149.4..193.8
-    W7       MISSING (1): Swage 341.0..418.9
+    W7       MISSING (1): Swage 312.9..418.9
     W7       EXTRAS  (1): Swage 338.9..418.9
     W8       MISSING (3): InnerDimple @11.6 | InnerDimple @275.7 | Swage 241.4..285.7
     W8       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @280.7 | Swage 246.3..290.7
-    W9       MISSING (1): Swage 388.5..447.0
+    W9       MISSING (1): Swage 374.5..447.0
     W9       EXTRAS  (1): Swage 367.0..447.0
     W10      MISSING (3): InnerDimple @11.6 | InnerDimple @372.6 | Swage 338.2..382.6
     W10      EXTRAS  (3): InnerDimple @16.5 | InnerDimple @377.5 | Swage 343.1..387.5
-    W11      MISSING (1): Swage 445.1..493.6
+    W11      MISSING (1): Swage 436.0..493.6
     W11      EXTRAS  (1): Swage 413.6..493.6
 
   TGI2-1 (31 sticks with gaps)

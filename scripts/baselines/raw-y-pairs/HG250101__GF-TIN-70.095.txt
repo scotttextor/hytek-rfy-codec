@@ -4,14 +4,14 @@ Setup:    F325iT 70mm
 Frames:   our 1 | ref 1
 
 OPS:      our 127 | ref 140
-MATCHED:  48  (34.3% of ref)
-MISSING:  92  (ops Detailer has, we don't)
-EXTRAS:   79   (ops we have, Detailer doesn't)
+MATCHED:  50  (35.7% of ref)
+MISSING:  90  (ops Detailer has, we don't)
+EXTRAS:   77   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt            14        58       51   (19% ref-coverage)
+InnerDimple@pt            16        56       49   (22% ref-coverage)
 Swage@span                17        19       17   (47% ref-coverage)
 LipNotch@span              3        13       11   (19% ref-coverage)
 Chamfer@start              7         1        0   (88% ref-coverage)
@@ -20,8 +20,8 @@ Chamfer@end                7         1        0   (88% ref-coverage)
 FRAMES WITH GAPS:
 
   TTI1-1 (21 sticks with gaps)
-    T2       MISSING (3): InnerDimple @235.3 | InnerDimple @273.3 | InnerDimple @315.9
-    T2       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @58.6 | InnerDimple @112.5 | InnerDimple @214.9 | InnerDimple @268.8 ... +2
+    T2       MISSING (1): InnerDimple @97.8
+    T2       EXTRAS  (5): InnerDimple @112.5 | InnerDimple @214.9 | InnerDimple @268.8 | InnerDimple @308.6 | LipNotch 192.4..325.1
     W4       MISSING (3): InnerDimple @11.0 | InnerDimple @355.0 | Swage 335.8..366.0
     W4       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @360.5 | Swage 338.0..377.0
     W5       MISSING (3): InnerDimple @11.0 | InnerDimple @362.4 | Swage 335.9..373.4

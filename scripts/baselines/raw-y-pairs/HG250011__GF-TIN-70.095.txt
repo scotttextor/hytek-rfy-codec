@@ -3,26 +3,26 @@ OP-LEVEL DIFF — HG250011 LOT 57 (5) NEVIS COURT D AGUILAR Rev 1-GF-TIN-70.095.
 Setup:    F325iT 70mm
 Frames:   our 5 | ref 5
 
-OPS:      our 1022 | ref 1120
-MATCHED:  698  (62.3% of ref)
-MISSING:  422  (ops Detailer has, we don't)
-EXTRAS:   324   (ops we have, Detailer doesn't)
+OPS:      our 1022 | ref 1142
+MATCHED:  700  (61.3% of ref)
+MISSING:  442  (ops Detailer has, we don't)
+EXTRAS:   322   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           367       140       85   (72% ref-coverage)
-Swage@span               150       103       76   (59% ref-coverage)
+InnerDimple@pt           369       147       83   (72% ref-coverage)
+Swage@span               150       105       76   (59% ref-coverage)
 Web@pt                     1        70       49   (1% ref-coverage)
-LipNotch@span             97        44       53   (69% ref-coverage)
-ScrewHoles@pt             46        41        2   (53% ref-coverage)
+LipNotch@span             97        51       53   (66% ref-coverage)
+ScrewHoles@pt             46        45        2   (51% ref-coverage)
 Chamfer@end               17         5       31   (77% ref-coverage)
 Chamfer@start             20         4       28   (83% ref-coverage)
 InnerNotch@span            0        15        0   (0% ref-coverage)
 
 FRAMES WITH GAPS:
 
-  TTI1-1 (33 sticks with gaps)
+  TTI1-1 (39 sticks with gaps)
     T10      MISSING (38): InnerDimple @10.0 | InnerDimple @64.1 | InnerDimple @115.3 | ScrewHoles @123.1 | ScrewHoles @171.2 ... +33
     T10      EXTRAS  (18): InnerDimple @16.5 | ScrewHoles @1490.0 | InnerDimple @1816.4 | InnerDimple @1927.3 | InnerDimple @2416.4 ... +13
     T11      MISSING (13): Web @26.9 | Web @75.0 | Web @366.5 | Web @561.8 | Web @630.3 ... +8
@@ -55,7 +55,7 @@ FRAMES WITH GAPS:
     W8       EXTRAS  (1): Swage 460.6..540.6
 
   PC8-1 (9 sticks with gaps)
-    W4       MISSING (1): Swage 678.6..730.1
+    W4       MISSING (1): Swage 678.5..730.1
     W4       EXTRAS  (1): Swage 675.4..730.1
     W5       MISSING (1): Swage 704.7..759.1
     W5       EXTRAS  (1): Swage 702.1..759.1

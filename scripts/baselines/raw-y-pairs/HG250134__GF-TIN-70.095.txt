@@ -3,16 +3,16 @@ OP-LEVEL DIFF — HG250134 LOT 62 (42) WARNING COURT DAGUILAR-GF-TIN-70.095.xml 
 Setup:    F325iT 70mm
 Frames:   our 4 | ref 4
 
-OPS:      our 690 | ref 767
-MATCHED:  488  (63.6% of ref)
-MISSING:  279  (ops Detailer has, we don't)
+OPS:      our 690 | ref 768
+MATCHED:  488  (63.5% of ref)
+MISSING:  280  (ops Detailer has, we don't)
 EXTRAS:   202   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt           265       132       77   (67% ref-coverage)
-Swage@span               120        78       62   (61% ref-coverage)
+Swage@span               120        79       62   (60% ref-coverage)
 LipNotch@span             69        52       31   (57% ref-coverage)
 Chamfer@start             16         6       16   (73% ref-coverage)
 Chamfer@end               18         6       14   (75% ref-coverage)
@@ -88,6 +88,7 @@ FRAMES WITH GAPS:
   TGI3-1 (18 sticks with gaps)
     T2       MISSING (18): InnerDimple @10.0 | InnerDimple @61.2 | InnerDimple @417.7 | InnerDimple @468.9 | InnerDimple @666.0 ... +13
     T2       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @936.4 | InnerDimple @1078.2 | InnerDimple @1586.4 | InnerDimple @1729.4 ... +2
+    W5       MISSING (1): Swage 44.9..70.1
     W5       EXTRAS  (1): Swage 37.6..76.6
     W6       MISSING (1): Swage 107.9..299.5
     W6       EXTRAS  (1): Swage 219.5..299.5

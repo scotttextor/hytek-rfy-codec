@@ -3,18 +3,18 @@ OP-LEVEL DIFF — HG250030 24 BAYVIEW STREET WELLINGTON POINT Rev 6-GF-TIN-89.11
 Setup:    F325iT 89mm
 Frames:   our 1 | ref 1
 
-OPS:      our 270 | ref 309
-MATCHED:  222  (71.8% of ref)
-MISSING:  87  (ops Detailer has, we don't)
+OPS:      our 270 | ref 266
+MATCHED:  222  (83.5% of ref)
+MISSING:  44  (ops Detailer has, we don't)
 EXTRAS:   48   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Swage@span                47        31       13   (60% ref-coverage)
-InnerDimple@pt           122        35        6   (78% ref-coverage)
-LipNotch@span             35        14        5   (71% ref-coverage)
+Swage@span                47        19       13   (71% ref-coverage)
+InnerDimple@pt           122        14        6   (90% ref-coverage)
 Web@pt                     0         3        8   (0% ref-coverage)
+LipNotch@span             35         4        5   (90% ref-coverage)
 ScrewHoles@pt              0         0        8   (- ref-coverage)
 Chamfer@start              9         0        4   (100% ref-coverage)
 Chamfer@end                9         0        4   (100% ref-coverage)
@@ -22,8 +22,7 @@ InnerNotch@span            0         4        0   (0% ref-coverage)
 
 FRAMES WITH GAPS:
 
-  PC7-1 (34 sticks with gaps)
-    W9       MISSING (2): InnerDimple @226.5 | Swage 204.0..249.0
+  PC7-1 (24 sticks with gaps)
     W10      MISSING (3): InnerDimple @13.4 | InnerDimple @579.5 | Swage 553.5..593.0
     W10      EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @576.1 | Swage 540.5..586.1 | Chamfer @end
     W9       MISSING (2): InnerDimple @226.5 | Swage 204.0..249.0
@@ -31,9 +30,11 @@ FRAMES WITH GAPS:
     W13      MISSING (1): Swage 510.9..554.9
     W13      EXTRAS  (3): Chamfer @start | Swage 505.8..555.2 | Chamfer @end
     B1       MISSING (2): InnerNotch 0.0..39.0 | InnerNotch 125.0..164.0
-    W14      MISSING (4): InnerDimple @275.5 | InnerDimple @394.5 | LipNotch 253.0..298.0 | Swage 372.0..417.0
+    W14      MISSING (1): InnerDimple @58.5
     W15      MISSING (3): InnerDimple @56.4 | LipNotch 21.9..72.1 | Swage 559.4..603.8
     W15      EXTRAS  (3): Chamfer @start | Swage 554.1..603.8 | Chamfer @end
     B3       MISSING (3): InnerDimple @411.9 | InnerNotch 318.5..363.5 | Swage 377.5..421.9
     B3       EXTRAS  (1): InnerDimple @404.4
-    W14      MISSING (4): InnerDimple @275.5 | InnerDimple @394.5 | LipNotch 253.0..298.0 | Swage 372.0..417.0
+    W16      MISSING (1): Swage 600.4..650.5
+    W16      EXTRAS  (1): Swage 596.9..650.5
+    B4       EXTRAS  (8): ScrewHoles @4504.0 | ScrewHoles @4706.5 | ScrewHoles @4806.0 | ScrewHoles @4876.0 | ScrewHoles @4909.0 ... +3

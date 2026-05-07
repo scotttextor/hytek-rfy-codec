@@ -3,32 +3,32 @@ OP-LEVEL DIFF — HG260032 LOT 303 (38) MCLOUGHLIN ROAD MORAYFIELD-GF-TIN-70.075
 Setup:    F325iT 70mm
 Frames:   our 4 | ref 4
 
-OPS:      our 403 | ref 407
-MATCHED:  319  (78.4% of ref)
-MISSING:  88  (ops Detailer has, we don't)
-EXTRAS:   84   (ops we have, Detailer doesn't)
+OPS:      our 403 | ref 408
+MATCHED:  314  (77.0% of ref)
+MISSING:  94  (ops Detailer has, we don't)
+EXTRAS:   89   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           166        41       36   (80% ref-coverage)
-Swage@span                81        22       21   (79% ref-coverage)
-LipNotch@span             42        20       17   (68% ref-coverage)
-Chamfer@start             16         3        4   (84% ref-coverage)
-Chamfer@end               14         1        6   (93% ref-coverage)
+InnerDimple@pt           160        47       42   (77% ref-coverage)
+Swage@span                81        23       21   (78% ref-coverage)
+LipNotch@span             43        19       16   (69% ref-coverage)
+Chamfer@start             14         2        6   (88% ref-coverage)
+Chamfer@end               16         2        4   (89% ref-coverage)
 InnerNotch@span            0         1        0   (0% ref-coverage)
 
 FRAMES WITH GAPS:
 
   TN1-1 (16 sticks with gaps)
-    T2       MISSING (20): Chamfer @start | InnerDimple @10.0 | InnerDimple @217.9 | InnerDimple @380.8 | InnerDimple @432.0 ... +15
-    T2       EXTRAS  (17): InnerDimple @16.5 | InnerDimple @244.3 | InnerDimple @396.2 | InnerDimple @681.7 | InnerDimple @779.1 ... +12
+    T2       MISSING (20): InnerDimple @10.0 | InnerDimple @61.3 | InnerDimple @423.2 | InnerDimple @474.5 | InnerDimple @834.3 ... +15
+    T2       EXTRAS  (16): InnerDimple @16.5 | InnerDimple @244.3 | InnerDimple @396.2 | InnerDimple @681.7 | InnerDimple @779.1 ... +11
     W4       MISSING (1): Swage 44.7..69.9
     W4       EXTRAS  (1): Swage 37.4..76.4
-    W5       MISSING (2): InnerDimple @294.4 | Swage 232.0..304.4
+    W5       MISSING (2): InnerDimple @294.4 | Swage 108.9..304.4
     W5       EXTRAS  (2): InnerDimple @290.5 | Swage 220.5..300.5
-    W7       MISSING (1): Swage 296.3..336.8
-    W7       EXTRAS  (2): Swage 276.3..335.5 | Chamfer @end
+    W7       MISSING (1): Swage 279.8..336.9
+    W7       EXTRAS  (2): Chamfer @start | Swage 276.3..335.5
     W9       MISSING (1): Swage 480.5..519.9
     W9       EXTRAS  (2): Swage 462.3..516.3 | Chamfer @end
     W11      MISSING (1): Swage 639.8..678.8

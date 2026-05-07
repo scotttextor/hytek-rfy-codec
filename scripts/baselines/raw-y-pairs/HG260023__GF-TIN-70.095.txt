@@ -3,35 +3,35 @@ OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-TIN-70.095.
 Setup:    F325iT 70mm
 Frames:   our 11 | ref 11
 
-OPS:      our 794 | ref 797
-MATCHED:  663  (83.2% of ref)
-MISSING:  134  (ops Detailer has, we don't)
-EXTRAS:   131   (ops we have, Detailer doesn't)
+OPS:      our 794 | ref 800
+MATCHED:  660  (82.5% of ref)
+MISSING:  140  (ops Detailer has, we don't)
+EXTRAS:   134   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           352        51       53   (87% ref-coverage)
-Swage@span               151        50       43   (75% ref-coverage)
-LipNotch@span            101        21       26   (83% ref-coverage)
-Chamfer@start             30         5        3   (86% ref-coverage)
+InnerDimple@pt           348        57       57   (86% ref-coverage)
+Swage@span               151        51       43   (75% ref-coverage)
+LipNotch@span            102        20       25   (84% ref-coverage)
+Chamfer@end               29         3        4   (91% ref-coverage)
+Chamfer@start             29         3        4   (91% ref-coverage)
 InnerNotch@span            1         6        1   (14% ref-coverage)
-Chamfer@end               28         1        5   (97% ref-coverage)
 
 FRAMES WITH GAPS:
 
   TN10-1 (19 sticks with gaps)
-    T2       MISSING (21): Chamfer @start | InnerDimple @10.0 | InnerDimple @10.0 | InnerDimple @217.9 | InnerDimple @317.8 ... +16
-    T2       EXTRAS  (24): InnerDimple @16.5 | InnerDimple @287.0 | InnerDimple @294.0 | InnerDimple @502.9 | InnerDimple @604.8 ... +19
+    T2       MISSING (19): InnerDimple @10.0 | InnerDimple @61.2 | InnerDimple @661.0 | InnerDimple @712.2 | InnerDimple @1312.0 ... +14
+    T2       EXTRAS  (23): InnerDimple @16.5 | InnerDimple @287.0 | InnerDimple @294.0 | InnerDimple @502.9 | InnerDimple @604.8 ... +18
     W5       MISSING (1): Swage 300.3..325.6
     W5       EXTRAS  (1): Swage 281.2..325.6
-    W6       MISSING (1): Swage 558.5..607.8
+    W6       MISSING (1): Swage 524.9..607.6
     W6       EXTRAS  (1): Swage 527.6..607.6
     W8       MISSING (1): Swage 754.3..794.6
     W8       EXTRAS  (2): Swage 734.5..792.9 | Chamfer @end
     W10      MISSING (2): Chamfer @start | Swage 986.2..1025.3
     W10      EXTRAS  (1): Swage 974.8..1026.5
-    W12      MISSING (3): InnerDimple @13.0 | InnerDimple @1178.7 | Swage 1150.1..1190.4
+    W12      MISSING (3): InnerDimple @11.7 | InnerDimple @1177.4 | Swage 1150.7..1190.4
     W12      EXTRAS  (3): InnerDimple @10.0 | InnerDimple @1175.7 | Swage 1145.9..1191.7
     W13      MISSING (6): InnerDimple @281.5 | InnerDimple @991.5 | InnerDimple @1285.7 | Swage 259.0..304.0 | Swage 969.0..1014.0 ... +1
     W13      EXTRAS  (2): InnerDimple @1287.8 | Swage 1253.4..1297.8
@@ -66,9 +66,11 @@ FRAMES WITH GAPS:
     W3       MISSING (1): Swage 46.0..71.2
     W3       EXTRAS  (1): Swage 38.7..77.7
 
-  PC25-1 (5 sticks with gaps)
+  PC25-1 (7 sticks with gaps)
     W7       MISSING (1): Swage 309.0..367.5
     W7       EXTRAS  (1): Swage 307.1..367.5
+    W5       MISSING (2): InnerDimple @125.5 | Swage 103.0..148.0
+    W5       MISSING (2): InnerDimple @125.5 | Swage 103.0..148.0
     W8       MISSING (1): Swage 305.0..362.4
     W8       EXTRAS  (1): Swage 302.9..362.4
     T4       MISSING (2): InnerDimple @112.5 | InnerNotch 90.0..129.0

@@ -3,26 +3,26 @@ OP-LEVEL DIFF — HG260045 LOT 38 (11) NEEDLEWOOD ROAD CABOOLTURE (3)-GF-TIN-70.
 Setup:    F325iT 70mm
 Frames:   our 3 | ref 3
 
-OPS:      our 590 | ref 655
-MATCHED:  474  (72.4% of ref)
-MISSING:  181  (ops Detailer has, we don't)
-EXTRAS:   116   (ops we have, Detailer doesn't)
+OPS:      our 590 | ref 665
+MATCHED:  464  (69.8% of ref)
+MISSING:  201  (ops Detailer has, we don't)
+EXTRAS:   126   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           237        74       54   (76% ref-coverage)
-Swage@span               110        39       30   (74% ref-coverage)
-LipNotch@span             67        19       22   (78% ref-coverage)
+InnerDimple@pt           232        82       59   (74% ref-coverage)
+Swage@span               110        47       30   (70% ref-coverage)
+LipNotch@span             62        24       27   (72% ref-coverage)
 Web@pt                     0        11        6   (0% ref-coverage)
-InnerNotch@span            0        14        2   (0% ref-coverage)
 ScrewHoles@pt              4        12        2   (25% ref-coverage)
-Chamfer@end               28        11        0   (72% ref-coverage)
+InnerNotch@span            0        12        2   (0% ref-coverage)
+Chamfer@end               28        12        0   (70% ref-coverage)
 Chamfer@start             28         1        0   (97% ref-coverage)
 
 FRAMES WITH GAPS:
 
-  HA2-1 (36 sticks with gaps)
+  HA2-1 (40 sticks with gaps)
     T5       MISSING (33): InnerDimple @10.0 | InnerDimple @59.7 | InnerDimple @131.4 | InnerDimple @182.7 | InnerDimple @793.4 ... +28
     T5       EXTRAS  (24): InnerDimple @16.5 | InnerDimple @1716.9 | InnerDimple @1775.5 | InnerDimple @1926.9 | InnerDimple @2016.9 ... +19
     W11      MISSING (1): Swage 644.7..669.9

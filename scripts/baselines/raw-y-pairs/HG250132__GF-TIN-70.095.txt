@@ -3,37 +3,37 @@ OP-LEVEL DIFF — HG250132 LOT 83 (37) HOTHAM COURT D AGUILAR-GF-TIN-70.095.xml 
 Setup:    F325iT 70mm
 Frames:   our 10 | ref 10
 
-OPS:      our 1520 | ref 1627
-MATCHED:  1005  (61.8% of ref)
-MISSING:  622  (ops Detailer has, we don't)
-EXTRAS:   515   (ops we have, Detailer doesn't)
+OPS:      our 1520 | ref 1659
+MATCHED:  1035  (62.4% of ref)
+MISSING:  624  (ops Detailer has, we don't)
+EXTRAS:   485   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           511       303      239   (63% ref-coverage)
-Swage@span               256       154      134   (62% ref-coverage)
-LipNotch@span            129       132      103   (49% ref-coverage)
-Chamfer@start             54         9       18   (86% ref-coverage)
-Chamfer@end               55         6       17   (90% ref-coverage)
-InnerNotch@span            0        18        4   (0% ref-coverage)
+InnerDimple@pt           526       305      224   (63% ref-coverage)
+Swage@span               255       155      135   (62% ref-coverage)
+LipNotch@span            145       132       87   (52% ref-coverage)
+Chamfer@start             54         8       18   (87% ref-coverage)
+Chamfer@end               55         7       17   (89% ref-coverage)
+InnerNotch@span            0        17        4   (0% ref-coverage)
 
 FRAMES WITH GAPS:
 
-  TN1-1 (21 sticks with gaps)
-    T2       MISSING (21): Chamfer @start | InnerDimple @10.0 | InnerDimple @32.6 | InnerDimple @217.9 | InnerDimple @620.5 ... +16
+  TN1-1 (22 sticks with gaps)
+    T2       MISSING (22): InnerDimple @10.0 | InnerDimple @61.3 | InnerDimple @674.2 | InnerDimple @725.5 | InnerDimple @1336.0 ... +17
     T2       EXTRAS  (18): InnerDimple @16.5 | InnerDimple @119.4 | InnerDimple @613.0 | InnerDimple @1110.4 | InnerDimple @1212.8 ... +13
-    B1       MISSING (17): InnerDimple @11.6 | InnerDimple @62.8 | InnerDimple @611.3 | InnerDimple @662.5 | InnerDimple @1232.2 ... +12
+    B1       MISSING (17): InnerDimple @11.6 | InnerDimple @583.6 | InnerDimple @634.8 | InnerDimple @1204.5 | InnerDimple @1255.7 ... +12
     B1       EXTRAS  (12): InnerDimple @16.5 | InnerDimple @618.6 | InnerDimple @1101.3 | InnerDimple @1206.2 | InnerDimple @1218.4 ... +7
     W4       MISSING (1): Swage 293.1..527.3
     W4       EXTRAS  (1): Swage 488.3..527.3
-    W5       MISSING (3): InnerDimple @11.6 | InnerDimple @101.6 | Swage 86.3..111.6
+    W5       MISSING (3): InnerDimple @11.6 | InnerDimple @102.2 | Swage 87.0..112.2
     W5       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @107.1 | Swage 72.7..117.1
     W6       MISSING (3): InnerDimple @11.6 | InnerDimple @221.6 | Swage 187.3..231.6
     W6       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @226.5 | Swage 192.1..236.5
     W8       MISSING (3): InnerDimple @11.6 | InnerDimple @340.6 | Swage 306.2..350.6
     W8       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @345.5 | Swage 311.1..355.5
-    W9       MISSING (1): Swage 502.8..562.8
+    W9       MISSING (1): Swage 488.6..563.2
     W9       EXTRAS  (1): Swage 483.2..563.2
     W10      MISSING (3): InnerDimple @11.6 | InnerDimple @459.6 | Swage 425.2..469.6
     W10      EXTRAS  (3): InnerDimple @16.5 | InnerDimple @464.5 | Swage 430.1..474.5

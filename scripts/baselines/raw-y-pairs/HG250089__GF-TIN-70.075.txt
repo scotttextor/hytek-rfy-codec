@@ -3,22 +3,22 @@ OP-LEVEL DIFF — HG250089 SE06 LOT 75 SHARMAN STREET REDBANK PLAINS - REV 4-GF-
 Setup:    F325iT 70mm
 Frames:   our 12 | ref 12
 
-OPS:      our 1132 | ref 1231
-MATCHED:  853  (69.3% of ref)
-MISSING:  378  (ops Detailer has, we don't)
+OPS:      our 1132 | ref 1229
+MATCHED:  853  (69.4% of ref)
+MISSING:  376  (ops Detailer has, we don't)
 EXTRAS:   279   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Swage@span               172        99       76   (63% ref-coverage)
+Swage@span               172       108       76   (61% ref-coverage)
 InnerDimple@pt           444       116       54   (79% ref-coverage)
 Web@pt                     2        64       64   (3% ref-coverage)
-LipNotch@span            133        52       31   (72% ref-coverage)
+LipNotch@span            133        43       31   (76% ref-coverage)
 InnerNotch@span            0        27        8   (0% ref-coverage)
 Chamfer@end               17         0       25   (100% ref-coverage)
 Chamfer@start             19         3       21   (86% ref-coverage)
-ScrewHoles@pt             66        17        0   (80% ref-coverage)
+ScrewHoles@pt             66        15        0   (81% ref-coverage)
 
 FRAMES WITH GAPS:
 
@@ -99,7 +99,7 @@ FRAMES WITH GAPS:
     W5       EXTRAS  (1): Swage 889.6..941.9
 
   PC30-1 (23 sticks with gaps)
-    W7       MISSING (2): InnerDimple @795.5 | Swage 773.0..818.0
+    W7       MISSING (2): InnerDimple @795.5 | LipNotch 773.0..818.0
     W8       MISSING (7): InnerDimple @11.7 | ScrewHoles @15.0 | ScrewHoles @779.0 | InnerDimple @817.1 | InnerDimple @1287.5 ... +2
     W8       EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @1285.8 | Swage 1249.3..1295.8 | Chamfer @end
     W7       MISSING (2): InnerDimple @795.5 | Swage 773.0..818.0
@@ -121,18 +121,18 @@ FRAMES WITH GAPS:
     W4       MISSING (2): InnerDimple @351.5 | LipNotch 329.0..374.0
     W5       MISSING (5): InnerDimple @13.7 | InnerDimple @352.3 | InnerDimple @1260.9 | Swage 326.5..378.0 | Swage 1235.2..1274.6
     W5       EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @1257.3 | Swage 1221.8..1267.3 | Chamfer @end
-    W4       MISSING (2): InnerDimple @351.5 | LipNotch 329.0..374.0
+    W4       MISSING (2): InnerDimple @351.5 | Swage 329.0..374.0
     W6       MISSING (3): InnerDimple @359.4 | Swage 330.3..388.5 | Swage 1264.2..1304.7
     W6       EXTRAS  (3): Chamfer @start | Swage 1255.3..1302.0 | Chamfer @end
-    W4       MISSING (2): InnerDimple @351.5 | LipNotch 329.0..374.0
+    W4       MISSING (2): InnerDimple @351.5 | Swage 329.0..374.0
     W6       MISSING (3): InnerDimple @359.4 | Swage 330.3..388.5 | Swage 1264.2..1304.7
     W6       EXTRAS  (3): Chamfer @start | Swage 1255.3..1302.0 | Chamfer @end
     H3       MISSING (36): InnerDimple @117.0 | InnerDimple @300.5 | InnerDimple @446.1 | InnerDimple @750.5 | InnerDimple @896.1 ... +31
     H3       EXTRAS  (3): InnerDimple @2470.5 | LipNotch 0.0..39.0 | LipNotch 2448.0..2487.0
-    W4       MISSING (2): InnerDimple @351.5 | LipNotch 329.0..374.0
+    W4       MISSING (2): InnerDimple @351.5 | Swage 329.0..374.0
     W7       MISSING (3): InnerDimple @367.3 | Swage 335.7..398.9 | Swage 1294.6..1336.2
     W7       EXTRAS  (3): Chamfer @start | Swage 1288.2..1336.2 | Chamfer @end
-    W4       MISSING (2): InnerDimple @351.5 | LipNotch 329.0..374.0
+    W4       MISSING (2): InnerDimple @351.5 | Swage 329.0..374.0
 
   PC32-1 (5 sticks with gaps)
     W4       MISSING (1): Swage 991.4..1037.7
@@ -159,7 +159,7 @@ FRAMES WITH GAPS:
     T2       EXTRAS  (2): InnerNotch 0.0..39.0 | InnerNotch 122.0..161.0
 
   PC34-1 (3 sticks with gaps)
-    W3       MISSING (3): InnerDimple @16.5 | InnerDimple @275.5 | Swage 253.0..292.0
+    W3       MISSING (3): InnerDimple @15.4 | InnerDimple @274.8 | Swage 251.2..290.2
     W3       EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @269.4 | Swage 240.4..279.4 | Chamfer @end
     W5       MISSING (1): Swage 464.8..559.0
     W5       EXTRAS  (1): Swage 479.0..559.0

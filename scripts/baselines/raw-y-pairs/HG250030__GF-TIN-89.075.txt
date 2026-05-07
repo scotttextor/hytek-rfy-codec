@@ -3,16 +3,16 @@ OP-LEVEL DIFF — HG250030 24 BAYVIEW STREET WELLINGTON POINT Rev 6-GF-TIN-89.07
 Setup:    F325iT 89mm
 Frames:   our 2 | ref 2
 
-OPS:      our 204 | ref 206
-MATCHED:  193  (93.7% of ref)
-MISSING:  13  (ops Detailer has, we don't)
+OPS:      our 204 | ref 210
+MATCHED:  193  (91.9% of ref)
+MISSING:  17  (ops Detailer has, we don't)
 EXTRAS:   11   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 Swage@span                41        11       11   (79% ref-coverage)
-InnerService@pt            0         2        0   (0% ref-coverage)
+InnerService@pt            0         6        0   (0% ref-coverage)
 InnerDimple@pt           104         0        0   (100% ref-coverage)
 LipNotch@span             26         0        0   (100% ref-coverage)
 Chamfer@start             11         0        0   (100% ref-coverage)
@@ -26,8 +26,9 @@ FRAMES WITH GAPS:
     W5       MISSING (1): Swage 303.3..439.7
     W5       EXTRAS  (1): Swage 359.7..439.7
 
-  PC12-1 (9 sticks with gaps)
-    W4       MISSING (2): InnerService @400.7 | Swage 451.8..540.3
+  PC12-1 (11 sticks with gaps)
+    W3       MISSING (2): InnerService @72.9 | InnerService @233.9
+    W4       MISSING (2): InnerService @85.9 | Swage 451.8..540.3
     W4       EXTRAS  (1): Swage 460.3..540.3
     W5       MISSING (1): Swage 484.2..579.5
     W5       EXTRAS  (1): Swage 499.4..579.4

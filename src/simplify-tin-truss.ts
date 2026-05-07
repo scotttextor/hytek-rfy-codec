@@ -30,6 +30,20 @@
 // angle diagonals) is deferred to a v2 in a separate session — those
 // changes require modelling truss topology (apex / panel points) and the
 // per-frame panel-pitch which isn't on the input XML.
+//
+// V2 ATTEMPT (2026-05-07): Tried implementing rule 86 panel-point pattern
+// (paired InnerDimples + LipNotch at every web⇄chord centerline crossing).
+// Result: regression, not progress. Two distinct issues:
+//   1. Position offset: emitted dimple positions are systematically ~30mm
+//      lower (toward chord.start) than ref. Likely needs `chord_half_depth ×
+//      tan(angle)` correction in the chord-axis direction, but the sign
+//      depends on which end of the chord is the heel (vs apex), and that
+//      isn't a clean signal in the parsed XML.
+//   2. Cohort split: ~80% of long T/B sticks DO have panel-point dimples,
+//      but ~20% don't (e.g. TN202-1 B1 — short bottom chord with only
+//      LipNotches, no dimples). Frame-prefix doesn't cleanly distinguish.
+// Reverted; the +13pp TIN unlock is left for a future session that can
+// properly mine the offset constant + cohort signal.
 import type { ParsedFrame, ParsedStick } from "./synthesize-plans.js";
 import type { RfyToolingOp } from "./format.js";
 

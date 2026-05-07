@@ -21,8 +21,18 @@ export interface SimplifyTinDecision {
  *  rewrite when called. */
 export declare function simplifyTinTrussFrame(frame: ParsedFrame): SimplifyTinDecision;
 /** Public entry point for the TIN simplifier post-pass.  Walks every plan
- *  and frame in the project; for each TIN-truss frame matching the gate
- *  (plan `/-TIN-/i` AND frame `/^(HN|TN|TS|TI)\d/i`), runs `simplifyTinTrussFrame`.
+ *  and frame in the project.
+ *
+ *  Two scoped sub-rules run:
+ *   (a) The original truss simplifier (`simplifyTinTrussFrame`) gated to
+ *       frame names matching `/^(HN|TN|TS|TI)\d/i`. Handles vertical-W trim,
+ *       diagonal-W chamfer-strip, bottom-chord ScrewHoles cleanup.
+ *   (b) The H-stick LipNotch→Swage substitution. Gated by plan `/-TIN-/i`
+ *       only — fires on H-named sticks across ALL TIN frame types
+ *       (PC / TTI / TGI / HB / HA / HN / TN / etc.). Per-stick predicate
+ *       (`substituteHeaderEndSwages`) handles safety: skips when an
+ *       InnerNotch already shares the anchor.
+ *
  *  Mutates `project.plans[].frames[].sticks[]` in place. */
 export declare function simplifyTinTrussFramesInProject(plans: ReadonlyArray<{
     name: string;

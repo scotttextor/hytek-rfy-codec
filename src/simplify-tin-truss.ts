@@ -45,6 +45,84 @@ export function isTinTrussFrameName(frameName: string): boolean {
   return /^(HN|TN|TS|TI)\d/i.test(frameName);
 }
 
+/** Stick is a TIN header (H-named): in TIN plans Detailer treats H-prefixed
+ *  sticks as headers — short profile bridging two trusses, often horizontal.
+ *  Used by the LipNotch→Swage substitution rule below. */
+function isHeaderStickName(name: string): boolean {
+  return /^H\d/.test(name);
+}
+
+/** Substitute every start- or end-anchored `LipNotch` span on a TIN H-stick
+ *  with a same-extent `Swage`, but ONLY when no `InnerNotch` already shares
+ *  that anchor.
+ *
+ *  Why: corpus mining over the 90-pair TIN baseline shows ref-RFY emits
+ *  `Swage 0..39` (start) and `Swage L-39..L` (end) on TIN header sticks
+ *  whenever no panel-point notch lives at the same anchor. The codec's
+ *  generic per-stick rules instead emit `LipNotch` at those anchors, giving
+ *  100% co-occurrence: every ref start-Swage on an H-stick lines up exactly
+ *  with one of our extra start-LipNotches. The InnerNotch test discriminates
+ *  the cohort where ref keeps `LipNotch` (those sticks always carry an
+ *  `InnerNotch` at the same anchor in our codec output, mirroring ref).
+ *
+ *  Truth-corpus support (TIN plans only):
+ *    - 103 H sticks emit ref start-Swage, all with NO InnerNotch at start.
+ *    - 32 of 43 H sticks emit ref start-LipNotch with an InnerNotch alongside.
+ *  No bleed: non-TIN plan types (RP/LBW/NLBW/...) almost never emit
+ *  `Swage` at H-stick anchors — the gate filters by plan name elsewhere.
+ *
+ *  This pass mutates `stick.tooling` in place. Returns the count of ops
+ *  rewritten on this stick. */
+function substituteHeaderEndSwages(stick: ParsedStick): number {
+  if (!isHeaderStickName(stick.name)) return 0;
+  const oldLen =
+    Math.sqrt(
+      (stick.end.x - stick.start.x) ** 2 +
+        (stick.end.y - stick.start.y) ** 2 +
+        (stick.end.z - stick.start.z) ** 2,
+    );
+  let rewritten = 0;
+  for (const op of stick.tooling) {
+    if (op.kind !== "spanned") continue;
+    if (op.type !== "LipNotch") continue;
+    const isStartAnchored = op.startPos < ANCHOR_END_TOL_MM && op.endPos < START_ANCHOR_END_MAX_MM;
+    const isEndAnchored =
+      oldLen - op.endPos < ANCHOR_END_TOL_MM && oldLen - op.startPos < END_ANCHOR_START_MAX_MM;
+    if (!isStartAnchored && !isEndAnchored) continue;
+    // Discriminator: skip when an InnerNotch already shares this anchor.
+    // In those cases ref keeps the LipNotch (it's a panel-point notch, not a
+    // header-end finish).
+    const hasInnerNotchAtAnchor = stick.tooling.some(o => {
+      if (o === op) return false;
+      if (o.kind !== "spanned") return false;
+      if (o.type !== "InnerNotch") return false;
+      if (isStartAnchored) {
+        return o.startPos < ANCHOR_END_TOL_MM && o.endPos < START_ANCHOR_END_MAX_MM;
+      }
+      // end anchor
+      return (
+        oldLen - o.endPos < ANCHOR_END_TOL_MM && oldLen - o.startPos < END_ANCHOR_START_MAX_MM
+      );
+    });
+    if (hasInnerNotchAtAnchor) continue;
+    op.type = "Swage";
+    rewritten++;
+  }
+  return rewritten;
+}
+
+/** Anchor tolerances (mm) for the H-stick LipNotch→Swage substitution.
+ *  An op is treated as start-anchored if its `startPos < START_ANCHOR_TOL`
+ *  and its `endPos < START_ANCHOR_END_MAX` (i.e. a tight 0..~39 span).
+ *  Likewise for end-anchored: `L - endPos < END_ANCHOR_TOL` and
+ *  `L - startPos < END_ANCHOR_START_MAX`.
+ *
+ *  These match the corpus dominant pattern: ref-RFY emits Swage spans of
+ *  ~39-40mm width at the ends of TIN header sticks. */
+const START_ANCHOR_END_MAX_MM = 60;
+const END_ANCHOR_START_MAX_MM = 80;
+const ANCHOR_END_TOL_MM = 5;
+
 const VERTICAL_HORIZ_TOL_MM = 0.5;
 /** TIN vertical-W length net-extension relative to raw XML length:
  *  ref applies +4.5mm; the diff harness's wall-rule extends by +11mm
@@ -379,8 +457,18 @@ export function simplifyTinTrussFrame(frame: ParsedFrame): SimplifyTinDecision {
 }
 
 /** Public entry point for the TIN simplifier post-pass.  Walks every plan
- *  and frame in the project; for each TIN-truss frame matching the gate
- *  (plan `/-TIN-/i` AND frame `/^(HN|TN|TS|TI)\d/i`), runs `simplifyTinTrussFrame`.
+ *  and frame in the project.
+ *
+ *  Two scoped sub-rules run:
+ *   (a) The original truss simplifier (`simplifyTinTrussFrame`) gated to
+ *       frame names matching `/^(HN|TN|TS|TI)\d/i`. Handles vertical-W trim,
+ *       diagonal-W chamfer-strip, bottom-chord ScrewHoles cleanup.
+ *   (b) The H-stick LipNotch→Swage substitution. Gated by plan `/-TIN-/i`
+ *       only — fires on H-named sticks across ALL TIN frame types
+ *       (PC / TTI / TGI / HB / HA / HN / TN / etc.). Per-stick predicate
+ *       (`substituteHeaderEndSwages`) handles safety: skips when an
+ *       InnerNotch already shares the anchor.
+ *
  *  Mutates `project.plans[].frames[].sticks[]` in place. */
 export function simplifyTinTrussFramesInProject(
   plans: ReadonlyArray<{ name: string; frames: ParsedFrame[] }>,
@@ -389,8 +477,15 @@ export function simplifyTinTrussFramesInProject(
   for (const plan of plans) {
     if (!isTinPlanName(plan.name)) continue;
     for (const frame of plan.frames) {
-      if (!isTinTrussFrameName(frame.name)) continue;
-      decisions.push(simplifyTinTrussFrame(frame));
+      if (isTinTrussFrameName(frame.name)) {
+        decisions.push(simplifyTinTrussFrame(frame));
+      }
+      // Header-stick LipNotch→Swage substitution runs on every TIN frame.
+      // The per-stick `substituteHeaderEndSwages` discriminates by
+      // InnerNotch presence so it's safe to call unconditionally.
+      for (const stick of frame.sticks) {
+        substituteHeaderEndSwages(stick);
+      }
     }
   }
   return decisions;

@@ -3,36 +3,35 @@ OP-LEVEL DIFF — HG250143 LOT 333 (25) ELKHORN STREET MORAYFIELD-GF-TB2B-70.075
 Setup:    F325iT 70mm
 Frames:   our 26 | ref 3
 
-OPS:      our 78 | ref 108
-MATCHED:  52  (48.1% of ref)
-MISSING:  56  (ops Detailer has, we don't)
-EXTRAS:   26   (ops we have, Detailer doesn't)
+OPS:      our 123 | ref 108
+MATCHED:  85  (78.7% of ref)
+MISSING:  23  (ops Detailer has, we don't)
+EXTRAS:   38   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Web@pt                    52        26       26   (67% ref-coverage)
-InnerDimple@pt             0        21        0   (0% ref-coverage)
-RightFlange@span           0         3        0   (0% ref-coverage)
-LipNotch@span              0         3        0   (0% ref-coverage)
-LeftFlange@span            0         3        0   (0% ref-coverage)
+Web@pt                    55        23       29   (71% ref-coverage)
+RightFlange@span           3         0        3   (100% ref-coverage)
+LipNotch@span              3         0        3   (100% ref-coverage)
+LeftFlange@span            3         0        3   (100% ref-coverage)
+InnerDimple@pt            21         0        0   (100% ref-coverage)
 
 FRAMES WITH GAPS:
 
   TN6-1 (2 sticks with gaps)
-    T3       MISSING (12): InnerDimple @50.0 | Web @716.4 | Web @969.7 | InnerDimple @1220.9 | Web @2030.8 ... +7
-    T3       EXTRAS  (6): Web @29.7 | Web @1273.2 | Web @1372.1 | Web @2655.4 | Web @2753.2 ... +1
-    B1       MISSING (6): Web @60.4 | InnerDimple @3505.0 | InnerDimple @3705.0 | RightFlange 0.0..8.6 | LipNotch 0.0..32.7 ... +1
-    B1       EXTRAS  (2): Web @2447.4 | Web @3646.6
+    T3       MISSING (7): Web @716.4 | Web @969.7 | Web @2030.8 | Web @2128.8 | Web @3411.9 ... +2
+    T3       EXTRAS  (8): Web @29.7 | Web @53.9 | Web @1273.2 | Web @1372.1 | Web @2655.2 ... +3
+    B1       EXTRAS  (4): Web @3695.0 | LeftFlange 3598.3..3755.0 | LipNotch 3722.7..3755.0 | RightFlange 3746.8..3755.0
 
   TT10-1 (2 sticks with gaps)
-    T3       MISSING (12): InnerDimple @50.0 | Web @716.4 | Web @1037.3 | InnerDimple @1220.9 | Web @2012.4 ... +7
-    T3       EXTRAS  (6): Web @29.7 | Web @1310.0 | Web @1408.9 | Web @2673.8 | Web @2771.6 ... +1
-    B1       MISSING (7): Web @60.4 | InnerDimple @3505.0 | Web @3607.0 | InnerDimple @3705.0 | RightFlange 0.0..8.6 ... +2
-    B1       EXTRAS  (3): Web @2413.9 | Web @3622.0 | Web @3632.2
+    T3       MISSING (7): Web @716.4 | Web @1037.3 | Web @2012.4 | Web @2110.4 | Web @3375.1 ... +2
+    T3       EXTRAS  (8): Web @29.7 | Web @53.9 | Web @1310.0 | Web @1408.9 | Web @2673.6 ... +3
+    B1       MISSING (1): Web @3607.0
+    B1       EXTRAS  (5): Web @3622.0 | Web @3695.0 | LeftFlange 3598.3..3755.0 | LipNotch 3722.7..3755.0 | RightFlange 3746.8..3755.0
 
   TT11-1 (2 sticks with gaps)
-    T3       MISSING (12): InnerDimple @50.0 | Web @716.4 | Web @1037.3 | InnerDimple @1220.9 | Web @2012.4 ... +7
-    T3       EXTRAS  (6): Web @29.7 | Web @1310.0 | Web @1408.9 | Web @2673.8 | Web @2771.6 ... +1
-    B1       MISSING (7): Web @60.4 | InnerDimple @3505.0 | Web @3607.0 | InnerDimple @3705.0 | RightFlange 0.0..8.6 ... +2
-    B1       EXTRAS  (3): Web @2413.9 | Web @3622.0 | Web @3632.2
+    T3       MISSING (7): Web @716.4 | Web @1037.3 | Web @2012.4 | Web @2110.4 | Web @3375.1 ... +2
+    T3       EXTRAS  (8): Web @29.7 | Web @53.9 | Web @1310.0 | Web @1408.9 | Web @2673.6 ... +3
+    B1       MISSING (1): Web @3607.0
+    B1       EXTRAS  (5): Web @3622.0 | Web @3695.0 | LeftFlange 3598.3..3755.0 | LipNotch 3722.7..3755.0 | RightFlange 3746.8..3755.0

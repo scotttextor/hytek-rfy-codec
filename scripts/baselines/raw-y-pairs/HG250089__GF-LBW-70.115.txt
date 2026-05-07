@@ -3,23 +3,23 @@ OP-LEVEL DIFF — HG250089 SE06 LOT 75 SHARMAN STREET REDBANK PLAINS - REV 4-GF-
 Setup:    F325iT 70mm
 Frames:   our 1 | ref 1
 
-OPS:      our 288 | ref 296
-MATCHED:  202  (68.2% of ref)
-MISSING:  94  (ops Detailer has, we don't)
-EXTRAS:   86   (ops we have, Detailer doesn't)
+OPS:      our 276 | ref 296
+MATCHED:  201  (67.9% of ref)
+MISSING:  95  (ops Detailer has, we don't)
+EXTRAS:   75   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt            88        44       36   (67% ref-coverage)
 LipNotch@span             23        21       23   (52% ref-coverage)
-Swage@span                53         9       10   (85% ref-coverage)
+Swage@span                52        10       11   (84% ref-coverage)
 Web@pt                     6        13        1   (32% ref-coverage)
-InnerService@pt           20         0       12   (100% ref-coverage)
 InnerNotch@span            7         6        3   (54% ref-coverage)
 Chamfer@end                0         0        1   (- ref-coverage)
 Chamfer@start              0         1        0   (0% ref-coverage)
 Bolt@pt                    5         0        0   (100% ref-coverage)
+InnerService@pt           20         0        0   (100% ref-coverage)
 
 FRAMES WITH GAPS:
 
@@ -39,7 +39,8 @@ FRAMES WITH GAPS:
     N1       MISSING (8): InnerDimple @86.5 | InnerDimple @193.0 | InnerDimple @235.0 | InnerNotch 64.0..109.0 | LipNotch 64.0..109.0 ... +3
     N1       EXTRAS  (8): InnerDimple @89.5 | InnerDimple @196.0 | InnerDimple @238.0 | InnerNotch 67.0..112.0 | LipNotch 67.0..112.0 ... +3
     W1       MISSING (1): Swage 799.5..838.9
-    W1       EXTRAS  (1): Swage 793.0..834.0
-    W2       MISSING (1): Chamfer @start
+    W1       EXTRAS  (1): Swage 791.8..834.0
+    W2       MISSING (2): Chamfer @start | Swage 789.5..831.9
+    W2       EXTRAS  (1): Swage 787.4..830.7
     W3       MISSING (3): InnerDimple @263.1 | LipNotch 247.4..298.0 | Swage 680.0..720.6
-    W3       EXTRAS  (1): Swage 677.1..718.1
+    W3       EXTRAS  (1): Swage 672.9..718.1

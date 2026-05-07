@@ -1,17 +1,17 @@
 {
   "inputXml": "Y:\\(17) 2026 HYTEK PROJECTS\\CORAL HOMES\\HG260004 LOT 328 (56) TREELINE CIRCUIT MOOLOOLAH VALLEY\\03 DETAILING\\03 FRAMECAD DETAILER\\01 XML OUTPUT\\HG260004 LOT 328 (56) TREELINE CIRCUIT MOOLOOLAH VALLEY-GF-RP-70.075.xml",
   "reference": "Y:\\(17) 2026 HYTEK PROJECTS\\CORAL HOMES\\HG260004 LOT 328 (56) TREELINE CIRCUIT MOOLOOLAH VALLEY\\06 MANUFACTURING\\04 ROLLFORMER FILES\\Split_HG260004\\HG260004_GF-RP-70.075.rfy",
-  "generated": "2026-05-07T02:30:39.521Z",
+  "generated": "2026-05-07T03:30:04.672Z",
   "setup": {
     "id": "2",
     "name": "F325iT 70mm"
   },
   "totals": {
-    "ours": 570,
+    "ours": 613,
     "ref": 755,
-    "matched": 153,
-    "missing": 602,
-    "extras": 417
+    "matched": 177,
+    "missing": 578,
+    "extras": 436
   },
   "byFrame": [
     {
@@ -21,27 +21,37 @@
           "name": "T1",
           "oursLength": 1352,
           "refLength": 1352.00373801879,
-          "matchedCount": 8,
+          "matchedCount": 5,
           "extras": [
-            "Swage 0.0..39.0"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1342.0",
+            "Chamfer @end"
           ],
           "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @1335.5",
             "LipNotch 0.0..39.0",
-            "InnerNotch 1195.0..1240.0"
+            "InnerNotch 1195.0..1240.0",
+            "Swage 1313.0..1352.0"
           ]
         },
         {
           "name": "T2",
           "oursLength": 150.998,
           "refLength": 150.999975109183,
-          "matchedCount": 2,
+          "matchedCount": 0,
           "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @141.0",
             "InnerNotch 0.0..39.0",
-            "Swage 0.0..39.0",
             "InnerNotch 112.0..151.0",
-            "Swage 112.0..151.0"
+            "Chamfer @end"
           ],
           "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @134.5",
             "LipNotch 0.0..39.0",
             "LipNotch 112.0..151.0"
           ]
@@ -50,19 +60,15 @@
           "name": "B1",
           "oursLength": 1874.3338,
           "refLength": 1885.35011986973,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @677.2",
             "InnerDimple @1176.7",
-            "InnerDimple @1857.8",
+            "InnerDimple @1864.3",
             "LipNotch 654.7..699.7",
-            "LipNotch 1154.2..1199.2",
-            "Swage 1835.3..1874.3"
+            "LipNotch 1154.2..1199.2"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "Web @178.4",
             "InnerDimple @379.2",
             "Web @677.6",
@@ -70,30 +76,26 @@
             "Web @1298.6",
             "InnerDimple @1649.1",
             "InnerDimple @1875.4",
+            "Swage 0.0..62.3",
             "LipNotch 367.2..431.6",
             "LipNotch 890.4..954.7",
             "LipNotch 1596.8..1661.1",
-            "Swage 1823.0..1885.4",
-            "Chamfer @end"
+            "Swage 1823.0..1885.4"
           ]
         },
         {
           "name": "B2",
           "oursLength": 1874.3338,
           "refLength": 1885.3501381154,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @677.2",
             "InnerDimple @1176.7",
-            "InnerDimple @1857.8",
+            "InnerDimple @1864.3",
             "LipNotch 654.7..699.7",
-            "LipNotch 1154.2..1199.2",
-            "Swage 1835.3..1874.3"
+            "LipNotch 1154.2..1199.2"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "Web @136.4",
             "InnerDimple @295.2",
             "Web @635.6",
@@ -101,71 +103,125 @@
             "Web @1256.6",
             "InnerDimple @1649.1",
             "InnerDimple @1875.4",
+            "Swage 0.0..62.3",
             "LipNotch 242.9..307.3",
             "LipNotch 930.6..995.0",
             "LipNotch 1637.0..1701.4",
-            "Swage 1823.0..1885.4",
-            "Chamfer @end"
+            "Swage 1823.0..1885.4"
           ]
         },
         {
           "name": "B3",
           "oursLength": 1352,
           "refLength": 1352.00195771974,
-          "matchedCount": 8,
-          "extras": [],
+          "matchedCount": 4,
+          "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1342.0",
+            "Chamfer @end"
+          ],
           "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @1335.5",
+            "Swage 0.0..39.0",
             "InnerNotch 653.5..698.5",
-            "InnerNotch 1153.0..1198.0"
+            "InnerNotch 1153.0..1198.0",
+            "Swage 1313.0..1352.0"
           ]
         },
         {
           "name": "N1",
           "oursLength": 1352.002,
           "refLength": 1352.00338204629,
-          "matchedCount": 11,
-          "extras": [],
+          "matchedCount": 7,
+          "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1342.0",
+            "Chamfer @end"
+          ],
           "missing": [
-            "Swage 1195.0..1240.0"
+            "InnerDimple @16.5",
+            "InnerDimple @1335.5",
+            "Swage 0.0..39.0",
+            "Swage 1195.0..1240.0",
+            "Swage 1313.0..1352.0"
+          ]
+        },
+        {
+          "name": "N2",
+          "oursLength": 1352.002,
+          "refLength": 1352.00302008934,
+          "matchedCount": 6,
+          "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1342.0",
+            "Chamfer @end"
+          ],
+          "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @1335.5",
+            "Swage 0.0..39.0",
+            "Swage 1313.0..1352.0"
+          ]
+        },
+        {
+          "name": "N3",
+          "oursLength": 1352.002,
+          "refLength": 1352.00265813214,
+          "matchedCount": 6,
+          "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1342.0",
+            "Chamfer @end"
+          ],
+          "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @1335.5",
+            "Swage 0.0..39.0",
+            "Swage 1313.0..1352.0"
           ]
         },
         {
           "name": "N4",
           "oursLength": 224.69,
           "refLength": 228.199015675029,
-          "matchedCount": 2,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @208.2",
-            "Swage 185.7..224.7"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @214.7"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @218.2",
-            "Swage 165.9..228.2",
-            "Chamfer @end"
+            "Swage 0.0..39.0",
+            "Swage 165.9..228.2"
           ]
         },
         {
           "name": "N5",
           "oursLength": 1082.898,
           "refLength": 1084.40703484202,
-          "matchedCount": 1,
+          "matchedCount": 2,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @406.9",
             "InnerDimple @906.4",
-            "InnerDimple @1066.4",
+            "InnerDimple @1072.9",
             "InnerNotch 384.4..429.4",
             "LipNotch 384.4..429.4",
             "InnerNotch 883.9..928.9",
             "LipNotch 883.9..928.9",
-            "Swage 1043.9..1082.9"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @408.4",
             "InnerDimple @907.9",
             "InnerDimple @1067.9",
+            "Swage 0.0..62.3",
             "InnerNotch 385.9..430.9",
             "LipNotch 385.9..430.9",
             "InnerNotch 885.4..930.4",
@@ -179,18 +235,19 @@
           "refLength": 6195.0221725392,
           "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1237.8",
             "InnerDimple @2477.6",
             "InnerDimple @3717.4",
             "InnerDimple @4957.2",
             "InnerDimple @6176.5",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 1215.3..1260.3",
             "Swage 2455.1..2500.1",
             "Swage 3694.9..3739.9",
             "Swage 4934.7..4979.7",
-            "Swage 6154.0..6193.0"
+            "Swage 6154.0..6193.0",
+            "Chamfer @end"
           ],
           "missing": [
             "InnerDimple @80.5",
@@ -214,19 +271,21 @@
           "name": "S2",
           "oursLength": 5360.1154,
           "refLength": 5363.62427083516,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @404.9",
             "InnerDimple @1644.7",
             "InnerDimple @2884.5",
             "InnerDimple @4124.3",
             "InnerDimple @5343.6",
+            "Swage 56.0..101.0",
             "Swage 382.4..427.4",
             "Swage 1622.2..1667.2",
             "Swage 2862.0..2907.0",
             "Swage 4101.8..4146.8",
-            "Swage 5321.1..5360.1"
+            "Swage 5321.1..5360.1",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
@@ -236,6 +295,7 @@
             "InnerDimple @2888.0",
             "InnerDimple @4127.8",
             "InnerDimple @5347.1",
+            "Swage 0.0..62.3",
             "Swage 385.9..430.9",
             "Swage 1625.7..1670.7",
             "Swage 2865.5..2910.5",
@@ -247,13 +307,16 @@
           "name": "S3",
           "oursLength": 1491.3641,
           "refLength": 1487.36318622898,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
+            "InnerDimple @78.5",
             "InnerDimple @1474.9",
-            "Swage 0.0..39.0",
-            "Swage 1452.4..1491.4"
+            "Swage 56.0..101.0",
+            "Swage 1452.4..1491.4",
+            "Chamfer @end"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @1235.8",
             "InnerDimple @1470.9",
             "InnerNotch 0.0..39.0",
@@ -268,16 +331,17 @@
           "refLength": 6430.08027202391,
           "matchedCount": 2,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1237.8",
             "InnerDimple @2477.6",
             "InnerDimple @3717.4",
             "InnerDimple @4957.2",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 1215.3..1260.3",
             "Swage 2455.1..2500.1",
             "Swage 3694.9..3739.9",
-            "Swage 4934.7..4979.7"
+            "Swage 4934.7..4979.7",
+            "Chamfer @end"
           ],
           "missing": [
             "InnerDimple @80.5",
@@ -300,19 +364,21 @@
           "name": "S5",
           "oursLength": 5859.617,
           "refLength": 5863.12436455686,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @904.4",
             "InnerDimple @2144.2",
             "InnerDimple @3384.0",
             "InnerDimple @4623.8",
             "InnerDimple @5843.1",
+            "Swage 56.0..101.0",
             "Swage 881.9..926.9",
             "Swage 2121.7..2166.7",
             "Swage 3361.5..3406.5",
             "Swage 4601.3..4646.3",
-            "Swage 5820.6..5859.6"
+            "Swage 5820.6..5859.6",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
@@ -322,6 +388,7 @@
             "InnerDimple @3387.5",
             "InnerDimple @4627.3",
             "InnerDimple @5846.6",
+            "Swage 0.0..62.3",
             "Swage 885.4..930.4",
             "Swage 2125.2..2170.2",
             "Swage 3365.0..3410.0",
@@ -333,38 +400,36 @@
           "name": "S6",
           "oursLength": 783.6646,
           "refLength": 792.001633040433,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @767.2",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 744.7..783.7"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @782.0",
             "Swage 58.0..103.0",
-            "Swage 729.7..792.0",
-            "Chamfer @end"
+            "Swage 729.7..792.0"
           ]
         },
         {
           "name": "S7",
           "oursLength": 286.9911,
           "refLength": 292.501512788247,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @270.5",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 248.0..287.0"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @282.5",
             "Swage 58.0..103.0",
-            "Swage 230.2..292.5",
-            "Chamfer @end"
+            "Swage 230.2..292.5"
           ]
         }
       ]
@@ -376,24 +441,18 @@
           "name": "T1",
           "oursLength": 3017.8473,
           "refLength": 3024.84776733882,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @845.4",
             "InnerDimple @1672.7",
-            "InnerDimple @3001.3",
-            "Swage 0.0..39.0",
             "LipNotch 822.9..867.9",
             "LipNotch 1650.2..1695.2",
-            "Swage 2978.8..3017.8"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @414.4",
             "InnerDimple @1194.5",
             "InnerDimple @2378.9",
-            "InnerDimple @3008.8",
             "LipNotch 0.0..22.0",
             "LipNotch 402.2..465.8",
             "LipNotch 1141.2..1206.4",
@@ -405,20 +464,24 @@
           "name": "T2",
           "oursLength": 2939.8316,
           "refLength": 2943.82653063876,
-          "matchedCount": 2,
+          "matchedCount": 0,
           "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
             "InnerDimple @411.8",
             "InnerDimple @1239.0",
-            "InnerDimple @2923.3",
+            "InnerDimple @2929.8",
             "LipNotch 389.3..434.3",
             "LipNotch 1216.5..1261.5",
-            "Swage 2900.8..2939.8"
+            "Chamfer @end"
           ],
           "missing": [
+            "InnerDimple @16.0",
             "InnerDimple @570.6",
             "InnerDimple @1755.0",
             "InnerDimple @2610.4",
             "InnerDimple @2927.8",
+            "Swage 0.0..39.0",
             "LipNotch 558.6..623.8",
             "LipNotch 1743.0..1808.2",
             "LipNotch 2559.0..2622.6",
@@ -429,30 +492,24 @@
           "name": "B1",
           "oursLength": 5929.6665,
           "refLength": 5936.66395383822,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @845.4",
             "InnerDimple @1672.7",
             "InnerDimple @2500.0",
             "InnerDimple @3327.3",
-            "InnerDimple @5913.2",
-            "Swage 0.0..39.0",
             "LipNotch 822.9..867.9",
             "LipNotch 1650.2..1695.2",
             "LipNotch 2477.5..2522.5",
             "LipNotch 3304.8..3349.8",
-            "Swage 5890.7..5929.7"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @1194.5",
             "InnerDimple @2378.9",
             "InnerDimple @2764.3",
             "InnerDimple @3563.4",
             "InnerDimple @4747.9",
-            "InnerDimple @5920.7",
             "LipNotch 0.0..63.2",
             "LipNotch 1182.5..1247.7",
             "LipNotch 2367.0..2432.2",
@@ -466,14 +523,13 @@
           "name": "N1",
           "oursLength": 3639.386,
           "refLength": 3644.10861950624,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @552.5",
             "InnerDimple @1379.7",
             "InnerDimple @2207.0",
             "InnerDimple @3034.3",
-            "InnerDimple @3622.9",
+            "InnerDimple @3629.4",
             "InnerNotch 530.0..575.0",
             "LipNotch 530.0..575.0",
             "InnerNotch 1357.2..1402.2",
@@ -481,17 +537,15 @@
             "InnerNotch 2184.5..2229.5",
             "LipNotch 2184.5..2229.5",
             "InnerNotch 3011.8..3056.8",
-            "LipNotch 3011.8..3056.8",
-            "Swage 3600.4..3639.4"
+            "LipNotch 3011.8..3056.8"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @554.8",
             "InnerDimple @1382.1",
             "InnerDimple @2209.4",
             "InnerDimple @3036.6",
             "InnerDimple @3634.1",
+            "Swage 0.0..61.4",
             "InnerNotch 532.3..577.3",
             "LipNotch 532.3..577.3",
             "InnerNotch 1359.6..1404.6",
@@ -500,23 +554,24 @@
             "LipNotch 2186.9..2231.9",
             "InnerNotch 3014.1..3059.1",
             "LipNotch 3014.1..3059.1",
-            "Swage 3582.7..3644.1",
-            "Chamfer @end"
+            "Swage 3582.7..3644.1"
           ]
         },
         {
           "name": "N2",
           "oursLength": 1947.849,
           "refLength": 1950.20936103493,
-          "matchedCount": 8,
+          "matchedCount": 7,
           "extras": [
-            "InnerDimple @1931.3",
-            "Swage 1908.8..1947.8"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1937.8"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @1940.2",
-            "Swage 1888.8..1950.2",
-            "Chamfer @end"
+            "Swage 0.0..39.0",
+            "Swage 1888.8..1950.2"
           ]
         },
         {
@@ -525,10 +580,11 @@
           "refLength": 4187.8116305162,
           "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @279.3",
             "InnerDimple @2765.3",
             "InnerDimple @4158.3",
+            "Swage 56.0..101.0",
             "Swage 256.8..301.8",
             "Swage 2742.8..2787.8",
             "Swage 4135.8..4174.8"
@@ -539,10 +595,10 @@
             "InnerDimple @1416.0",
             "InnerDimple @3902.0",
             "InnerDimple @4177.8",
+            "Swage 0.0..63.2",
             "Swage 1393.5..1438.5",
             "Swage 3879.5..3924.5",
-            "Swage 4124.6..4187.8",
-            "Chamfer @end"
+            "Swage 4124.6..4187.8"
           ]
         },
         {
@@ -551,10 +607,11 @@
           "refLength": 4187.81281725271,
           "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1127.0",
             "InnerDimple @3613.0",
             "InnerDimple @4158.3",
+            "Swage 56.0..101.0",
             "Swage 1104.5..1149.5",
             "Swage 3590.5..3635.5",
             "Swage 4135.8..4174.8"
@@ -565,10 +622,10 @@
             "InnerDimple @568.3",
             "InnerDimple @3054.3",
             "InnerDimple @4177.8",
+            "Swage 0.0..63.2",
             "Swage 545.8..590.8",
             "Swage 3031.8..3076.8",
-            "Swage 4124.6..4187.8",
-            "Chamfer @end"
+            "Swage 4124.6..4187.8"
           ]
         },
         {
@@ -577,9 +634,10 @@
           "refLength": 4187.81393576543,
           "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1974.7",
             "InnerDimple @4158.3",
+            "Swage 56.0..101.0",
             "Swage 1952.2..1997.2",
             "Swage 4135.8..4174.8"
           ],
@@ -588,9 +646,9 @@
             "InnerDimple @10.0",
             "InnerDimple @2206.6",
             "InnerDimple @4177.8",
+            "Swage 0.0..21.2",
             "LipNotch 2184.1..2229.1",
-            "Swage 4124.6..4187.8",
-            "Chamfer @end"
+            "Swage 4124.6..4187.8"
           ]
         },
         {
@@ -599,9 +657,10 @@
           "refLength": 3394.06083942587,
           "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1917.6",
             "InnerDimple @3364.5",
+            "Swage 56.0..101.0",
             "Swage 1895.1..1940.1",
             "Swage 3342.0..3381.0"
           ],
@@ -610,9 +669,9 @@
             "InnerDimple @10.0",
             "InnerDimple @1469.9",
             "InnerDimple @3384.1",
+            "Swage 0.0..63.2",
             "Swage 1447.4..1492.4",
-            "Swage 3330.8..3394.1",
-            "Chamfer @end"
+            "Swage 3330.8..3394.1"
           ]
         },
         {
@@ -621,9 +680,10 @@
           "refLength": 1698.68184734397,
           "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1070.0",
             "InnerDimple @1669.1",
+            "Swage 56.0..101.0",
             "Swage 1047.5..1092.5",
             "Swage 1646.6..1685.6"
           ],
@@ -632,9 +692,9 @@
             "InnerDimple @10.0",
             "InnerDimple @622.2",
             "InnerDimple @1688.7",
+            "Swage 0.0..63.2",
             "Swage 599.7..644.7",
-            "Swage 1635.5..1698.7",
-            "Chamfer @end"
+            "Swage 1635.5..1698.7"
           ]
         }
       ]
@@ -646,20 +706,15 @@
           "name": "T1",
           "oursLength": 2947.2755,
           "refLength": 2957.2768616869,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @702.0",
             "InnerDimple @1385.8",
-            "InnerDimple @2930.8",
-            "Swage 0.0..39.0",
+            "InnerDimple @2937.3",
             "LipNotch 679.5..724.5",
-            "LipNotch 1363.3..1408.3",
-            "Swage 2908.3..2947.3"
+            "LipNotch 1363.3..1408.3"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @989.1",
             "InnerDimple @1605.4",
             "InnerDimple @1968.2",
@@ -668,57 +723,78 @@
             "LipNotch 977.1..1042.3",
             "LipNotch 1553.9..1617.5",
             "LipNotch 1956.2..2021.4",
-            "LipNotch 2935.3..2957.3",
-            "Chamfer @end"
+            "LipNotch 2935.3..2957.3"
           ]
         },
         {
           "name": "B1",
           "oursLength": 1135.412,
           "refLength": 1140.77402529775,
-          "matchedCount": 4,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @1118.9",
-            "Swage 1096.4..1135.4"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1125.4"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @1130.8",
+            "Swage 0.0..39.0",
             "InnerNotch 677.8..722.8",
-            "Swage 1079.3..1140.8",
-            "Chamfer @end"
+            "Swage 1079.3..1140.8"
           ]
         },
         {
           "name": "B2",
           "oursLength": 2084.5,
           "refLength": 2084.50077518768,
-          "matchedCount": 8,
-          "extras": [],
+          "matchedCount": 4,
+          "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @2074.5",
+            "Chamfer @end"
+          ],
           "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @2068.0",
+            "Swage 0.0..39.0",
             "InnerNotch 677.8..722.8",
-            "InnerNotch 1361.7..1406.7"
+            "InnerNotch 1361.7..1406.7",
+            "Swage 2045.5..2084.5"
           ]
         },
         {
           "name": "B3",
           "oursLength": 2084.5,
           "refLength": 2084.49997376783,
-          "matchedCount": 8,
-          "extras": [],
+          "matchedCount": 4,
+          "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @2074.5",
+            "Chamfer @end"
+          ],
           "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @2068.0",
+            "Swage 0.0..39.0",
             "InnerNotch 677.8..722.8",
-            "InnerNotch 1361.7..1406.7"
+            "InnerNotch 1361.7..1406.7",
+            "Swage 2045.5..2084.5"
           ]
         },
         {
           "name": "S1",
           "oursLength": 4221.7539,
           "refLength": 4230.2708054773,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @4205.3",
-            "Swage 4182.8..4221.8"
+            "Swage 56.0..101.0",
+            "Swage 4182.8..4221.8",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
@@ -726,6 +802,7 @@
             "InnerDimple @1151.8",
             "InnerDimple @2651.8",
             "InnerDimple @4151.8",
+            "Swage 0.0..63.2",
             "LipNotch 1129.3..1174.3",
             "LipNotch 2629.3..2674.3",
             "LipNotch 4129.3..4174.3"
@@ -735,65 +812,52 @@
           "name": "S2",
           "oursLength": 3521.0446,
           "refLength": 3529.56211992052,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @3504.5",
-            "Swage 0.0..39.0",
             "Swage 3482.0..3521.0"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @1578.5",
             "InnerDimple @3078.5",
             "InnerDimple @3519.6",
-            "Swage 56.0..101.0",
             "Swage 1556.0..1601.0",
             "Swage 3056.0..3101.0",
-            "Swage 3466.3..3529.6",
-            "Chamfer @end"
+            "Swage 3466.3..3529.6"
           ]
         },
         {
           "name": "S3",
           "oursLength": 2820.3362,
           "refLength": 2828.8534374866,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @2803.8",
-            "Swage 0.0..39.0",
             "Swage 2781.3..2820.3"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @1578.5",
             "InnerDimple @2818.9",
-            "Swage 56.0..101.0",
             "Swage 1556.0..1601.0",
-            "Swage 2765.6..2828.9",
-            "Chamfer @end"
+            "Swage 2765.6..2828.9"
           ]
         },
         {
           "name": "S4",
           "oursLength": 2119.6278,
           "refLength": 2128.14456778364,
-          "matchedCount": 0,
+          "matchedCount": 2,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @2103.1",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 2080.6..2119.6"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @1578.5",
             "InnerDimple @2118.1",
             "LipNotch 56.0..101.0",
             "LipNotch 1556.0..1601.0",
-            "Swage 2106.9..2128.1",
-            "Chamfer @end"
+            "Swage 2106.9..2128.1"
           ]
         }
       ]
@@ -805,22 +869,18 @@
           "name": "T1",
           "oursLength": 2885.1066,
           "refLength": 2894.10678101423,
-          "matchedCount": 0,
+          "matchedCount": 2,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @696.9",
             "InnerDimple @1375.6",
             "InnerDimple @1714.7",
-            "InnerDimple @2868.6",
-            "Swage 0.0..39.0",
+            "InnerDimple @2875.1",
             "LipNotch 674.4..719.4",
             "LipNotch 1353.1..1398.1",
             "LipNotch 1692.2..1737.2",
-            "Swage 2846.1..2885.1"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @981.8",
             "InnerDimple @1426.7",
             "InnerDimple @1953.6",
@@ -838,52 +898,59 @@
           "name": "B1",
           "oursLength": 1970.662,
           "refLength": 1976.02516567305,
-          "matchedCount": 8,
+          "matchedCount": 7,
           "extras": [
-            "InnerDimple @1954.2",
-            "Swage 1931.7..1970.7"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1960.7"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @1966.0",
+            "Swage 0.0..39.0",
             "InnerNotch 672.7..717.7",
             "InnerNotch 1351.5..1396.5",
             "InnerNotch 1690.6..1735.6",
-            "Swage 1914.6..1976.0",
-            "Chamfer @end"
+            "Swage 1914.6..1976.0"
           ]
         },
         {
           "name": "N1",
           "oursLength": 1010.815,
           "refLength": 1015.96981556437,
-          "matchedCount": 5,
+          "matchedCount": 4,
           "extras": [
-            "InnerDimple @994.3",
-            "Swage 971.8..1010.8"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1000.8"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @1006.0",
-            "Swage 954.5..1016.0",
-            "Chamfer @end"
+            "Swage 0.0..39.0",
+            "Swage 954.5..1016.0"
           ]
         },
         {
           "name": "S1",
           "oursLength": 2077.6162,
           "refLength": 2086.13295909618,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1060.2",
             "InnerDimple @2061.1",
+            "Swage 56.0..101.0",
             "Swage 1037.7..1082.7",
-            "Swage 2038.6..2077.6"
+            "Swage 2038.6..2077.6",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
             "InnerDimple @10.0",
             "InnerDimple @1023.9",
             "InnerDimple @2007.6",
+            "Swage 0.0..63.2",
             "LipNotch 1001.4..1046.4",
             "LipNotch 1985.1..2030.1"
           ]
@@ -892,19 +959,22 @@
           "name": "S2",
           "oursLength": 1382.1235,
           "refLength": 1390.64037350963,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1060.2",
             "InnerDimple @1365.6",
+            "Swage 56.0..101.0",
             "Swage 1037.7..1082.7",
-            "Swage 1343.1..1382.1"
+            "Swage 1343.1..1382.1",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
             "InnerDimple @10.0",
             "InnerDimple @328.4",
             "InnerDimple @1312.1",
+            "Swage 0.0..63.2",
             "Swage 305.9..350.9",
             "Swage 1289.6..1334.6"
           ]
@@ -913,38 +983,32 @@
           "name": "S3",
           "oursLength": 686.6298,
           "refLength": 695.147758222562,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @670.1",
-            "Swage 0.0..39.0",
             "Swage 647.6..686.6"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @685.1",
-            "Swage 56.0..101.0",
-            "Swage 631.9..695.1",
-            "Chamfer @end"
+            "Swage 631.9..695.1"
           ]
         },
         {
           "name": "S4",
           "oursLength": 341.1697,
           "refLength": 349.689845974501,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @324.7",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 302.2..341.2"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @339.7",
             "Swage 58.0..103.0",
-            "Swage 286.5..349.7",
-            "Chamfer @end"
+            "Swage 286.5..349.7"
           ]
         }
       ]
@@ -956,16 +1020,15 @@
           "name": "T1",
           "oursLength": 2421.9291,
           "refLength": 2430.93071781161,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "Chamfer @start",
+            "InnerDimple @10.0",
             "InnerDimple @329.7",
             "InnerDimple @846.4",
-            "InnerDimple @2405.4",
-            "Swage 0.0..39.0",
+            "InnerDimple @2411.9",
             "LipNotch 307.2..352.2",
-            "LipNotch 823.9..868.9",
-            "Swage 2382.9..2421.9"
+            "LipNotch 823.9..868.9"
           ],
           "missing": [
             "InnerDimple @92.8",
@@ -975,30 +1038,25 @@
             "LipNotch 80.7..144.3",
             "LipNotch 401.8..467.0",
             "LipNotch 1141.6..1206.8",
-            "LipNotch 2367.7..2430.9",
-            "Chamfer @end"
+            "LipNotch 2367.7..2430.9"
           ]
         },
         {
           "name": "B1",
           "oursLength": 1647.162,
           "refLength": 1652.52531261247,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @257.6",
             "InnerDimple @774.3",
-            "InnerDimple @1630.7",
             "LipNotch 235.1..280.1",
             "LipNotch 751.8..796.8",
-            "Swage 1608.2..1647.2"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @262.9",
             "InnerDimple @779.7",
-            "InnerDimple @1636.0",
+            "Swage 0.0..61.4",
             "InnerNotch 240.4..285.4",
             "LipNotch 240.4..285.4",
             "LipNotch 757.2..802.2",
@@ -1010,57 +1068,54 @@
           "name": "S1",
           "oursLength": 1748.133,
           "refLength": 1756.65097011595,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1731.6",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 1709.1..1748.1"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @1746.7",
             "LipNotch 58.0..103.0",
-            "Swage 1693.4..1756.7",
-            "Chamfer @end"
+            "Swage 1693.4..1756.7"
           ]
         },
         {
           "name": "S2",
           "oursLength": 870.6351,
           "refLength": 879.15176453962,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @854.1",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 831.6..870.6"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @869.2",
             "Swage 58.0..103.0",
-            "Swage 815.9..879.2",
-            "Chamfer @end"
+            "Swage 815.9..879.2"
           ]
         },
         {
           "name": "S3",
           "oursLength": 343.1679,
           "refLength": 351.689591977898,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @326.7",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 304.2..343.2"
           ],
           "missing": [
             "InnerDimple @82.5",
             "InnerDimple @341.7",
             "Swage 60.0..105.0",
-            "Swage 288.5..351.7",
-            "Chamfer @end"
+            "Swage 288.5..351.7"
           ]
         }
       ]
@@ -1072,20 +1127,15 @@
           "name": "T1",
           "oursLength": 2947.2755,
           "refLength": 2957.27606507925,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @702.0",
             "InnerDimple @1385.8",
-            "InnerDimple @2930.8",
-            "Swage 0.0..39.0",
+            "InnerDimple @2937.3",
             "LipNotch 679.5..724.5",
-            "LipNotch 1363.3..1408.3",
-            "Swage 2908.3..2947.3"
+            "LipNotch 1363.3..1408.3"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @989.1",
             "InnerDimple @1351.9",
             "InnerDimple @1968.2",
@@ -1094,27 +1144,22 @@
             "LipNotch 935.9..1001.1",
             "LipNotch 1339.7..1403.3",
             "LipNotch 1915.0..1980.2",
-            "LipNotch 2894.1..2957.3",
-            "Chamfer @end"
+            "LipNotch 2894.1..2957.3"
           ]
         },
         {
           "name": "B1",
           "oursLength": 1135.412,
           "refLength": 1140.77409629598,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @435.1",
-            "InnerDimple @1118.9",
             "LipNotch 412.6..457.6",
-            "Swage 1096.4..1135.4"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @440.4",
-            "InnerDimple @1124.3",
+            "Swage 0.0..61.4",
             "LipNotch 417.9..462.9",
             "InnerNotch 417.9..462.9",
             "Swage 1101.8..1140.8"
@@ -1124,33 +1169,53 @@
           "name": "B2",
           "oursLength": 2084.5,
           "refLength": 2084.50068207946,
-          "matchedCount": 8,
-          "extras": [],
+          "matchedCount": 4,
+          "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @2074.5",
+            "Chamfer @end"
+          ],
           "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @2068.0",
+            "Swage 0.0..39.0",
             "InnerNotch 677.8..722.8",
-            "InnerNotch 1361.7..1406.7"
+            "InnerNotch 1361.7..1406.7",
+            "Swage 2045.5..2084.5"
           ]
         },
         {
           "name": "B3",
           "oursLength": 2084.5,
           "refLength": 2084.49997030166,
-          "matchedCount": 8,
-          "extras": [],
+          "matchedCount": 4,
+          "extras": [
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @2074.5",
+            "Chamfer @end"
+          ],
           "missing": [
+            "InnerDimple @16.5",
+            "InnerDimple @2068.0",
+            "Swage 0.0..39.0",
             "InnerNotch 677.8..722.8",
-            "InnerNotch 1361.7..1406.7"
+            "InnerNotch 1361.7..1406.7",
+            "Swage 2045.5..2084.5"
           ]
         },
         {
           "name": "S1",
           "oursLength": 4221.7539,
           "refLength": 4230.27080479281,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @4205.3",
-            "Swage 4182.8..4221.8"
+            "Swage 56.0..101.0",
+            "Swage 4182.8..4221.8",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
@@ -1158,6 +1223,7 @@
             "InnerDimple @1151.8",
             "InnerDimple @2651.8",
             "InnerDimple @4151.8",
+            "Swage 0.0..63.2",
             "LipNotch 1129.3..1174.3",
             "LipNotch 2629.3..2674.3",
             "LipNotch 4129.3..4174.3"
@@ -1167,11 +1233,13 @@
           "name": "S2",
           "oursLength": 3521.0446,
           "refLength": 3529.56178288179,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @3504.5",
-            "Swage 3482.0..3521.0"
+            "Swage 56.0..101.0",
+            "Swage 3482.0..3521.0",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
@@ -1179,6 +1247,7 @@
             "InnerDimple @451.1",
             "InnerDimple @1951.1",
             "InnerDimple @3451.1",
+            "Swage 0.0..63.2",
             "Swage 428.6..473.6",
             "Swage 1928.6..1973.6",
             "Swage 3428.6..3473.6"
@@ -1188,17 +1257,20 @@
           "name": "S3",
           "oursLength": 2820.3362,
           "refLength": 2828.85269723214,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @2803.8",
-            "Swage 2781.3..2820.3"
+            "Swage 56.0..101.0",
+            "Swage 2781.3..2820.3",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
             "InnerDimple @10.0",
             "InnerDimple @1250.4",
             "InnerDimple @2750.4",
+            "Swage 0.0..63.2",
             "Swage 1227.9..1272.9",
             "Swage 2727.9..2772.9"
           ]
@@ -1207,17 +1279,20 @@
           "name": "S4",
           "oursLength": 2119.6268,
           "refLength": 2128.14463995308,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @2103.1",
-            "Swage 2080.6..2119.6"
+            "Swage 56.0..101.0",
+            "Swage 2080.6..2119.6",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
             "InnerDimple @10.0",
             "InnerDimple @549.6",
             "InnerDimple @2049.6",
+            "Swage 0.0..21.2",
             "LipNotch 527.1..572.1",
             "LipNotch 2027.1..2072.1"
           ]
@@ -1231,22 +1306,21 @@
           "name": "T1",
           "oursLength": 5816.6554,
           "refLength": 5825.65466693008,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "Chamfer @start",
+            "InnerDimple @10.0",
             "InnerDimple @329.7",
             "InnerDimple @806.8",
             "InnerDimple @1623.5",
             "InnerDimple @2440.3",
             "InnerDimple @3257.0",
-            "InnerDimple @5800.2",
-            "Swage 0.0..39.0",
+            "InnerDimple @5806.7",
             "LipNotch 307.2..352.2",
             "LipNotch 784.3..829.3",
             "LipNotch 1601.0..1646.0",
             "LipNotch 2417.8..2462.8",
-            "LipNotch 3234.5..3279.5",
-            "Swage 5777.7..5816.7"
+            "LipNotch 3234.5..3279.5"
           ],
           "missing": [
             "InnerDimple @92.8",
@@ -1266,27 +1340,22 @@
             "LipNotch 3423.7..3488.8",
             "LipNotch 4225.8..4289.4",
             "LipNotch 4593.0..4658.2",
-            "LipNotch 5762.4..5825.7",
-            "Chamfer @end"
+            "LipNotch 5762.4..5825.7"
           ]
         },
         {
           "name": "B1",
           "oursLength": 1123.065,
           "refLength": 1128.42739872641,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @289.8",
-            "InnerDimple @1106.6",
             "LipNotch 267.3..312.3",
-            "Swage 1084.1..1123.1"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @295.2",
-            "InnerDimple @1111.9",
+            "Swage 0.0..61.4",
             "LipNotch 272.7..317.7",
             "InnerNotch 272.7..317.7",
             "Swage 1089.4..1128.4"
@@ -1296,25 +1365,21 @@
           "name": "B2",
           "oursLength": 2651.879,
           "refLength": 2657.24116966975,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @185.1",
             "InnerDimple @1001.9",
             "InnerDimple @1818.6",
-            "InnerDimple @2635.4",
             "LipNotch 162.6..207.6",
             "LipNotch 979.4..1024.4",
             "LipNotch 1796.1..1841.1",
-            "Swage 2612.9..2651.9"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @190.5",
             "InnerDimple @1007.2",
             "InnerDimple @1824.0",
-            "InnerDimple @2640.7",
+            "Swage 0.0..61.4",
             "InnerNotch 168.0..213.0",
             "LipNotch 168.0..213.0",
             "LipNotch 984.7..1029.7",
@@ -1328,31 +1393,27 @@
           "name": "B3",
           "oursLength": 4018.163,
           "refLength": 4023.52726786569,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @257.6",
             "InnerDimple @734.7",
             "InnerDimple @1551.4",
             "InnerDimple @2368.2",
             "InnerDimple @3184.9",
-            "InnerDimple @4001.7",
             "LipNotch 235.1..280.1",
             "LipNotch 712.2..757.2",
             "LipNotch 1528.9..1573.9",
             "LipNotch 2345.7..2390.7",
             "LipNotch 3162.4..3207.4",
-            "Swage 3979.2..4018.2"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @262.9",
             "InnerDimple @740.0",
             "InnerDimple @1556.8",
             "InnerDimple @2373.5",
             "InnerDimple @3190.3",
-            "InnerDimple @4007.0",
+            "Swage 0.0..61.4",
             "InnerNotch 240.4..285.4",
             "LipNotch 240.4..285.4",
             "LipNotch 717.5..762.5",
@@ -1370,11 +1431,13 @@
           "name": "S1",
           "oursLength": 4175.6434,
           "refLength": 4184.16081269282,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @4159.1",
-            "Swage 4136.6..4175.6"
+            "Swage 56.0..101.0",
+            "Swage 4136.6..4175.6",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
@@ -1382,6 +1445,7 @@
             "InnerDimple @1139.1",
             "InnerDimple @2705.7",
             "InnerDimple @4105.7",
+            "Swage 0.0..63.2",
             "LipNotch 1116.6..1161.6",
             "LipNotch 2683.2..2728.2",
             "LipNotch 4083.2..4128.2"
@@ -1391,11 +1455,13 @@
           "name": "S2",
           "oursLength": 3338.7421,
           "refLength": 3347.25991582786,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @3322.2",
-            "Swage 3299.7..3338.7"
+            "Swage 56.0..101.0",
+            "Swage 3299.7..3338.7",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
@@ -1403,6 +1469,7 @@
             "InnerDimple @302.2",
             "InnerDimple @1868.8",
             "InnerDimple @3268.8",
+            "Swage 0.0..63.2",
             "Swage 279.7..324.7",
             "Swage 1846.3..1891.3",
             "Swage 3246.3..3291.3"
@@ -1412,80 +1479,64 @@
           "name": "S3",
           "oursLength": 2501.8409,
           "refLength": 2510.35901699296,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @2485.3",
-            "Swage 0.0..39.0",
             "Swage 2462.8..2501.8"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @1478.5",
             "InnerDimple @2500.4",
-            "Swage 56.0..101.0",
             "Swage 1456.0..1501.0",
-            "Swage 2447.1..2510.4",
-            "Chamfer @end"
+            "Swage 2447.1..2510.4"
           ]
         },
         {
           "name": "S4",
           "oursLength": 1664.9395,
           "refLength": 1673.45811915018,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @1648.4",
-            "Swage 0.0..39.0",
             "Swage 1625.9..1664.9"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @1478.5",
             "InnerDimple @1663.5",
-            "Swage 56.0..101.0",
             "Swage 1456.0..1501.0",
-            "Swage 1610.2..1673.5",
-            "Chamfer @end"
+            "Swage 1610.2..1673.5"
           ]
         },
         {
           "name": "S5",
           "oursLength": 828.0383,
           "refLength": 836.557159826127,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @811.5",
-            "Swage 0.0..39.0",
             "Swage 789.0..828.0"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @826.6",
-            "Swage 56.0..101.0",
-            "Swage 773.3..836.6",
-            "Chamfer @end"
+            "Swage 773.3..836.6"
           ]
         },
         {
           "name": "S6",
           "oursLength": 341.1687,
           "refLength": 349.689394427841,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @324.7",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 302.2..341.2"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @339.7",
             "Swage 58.0..103.0",
-            "Swage 286.5..349.7",
-            "Chamfer @end"
+            "Swage 286.5..349.7"
           ]
         }
       ]
@@ -1497,18 +1548,17 @@
           "name": "T1",
           "oursLength": 2885.1073,
           "refLength": 2894.10693846832,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "Chamfer @start",
+            "InnerDimple @10.0",
             "InnerDimple @329.7",
             "InnerDimple @668.8",
             "InnerDimple @1347.5",
-            "InnerDimple @2868.6",
-            "Swage 0.0..39.0",
+            "InnerDimple @2875.1",
             "LipNotch 307.2..352.2",
             "LipNotch 646.3..691.3",
-            "LipNotch 1325.0..1370.0",
-            "Swage 2846.1..2885.1"
+            "LipNotch 1325.0..1370.0"
           ],
           "missing": [
             "InnerDimple @92.8",
@@ -1522,33 +1572,28 @@
             "LipNotch 887.3..952.5",
             "LipNotch 1455.2..1518.9",
             "LipNotch 1859.1..1924.3",
-            "LipNotch 2830.9..2894.1",
-            "Chamfer @end"
+            "LipNotch 2830.9..2894.1"
           ]
         },
         {
           "name": "B1",
           "oursLength": 1970.663,
           "refLength": 1976.02610825689,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @257.6",
             "InnerDimple @596.7",
             "InnerDimple @1275.4",
-            "InnerDimple @1954.2",
             "LipNotch 235.1..280.1",
             "LipNotch 574.2..619.2",
             "LipNotch 1252.9..1297.9",
-            "Swage 1931.7..1970.7"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @262.9",
             "InnerDimple @602.0",
             "InnerDimple @1280.8",
-            "InnerDimple @1959.5",
+            "Swage 0.0..61.4",
             "InnerNotch 240.4..285.4",
             "LipNotch 240.4..285.4",
             "LipNotch 579.5..624.5",
@@ -1562,20 +1607,16 @@
           "name": "N1",
           "oursLength": 1010.815,
           "refLength": 1015.97023382419,
-          "matchedCount": 1,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @315.6",
-            "InnerDimple @994.3",
             "InnerNotch 293.1..338.1",
             "LipNotch 293.1..338.1",
-            "Swage 971.8..1010.8"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @320.7",
-            "InnerDimple @999.5",
+            "Swage 0.0..61.4",
             "LipNotch 298.2..343.2",
             "InnerNotch 298.2..343.2",
             "Swage 977.0..1016.0"
@@ -1585,84 +1626,70 @@
           "name": "S1",
           "oursLength": 2077.6171,
           "refLength": 2086.13302708817,
-          "matchedCount": 0,
+          "matchedCount": 2,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @1060.2",
             "InnerDimple @2061.1",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 1037.7..1082.7",
             "Swage 2038.6..2077.6"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @1062.2",
             "InnerDimple @2076.1",
             "LipNotch 56.0..101.0",
             "LipNotch 1039.7..1084.7",
-            "Swage 2022.9..2086.1",
-            "Chamfer @end"
+            "Swage 2022.9..2086.1"
           ]
         },
         {
           "name": "S2",
           "oursLength": 1382.1235,
           "refLength": 1390.64037608422,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @1060.2",
             "InnerDimple @1365.6",
-            "Swage 0.0..39.0",
             "Swage 1037.7..1082.7",
             "Swage 1343.1..1382.1"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @1062.2",
             "InnerDimple @1380.6",
-            "Swage 56.0..101.0",
             "Swage 1039.7..1084.7",
-            "Swage 1327.4..1390.6",
-            "Chamfer @end"
+            "Swage 1327.4..1390.6"
           ]
         },
         {
           "name": "S3",
           "oursLength": 686.6298,
           "refLength": 695.147793472541,
-          "matchedCount": 0,
+          "matchedCount": 3,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @670.1",
-            "Swage 0.0..39.0",
             "Swage 647.6..686.6"
           ],
           "missing": [
-            "InnerDimple @78.5",
             "InnerDimple @685.1",
-            "Swage 56.0..101.0",
-            "Swage 631.9..695.1",
-            "Chamfer @end"
+            "Swage 631.9..695.1"
           ]
         },
         {
           "name": "S4",
           "oursLength": 341.1697,
           "refLength": 349.689910090878,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @324.7",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 302.2..341.2"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @339.7",
             "Swage 58.0..103.0",
-            "Swage 286.5..349.7",
-            "Chamfer @end"
+            "Swage 286.5..349.7"
           ]
         }
       ]
@@ -1674,20 +1701,16 @@
           "name": "T1",
           "oursLength": 2421.9291,
           "refLength": 2430.93077157702,
-          "matchedCount": 0,
+          "matchedCount": 2,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @874.5",
             "InnerDimple @1391.2",
-            "InnerDimple @2405.4",
-            "Swage 0.0..39.0",
+            "InnerDimple @2411.9",
             "LipNotch 852.0..897.0",
             "LipNotch 1368.7..1413.7",
-            "Swage 2382.9..2421.9"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @1236.1",
             "InnerDimple @1975.9",
             "InnerDimple @2338.1",
@@ -1701,33 +1724,38 @@
           "name": "B1",
           "oursLength": 1647.162,
           "refLength": 1652.52623954325,
-          "matchedCount": 6,
+          "matchedCount": 5,
           "extras": [
-            "InnerDimple @1630.7",
-            "Swage 1608.2..1647.2"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1637.2"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @1642.5",
+            "Swage 0.0..39.0",
             "InnerNotch 850.4..895.4",
             "InnerNotch 1367.1..1412.1",
-            "Swage 1591.1..1652.5",
-            "Chamfer @end"
+            "Swage 1591.1..1652.5"
           ]
         },
         {
           "name": "S1",
           "oursLength": 1748.133,
           "refLength": 1756.65102664113,
-          "matchedCount": 1,
+          "matchedCount": 0,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1731.6",
-            "Swage 1709.1..1748.1"
+            "Swage 56.0..101.0",
+            "Swage 1709.1..1748.1",
+            "Chamfer @end"
           ],
           "missing": [
             "Chamfer @start",
             "InnerDimple @10.0",
             "InnerDimple @1676.2",
+            "Swage 0.0..63.2",
             "LipNotch 1653.7..1698.7"
           ]
         },
@@ -1735,38 +1763,36 @@
           "name": "S2",
           "oursLength": 870.6341,
           "refLength": 879.155765170409,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @854.1",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 831.6..870.6"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @869.2",
             "Swage 58.0..103.0",
-            "Swage 815.9..879.2",
-            "Chamfer @end"
+            "Swage 815.9..879.2"
           ]
         },
         {
           "name": "S3",
           "oursLength": 343.1688,
           "refLength": 351.689588469498,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @326.7",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 304.2..343.2"
           ],
           "missing": [
             "InnerDimple @82.5",
             "InnerDimple @341.7",
             "Swage 60.0..105.0",
-            "Swage 288.5..351.7",
-            "Chamfer @end"
+            "Swage 288.5..351.7"
           ]
         }
       ]
@@ -1778,20 +1804,16 @@
           "name": "T1",
           "oursLength": 2278.7523,
           "refLength": 2287.75383305469,
-          "matchedCount": 0,
+          "matchedCount": 2,
           "extras": [
-            "InnerDimple @16.5",
             "InnerDimple @824.5",
             "InnerDimple @1291.2",
-            "InnerDimple @2262.3",
-            "Swage 0.0..39.0",
+            "InnerDimple @2268.8",
             "LipNotch 802.0..847.0",
             "LipNotch 1268.7..1313.7",
-            "Swage 2239.8..2278.8"
+            "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start",
-            "InnerDimple @10.0",
             "InnerDimple @1164.5",
             "InnerDimple @1832.8",
             "InnerDimple @2194.9",
@@ -1805,74 +1827,73 @@
           "name": "B1",
           "oursLength": 1547.162,
           "refLength": 1552.52623871317,
-          "matchedCount": 6,
+          "matchedCount": 5,
           "extras": [
-            "InnerDimple @1530.7",
-            "Swage 1508.2..1547.2"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @1537.2"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @1542.5",
+            "Swage 0.0..39.0",
             "InnerNotch 800.4..845.4",
             "InnerNotch 1267.1..1312.1",
-            "Swage 1491.1..1552.5",
-            "Chamfer @end"
+            "Swage 1491.1..1552.5"
           ]
         },
         {
           "name": "S1",
           "oursLength": 1645.6642,
           "refLength": 1654.18329678503,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @1629.2",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 1606.7..1645.7"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @1644.2",
             "LipNotch 58.0..103.0",
-            "Swage 1591.0..1654.2",
-            "Chamfer @end"
+            "Swage 1591.0..1654.2"
           ]
         },
         {
           "name": "S2",
           "oursLength": 819.4001,
           "refLength": 827.917950102906,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @802.9",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 780.4..819.4"
           ],
           "missing": [
             "InnerDimple @80.5",
             "InnerDimple @817.9",
             "Swage 58.0..103.0",
-            "Swage 764.7..827.9",
-            "Chamfer @end"
+            "Swage 764.7..827.9"
           ]
         },
         {
           "name": "S3",
           "oursLength": 343.1688,
           "refLength": 351.689570517229,
-          "matchedCount": 0,
+          "matchedCount": 1,
           "extras": [
-            "InnerDimple @16.5",
+            "InnerDimple @78.5",
             "InnerDimple @326.7",
-            "Swage 0.0..39.0",
+            "Swage 56.0..101.0",
             "Swage 304.2..343.2"
           ],
           "missing": [
             "InnerDimple @82.5",
             "InnerDimple @341.7",
             "Swage 60.0..105.0",
-            "Swage 288.5..351.7",
-            "Chamfer @end"
+            "Swage 288.5..351.7"
           ]
         }
       ]

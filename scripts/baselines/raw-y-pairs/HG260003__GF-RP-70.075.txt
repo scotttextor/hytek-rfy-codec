@@ -3,342 +3,351 @@ OP-LEVEL DIFF — HG260003 69 GUROMAN DRIVE GREENBANK-GF-RP-70.075.xml vs HG2600
 Setup:    F325iT 70mm
 Frames:   our 21 | ref 21
 
-OPS:      our 1085 | ref 1383
-MATCHED:  263  (19.0% of ref)
-MISSING:  1120  (ops Detailer has, we don't)
-EXTRAS:   822   (ops we have, Detailer doesn't)
+OPS:      our 1171 | ref 1383
+MATCHED:  341  (24.7% of ref)
+MISSING:  1042  (ops Detailer has, we don't)
+EXTRAS:   830   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           102       482      424   (17% ref-coverage)
-Swage@span               106       184      262   (37% ref-coverage)
-LipNotch@span             41       241      117   (15% ref-coverage)
-Chamfer@end                0        91        0   (0% ref-coverage)
+InnerDimple@pt           138       446      388   (24% ref-coverage)
+Swage@span                37       253      185   (13% ref-coverage)
+LipNotch@span             38       244      104   (13% ref-coverage)
+Chamfer@start             28        36       53   (44% ref-coverage)
+Chamfer@end               86         5       81   (95% ref-coverage)
 InnerNotch@span           14        58       19   (19% ref-coverage)
-Chamfer@start              0        64        0   (0% ref-coverage)
 
 FRAMES WITH GAPS:
 
   R1 (6 sticks with gaps)
-    T1       MISSING (9): InnerDimple @76.4 | InnerDimple @913.0 | InnerDimple @1714.8 | InnerDimple @1756.5 | LipNotch 59.8..108.3 ... +4
-    T1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1741.0 | Swage 0.0..39.0 | Swage 1718.5..1757.5
-    T2       MISSING (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @58.9
-    T2       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @44.1 | InnerNotch 0.0..39.0 | InnerNotch 21.6..60.6 | LipNotch 21.6..60.6
-    T3       MISSING (5): InnerDimple @10.0 | InnerDimple @891.8 | InnerDimple @1728.2 | LipNotch 859.8..908.3 | LipNotch 1696.3..1744.8
-    T3       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @1780.8 | Swage 1758.3..1797.3
-    B1       MISSING (4): InnerDimple @10.0 | InnerDimple @1258.7 | InnerNotch 574.0..619.0 | Swage 1226.8..1268.7
-    B1       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @1252.4 | Swage 1229.9..1268.9
-    N1       MISSING (3): InnerDimple @10.0 | InnerDimple @660.3 | Swage 628.3..670.3
-    N1       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @655.7 | Swage 633.2..672.2
-    S1       MISSING (7): InnerDimple @78.5 | InnerDimple @859.7 | InnerDimple @1608.4 | Swage 56.0..101.0 | Swage 837.2..882.2 ... +2
-    S1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @857.7 | InnerDimple @1586.1 | Swage 0.0..39.0 | Swage 835.2..880.2 ... +1
+    T1       MISSING (8): InnerDimple @76.4 | InnerDimple @913.0 | InnerDimple @1714.8 | InnerDimple @1756.5 | LipNotch 59.8..108.3 ... +3
+    T1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @1747.5
+    T2       MISSING (2): InnerDimple @58.9 | LipNotch 0.0..68.9
+    T2       EXTRAS  (4): InnerDimple @50.6 | InnerNotch 0.0..39.0 | InnerNotch 21.6..60.6 | Chamfer @end
+    T3       MISSING (5): InnerDimple @891.8 | InnerDimple @1728.2 | Swage 0.0..45.2 | LipNotch 859.8..908.3 | LipNotch 1696.3..1744.8
+    T3       EXTRAS  (3): Chamfer @start | InnerDimple @1787.3 | Chamfer @end
+    B1       MISSING (3): Swage 0.0..42.0 | InnerNotch 574.0..619.0 | Swage 1226.8..1268.7
+    B1       EXTRAS  (2): Chamfer @start | Chamfer @end
+    N1       MISSING (3): InnerDimple @660.3 | Swage 0.0..42.0 | Swage 628.3..670.3
+    N1       EXTRAS  (3): Chamfer @start | InnerDimple @662.2 | Chamfer @end
+    S1       MISSING (4): InnerDimple @859.7 | InnerDimple @1608.4 | Swage 837.2..882.2 | Swage 1492.1..1618.4
+    S1       EXTRAS  (4): InnerDimple @857.7 | InnerDimple @1586.1 | Swage 835.2..880.2 | Swage 1563.6..1602.6
 
   R2 (5 sticks with gaps)
-    T1       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @1036.3 | InnerDimple @2062.6 | InnerDimple @2425.9 ... +4
-    T1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @714.9 | InnerDimple @1411.4 | InnerDimple @2491.1 | Swage 0.0..39.0 ... +3
-    B1       MISSING (5): InnerDimple @1655.9 | InnerNotch 690.4..735.4 | InnerNotch 1386.9..1431.9 | Swage 1606.4..1665.9 | Chamfer @end
-    B1       EXTRAS  (2): InnerDimple @1644.4 | Swage 1621.9..1660.9
-    S1       MISSING (5): InnerDimple @78.5 | InnerDimple @1853.0 | LipNotch 56.0..101.0 | Swage 1797.7..1863.0 | Chamfer @end
-    S1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1837.6 | Swage 0.0..39.0 | Swage 1815.1..1854.1
-    S2       MISSING (5): InnerDimple @78.5 | InnerDimple @1099.2 | Swage 56.0..101.0 | Swage 1043.8..1109.2 | Chamfer @end
-    S2       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1083.7 | Swage 0.0..39.0 | Swage 1061.2..1100.2
-    S3       MISSING (5): InnerDimple @78.5 | InnerDimple @345.3 | Swage 56.0..101.0 | Swage 290.0..355.3 | Chamfer @end
-    S3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @329.9 | Swage 0.0..39.0 | Swage 307.4..346.4
+    T1       MISSING (7): InnerDimple @1036.3 | InnerDimple @2062.6 | InnerDimple @2425.9 | LipNotch 0.0..65.3 | LipNotch 1024.5..1091.7 ... +2
+    T1       EXTRAS  (6): InnerDimple @714.9 | InnerDimple @1411.4 | InnerDimple @2497.6 | LipNotch 692.4..737.4 | LipNotch 1388.9..1433.9 ... +1
+    B1       MISSING (6): InnerDimple @16.5 | InnerDimple @1655.9 | Swage 0.0..39.0 | InnerNotch 690.4..735.4 | InnerNotch 1386.9..1431.9 ... +1
+    B1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @1650.9
+    S1       MISSING (3): InnerDimple @1853.0 | LipNotch 56.0..101.0 | Swage 1797.7..1863.0
+    S1       EXTRAS  (3): InnerDimple @1837.6 | Swage 56.0..101.0 | Swage 1815.1..1854.1
+    S2       MISSING (2): InnerDimple @1099.2 | Swage 1043.8..1109.2
+    S2       EXTRAS  (2): InnerDimple @1083.7 | Swage 1061.2..1100.2
+    S3       MISSING (2): InnerDimple @345.3 | Swage 290.0..355.3
+    S3       EXTRAS  (2): InnerDimple @329.9 | Swage 307.4..346.4
 
   R3 (7 sticks with gaps)
-    T1       MISSING (13): InnerDimple @90.7 | InnerDimple @454.0 | InnerDimple @1101.0 | InnerDimple @1507.5 | InnerDimple @2231.9 ... +8
-    T1       EXTRAS  (10): InnerDimple @16.5 | InnerDimple @320.4 | InnerDimple @759.5 | InnerDimple @1526.9 | InnerDimple @3347.3 ... +5
-    B1       MISSING (13): Chamfer @start | InnerDimple @10.0 | InnerDimple @256.5 | InnerDimple @695.6 | InnerDimple @1463.0 ... +8
-    B1       EXTRAS  (9): InnerDimple @16.5 | InnerDimple @251.5 | InnerDimple @690.6 | InnerDimple @1458.0 | InnerDimple @2225.4 ... +4
-    N1       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @501.6 | InnerDimple @1269.0 | InnerNotch 479.1..524.1 ... +2
-    N1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @499.6 | InnerDimple @1267.0 | InnerNotch 477.1..522.1 | LipNotch 477.1..522.1 ... +1
-    S1       MISSING (7): InnerDimple @78.5 | InnerDimple @1119.2 | InnerDimple @2481.9 | LipNotch 56.0..101.0 | LipNotch 1096.7..1141.7 ... +2
-    S1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @1117.2 | InnerDimple @2466.5 | Swage 0.0..39.0 | Swage 1094.7..1139.7 ... +1
-    S2       MISSING (7): InnerDimple @78.5 | InnerDimple @1119.2 | InnerDimple @1651.3 | Swage 56.0..101.0 | Swage 1096.7..1141.7 ... +2
-    S2       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @1117.2 | InnerDimple @1635.8 | Swage 0.0..39.0 | Swage 1094.7..1139.7 ... +1
-    S3       MISSING (5): InnerDimple @78.5 | InnerDimple @820.6 | Swage 56.0..101.0 | Swage 765.3..830.6 | Chamfer @end
-    S3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @805.2 | Swage 0.0..39.0 | Swage 782.7..821.7
-    S4       MISSING (5): InnerDimple @78.5 | InnerDimple @345.3 | Swage 56.0..101.0 | Swage 290.0..355.3 | Chamfer @end
-    S4       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @329.9 | Swage 0.0..39.0 | Swage 307.4..346.4
+    T1       MISSING (12): InnerDimple @90.7 | InnerDimple @454.0 | InnerDimple @1101.0 | InnerDimple @1507.5 | InnerDimple @2231.9 ... +7
+    T1       EXTRAS  (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @320.4 | InnerDimple @759.5 | InnerDimple @1526.9 ... +4
+    B1       MISSING (11): InnerDimple @256.5 | InnerDimple @695.6 | InnerDimple @1463.0 | Swage 0.0..59.6 | LipNotch 234.0..279.0 ... +6
+    B1       EXTRAS  (7): InnerDimple @251.5 | InnerDimple @690.6 | InnerDimple @1458.0 | LipNotch 229.0..274.0 | LipNotch 668.1..713.1 ... +2
+    N1       MISSING (6): InnerDimple @501.6 | InnerDimple @1269.0 | Swage 0.0..59.6 | InnerNotch 479.1..524.1 | LipNotch 479.1..524.1 ... +1
+    N1       EXTRAS  (5): InnerDimple @499.6 | InnerDimple @1273.5 | InnerNotch 477.1..522.1 | LipNotch 477.1..522.1 | Chamfer @end
+    S1       MISSING (5): InnerDimple @1119.2 | InnerDimple @2481.9 | LipNotch 56.0..101.0 | LipNotch 1096.7..1141.7 | Swage 2426.5..2491.9
+    S1       EXTRAS  (5): InnerDimple @1117.2 | InnerDimple @2466.5 | Swage 56.0..101.0 | Swage 1094.7..1139.7 | Swage 2444.0..2483.0
+    S2       MISSING (4): InnerDimple @1119.2 | InnerDimple @1651.3 | Swage 1096.7..1141.7 | Swage 1595.9..1661.3
+    S2       EXTRAS  (4): InnerDimple @1117.2 | InnerDimple @1635.8 | Swage 1094.7..1139.7 | Swage 1613.3..1652.3
+    S3       MISSING (2): InnerDimple @820.6 | Swage 765.3..830.6
+    S3       EXTRAS  (2): InnerDimple @805.2 | Swage 782.7..821.7
+    S4       MISSING (2): InnerDimple @345.3 | Swage 290.0..355.3
+    S4       EXTRAS  (2): InnerDimple @329.9 | Swage 307.4..346.4
 
   R4 (5 sticks with gaps)
     T1       MISSING (6): InnerDimple @76.3 | InnerDimple @912.8 | InnerDimple @1813.5 | LipNotch 59.8..108.3 | LipNotch 896.3..944.7 ... +1
-    T1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1951.1 | Swage 0.0..39.0 | Swage 1928.6..1967.6
-    T2       MISSING (3): InnerDimple @10.0 | InnerDimple @181.4 | Swage 158.9..197.9
-    T2       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @179.5 | InnerNotch 0.0..39.0 | InnerNotch 157.0..196.0 | Swage 157.0..196.0
-    B1       MISSING (1): InnerDimple @10.0
-    B1       EXTRAS  (1): InnerDimple @16.5
-    N1       MISSING (1): InnerDimple @10.0
-    N1       EXTRAS  (1): InnerDimple @16.5
-    S1       MISSING (6): InnerDimple @78.5 | InnerDimple @859.7 | InnerDimple @1700.9 | LipNotch 56.0..101.0 | LipNotch 837.2..882.2 ... +1
-    S1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @857.7 | InnerDimple @1848.9 | Swage 0.0..39.0 | Swage 835.2..880.2 ... +1
+    T1       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @1957.6 | Chamfer @end
+    T2       MISSING (3): InnerDimple @181.4 | Swage 0.0..41.9 | Swage 158.9..197.9
+    T2       EXTRAS  (5): Chamfer @start | InnerDimple @186.0 | InnerNotch 0.0..39.0 | InnerNotch 157.0..196.0 | Chamfer @end
+    B1       MISSING (3): InnerDimple @802.3 | Swage 0.0..41.9 | Swage 779.8..818.8
+    B1       EXTRAS  (3): Chamfer @start | InnerDimple @808.9 | Chamfer @end
+    N1       MISSING (3): InnerDimple @503.3 | Swage 0.0..41.9 | Swage 480.8..519.8
+    N1       EXTRAS  (3): Chamfer @start | InnerDimple @510.8 | Chamfer @end
+    S1       MISSING (5): InnerDimple @859.7 | InnerDimple @1700.9 | LipNotch 56.0..101.0 | LipNotch 837.2..882.2 | LipNotch 1678.4..1723.4
+    S1       EXTRAS  (6): InnerDimple @857.7 | InnerDimple @1848.9 | Swage 56.0..101.0 | Swage 835.2..880.2 | Swage 1826.4..1865.4 ... +1
 
   R5 (4 sticks with gaps)
-    T1       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @780.2 | InnerDimple @1583.1 | LipNotch 0.0..126.7 ... +2
-    T1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1634.0 | Swage 0.0..39.0 | Swage 1611.5..1650.5
-    B1       MISSING (2): InnerDimple @577.9 | Swage 546.0..587.9
-    B1       EXTRAS  (2): InnerDimple @571.5 | Swage 549.0..588.0
-    N1       MISSING (2): InnerDimple @291.4 | Swage 259.4..301.4
-    N1       EXTRAS  (2): InnerDimple @285.8 | Swage 263.3..302.3
-    S1       MISSING (7): InnerDimple @78.5 | InnerDimple @828.6 | InnerDimple @1548.1 | LipNotch 56.0..101.0 | LipNotch 806.1..851.1 ... +2
-    S1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @826.6 | InnerDimple @1525.7 | Swage 0.0..39.0 | Swage 804.1..849.1 ... +1
+    T1       MISSING (5): InnerDimple @780.2 | InnerDimple @1583.1 | LipNotch 0.0..126.7 | LipNotch 748.3..796.7 | LipNotch 1551.2..1599.7
+    T1       EXTRAS  (2): InnerDimple @1640.5 | Chamfer @end
+    B1       MISSING (3): InnerDimple @16.5 | Swage 0.0..39.0 | Swage 546.0..587.9
+    B1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | Chamfer @end
+    N1       MISSING (3): InnerDimple @16.5 | Swage 0.0..39.0 | Swage 259.4..301.4
+    N1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | Chamfer @end
+    S1       MISSING (5): InnerDimple @828.6 | InnerDimple @1548.1 | LipNotch 56.0..101.0 | LipNotch 806.1..851.1 | LipNotch 1431.4..1558.1
+    S1       EXTRAS  (5): InnerDimple @826.6 | InnerDimple @1525.7 | Swage 56.0..101.0 | Swage 804.1..849.1 | Swage 1503.2..1542.2
 
   R6 (7 sticks with gaps)
-    T1       MISSING (13): Chamfer @start | InnerDimple @10.0 | InnerDimple @1140.9 | InnerDimple @1865.3 | InnerDimple @2271.7 ... +8
-    T1       EXTRAS  (10): InnerDimple @16.5 | InnerDimple @785.9 | InnerDimple @1553.3 | InnerDimple @1992.4 | InnerDimple @3347.3 ... +5
-    B1       MISSING (6): InnerDimple @2236.9 | InnerNotch 761.4..806.4 | InnerNotch 1528.8..1573.8 | InnerNotch 1967.9..2012.9 | Swage 2187.4..2246.9 ... +1
-    B1       EXTRAS  (2): InnerDimple @2225.4 | Swage 2202.9..2241.9
-    N1       MISSING (3): InnerDimple @1275.5 | Swage 1225.9..1285.5 | Chamfer @end
-    N1       EXTRAS  (2): InnerDimple @1267.0 | Swage 1244.5..1283.5
-    S1       MISSING (7): InnerDimple @78.5 | InnerDimple @1119.2 | InnerDimple @2481.9 | LipNotch 56.0..101.0 | LipNotch 1096.7..1141.7 ... +2
-    S1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @1117.2 | InnerDimple @2466.5 | Swage 0.0..39.0 | Swage 1094.7..1139.7 ... +1
-    S2       MISSING (7): InnerDimple @78.5 | InnerDimple @1119.2 | InnerDimple @1651.3 | Swage 56.0..101.0 | Swage 1096.7..1141.7 ... +2
-    S2       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @1117.2 | InnerDimple @1635.8 | Swage 0.0..39.0 | Swage 1094.7..1139.7 ... +1
-    S3       MISSING (5): InnerDimple @78.5 | InnerDimple @820.6 | Swage 56.0..101.0 | Swage 765.3..830.6 | Chamfer @end
-    S3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @805.2 | Swage 0.0..39.0 | Swage 782.7..821.7
-    S4       MISSING (5): InnerDimple @78.5 | InnerDimple @345.3 | Swage 56.0..101.0 | Swage 290.0..355.3 | Chamfer @end
-    S4       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @329.9 | Swage 0.0..39.0 | Swage 307.4..346.4
+    T1       MISSING (11): InnerDimple @1140.9 | InnerDimple @1865.3 | InnerDimple @2271.7 | InnerDimple @2918.8 | InnerDimple @3282.1 ... +6
+    T1       EXTRAS  (8): InnerDimple @785.9 | InnerDimple @1553.3 | InnerDimple @1992.4 | InnerDimple @3353.8 | LipNotch 763.4..808.4 ... +3
+    B1       MISSING (7): InnerDimple @16.5 | InnerDimple @2236.9 | Swage 0.0..39.0 | InnerNotch 761.4..806.4 | InnerNotch 1528.8..1573.8 ... +2
+    B1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @2231.9
+    N1       MISSING (4): InnerDimple @16.5 | InnerDimple @1275.5 | Swage 0.0..39.0 | Swage 1225.9..1285.5
+    N1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @1273.5
+    S1       MISSING (5): InnerDimple @1119.2 | InnerDimple @2481.9 | LipNotch 56.0..101.0 | LipNotch 1096.7..1141.7 | Swage 2426.5..2491.9
+    S1       EXTRAS  (5): InnerDimple @1117.2 | InnerDimple @2466.5 | Swage 56.0..101.0 | Swage 1094.7..1139.7 | Swage 2444.0..2483.0
+    S2       MISSING (4): InnerDimple @1119.2 | InnerDimple @1651.3 | Swage 1096.7..1141.7 | Swage 1595.9..1661.3
+    S2       EXTRAS  (4): InnerDimple @1117.2 | InnerDimple @1635.8 | Swage 1094.7..1139.7 | Swage 1613.3..1652.3
+    S3       MISSING (2): InnerDimple @820.6 | Swage 765.3..830.6
+    S3       EXTRAS  (2): InnerDimple @805.2 | Swage 782.7..821.7
+    S4       MISSING (2): InnerDimple @345.3 | Swage 290.0..355.3
+    S4       EXTRAS  (2): InnerDimple @329.9 | Swage 307.4..346.4
 
   R7 (5 sticks with gaps)
-    T1       MISSING (9): InnerDimple @90.7 | InnerDimple @499.9 | InnerDimple @1503.2 | InnerDimple @2506.6 | LipNotch 78.3..140.3 ... +4
-    T1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @351.6 | InnerDimple @1032.4 | InnerDimple @2491.1 | Swage 0.0..39.0 ... +3
-    B1       MISSING (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @287.7 | InnerDimple @968.6 | InnerDimple @1649.4 ... +5
-    B1       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @282.6 | InnerDimple @963.5 | InnerDimple @1644.4 | LipNotch 260.1..305.1 ... +2
-    S1       MISSING (5): InnerDimple @78.5 | InnerDimple @1853.0 | LipNotch 56.0..101.0 | Swage 1797.7..1863.0 | Chamfer @end
-    S1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1837.6 | Swage 0.0..39.0 | Swage 1815.1..1854.1
-    S2       MISSING (5): InnerDimple @78.5 | InnerDimple @1116.0 | Swage 56.0..101.0 | Swage 1060.7..1126.0 | Chamfer @end
-    S2       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1100.6 | Swage 0.0..39.0 | Swage 1078.1..1117.1
-    S3       MISSING (5): InnerDimple @78.5 | InnerDimple @379.1 | Swage 56.0..101.0 | Swage 323.7..389.1 | Chamfer @end
-    S3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @363.6 | Swage 0.0..39.0 | Swage 341.1..380.1
+    T1       MISSING (8): InnerDimple @90.7 | InnerDimple @499.9 | InnerDimple @1503.2 | InnerDimple @2506.6 | LipNotch 78.3..140.3 ... +3
+    T1       EXTRAS  (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @351.6 | InnerDimple @1032.4 | InnerDimple @2497.6 ... +2
+    B1       MISSING (8): InnerDimple @287.7 | InnerDimple @968.6 | Swage 0.0..59.6 | InnerNotch 265.2..310.2 | LipNotch 265.2..310.2 ... +3
+    B1       EXTRAS  (5): InnerDimple @282.6 | InnerDimple @963.5 | LipNotch 260.1..305.1 | LipNotch 941.0..986.0 | Chamfer @end
+    S1       MISSING (3): InnerDimple @1853.0 | LipNotch 56.0..101.0 | Swage 1797.7..1863.0
+    S1       EXTRAS  (3): InnerDimple @1837.6 | Swage 56.0..101.0 | Swage 1815.1..1854.1
+    S2       MISSING (2): InnerDimple @1116.0 | Swage 1060.7..1126.0
+    S2       EXTRAS  (2): InnerDimple @1100.6 | Swage 1078.1..1117.1
+    S3       MISSING (2): InnerDimple @379.1 | Swage 323.7..389.1
+    S3       EXTRAS  (2): InnerDimple @363.6 | Swage 341.1..380.1
 
   R8 (12 sticks with gaps)
-    T1       MISSING (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @527.4 | LipNotch 0.0..59.6 | LipNotch 515.0..537.4 ... +1
-    T1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @510.9 | Swage 0.0..39.0 | Swage 488.4..527.4
-    T2       MISSING (20): Chamfer @start | InnerDimple @10.0 | InnerDimple @410.9 | InnerDimple @1613.0 | InnerDimple @2815.2 ... +15
-    T2       EXTRAS  (17): InnerDimple @16.5 | InnerDimple @290.5 | InnerDimple @1106.3 | InnerDimple @1922.0 | InnerDimple @2737.8 ... +12
-    B1       MISSING (18): Chamfer @start | InnerDimple @10.0 | InnerDimple @1173.3 | InnerDimple @2375.5 | InnerDimple @3577.6 ... +13
-    B1       EXTRAS  (15): InnerDimple @16.5 | InnerDimple @807.9 | InnerDimple @1623.7 | InnerDimple @2439.4 | InnerDimple @3255.2 ... +10
-    B2       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @280.9 | InnerDimple @527.4 | Swage 258.4..303.4 ... +2
-    B2       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @275.8 | InnerDimple @510.8 | LipNotch 253.3..298.3 | Swage 488.3..527.3
-    N1       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @527.4 | Swage 477.8..537.4 | Chamfer @end
-    N1       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @516.8 | Swage 494.3..533.3
-    S1       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 514.7..580.0 | Chamfer @end
-    S1       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @549.7 | Swage 527.2..566.2
-    S2       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 514.7..580.0 | Chamfer @end
-    S2       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @549.7 | Swage 527.2..566.2
-    S3       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 514.7..580.0 | Chamfer @end
-    S3       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @549.7 | Swage 527.2..566.2
-    S4       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 514.7..580.0 | Chamfer @end
-    S4       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @549.7 | Swage 527.2..566.2
-    S5       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 514.7..580.0 | Chamfer @end
-    S5       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @549.7 | Swage 527.2..566.2
+    T1       MISSING (3): InnerDimple @527.4 | LipNotch 0.0..59.6 | LipNotch 515.0..537.4
+    T1       EXTRAS  (1): InnerDimple @517.4
+    T2       MISSING (19): InnerDimple @410.9 | InnerDimple @1613.0 | InnerDimple @2815.2 | InnerDimple @3916.9 | InnerDimple @4017.3 ... +14
+    T2       EXTRAS  (16): InnerDimple @290.5 | InnerDimple @1106.3 | InnerDimple @1922.0 | InnerDimple @2737.8 | InnerDimple @3553.6 ... +11
+    B1       MISSING (17): InnerDimple @1173.3 | InnerDimple @2375.5 | InnerDimple @3577.6 | InnerDimple @3916.9 | InnerDimple @4779.8 ... +12
+    B1       EXTRAS  (14): InnerDimple @807.9 | InnerDimple @1623.7 | InnerDimple @2439.4 | InnerDimple @3255.2 | InnerDimple @4071.0 ... +9
+    B2       MISSING (5): InnerDimple @280.9 | InnerDimple @527.4 | Swage 0.0..59.6 | Swage 258.4..303.4 | Swage 477.8..537.4
+    B2       EXTRAS  (3): InnerDimple @275.8 | InnerDimple @517.3 | LipNotch 253.3..298.3
+    N1       MISSING (3): InnerDimple @527.4 | Swage 0.0..59.6 | Swage 477.8..537.4
+    N1       EXTRAS  (1): InnerDimple @523.3
+    S1       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 0.0..65.3 | Swage 514.7..580.0
+    S1       EXTRAS  (4): InnerDimple @78.5 | InnerDimple @549.7 | Swage 56.0..101.0 | Swage 527.2..566.2
+    S2       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 0.0..65.3 | Swage 514.7..580.0
+    S2       EXTRAS  (4): InnerDimple @78.5 | InnerDimple @549.7 | Swage 56.0..101.0 | Swage 527.2..566.2
+    S3       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 0.0..65.3 | Swage 514.7..580.0
+    S3       EXTRAS  (4): InnerDimple @78.5 | InnerDimple @549.7 | Swage 56.0..101.0 | Swage 527.2..566.2
+    S4       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 0.0..65.3 | Swage 514.7..580.0
+    S4       EXTRAS  (4): InnerDimple @78.5 | InnerDimple @549.7 | Swage 56.0..101.0 | Swage 527.2..566.2
+    S5       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @570.0 | Swage 0.0..65.3 | Swage 514.7..580.0
+    S5       EXTRAS  (4): InnerDimple @78.5 | InnerDimple @549.7 | Swage 56.0..101.0 | Swage 527.2..566.2
 
   R9 (7 sticks with gaps)
-    T1       MISSING (11): InnerDimple @14.9 | InnerDimple @314.8 | InnerDimple @920.4 | InnerDimple @1836.8 | InnerDimple @2081.9 ... +6
-    T1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @638.3 | InnerDimple @1260.2 | InnerDimple @2068.4 | Swage 0.0..39.0 ... +3
-    T2       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @465.5 | LipNotch 0.0..22.4 | LipNotch 443.0..482.0
-    T2       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @460.5 | Swage 0.0..39.0 | Swage 438.0..477.0
-    B1       MISSING (8): InnerDimple @14.9 | InnerDimple @920.4 | InnerDimple @1836.8 | InnerDimple @2753.2 | LipNotch 865.1..932.2 ... +3
-    B1       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @638.3 | InnerDimple @1260.2 | InnerDimple @2739.7 | LipNotch 615.8..660.8 ... +2
-    N1       MISSING (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @421.0 | InnerDimple @1042.9 | InnerDimple @1664.7 ... +5
-    N1       EXTRAS  (9): InnerDimple @16.5 | InnerDimple @419.0 | InnerDimple @1040.8 | InnerDimple @1662.7 | InnerNotch 396.5..441.5 ... +4
-    S1       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @1568.4 | InnerDimple @2686.4 | Swage 1545.9..1590.9 ... +2
-    S1       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @1561.5 | InnerDimple @2666.0 | Swage 1539.0..1584.0 | Swage 2643.5..2682.5
-    S2       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @895.3 | InnerDimple @1340.2 | Swage 872.8..917.8 ... +2
-    S2       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @888.4 | InnerDimple @1319.8 | Swage 865.9..910.9 | Swage 1297.3..1336.3
-    S3       MISSING (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @2241.6 | InnerDimple @3539.5 | LipNotch 2219.1..2264.1 ... +1
-    S3       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @2234.6 | InnerDimple @3532.6 | Swage 2212.1..2257.1 | Swage 3510.1..3549.1
+    T1       MISSING (10): InnerDimple @14.9 | InnerDimple @314.8 | InnerDimple @920.4 | InnerDimple @1836.8 | InnerDimple @2081.9 ... +5
+    T1       EXTRAS  (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @638.3 | InnerDimple @1260.2 | InnerDimple @2074.9 ... +2
+    T2       MISSING (2): LipNotch 0.0..22.4 | LipNotch 443.0..482.0
+    T2       EXTRAS  (1): Chamfer @end
+    B1       MISSING (8): InnerDimple @14.9 | InnerDimple @920.4 | InnerDimple @1836.8 | InnerDimple @2753.2 | Swage 0.0..35.9 ... +3
+    B1       EXTRAS  (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @638.3 | InnerDimple @1260.2 | InnerDimple @2746.2 ... +2
+    N1       MISSING (9): InnerDimple @421.0 | InnerDimple @1042.9 | InnerDimple @1664.7 | Swage 0.0..59.6 | LipNotch 398.5..443.5 ... +4
+    N1       EXTRAS  (8): InnerDimple @419.0 | InnerDimple @1040.8 | InnerDimple @1669.2 | InnerNotch 396.5..441.5 | LipNotch 396.5..441.5 ... +3
+    S1       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @1568.4 | InnerDimple @2686.4 | Swage 0.0..65.3 ... +2
+    S1       EXTRAS  (6): InnerDimple @78.5 | InnerDimple @1561.5 | InnerDimple @2666.0 | Swage 56.0..101.0 | Swage 1539.0..1584.0 ... +1
+    S2       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @895.3 | InnerDimple @1340.2 | Swage 0.0..65.3 ... +2
+    S2       EXTRAS  (6): InnerDimple @78.5 | InnerDimple @888.4 | InnerDimple @1319.8 | Swage 56.0..101.0 | Swage 865.9..910.9 ... +1
+    S3       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @2241.6 | InnerDimple @3539.5 | Swage 0.0..65.3 ... +2
+    S3       EXTRAS  (7): InnerDimple @78.5 | InnerDimple @2234.6 | InnerDimple @3532.6 | Swage 56.0..101.0 | Swage 2212.1..2257.1 ... +2
 
   R10 (11 sticks with gaps)
-    T1       MISSING (5): InnerDimple @10.0 | InnerDimple @652.5 | InnerNotch 0.0..22.4 | LipNotch 0.0..59.6 | Swage 628.4..667.5
-    T1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @644.0 | Swage 0.0..39.0 | Swage 621.5..660.5
-    T2       MISSING (5): InnerDimple @120.0 | LipNotch 0.0..39.0 | Swage 107.6..169.5 | LipNotch 697.5..736.5 | InnerNotch 697.5..736.5
-    T2       EXTRAS  (2): Swage 0.0..39.0 | Swage 697.5..736.5
-    T3       MISSING (13): InnerDimple @14.9 | InnerDimple @256.6 | InnerDimple @1293.2 | InnerDimple @2329.8 | InnerDimple @3288.4 ... +8
-    T3       EXTRAS  (10): InnerDimple @16.5 | InnerDimple @187.8 | InnerDimple @891.3 | InnerDimple @1594.7 | InnerDimple @3353.0 ... +5
-    B1       MISSING (3): InnerNotch 697.5..742.5 | InnerNotch 1400.9..1445.9 | InnerNotch 2104.4..2149.4
-    N1       MISSING (3): InnerDimple @2777.4 | Swage 2727.8..2787.4 | Chamfer @end
-    N1       EXTRAS  (2): InnerDimple @2766.1 | Swage 2743.6..2782.6
-    N2       MISSING (2): InnerDimple @2830.4 | Swage 2807.9..2846.9
-    N2       EXTRAS  (2): InnerDimple @2833.4 | Swage 2810.9..2849.9
-    S1       MISSING (8): InnerDimple @78.5 | InnerDimple @1609.2 | InnerDimple @3649.9 | InnerDimple @5582.4 | LipNotch 56.0..101.0 ... +3
-    S1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @1607.2 | InnerDimple @3647.9 | InnerDimple @5580.4 | Swage 0.0..39.0 ... +3
-    S2       MISSING (11): InnerDimple @78.5 | InnerDimple @1609.2 | InnerDimple @3649.9 | InnerDimple @5582.4 | InnerDimple @5876.8 ... +6
-    S2       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @1607.2 | InnerDimple @3647.9 | InnerDimple @5861.4 | Swage 0.0..39.0 ... +3
-    S3       MISSING (9): InnerDimple @78.5 | InnerDimple @1609.2 | InnerDimple @3649.9 | InnerDimple @5115.4 | Swage 56.0..101.0 ... +4
-    S3       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @1607.2 | InnerDimple @3647.9 | InnerDimple @5100.0 | Swage 0.0..39.0 ... +3
-    S4       MISSING (9): InnerDimple @78.5 | InnerDimple @1609.2 | InnerDimple @3649.9 | InnerDimple @4354.0 | Swage 56.0..101.0 ... +4
-    S4       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @1607.2 | InnerDimple @3647.9 | InnerDimple @4338.6 | Swage 0.0..39.0 ... +3
+    T1       MISSING (4): InnerDimple @652.5 | InnerNotch 0.0..22.4 | LipNotch 0.0..59.6 | Swage 628.4..667.5
+    T1       EXTRAS  (3): Chamfer @start | InnerDimple @650.5 | Chamfer @end
+    T2       MISSING (7): InnerDimple @16.5 | InnerDimple @120.0 | InnerDimple @720.0 | LipNotch 0.0..39.0 | Swage 107.6..169.5 ... +2
+    T2       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @726.5 | Chamfer @end
+    T3       MISSING (12): InnerDimple @14.9 | InnerDimple @256.6 | InnerDimple @1293.2 | InnerDimple @2329.8 | InnerDimple @3288.4 ... +7
+    T3       EXTRAS  (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @187.8 | InnerDimple @891.3 | InnerDimple @1594.7 ... +4
+    B1       MISSING (7): InnerDimple @16.5 | InnerDimple @2830.4 | Swage 0.0..39.0 | InnerNotch 697.5..742.5 | InnerNotch 1400.9..1445.9 ... +2
+    B1       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @2836.9 | Chamfer @end
+    N1       MISSING (4): InnerDimple @16.5 | InnerDimple @2777.4 | Swage 0.0..39.0 | Swage 2727.8..2787.4
+    N1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @2772.6
+    N2       MISSING (4): InnerDimple @16.5 | InnerDimple @2830.4 | Swage 0.0..39.0 | Swage 2807.9..2846.9
+    N2       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @2839.9 | Chamfer @end
+    S1       MISSING (7): InnerDimple @1609.2 | InnerDimple @3649.9 | InnerDimple @5582.4 | LipNotch 56.0..101.0 | LipNotch 1586.7..1631.7 ... +2
+    S1       EXTRAS  (8): InnerDimple @1607.2 | InnerDimple @3647.9 | InnerDimple @5580.4 | Swage 56.0..101.0 | Swage 1584.7..1629.7 ... +3
+    S2       MISSING (8): InnerDimple @1609.2 | InnerDimple @3649.9 | InnerDimple @5582.4 | InnerDimple @5876.8 | Swage 1586.7..1631.7 ... +3
+    S2       EXTRAS  (6): InnerDimple @1607.2 | InnerDimple @3647.9 | InnerDimple @5861.4 | Swage 1584.7..1629.7 | Swage 3625.4..3670.4 ... +1
+    S3       MISSING (6): InnerDimple @1609.2 | InnerDimple @3649.9 | InnerDimple @5115.4 | Swage 1586.7..1631.7 | Swage 3627.4..3672.4 ... +1
+    S3       EXTRAS  (6): InnerDimple @1607.2 | InnerDimple @3647.9 | InnerDimple @5100.0 | Swage 1584.7..1629.7 | Swage 3625.4..3670.4 ... +1
+    S4       MISSING (6): InnerDimple @1609.2 | InnerDimple @3649.9 | InnerDimple @4354.0 | Swage 1586.7..1631.7 | Swage 3627.4..3672.4 ... +1
+    S4       EXTRAS  (6): InnerDimple @1607.2 | InnerDimple @3647.9 | InnerDimple @4338.6 | Swage 1584.7..1629.7 | Swage 3625.4..3670.4 ... +1
 
   R11 (8 sticks with gaps)
-    T1       MISSING (15): Chamfer @start | InnerDimple @10.0 | InnerDimple @1221.1 | InnerDimple @2432.2 | InnerDimple @2649.8 ... +10
-    T1       EXTRAS  (12): InnerDimple @16.5 | InnerDimple @840.3 | InnerDimple @1662.1 | InnerDimple @2484.0 | InnerDimple @2965.7 ... +7
-    B1       MISSING (7): InnerDimple @3222.1 | InnerNotch 815.8..860.8 | InnerNotch 1637.7..1682.7 | InnerNotch 2459.5..2504.5 | InnerNotch 2941.3..2986.3 ... +2
-    B1       EXTRAS  (2): InnerDimple @3210.5 | Swage 3188.0..3227.0
-    N1       MISSING (3): InnerDimple @1807.9 | Swage 1758.3..1817.9 | Chamfer @end
-    N1       EXTRAS  (2): InnerDimple @1799.4 | Swage 1776.9..1815.9
-    S1       MISSING (7): InnerDimple @78.5 | InnerDimple @1609.2 | InnerDimple @3548.2 | LipNotch 56.0..101.0 | LipNotch 1586.7..1631.7 ... +2
-    S1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @1607.2 | InnerDimple @3532.8 | Swage 0.0..39.0 | Swage 1584.7..1629.7 ... +1
-    S2       MISSING (7): InnerDimple @78.5 | InnerDimple @1609.2 | InnerDimple @2658.6 | Swage 56.0..101.0 | Swage 1586.7..1631.7 ... +2
-    S2       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @1607.2 | InnerDimple @2643.2 | Swage 0.0..39.0 | Swage 1584.7..1629.7 ... +1
-    S3       MISSING (7): InnerDimple @78.5 | InnerDimple @1609.2 | InnerDimple @1769.1 | Swage 56.0..101.0 | Swage 1586.7..1631.7 ... +2
-    S3       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @1607.2 | InnerDimple @1753.7 | Swage 0.0..39.0 | Swage 1584.7..1629.7 ... +1
-    S4       MISSING (5): InnerDimple @78.5 | InnerDimple @879.5 | Swage 56.0..101.0 | Swage 824.2..889.5 | Chamfer @end
-    S4       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @864.1 | Swage 0.0..39.0 | Swage 841.6..880.6
-    S5       MISSING (5): InnerDimple @78.5 | InnerDimple @358.1 | Swage 56.0..101.0 | Swage 302.7..368.1 | Chamfer @end
-    S5       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @342.6 | Swage 0.0..39.0 | Swage 320.1..359.1
+    T1       MISSING (13): InnerDimple @1221.1 | InnerDimple @2432.2 | InnerDimple @2649.8 | InnerDimple @3643.2 | InnerDimple @4353.2 ... +8
+    T1       EXTRAS  (10): InnerDimple @840.3 | InnerDimple @1662.1 | InnerDimple @2484.0 | InnerDimple @2965.7 | InnerDimple @4805.5 ... +5
+    B1       MISSING (8): InnerDimple @16.5 | InnerDimple @3222.1 | Swage 0.0..39.0 | InnerNotch 815.8..860.8 | InnerNotch 1637.7..1682.7 ... +3
+    B1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @3217.0
+    N1       MISSING (4): InnerDimple @16.5 | InnerDimple @1807.9 | Swage 0.0..39.0 | Swage 1758.3..1817.9
+    N1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @1805.9
+    S1       MISSING (5): InnerDimple @1609.2 | InnerDimple @3548.2 | LipNotch 56.0..101.0 | LipNotch 1586.7..1631.7 | Swage 3492.8..3558.2
+    S1       EXTRAS  (5): InnerDimple @1607.2 | InnerDimple @3532.8 | Swage 56.0..101.0 | Swage 1584.7..1629.7 | Swage 3510.3..3549.3
+    S2       MISSING (4): InnerDimple @1609.2 | InnerDimple @2658.6 | Swage 1586.7..1631.7 | Swage 2603.3..2668.6
+    S2       EXTRAS  (4): InnerDimple @1607.2 | InnerDimple @2643.2 | Swage 1584.7..1629.7 | Swage 2620.7..2659.7
+    S3       MISSING (4): InnerDimple @1609.2 | InnerDimple @1769.1 | Swage 1586.7..1631.7 | Swage 1713.7..1779.1
+    S3       EXTRAS  (4): InnerDimple @1607.2 | InnerDimple @1753.7 | Swage 1584.7..1629.7 | Swage 1731.2..1770.2
+    S4       MISSING (2): InnerDimple @879.5 | Swage 824.2..889.5
+    S4       EXTRAS  (2): InnerDimple @864.1 | Swage 841.6..880.6
+    S5       MISSING (2): InnerDimple @358.1 | Swage 302.7..368.1
+    S5       EXTRAS  (2): InnerDimple @342.6 | Swage 320.1..359.1
 
   R12 (5 sticks with gaps)
-    T1       MISSING (9): InnerDimple @90.7 | InnerDimple @454.0 | InnerDimple @1465.5 | InnerDimple @2477.1 | LipNotch 78.3..140.3 ... +4
-    T1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @320.4 | InnerDimple @1006.9 | InnerDimple @2461.6 | Swage 0.0..39.0 ... +3
-    B1       MISSING (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @256.5 | InnerDimple @943.0 | InnerDimple @1629.4 ... +5
-    B1       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @251.5 | InnerDimple @938.0 | InnerDimple @1624.4 | LipNotch 229.0..274.0 ... +2
-    S1       MISSING (5): InnerDimple @78.5 | InnerDimple @1831.4 | LipNotch 56.0..101.0 | Swage 1776.0..1841.4 | Chamfer @end
-    S1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1815.9 | Swage 0.0..39.0 | Swage 1793.4..1832.4
-    S2       MISSING (5): InnerDimple @78.5 | InnerDimple @1088.3 | Swage 56.0..101.0 | Swage 1033.0..1098.3 | Chamfer @end
-    S2       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1072.9 | Swage 0.0..39.0 | Swage 1050.4..1089.4
-    S3       MISSING (5): InnerDimple @78.5 | InnerDimple @345.3 | Swage 56.0..101.0 | Swage 290.0..355.3 | Chamfer @end
-    S3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @329.9 | Swage 0.0..39.0 | Swage 307.4..346.4
+    T1       MISSING (8): InnerDimple @90.7 | InnerDimple @454.0 | InnerDimple @1465.5 | InnerDimple @2477.1 | LipNotch 78.3..140.3 ... +3
+    T1       EXTRAS  (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @320.4 | InnerDimple @1006.9 | InnerDimple @2468.1 ... +2
+    B1       MISSING (8): InnerDimple @256.5 | InnerDimple @943.0 | Swage 0.0..59.6 | InnerNotch 234.0..279.0 | LipNotch 234.0..279.0 ... +3
+    B1       EXTRAS  (5): InnerDimple @251.5 | InnerDimple @938.0 | LipNotch 229.0..274.0 | LipNotch 915.5..960.5 | Chamfer @end
+    S1       MISSING (3): InnerDimple @1831.4 | LipNotch 56.0..101.0 | Swage 1776.0..1841.4
+    S1       EXTRAS  (3): InnerDimple @1815.9 | Swage 56.0..101.0 | Swage 1793.4..1832.4
+    S2       MISSING (2): InnerDimple @1088.3 | Swage 1033.0..1098.3
+    S2       EXTRAS  (2): InnerDimple @1072.9 | Swage 1050.4..1089.4
+    S3       MISSING (2): InnerDimple @345.3 | Swage 290.0..355.3
+    S3       EXTRAS  (2): InnerDimple @329.9 | Swage 307.4..346.4
 
   R13 (5 sticks with gaps)
-    T1       MISSING (9): InnerDimple @90.7 | InnerDimple @454.0 | InnerDimple @1480.3 | InnerDimple @2506.6 | LipNotch 78.3..140.3 ... +4
-    T1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @320.4 | InnerDimple @1016.9 | InnerDimple @2491.1 | Swage 0.0..39.0 ... +3
-    B1       MISSING (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @256.5 | InnerDimple @953.0 | InnerDimple @1649.4 ... +5
-    B1       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @251.5 | InnerDimple @948.0 | InnerDimple @1644.4 | LipNotch 229.0..274.0 ... +2
-    S1       MISSING (5): InnerDimple @78.5 | InnerDimple @1853.0 | LipNotch 56.0..101.0 | Swage 1797.7..1863.0 | Chamfer @end
-    S1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1837.6 | Swage 0.0..39.0 | Swage 1815.1..1854.1
-    S2       MISSING (5): InnerDimple @78.5 | InnerDimple @1099.2 | Swage 56.0..101.0 | Swage 1043.8..1109.2 | Chamfer @end
-    S2       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1083.7 | Swage 0.0..39.0 | Swage 1061.2..1100.2
-    S3       MISSING (5): InnerDimple @78.5 | InnerDimple @345.3 | Swage 56.0..101.0 | Swage 290.0..355.3 | Chamfer @end
-    S3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @329.9 | Swage 0.0..39.0 | Swage 307.4..346.4
+    T1       MISSING (8): InnerDimple @90.7 | InnerDimple @454.0 | InnerDimple @1480.3 | InnerDimple @2506.6 | LipNotch 78.3..140.3 ... +3
+    T1       EXTRAS  (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @320.4 | InnerDimple @1016.9 | InnerDimple @2497.6 ... +2
+    B1       MISSING (8): InnerDimple @256.5 | InnerDimple @953.0 | Swage 0.0..59.6 | InnerNotch 234.0..279.0 | LipNotch 234.0..279.0 ... +3
+    B1       EXTRAS  (5): InnerDimple @251.5 | InnerDimple @948.0 | LipNotch 229.0..274.0 | LipNotch 925.5..970.5 | Chamfer @end
+    S1       MISSING (3): InnerDimple @1853.0 | LipNotch 56.0..101.0 | Swage 1797.7..1863.0
+    S1       EXTRAS  (3): InnerDimple @1837.6 | Swage 56.0..101.0 | Swage 1815.1..1854.1
+    S2       MISSING (2): InnerDimple @1099.2 | Swage 1043.8..1109.2
+    S2       EXTRAS  (2): InnerDimple @1083.7 | Swage 1061.2..1100.2
+    S3       MISSING (2): InnerDimple @345.3 | Swage 290.0..355.3
+    S3       EXTRAS  (2): InnerDimple @329.9 | Swage 307.4..346.4
 
   R14 (20 sticks with gaps)
-    T1       MISSING (13): Chamfer @start | InnerDimple @10.0 | InnerDimple @550.3 | InnerDimple @673.4 | InnerDimple @732.4 ... +8
-    T1       EXTRAS  (11): InnerDimple @16.5 | InnerDimple @1744.3 | Swage 1721.8..1760.8 | InnerDimple @616.0 | LipNotch 593.5..638.5 ... +6
-    T2       MISSING (8): InnerDimple @90.7 | InnerDimple @146.5 | InnerDimple @825.1 | InnerDimple @905.7 | LipNotch 41.1..158.9 ... +3
-    T2       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @890.2 | Swage 0.0..39.0 | Swage 867.7..906.7
-    B1       MISSING (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @396.9 | InnerDimple @996.4 | InnerDimple @1595.9 ... +5
-    B1       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @1590.4 | Swage 1567.9..1606.9 | InnerDimple @616.0 | LipNotch 593.5..638.5 ... +2
-    B2       MISSING (11): InnerDimple @58.5 | InnerDimple @117.5 | InnerDimple @515.0 | InnerDimple @1114.4 | InnerDimple @1713.9 ... +6
-    B2       EXTRAS  (10): InnerDimple @616.0 | LipNotch 593.5..638.5 | InnerDimple @1622.9 | LipNotch 1600.4..1645.4 | InnerDimple @1681.9 ... +5
-    B3       MISSING (6): InnerDimple @515.0 | InnerDimple @668.5 | InnerNotch 492.5..537.5 | LipNotch 492.5..537.5 | Swage 616.2..678.5 ... +1
-    B3       EXTRAS  (2): InnerDimple @643.1 | Swage 620.6..659.6
-    B4       MISSING (3): InnerDimple @317.5 | Swage 265.2..327.5 | Chamfer @end
-    B4       EXTRAS  (2): InnerDimple @305.5 | Swage 283.0..322.0
+    T1       MISSING (11): InnerDimple @550.3 | InnerDimple @673.4 | InnerDimple @732.4 | InnerDimple @1149.8 | InnerDimple @1211.3 ... +6
+    T1       EXTRAS  (9): Chamfer @end | InnerDimple @616.0 | LipNotch 593.5..638.5 | InnerDimple @1622.9 | LipNotch 1600.4..1645.4 ... +4
+    T2       MISSING (7): InnerDimple @90.7 | InnerDimple @146.5 | InnerDimple @825.1 | InnerDimple @905.7 | LipNotch 41.1..158.9 ... +2
+    T2       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @896.7
+    B1       MISSING (8): InnerDimple @396.9 | InnerDimple @996.4 | Swage 0.0..62.3 | InnerNotch 374.4..419.4 | LipNotch 374.4..419.4 ... +3
+    B1       EXTRAS  (5): Chamfer @end | InnerDimple @616.0 | LipNotch 593.5..638.5 | InnerDimple @1215.4 | LipNotch 1192.9..1237.9
+    B2       MISSING (15): InnerDimple @16.5 | InnerDimple @58.5 | InnerDimple @117.5 | InnerDimple @515.0 | InnerDimple @1114.4 ... +10
+    B2       EXTRAS  (14): Chamfer @start | InnerDimple @10.0 | InnerDimple @2319.9 | Chamfer @end | InnerDimple @616.0 ... +9
+    B3       MISSING (7): InnerDimple @16.5 | InnerDimple @515.0 | InnerDimple @668.5 | Swage 0.0..39.0 | InnerNotch 492.5..537.5 ... +2
+    B3       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @649.6
+    B4       MISSING (4): InnerDimple @16.5 | InnerDimple @317.5 | Swage 0.0..39.0 | Swage 265.2..327.5
+    B4       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @312.0
     B5       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    B5       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @76.5 | LipNotch 0.0..39.0 | LipNotch 54.0..93.0
+    B5       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @83.0 | Chamfer @end
     B6       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    B6       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @76.5 | LipNotch 0.0..39.0 | LipNotch 54.0..93.0
-    S1       MISSING (4): InnerDimple @583.0 | InnerDimple @626.5 | InnerDimple @678.0 | LipNotch 528.8..728.9
-    S2       MISSING (2): InnerDimple @626.5 | Swage 604.0..649.0
+    B6       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @83.0 | Chamfer @end
+    S1       MISSING (6): InnerDimple @16.5 | InnerDimple @583.0 | InnerDimple @626.5 | InnerDimple @678.0 | LipNotch 0.0..39.0 ... +1
+    S1       EXTRAS  (3): InnerDimple @78.5 | Swage 56.0..101.0 | Chamfer @end
+    S2       MISSING (4): InnerDimple @16.5 | InnerDimple @626.5 | Swage 0.0..39.0 | Swage 604.0..649.0
+    S2       EXTRAS  (3): InnerDimple @78.5 | Swage 56.0..101.0 | Chamfer @end
 
   R15 (4 sticks with gaps)
-    T1       MISSING (4): InnerDimple @1512.4 | LipNotch 0.0..39.0 | LipNotch 1462.8..1522.4 | Chamfer @end
-    T1       EXTRAS  (3): InnerDimple @1500.9 | Swage 0.0..39.0 | Swage 1478.4..1517.4
-    B1       MISSING (8): Chamfer @start | InnerDimple @10.0 | InnerDimple @1131.6 | InnerDimple @2214.3 | LipNotch 0.0..65.3 ... +3
-    B1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @779.6 | InnerDimple @2197.8 | Swage 0.0..39.0 | LipNotch 757.1..802.1 ... +1
-    S1       MISSING (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @1629.1 | Swage 1606.6..1645.6
-    S1       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @1622.2 | Swage 1599.7..1638.7
-    S2       MISSING (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @805.3 | Swage 782.8..821.8
-    S2       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @798.4 | Swage 775.9..814.9
+    T1       MISSING (4): InnerDimple @16.5 | InnerDimple @1512.4 | LipNotch 0.0..39.0 | LipNotch 1462.8..1522.4
+    T1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @1507.4
+    B1       MISSING (5): InnerDimple @1131.6 | InnerDimple @2214.3 | LipNotch 0.0..65.3 | LipNotch 1119.8..1186.9 | Swage 2164.8..2224.3
+    B1       EXTRAS  (3): InnerDimple @779.6 | InnerDimple @2204.3 | LipNotch 757.1..802.1
+    S1       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @1629.1 | Swage 0.0..65.3 | Swage 1606.6..1645.6
+    S1       EXTRAS  (5): InnerDimple @78.5 | InnerDimple @1622.2 | Swage 56.0..101.0 | Swage 1599.7..1638.7 | Chamfer @end
+    S2       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @805.3 | Swage 0.0..65.3 | Swage 782.8..821.8
+    S2       EXTRAS  (5): InnerDimple @78.5 | InnerDimple @798.4 | Swage 56.0..101.0 | Swage 775.9..814.9 | Chamfer @end
 
-  R16 (23 sticks with gaps)
+  R16 (24 sticks with gaps)
     T1       MISSING (19): InnerDimple @80.5 | InnerDimple @121.5 | InnerDimple @163.5 | InnerDimple @221.5 | InnerDimple @610.8 ... +14
-    T1       EXTRAS  (20): InnerDimple @16.5 | InnerDimple @2414.4 | Swage 0.0..39.0 | Swage 2391.9..2430.9 | InnerDimple @468.4 ... +15
-    T2       MISSING (13): Chamfer @start | InnerDimple @10.0 | InnerDimple @241.2 | InnerDimple @693.1 | InnerDimple @1145.0 ... +8
-    T2       EXTRAS  (9): InnerDimple @16.5 | InnerDimple @1591.4 | Swage 1568.9..1607.9 | InnerDimple @468.4 | LipNotch 445.9..490.9 ... +4
-    T3       MISSING (6): InnerDimple @505.8 | InnerDimple @668.5 | InnerNotch 483.3..528.3 | LipNotch 483.3..528.3 | Swage 616.2..678.5 ... +1
-    T3       EXTRAS  (2): InnerDimple @656.5 | Swage 634.0..673.0
-    T4       MISSING (3): InnerDimple @317.5 | Swage 265.2..327.5 | Chamfer @end
-    T4       EXTRAS  (2): InnerDimple @305.5 | Swage 283.0..322.0
+    T1       EXTRAS  (20): Chamfer @start | InnerDimple @10.0 | InnerDimple @2420.9 | Chamfer @end | InnerDimple @468.4 ... +15
+    T2       MISSING (11): InnerDimple @241.2 | InnerDimple @693.1 | InnerDimple @1145.0 | Swage 0.0..62.3 | InnerNotch 218.7..263.7 ... +6
+    T2       EXTRAS  (7): Chamfer @end | InnerDimple @468.4 | LipNotch 445.9..490.9 | InnerDimple @920.3 | LipNotch 897.8..942.8 ... +2
+    T3       MISSING (7): InnerDimple @16.5 | InnerDimple @505.8 | InnerDimple @668.5 | Swage 0.0..39.0 | InnerNotch 483.3..528.3 ... +2
+    T3       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @663.0
+    T4       MISSING (4): InnerDimple @16.5 | InnerDimple @317.5 | Swage 0.0..39.0 | Swage 265.2..327.5
+    T4       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @312.0
     T5       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    T5       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @76.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 54.0..93.0 ... +1
+    T5       EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @83.0 | InnerNotch 0.0..39.0 | InnerNotch 54.0..93.0 ... +1
     T6       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    T6       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @76.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 54.0..93.0 ... +1
-    B1       MISSING (14): InnerDimple @505.8 | InnerDimple @957.7 | InnerDimple @1237.5 | InnerDimple @1295.5 | InnerDimple @1409.6 ... +9
-    B1       EXTRAS  (12): InnerDimple @468.4 | LipNotch 445.9..490.9 | InnerDimple @920.3 | LipNotch 897.8..942.8 | InnerDimple @1623.9 ... +7
+    T6       EXTRAS  (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @83.0 | InnerNotch 0.0..39.0 | InnerNotch 54.0..93.0 ... +1
+    B1       MISSING (18): InnerDimple @16.5 | InnerDimple @505.8 | InnerDimple @957.7 | InnerDimple @1237.5 | InnerDimple @1295.5 ... +13
+    B1       EXTRAS  (16): Chamfer @start | InnerDimple @10.0 | InnerDimple @2319.9 | Chamfer @end | InnerDimple @468.4 ... +11
+    B2       MISSING (4): InnerDimple @16.5 | InnerDimple @505.8 | Swage 0.0..39.0 | Swage 483.3..522.3
+    B2       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @512.3 | Chamfer @end
     B3       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    B3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @76.5 | LipNotch 0.0..39.0 | LipNotch 54.0..93.0
+    B3       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @83.0 | Chamfer @end
     B4       MISSING (2): InnerDimple @80.5 | Swage 58.0..97.0
-    B4       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @76.5 | LipNotch 0.0..39.0 | LipNotch 54.0..93.0
-    S1       MISSING (4): InnerDimple @537.2 | InnerDimple @585.5 | InnerDimple @628.8 | LipNotch 472.4..698.2
+    B4       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @83.0 | Chamfer @end
 
   R17 (8 sticks with gaps)
-    T1       MISSING (12): Chamfer @start | InnerDimple @10.0 | InnerDimple @1208.1 | InnerDimple @2406.1 | InnerDimple @3253.3 ... +7
-    T1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @831.4 | InnerDimple @1644.4 | InnerDimple @3587.7 | Swage 0.0..39.0 ... +3
-    B1       MISSING (2): InnerNotch 807.0..852.0 | InnerNotch 1620.0..1665.0
-    N1       MISSING (9): InnerDimple @829.5 | InnerDimple @1642.5 | InnerDimple @2217.4 | InnerNotch 807.0..852.0 | LipNotch 807.0..852.0 ... +4
-    N1       EXTRAS  (8): InnerDimple @832.5 | InnerDimple @1645.5 | InnerDimple @2211.8 | InnerNotch 810.0..855.0 | LipNotch 810.0..855.0 ... +3
-    N2       MISSING (8): InnerDimple @829.5 | InnerDimple @1642.5 | InnerDimple @2455.5 | LipNotch 807.0..852.0 | InnerNotch 807.0..852.0 ... +3
-    N2       EXTRAS  (8): InnerDimple @832.5 | InnerDimple @1645.5 | InnerDimple @2461.5 | InnerNotch 810.0..855.0 | LipNotch 810.0..855.0 ... +3
-    S1       MISSING (8): Chamfer @start | InnerDimple @10.0 | InnerDimple @2392.2 | InnerDimple @4677.0 | InnerDimple @5963.6 ... +3
-    S1       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @6016.7 | Swage 1340.6..1385.6 ... +2
-    S2       MISSING (8): Chamfer @start | InnerDimple @10.0 | InnerDimple @1512.2 | InnerDimple @3797.1 | InnerDimple @5083.6 ... +3
-    S2       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @5136.7 | Swage 1340.6..1385.6 ... +2
-    S3       MISSING (8): Chamfer @start | InnerDimple @10.0 | InnerDimple @632.2 | InnerDimple @2917.1 | InnerDimple @4203.7 ... +3
-    S3       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @4256.7 | Swage 1340.6..1385.6 ... +2
-    S4       MISSING (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @2037.1 | InnerDimple @3323.7 | LipNotch 2014.6..2059.6 ... +1
-    S4       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @3376.7 | Swage 1340.6..1385.6 | Swage 3354.2..3393.2
+    T1       MISSING (9): InnerDimple @1208.1 | InnerDimple @2406.1 | InnerDimple @3253.3 | InnerDimple @3604.2 | LipNotch 0.0..65.3 ... +4
+    T1       EXTRAS  (5): InnerDimple @831.4 | InnerDimple @1644.4 | InnerDimple @3594.2 | LipNotch 808.9..854.0 | LipNotch 1621.9..1667.0
+    B1       MISSING (6): InnerDimple @16.5 | InnerDimple @2455.5 | Swage 0.0..39.0 | InnerNotch 807.0..852.0 | InnerNotch 1620.0..1665.0 ... +1
+    B1       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @2462.0 | Chamfer @end
+    N1       MISSING (9): InnerDimple @16.5 | InnerDimple @829.5 | InnerDimple @1642.5 | Swage 0.0..39.0 | InnerNotch 807.0..852.0 ... +4
+    N1       EXTRAS  (8): Chamfer @start | InnerDimple @10.0 | InnerDimple @832.5 | InnerDimple @1645.5 | InnerNotch 810.0..855.0 ... +3
+    N2       MISSING (10): InnerDimple @16.5 | InnerDimple @829.5 | InnerDimple @1642.5 | InnerDimple @2455.5 | Swage 0.0..39.0 ... +5
+    N2       EXTRAS  (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @832.5 | InnerDimple @1645.5 | InnerDimple @2468.0 ... +5
+    S1       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @2392.2 | InnerDimple @4677.0 | InnerDimple @5963.6 ... +4
+    S1       EXTRAS  (9): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @6016.7 | Swage 56.0..101.0 ... +4
+    S2       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @1512.2 | InnerDimple @3797.1 | InnerDimple @5083.6 ... +4
+    S2       EXTRAS  (9): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @5136.7 | Swage 56.0..101.0 ... +4
+    S3       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @632.2 | InnerDimple @2917.1 | InnerDimple @4203.7 ... +4
+    S3       EXTRAS  (9): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @4256.7 | Swage 56.0..101.0 ... +4
+    S4       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @2037.1 | InnerDimple @3323.7 | Swage 0.0..21.0 ... +2
+    S4       EXTRAS  (7): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @3376.7 | Swage 56.0..101.0 | Swage 1340.6..1385.6 ... +2
 
-  R18 (7 sticks with gaps)
-    T1       MISSING (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @1208.1 | InnerDimple @1278.1 | InnerDimple @2406.1 ... +5
-    T1       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @831.4 | InnerDimple @2388.6 | Swage 0.0..39.0 | LipNotch 808.9..854.0 ... +1
-    T2       MISSING (7): InnerDimple @10.0 | InnerDimple @775.5 | InnerDimple @1588.5 | InnerNotch 0.0..22.4 | LipNotch 0.0..59.6 ... +2
-    T2       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @770.5 | InnerDimple @1583.5 | Swage 0.0..39.0 | LipNotch 748.0..793.0 ... +1
-    B1       MISSING (2): InnerNotch 807.0..852.0 | InnerNotch 1620.0..1665.0
-    S1       MISSING (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @2069.4 | InnerDimple @3279.3 | LipNotch 2046.9..2091.9 ... +1
-    S1       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @1286.4 | InnerDimple @3332.4 | Swage 1263.9..1308.9 | Swage 3309.9..3348.9
-    S2       MISSING (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1189.4 | InnerDimple @2399.3 | Swage 1166.9..1211.9 ... +1
-    S2       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @1286.4 | InnerDimple @2452.4 | Swage 1263.9..1308.9 | Swage 2429.9..2468.9
-    S3       MISSING (6): InnerDimple @845.0 | InnerDimple @1144.4 | InnerDimple @2354.4 | Swage 789.7..856.8 | Swage 1121.9..1166.9 ... +1
-    S3       EXTRAS  (4): InnerDimple @1286.4 | InnerDimple @2414.4 | Swage 1263.9..1308.9 | Swage 2391.9..2430.9
-    S4       MISSING (4): InnerDimple @1144.4 | InnerDimple @2354.4 | LipNotch 1121.9..1166.9 | LipNotch 2331.9..2376.9
-    S4       EXTRAS  (4): InnerDimple @1286.4 | InnerDimple @2414.4 | Swage 1263.9..1308.9 | Swage 2391.9..2430.9
+  R18 (8 sticks with gaps)
+    T1       MISSING (8): InnerDimple @1208.1 | InnerDimple @1278.1 | InnerDimple @2406.1 | LipNotch 0.0..65.3 | LipNotch 1196.3..1263.4 ... +3
+    T1       EXTRAS  (4): InnerDimple @831.4 | InnerDimple @2395.1 | LipNotch 808.9..854.0 | Chamfer @end
+    T2       MISSING (6): InnerDimple @775.5 | InnerDimple @1588.5 | InnerNotch 0.0..22.4 | LipNotch 0.0..59.6 | LipNotch 753.0..798.0 ... +1
+    T2       EXTRAS  (5): Chamfer @start | InnerDimple @770.5 | InnerDimple @1590.0 | LipNotch 748.0..793.0 | Chamfer @end
+    B1       MISSING (6): InnerDimple @16.5 | InnerDimple @2455.5 | Swage 0.0..39.0 | InnerNotch 807.0..852.0 | InnerNotch 1620.0..1665.0 ... +1
+    B1       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @2462.0 | Chamfer @end
+    N1       MISSING (4): InnerDimple @16.5 | InnerDimple @2455.5 | Swage 0.0..39.0 | Swage 2433.0..2472.0
+    N1       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @2462.0 | Chamfer @end
+    S1       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @2069.4 | InnerDimple @3279.3 | Swage 0.0..65.3 ... +2
+    S1       EXTRAS  (7): InnerDimple @78.5 | InnerDimple @1286.4 | InnerDimple @3332.4 | Swage 56.0..101.0 | Swage 1263.9..1308.9 ... +2
+    S2       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @1189.4 | InnerDimple @2399.3 | Swage 0.0..65.3 ... +2
+    S2       EXTRAS  (7): InnerDimple @78.5 | InnerDimple @1286.4 | InnerDimple @2452.4 | Swage 56.0..101.0 | Swage 1263.9..1308.9 ... +2
+    S3       MISSING (8): InnerDimple @16.5 | InnerDimple @845.0 | InnerDimple @1144.4 | InnerDimple @2354.4 | Swage 0.0..39.0 ... +3
+    S3       EXTRAS  (7): InnerDimple @78.5 | InnerDimple @1286.4 | InnerDimple @2414.4 | Swage 56.0..101.0 | Swage 1263.9..1308.9 ... +2
+    S4       MISSING (6): InnerDimple @16.5 | InnerDimple @1144.4 | InnerDimple @2354.4 | Swage 0.0..39.0 | LipNotch 1121.9..1166.9 ... +1
+    S4       EXTRAS  (7): InnerDimple @78.5 | InnerDimple @1286.4 | InnerDimple @2414.4 | Swage 56.0..101.0 | Swage 1263.9..1308.9 ... +2
 
   R19 (8 sticks with gaps)
-    T1       MISSING (12): Chamfer @start | InnerDimple @10.0 | InnerDimple @574.6 | InnerDimple @1279.3 | InnerDimple @2548.6 ... +7
-    T1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @879.8 | InnerDimple @1741.1 | InnerDimple @3801.3 | Swage 0.0..39.0 ... +3
-    B1       MISSING (2): InnerNotch 855.3..900.3 | InnerNotch 1716.7..1761.7
-    N1       MISSING (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @488.2 | InnerDimple @1349.5 | InnerDimple @2210.9 ... +5
-    N1       EXTRAS  (9): InnerDimple @16.5 | InnerDimple @483.5 | InnerDimple @1344.8 | InnerDimple @2206.1 | InnerNotch 461.0..506.0 ... +4
+    T1       MISSING (9): InnerDimple @574.6 | InnerDimple @1279.3 | InnerDimple @2548.6 | InnerDimple @3817.9 | LipNotch 0.0..21.8 ... +4
+    T1       EXTRAS  (5): InnerDimple @879.8 | InnerDimple @1741.1 | InnerDimple @3807.8 | LipNotch 857.3..902.3 | LipNotch 1718.6..1763.6
+    B1       MISSING (6): InnerDimple @16.5 | InnerDimple @2600.5 | Swage 0.0..39.0 | InnerNotch 855.3..900.3 | InnerNotch 1716.7..1761.7 ... +1
+    B1       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @2607.0 | Chamfer @end
+    N1       MISSING (9): InnerDimple @488.2 | InnerDimple @1349.5 | InnerDimple @2210.9 | Swage 0.0..59.6 | InnerNotch 465.7..510.7 ... +4
+    N1       EXTRAS  (8): InnerDimple @483.5 | InnerDimple @1344.8 | InnerDimple @2212.6 | InnerNotch 461.0..506.0 | LipNotch 461.0..506.0 ... +3
     N2       MISSING (2): InnerDimple @2557.1 | Swage 2534.6..2573.6
-    N2       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @2559.1 | Swage 0.0..39.0 | Swage 2536.6..2575.6
-    S1       MISSING (8): Chamfer @start | InnerDimple @10.0 | InnerDimple @2392.2 | InnerDimple @4677.0 | InnerDimple @5963.6 ... +3
-    S1       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @6016.7 | Swage 1340.6..1385.6 ... +2
-    S2       MISSING (8): Chamfer @start | InnerDimple @10.0 | InnerDimple @1459.9 | InnerDimple @3744.7 | InnerDimple @5031.3 ... +3
-    S2       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @5084.4 | Swage 1340.6..1385.6 ... +2
-    S3       MISSING (8): Chamfer @start | InnerDimple @10.0 | InnerDimple @527.6 | InnerDimple @2812.4 | InnerDimple @4099.0 ... +3
-    S3       EXTRAS  (7): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @4152.1 | Swage 1340.6..1385.6 ... +2
-    S4       MISSING (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @3166.7 | LipNotch 3144.2..3189.2
-    S4       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @3219.8 | Swage 3197.3..3236.3
+    N2       EXTRAS  (4): Chamfer @start | InnerDimple @10.0 | InnerDimple @2565.6 | Chamfer @end
+    S1       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @2392.2 | InnerDimple @4677.0 | InnerDimple @5963.6 ... +4
+    S1       EXTRAS  (9): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @6016.7 | Swage 56.0..101.0 ... +4
+    S2       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @1459.9 | InnerDimple @3744.7 | InnerDimple @5031.3 ... +4
+    S2       EXTRAS  (9): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @5084.4 | Swage 56.0..101.0 ... +4
+    S3       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @527.6 | InnerDimple @2812.4 | InnerDimple @4099.0 ... +4
+    S3       EXTRAS  (9): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @3647.9 | InnerDimple @4152.1 | Swage 56.0..101.0 ... +4
+    S4       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @3166.7 | Swage 0.0..21.0 | LipNotch 3144.2..3189.2
+    S4       EXTRAS  (5): InnerDimple @78.5 | InnerDimple @3219.8 | Swage 56.0..101.0 | Swage 3197.3..3236.3 | Chamfer @end
 
   R20 (8 sticks with gaps)
-    T1       MISSING (15): InnerDimple @90.7 | InnerDimple @454.0 | InnerDimple @1059.6 | InnerDimple @1842.3 | InnerDimple @2149.1 ... +10
-    T1       EXTRAS  (12): InnerDimple @16.5 | InnerDimple @320.4 | InnerDimple @731.4 | InnerDimple @1470.7 | InnerDimple @2210.0 ... +7
-    B1       MISSING (16): Chamfer @start | InnerDimple @10.0 | InnerDimple @256.5 | InnerDimple @667.5 | InnerDimple @1406.8 ... +11
-    B1       EXTRAS  (11): InnerDimple @16.5 | InnerDimple @251.5 | InnerDimple @662.5 | InnerDimple @1401.8 | InnerDimple @2141.1 ... +6
-    N1       MISSING (10): Chamfer @start | InnerDimple @10.0 | InnerDimple @218.2 | InnerDimple @957.5 | InnerDimple @1696.8 ... +5
-    N1       EXTRAS  (9): InnerDimple @16.5 | InnerDimple @216.1 | InnerDimple @955.5 | InnerDimple @1694.8 | InnerNotch 193.6..238.6 ... +4
-    S1       MISSING (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1835.8 | InnerDimple @3122.3 | LipNotch 1813.3..1858.3 ... +1
-    S1       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @3175.4 | Swage 1340.6..1385.6 | Swage 3152.9..3191.9
-    S2       MISSING (6): Chamfer @start | InnerDimple @10.0 | InnerDimple @1035.5 | InnerDimple @2322.1 | Swage 1013.0..1058.0 ... +1
-    S2       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @2375.2 | Swage 1340.6..1385.6 | Swage 2352.7..2391.7
-    S3       MISSING (7): InnerDimple @78.5 | InnerDimple @1365.1 | InnerDimple @1590.4 | Swage 56.0..101.0 | Swage 1342.6..1387.6 ... +2
-    S3       EXTRAS  (6): InnerDimple @16.5 | InnerDimple @1363.1 | InnerDimple @1575.0 | Swage 0.0..39.0 | Swage 1340.6..1385.6 ... +1
-    S4       MISSING (5): InnerDimple @78.5 | InnerDimple @790.2 | Swage 56.0..101.0 | Swage 734.8..800.2 | Chamfer @end
-    S4       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @774.8 | Swage 0.0..39.0 | Swage 752.3..791.3
-    S5       MISSING (5): InnerDimple @78.5 | InnerDimple @345.3 | Swage 56.0..101.0 | Swage 290.0..355.3 | Chamfer @end
-    S5       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @329.9 | Swage 0.0..39.0 | Swage 307.4..346.4
+    T1       MISSING (14): InnerDimple @90.7 | InnerDimple @454.0 | InnerDimple @1059.6 | InnerDimple @1842.3 | InnerDimple @2149.1 ... +9
+    T1       EXTRAS  (11): Chamfer @start | InnerDimple @10.0 | InnerDimple @320.4 | InnerDimple @731.4 | InnerDimple @1470.7 ... +6
+    B1       MISSING (14): InnerDimple @256.5 | InnerDimple @667.5 | InnerDimple @1406.8 | InnerDimple @2146.1 | Swage 0.0..59.6 ... +9
+    B1       EXTRAS  (9): InnerDimple @251.5 | InnerDimple @662.5 | InnerDimple @1401.8 | InnerDimple @2141.1 | LipNotch 229.0..274.0 ... +4
+    N1       MISSING (9): InnerDimple @218.2 | InnerDimple @957.5 | InnerDimple @1696.8 | Swage 0.0..59.6 | LipNotch 195.7..240.7 ... +4
+    N1       EXTRAS  (8): InnerDimple @216.1 | InnerDimple @955.5 | InnerDimple @1701.3 | InnerNotch 193.6..238.6 | LipNotch 193.6..238.6 ... +3
+    S1       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @1835.8 | InnerDimple @3122.3 | Swage 0.0..65.3 ... +2
+    S1       EXTRAS  (7): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @3175.4 | Swage 56.0..101.0 | Swage 1340.6..1385.6 ... +2
+    S2       MISSING (7): Chamfer @start | InnerDimple @10.0 | InnerDimple @1035.5 | InnerDimple @2322.1 | Swage 0.0..65.3 ... +2
+    S2       EXTRAS  (7): InnerDimple @78.5 | InnerDimple @1363.1 | InnerDimple @2375.2 | Swage 56.0..101.0 | Swage 1340.6..1385.6 ... +2
+    S3       MISSING (4): InnerDimple @1365.1 | InnerDimple @1590.4 | Swage 1342.6..1387.6 | Swage 1535.1..1600.4
+    S3       EXTRAS  (4): InnerDimple @1363.1 | InnerDimple @1575.0 | Swage 1340.6..1385.6 | Swage 1552.5..1591.5
+    S4       MISSING (2): InnerDimple @790.2 | Swage 734.8..800.2
+    S4       EXTRAS  (2): InnerDimple @774.8 | Swage 752.3..791.3
+    S5       MISSING (2): InnerDimple @345.3 | Swage 290.0..355.3
+    S5       EXTRAS  (2): InnerDimple @329.9 | Swage 307.4..346.4
 
   R21 (5 sticks with gaps)
-    T1       MISSING (9): Chamfer @start | InnerDimple @10.0 | InnerDimple @1036.3 | InnerDimple @2062.6 | InnerDimple @2425.9 ... +4
-    T1       EXTRAS  (8): InnerDimple @16.5 | InnerDimple @714.9 | InnerDimple @1411.4 | InnerDimple @2491.1 | Swage 0.0..39.0 ... +3
-    B1       MISSING (5): InnerDimple @1655.9 | InnerNotch 690.5..735.5 | InnerNotch 1386.9..1431.9 | Swage 1606.4..1665.9 | Chamfer @end
-    B1       EXTRAS  (2): InnerDimple @1644.4 | Swage 1621.9..1660.9
-    S1       MISSING (5): InnerDimple @78.5 | InnerDimple @1853.0 | LipNotch 56.0..101.0 | Swage 1797.7..1863.0 | Chamfer @end
-    S1       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1837.6 | Swage 0.0..39.0 | Swage 1815.1..1854.1
-    S2       MISSING (5): InnerDimple @78.5 | InnerDimple @1099.2 | Swage 56.0..101.0 | Swage 1043.8..1109.2 | Chamfer @end
-    S2       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @1083.7 | Swage 0.0..39.0 | Swage 1061.2..1100.2
-    S3       MISSING (5): InnerDimple @78.5 | InnerDimple @345.3 | Swage 56.0..101.0 | Swage 290.0..355.3 | Chamfer @end
-    S3       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @329.9 | Swage 0.0..39.0 | Swage 307.4..346.4
+    T1       MISSING (7): InnerDimple @1036.3 | InnerDimple @2062.6 | InnerDimple @2425.9 | LipNotch 0.0..65.3 | LipNotch 1024.5..1091.7 ... +2
+    T1       EXTRAS  (6): InnerDimple @714.9 | InnerDimple @1411.4 | InnerDimple @2497.6 | LipNotch 692.4..737.4 | LipNotch 1388.9..1433.9 ... +1
+    B1       MISSING (6): InnerDimple @16.5 | InnerDimple @1655.9 | Swage 0.0..39.0 | InnerNotch 690.5..735.5 | InnerNotch 1386.9..1431.9 ... +1
+    B1       EXTRAS  (3): Chamfer @start | InnerDimple @10.0 | InnerDimple @1650.9
+    S1       MISSING (3): InnerDimple @1853.0 | LipNotch 56.0..101.0 | Swage 1797.7..1863.0
+    S1       EXTRAS  (3): InnerDimple @1837.6 | Swage 56.0..101.0 | Swage 1815.1..1854.1
+    S2       MISSING (2): InnerDimple @1099.2 | Swage 1043.8..1109.2
+    S2       EXTRAS  (2): InnerDimple @1083.7 | Swage 1061.2..1100.2
+    S3       MISSING (2): InnerDimple @345.3 | Swage 290.0..355.3
+    S3       EXTRAS  (2): InnerDimple @329.9 | Swage 307.4..346.4

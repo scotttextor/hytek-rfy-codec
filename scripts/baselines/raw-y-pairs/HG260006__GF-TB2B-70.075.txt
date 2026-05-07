@@ -3,70 +3,70 @@ OP-LEVEL DIFF — HG260006 LOT 13 (433) BECKETT ROAD BRIDGEMAN DOWNS-GF-TB2B-70.
 Setup:    F325iT 70mm
 Frames:   our 15 | ref 8
 
-OPS:      our 80 | ref 204
-MATCHED:  55  (27.0% of ref)
-MISSING:  149  (ops Detailer has, we don't)
-EXTRAS:   25   (ops we have, Detailer doesn't)
+OPS:      our 112 | ref 204
+MATCHED:  63  (30.9% of ref)
+MISSING:  141  (ops Detailer has, we don't)
+EXTRAS:   49   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Web@pt                    55        89       25   (38% ref-coverage)
-InnerDimple@pt             0        52        0   (0% ref-coverage)
+Web@pt                    55        89       41   (38% ref-coverage)
+InnerDimple@pt             8        44        8   (15% ref-coverage)
 LeftFlange@span            0         8        0   (0% ref-coverage)
 
 FRAMES WITH GAPS:
 
   HN4-1 (4 sticks with gaps)
-    T3       MISSING (9): InnerDimple @50.0 | Web @174.4 | Web @748.2 | InnerDimple @1063.5 | Web @1173.3 ... +4
-    T3       EXTRAS  (3): Web @33.6 | Web @744.7 | Web @1379.0
+    T3       MISSING (8): Web @174.4 | Web @748.2 | InnerDimple @1063.5 | Web @1173.3 | Web @1382.5 ... +3
+    T3       EXTRAS  (6): Web @33.6 | Web @53.9 | Web @94.2 | InnerDimple @135.4 | Web @744.7 ... +1
     B1       MISSING (8): Web @28.1 | InnerDimple @50.0 | InnerDimple @567.7 | Web @697.7 | InnerDimple @1246.4 ... +3
     W6       MISSING (2): Web @35.0 | Web @372.0
     W8       MISSING (2): Web @35.0 | Web @565.2
 
   HN5-1 (4 sticks with gaps)
-    T4       MISSING (9): InnerDimple @50.0 | Web @174.4 | Web @748.2 | InnerDimple @1063.5 | Web @1173.3 ... +4
-    T4       EXTRAS  (3): Web @33.6 | Web @744.7 | Web @1379.0
+    T4       MISSING (8): Web @174.4 | Web @748.2 | InnerDimple @1063.5 | Web @1173.3 | Web @1382.5 ... +3
+    T4       EXTRAS  (6): Web @33.6 | Web @53.9 | Web @94.2 | InnerDimple @135.4 | Web @744.7 ... +1
     B2       MISSING (8): Web @28.1 | InnerDimple @50.0 | InnerDimple @567.7 | Web @697.7 | InnerDimple @1246.4 ... +3
     W6       MISSING (2): Web @35.0 | Web @372.0
     W8       MISSING (2): Web @35.0 | Web @565.2
 
   HN5-2 (4 sticks with gaps)
-    T4       MISSING (9): InnerDimple @50.0 | Web @174.4 | Web @748.2 | InnerDimple @1063.5 | Web @1173.3 ... +4
-    T4       EXTRAS  (3): Web @33.6 | Web @744.7 | Web @1379.0
+    T4       MISSING (8): Web @174.4 | Web @748.2 | InnerDimple @1063.5 | Web @1173.3 | Web @1382.5 ... +3
+    T4       EXTRAS  (6): Web @33.6 | Web @53.9 | Web @94.2 | InnerDimple @135.4 | Web @744.7 ... +1
     B2       MISSING (8): Web @28.1 | InnerDimple @50.0 | InnerDimple @567.7 | Web @697.7 | InnerDimple @1246.4 ... +3
     W6       MISSING (2): Web @35.0 | Web @372.0
     W8       MISSING (2): Web @35.0 | Web @565.2
 
   HN6-1 (4 sticks with gaps)
-    T3       MISSING (9): Web @33.4 | InnerDimple @50.0 | Web @646.5 | Web @744.5 | Web @953.7 ... +4
-    T3       EXTRAS  (3): Web @748.0 | Web @1382.3 | Web @2093.4
+    T3       MISSING (8): Web @33.4 | Web @646.5 | Web @744.5 | Web @953.7 | InnerDimple @1063.5 ... +3
+    T3       EXTRAS  (6): Web @53.9 | Web @94.2 | InnerDimple @135.4 | Web @748.0 | Web @1382.3 ... +1
     W6       MISSING (2): Web @35.0 | Web @565.2
     B1       MISSING (11): Web @35.0 | InnerDimple @50.0 | Web @128.0 | InnerDimple @728.6 | Web @743.4 ... +6
     B1       EXTRAS  (3): Web @599.7 | Web @1231.6 | Web @1940.0
     W8       MISSING (2): Web @35.0 | Web @372.0
 
   HN7-1 (3 sticks with gaps)
-    T3       MISSING (7): InnerDimple @50.0 | Web @174.4 | Web @748.2 | InnerDimple @762.4 | Web @846.2 ... +2
-    T3       EXTRAS  (2): Web @33.6 | Web @776.7
+    T3       MISSING (6): Web @174.4 | Web @748.2 | InnerDimple @762.4 | Web @846.2 | InnerDimple @1474.7 ... +1
+    T3       EXTRAS  (5): Web @33.6 | Web @41.7 | Web @53.9 | InnerDimple @82.9 | Web @776.7
     B1       MISSING (6): Web @28.1 | InnerDimple @50.0 | InnerDimple @567.7 | Web @1242.0 | InnerDimple @1325.0 ... +1
     W6       MISSING (2): Web @35.0 | Web @582.8
 
   HN7-2 (3 sticks with gaps)
-    T3       MISSING (7): InnerDimple @50.0 | Web @174.4 | Web @748.2 | InnerDimple @762.4 | Web @846.2 ... +2
-    T3       EXTRAS  (2): Web @33.6 | Web @776.7
+    T3       MISSING (6): Web @174.4 | Web @748.2 | InnerDimple @762.4 | Web @846.2 | InnerDimple @1474.7 ... +1
+    T3       EXTRAS  (5): Web @33.6 | Web @41.7 | Web @53.9 | InnerDimple @82.9 | Web @776.7
     B1       MISSING (6): Web @28.1 | InnerDimple @50.0 | InnerDimple @567.7 | Web @1242.0 | InnerDimple @1325.0 ... +1
     W6       MISSING (2): Web @35.0 | Web @582.8
 
   HN7-3 (3 sticks with gaps)
-    T3       MISSING (7): InnerDimple @50.0 | Web @174.4 | Web @748.2 | InnerDimple @762.4 | Web @846.2 ... +2
-    T3       EXTRAS  (2): Web @33.6 | Web @776.7
+    T3       MISSING (6): Web @174.4 | Web @748.2 | InnerDimple @762.4 | Web @846.2 | InnerDimple @1474.7 ... +1
+    T3       EXTRAS  (5): Web @33.6 | Web @41.7 | Web @53.9 | InnerDimple @82.9 | Web @776.7
     B1       MISSING (6): Web @28.1 | InnerDimple @50.0 | InnerDimple @567.7 | Web @1242.0 | InnerDimple @1325.0 ... +1
     W6       MISSING (2): Web @35.0 | Web @582.8
 
   HN8-1 (3 sticks with gaps)
-    T3       MISSING (7): Web @33.4 | InnerDimple @50.0 | Web @678.5 | InnerDimple @762.4 | Web @776.5 ... +2
-    T3       EXTRAS  (2): Web @748.0 | Web @1491.1
+    T3       MISSING (6): Web @33.4 | Web @678.5 | InnerDimple @762.4 | Web @776.5 | Web @1350.3 ... +1
+    T3       EXTRAS  (5): Web @41.7 | Web @53.9 | InnerDimple @82.9 | Web @748.0 | Web @1491.1
     B1       MISSING (8): Web @35.0 | InnerDimple @50.0 | Web @133.0 | Web @775.3 | InnerDimple @807.3 ... +3
     B1       EXTRAS  (2): Web @599.7 | Web @1340.0
     W6       MISSING (2): Web @35.0 | Web @582.8

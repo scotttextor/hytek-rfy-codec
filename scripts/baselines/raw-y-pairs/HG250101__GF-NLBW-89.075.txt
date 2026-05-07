@@ -3,10 +3,10 @@ OP-LEVEL DIFF — HG250101 LOT 78 (21) LOMANDRA PLACE TEWANTIN - Rev2-GF-NLBW-89
 Setup:    F325iT 89mm
 Frames:   our 1 | ref 1
 
-OPS:      our 122 | ref 113
+OPS:      our 117 | ref 113
 MATCHED:  105  (92.9% of ref)
 MISSING:  8  (ops Detailer has, we don't)
-EXTRAS:   17   (ops we have, Detailer doesn't)
+EXTRAS:   12   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
@@ -15,20 +15,19 @@ LipNotch@span             24         2        4   (92% ref-coverage)
 Swage@span                20         4        2   (83% ref-coverage)
 InnerDimple@pt            50         2        2   (96% ref-coverage)
 InnerNotch@span            4         0        4   (100% ref-coverage)
-InnerService@pt            4         0        4   (100% ref-coverage)
-Web@pt                     1         0        1   (100% ref-coverage)
+Web@pt                     1         0        0   (100% ref-coverage)
 Bolt@pt                    2         0        0   (100% ref-coverage)
+InnerService@pt            4         0        0   (100% ref-coverage)
 
 FRAMES WITH GAPS:
 
-  N64 (6 sticks with gaps)
-    B3       EXTRAS  (1): Web @8.0
+  N64 (5 sticks with gaps)
     H1       EXTRAS  (2): InnerDimple @58.5 | InnerDimple @1815.5
     N1       MISSING (2): Swage 0.0..39.0 | Swage 97.0..136.0
     N1       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 97.0..136.0 | LipNotch 97.0..136.0
     N2       MISSING (2): Swage 0.0..39.0 | Swage 79.0..118.0
     N2       EXTRAS  (4): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | InnerNotch 79.0..118.0 | LipNotch 79.0..118.0
     S2       MISSING (2): InnerDimple @57.5 | LipNotch 1253.0..1298.0
-    S2       EXTRAS  (3): InnerService @296.0 | InnerService @446.0 | Swage 1253.0..1298.0
+    S2       EXTRAS  (1): Swage 1253.0..1298.0
     S8       MISSING (2): InnerDimple @57.5 | LipNotch 1253.0..1298.0
-    S8       EXTRAS  (3): InnerService @296.0 | InnerService @446.0 | Swage 1253.0..1298.0
+    S8       EXTRAS  (1): Swage 1253.0..1298.0

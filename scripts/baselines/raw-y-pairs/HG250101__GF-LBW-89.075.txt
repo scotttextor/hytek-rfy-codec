@@ -3,40 +3,40 @@ OP-LEVEL DIFF — HG250101 LOT 78 (21) LOMANDRA PLACE TEWANTIN - Rev2-GF-LBW-89.
 Setup:    F325iT 89mm
 Frames:   our 1 | ref 1
 
-OPS:      our 400 | ref 423
-MATCHED:  327  (77.3% of ref)
-MISSING:  96  (ops Detailer has, we don't)
-EXTRAS:   73   (ops we have, Detailer doesn't)
+OPS:      our 415 | ref 423
+MATCHED:  359  (84.9% of ref)
+MISSING:  64  (ops Detailer has, we don't)
+EXTRAS:   56   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           147        28       24   (84% ref-coverage)
 LipNotch@span             54        15       19   (78% ref-coverage)
 Swage@span                70        12       17   (85% ref-coverage)
-Web@pt                     5        19        1   (21% ref-coverage)
-Chamfer@start              0        10        0   (0% ref-coverage)
-Chamfer@end                0        10        0   (0% ref-coverage)
-InnerService@pt           27         0        8   (100% ref-coverage)
+InnerDimple@pt           159        16       12   (91% ref-coverage)
+Web@pt                     5        19        0   (21% ref-coverage)
 InnerNotch@span           19         2        4   (90% ref-coverage)
+InnerService@pt           27         0        4   (100% ref-coverage)
 Bolt@pt                    5         0        0   (100% ref-coverage)
+Chamfer@start             10         0        0   (100% ref-coverage)
+Chamfer@end               10         0        0   (100% ref-coverage)
 
 FRAMES WITH GAPS:
 
   L24 (25 sticks with gaps)
     T1       EXTRAS  (2): LipNotch 1603.4..1672.2 | LipNotch 3403.0..3532.0
     B1       EXTRAS  (1): LipNotch 1504.0..1543.0
-    B3       EXTRAS  (2): Web @8.0 | LipNotch 36.0..81.0
+    B3       EXTRAS  (1): LipNotch 36.0..81.0
     H1       MISSING (18): Web @89.0 | Web @388.3 | Web @687.7 | Web @987.0 | Web @1286.3 ... +13
     H1       EXTRAS  (11): LipNotch 199.8..249.8 | LipNotch 269.8..319.8 | LipNotch 563.4..613.4 | LipNotch 633.4..683.4 | LipNotch 927.0..977.0 ... +6
     H3       MISSING (11): Web @89.0 | Web @388.3 | Web @687.7 | InnerDimple @987.0 | Web @987.0 ... +6
     H3       EXTRAS  (7): InnerDimple @58.5 | InnerDimple @1835.5 | InnerDimple @1877.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 ... +2
     N1       EXTRAS  (3): InnerDimple @1286.5 | InnerNotch 1462.0..1507.0 | LipNotch 1462.0..1507.0
-    W1       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @182.8 | Swage 124.7..192.8 | Chamfer @end
-    W1       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @174.8 | Swage 152.3..191.3
-    W2       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @183.5 | Swage 125.1..193.5 | Chamfer @end
-    W2       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @175.5 | Swage 153.0..192.0
-    W3       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @183.5 | Swage 125.1..193.5 | Chamfer @end
-    W3       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @175.5 | Swage 153.0..192.0
-    W4       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @183.5 | Swage 125.1..193.5 | Chamfer @end
-    W4       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @175.5 | Swage 153.0..192.0
+    W1       MISSING (1): Swage 124.7..192.8
+    W1       EXTRAS  (1): Swage 121.0..191.3
+    W2       MISSING (2): InnerDimple @183.5 | Swage 125.1..193.5
+    W2       EXTRAS  (2): InnerDimple @182.0 | Swage 121.2..192.0
+    W3       MISSING (2): InnerDimple @183.5 | Swage 125.1..193.5
+    W3       EXTRAS  (2): InnerDimple @182.0 | Swage 121.2..192.0
+    W4       MISSING (2): InnerDimple @183.5 | Swage 125.1..193.5
+    W4       EXTRAS  (2): InnerDimple @182.0 | Swage 121.2..192.0

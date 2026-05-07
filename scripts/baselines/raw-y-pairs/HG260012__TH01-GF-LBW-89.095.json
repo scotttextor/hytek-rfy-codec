@@ -1,17 +1,17 @@
 {
   "inputXml": "Y:\\(17) 2026 HYTEK PROJECTS\\AKAM CONSTRUCTIONS\\HG260012 23 SPRINGWOOD ST TOWNHOUSES\\03 DETAILING\\03 FRAMECAD DETAILER\\01 XML OUTPUT\\HG260012 [Akam] 23 Springwood Street -TH01-02-TH01-GF-LBW-89.095.xml",
   "reference": "Y:\\(17) 2026 HYTEK PROJECTS\\AKAM CONSTRUCTIONS\\HG260012 23 SPRINGWOOD ST TOWNHOUSES\\06 MANUFACTURING\\04 ROLLFORMER FILES\\HG260012#3-1_SPLIT_2026-04-16\\HG260012#1-1_TH01-GF-LBW-89.095.rfy",
-  "generated": "2026-05-06T22:04:17.571Z",
+  "generated": "2026-05-07T03:29:24.478Z",
   "setup": {
     "id": "6",
     "name": "F325iT 89mm"
   },
   "totals": {
-    "ours": 259,
+    "ours": 290,
     "ref": 257,
-    "matched": 208,
-    "missing": 49,
-    "extras": 51
+    "matched": 213,
+    "missing": 44,
+    "extras": 77
   },
   "byFrame": [
     {
@@ -50,7 +50,6 @@
           "refLength": 887,
           "matchedCount": 8,
           "extras": [
-            "Web @8.0",
             "LipNotch 36.0..81.0",
             "LipNotch 842.0..887.0"
           ],
@@ -95,6 +94,8 @@
           "matchedCount": 3,
           "extras": [
             "InnerDimple @10.0",
+            "InnerDimple @10.0",
+            "InnerDimple @365.6",
             "InnerDimple @365.6",
             "Swage 329.9..375.6"
           ],
@@ -108,61 +109,65 @@
           "name": "W2",
           "oursLength": 396.7332,
           "refLength": 395.809199798373,
-          "matchedCount": 5,
+          "matchedCount": 6,
           "extras": [
+            "InnerDimple @10.0",
+            "InnerDimple @386.7",
             "Swage 348.2..396.7"
           ],
-          "missing": [
-            "Swage 353.4..395.8"
-          ]
+          "missing": []
         },
         {
           "name": "W3",
           "oursLength": 411.2999,
           "refLength": 410.418549639652,
-          "matchedCount": 5,
+          "matchedCount": 6,
           "extras": [
+            "InnerDimple @10.0",
+            "InnerDimple @401.3",
             "Swage 361.0..411.3"
           ],
-          "missing": [
-            "Swage 365.0..410.4"
-          ]
+          "missing": []
         },
         {
           "name": "W4",
           "oursLength": 456.102,
           "refLength": 455.348484122771,
-          "matchedCount": 5,
+          "matchedCount": 6,
           "extras": [
-            "Swage 400.0..456.1"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @446.1",
+            "Swage 400.0..456.1",
+            "Chamfer @end"
           ],
-          "missing": [
-            "Swage 402.0..455.3"
-          ]
+          "missing": []
         },
         {
           "name": "W5",
           "oursLength": 459.7138,
           "refLength": 458.973382361177,
-          "matchedCount": 5,
+          "matchedCount": 6,
           "extras": [
-            "Swage 403.1..459.7"
+            "Chamfer @start",
+            "InnerDimple @10.0",
+            "InnerDimple @449.7",
+            "Swage 403.1..459.7",
+            "Chamfer @end"
           ],
-          "missing": [
-            "Swage 405.0..459.0"
-          ]
+          "missing": []
         },
         {
           "name": "W6",
           "oursLength": 411.9739,
           "refLength": 411.095797292207,
-          "matchedCount": 5,
+          "matchedCount": 6,
           "extras": [
+            "InnerDimple @10.0",
+            "InnerDimple @402.0",
             "Swage 361.6..412.0"
           ],
-          "missing": [
-            "Swage 365.5..411.1"
-          ]
+          "missing": []
         },
         {
           "name": "W7",
@@ -171,6 +176,8 @@
           "matchedCount": 3,
           "extras": [
             "InnerDimple @10.0",
+            "InnerDimple @10.0",
+            "InnerDimple @365.6",
             "InnerDimple @365.6",
             "Swage 329.9..375.6"
           ],
@@ -181,13 +188,30 @@
           ]
         },
         {
+          "name": "S1",
+          "oursLength": 2502,
+          "refLength": 2502,
+          "matchedCount": 8,
+          "extras": [
+            "InnerService @146.0",
+            "InnerService @1250.0",
+            "InnerService @2051.5",
+            "InnerService @2367.9"
+          ],
+          "missing": []
+        },
+        {
           "name": "S2",
           "oursLength": 2502,
           "refLength": 2502,
           "matchedCount": 6,
           "extras": [
+            "InnerService @146.0",
             "InnerService @296.0",
-            "InnerService @446.0"
+            "InnerService @446.0",
+            "InnerService @1250.0",
+            "InnerService @2051.5",
+            "InnerService @2367.9"
           ],
           "missing": [
             "InnerService @78.0",
@@ -202,8 +226,10 @@
           "refLength": 2502,
           "matchedCount": 7,
           "extras": [
-            "InnerService @296.0",
-            "InnerService @446.0",
+            "InnerService @146.0",
+            "InnerService @1250.0",
+            "InnerService @2051.5",
+            "InnerService @2367.9",
             "Swage 1228.0..1273.0"
           ],
           "missing": [
@@ -222,7 +248,9 @@
           "oursLength": 381,
           "refLength": 382,
           "matchedCount": 4,
-          "extras": [],
+          "extras": [
+            "InnerService @246.9"
+          ],
           "missing": [
             "Web @79.0",
             "InnerService @179.9",
@@ -330,8 +358,6 @@
           "refLength": 2502,
           "matchedCount": 7,
           "extras": [
-            "InnerService @296.0",
-            "InnerService @446.0",
             "Swage 1228.0..1273.0"
           ],
           "missing": [

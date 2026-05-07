@@ -3,42 +3,39 @@ OP-LEVEL DIFF — HG250136 18 AGATE STREET CAMP HILL-GF-LBW-89.095.xml vs HG2501
 Setup:    F325iT 89mm
 Frames:   our 1 | ref 1
 
-OPS:      our 280 | ref 278
-MATCHED:  209  (75.2% of ref)
-MISSING:  69  (ops Detailer has, we don't)
-EXTRAS:   71   (ops we have, Detailer doesn't)
+OPS:      our 278 | ref 278
+MATCHED:  234  (84.2% of ref)
+MISSING:  44  (ops Detailer has, we don't)
+EXTRAS:   44   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt            99        19       17   (84% ref-coverage)
 LipNotch@span             27        12       21   (69% ref-coverage)
-Swage@span                47        10       13   (82% ref-coverage)
-InnerService@pt           12         3       16   (80% ref-coverage)
-Web@pt                     9        12        4   (43% ref-coverage)
-Chamfer@end                0         6        0   (0% ref-coverage)
-Chamfer@start              0         5        0   (0% ref-coverage)
+InnerDimple@pt           109         9        7   (92% ref-coverage)
+Web@pt                     9        12        2   (43% ref-coverage)
+Swage@span                52         5        8   (91% ref-coverage)
+InnerService@pt           12         3        6   (80% ref-coverage)
 Bolt@pt                    3         2        0   (60% ref-coverage)
+Chamfer@end                5         1        0   (83% ref-coverage)
 InnerNotch@span           12         0        0   (100% ref-coverage)
+Chamfer@start              5         0        0   (100% ref-coverage)
 
 FRAMES WITH GAPS:
 
-  L31 (23 sticks with gaps)
+  L31 (14 sticks with gaps)
     T1       MISSING (1): LipNotch 3281.0..3320.0
     T1       EXTRAS  (9): Web @2581.0 | Web @3031.0 | LipNotch 48.5..93.5 | LipNotch 703.2..748.2 | LipNotch 763.9..820.2 ... +4
     B1       EXTRAS  (2): LipNotch 48.5..93.5 | LipNotch 197.0..242.0
     B2       MISSING (2): Bolt @2157.0 | Bolt @2248.0
     B3       MISSING (2): InnerDimple @403.0 | LipNotch 389.0..413.0
-    B3       EXTRAS  (4): Web @8.0 | InnerDimple @393.5 | LipNotch 36.0..81.0 | LipNotch 365.0..410.0
+    B3       EXTRAS  (3): InnerDimple @393.5 | LipNotch 36.0..81.0 | LipNotch 365.0..410.0
     B4       MISSING (6): InnerDimple @10.0 | InnerDimple @353.4 | InnerService @359.6 | Swage 0.0..23.4 | Swage 282.1..363.4 ... +1
-    B4       EXTRAS  (5): Web @8.0 | InnerDimple @16.5 | InnerDimple @336.1 | LipNotch 0.0..45.0 | LipNotch 307.6..352.6
+    B4       EXTRAS  (4): InnerDimple @16.5 | InnerDimple @336.1 | LipNotch 0.0..45.0 | LipNotch 307.6..352.6
     H1       MISSING (3): LipNotch 922.4..1111.4 | LipNotch 1922.8..2109.2 | LipNotch 2453.0..2534.0
     H1       EXTRAS  (6): LipNotch 86.9..131.9 | LipNotch 931.0..981.0 | LipNotch 1001.9..1090.3 | LipNotch 1931.4..1981.4 | LipNotch 2002.3..2090.7 ... +1
-    W1       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @647.8 | Swage 606.9..657.8 | Chamfer @end
-    W1       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @640.1 | Swage 617.6..656.6
-    W2       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @672.3 | Swage 628.7..682.3 | Chamfer @end
-    W2       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @664.5 | Swage 642.0..681.0
-    W3       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @672.3 | Swage 628.7..682.3 | Chamfer @end
-    W3       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @664.5 | Swage 642.0..681.0
-    W4       MISSING (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @672.3 | Swage 628.7..682.3 | Chamfer @end
-    W4       EXTRAS  (3): InnerDimple @16.5 | InnerDimple @664.5 | Swage 642.0..681.0
+    S3       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
+    S4       MISSING (6): InnerDimple @57.5 | Web @2509.0 | Web @2711.5 | Web @2914.0 | LipNotch 1303.0..1348.0 ... +1
+    S4       EXTRAS  (2): Swage 1303.0..1348.0 | Swage 2653.0..2698.0
+    S5       MISSING (3): Web @79.0 | Web @281.5 | Web @484.0
+    S10      MISSING (3): Web @79.0 | Web @281.5 | Web @484.0

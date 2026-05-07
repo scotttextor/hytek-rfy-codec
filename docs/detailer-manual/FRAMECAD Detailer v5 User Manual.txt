@@ -1,0 +1,4766 @@
+
+
+===== PAGE 1 =====
+
+
+
+===== PAGE 2 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+i 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+This document has been published for the purpose of providing information of a general nature only. 
+Further, no guarantee, warranty, or any other form of assurance is given as to the accuracy, currency 
+or completeness of the information provided. 
+Accordingly, any reliance on, or use, by you of any information contained within this document for any 
+purpose whatsoever shall be entirely at your own risk, and any liability to you is expressly disclaimed 
+to the maximum extent permitted by law. 
+ALL INFORMATION CONTAINED IN THIS DOCUMENT IS SUBJECT TO CHANGE WITHOUT 
+NOTICE.  THIS DOCUMENT SUPERSEDES ALL PREVIOUS DOCUMENTS. 
+ 
+ 
+FRAMECAD® and the FRAMECAD® logo are trademarks of FRAMECAD Limited. 
+Reproduction of this document and all material included herein is prohibited, except with the prior 
+written consent of FRAMECAD Limited. 
+Copyright 2018 FRAMECAD Limited. 
+ 
+ 
+This document and all material included herein is confidential to FRAMECAD Limited and must not be 
+disclosed to any other party or used to the detriment of or other than as authorised by FRAMECAD 
+Limited. 
+This document and all material included herein shall be returned to FRAMECAD Limited Immediately 
+upon request. 
+ 
+Disclaimer 
+Intellectual Property Notice 
+Confidentiality 
+
+
+===== PAGE 3 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+ii 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+For all sales, support, licensing and software subscription renewals contact FRAMECAD 
+http://my.framecad.com 
+Important Contact Information 
+
+
+===== PAGE 4 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+iii 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Disclaimer 
+i 
+Intellectual Property Notice 
+i 
+Confidentiality 
+i 
+Important Contact Information 
+ii 
+1 
+Introduction 
+1 
+1.1 
+Pre-requisites ....................................................................................................................... 1 
+1.2 
+System Requirements ......................................................................................................... 1 
+2 
+Software Installation 
+2 
+2.1 
+Installation Types ................................................................................................................ 2 
+2.1.1 
+Installation ............................................................................................................................ 2 
+2.2 
+Dongle Usage ....................................................................................................................... 6 
+2.3 
+Updating Your License ....................................................................................................... 8 
+3 
+Defaults and Global Settings 
+10 
+3.1 
+CAD ..................................................................................................................................... 10 
+3.2 
+General ................................................................................................................................ 11 
+3.2.1 
+Directories .......................................................................................................................... 11 
+3.2.2 
+Other ................................................................................................................................... 11 
+3.2.3 
+Units of Measurement ...................................................................................................... 12 
+3.2.4 
+VRML .................................................................................................................................. 12 
+3.3 
+Fonts .................................................................................................................................... 13 
+3.4 
+Default Names ................................................................................................................... 13 
+4 
+Machine and Frame Type Setups 
+14 
+4.1 
+Machine Setups .................................................................................................................. 14 
+4.2 
+Creating Machine Setups ................................................................................................. 17 
+4.2.1 
+Tools .................................................................................................................................... 19 
+4.2.2 
+Tool Lengths ....................................................................................................................... 20 
+4.2.3 
+General ................................................................................................................................ 21 
+4.2.4 
+Clearances ........................................................................................................................... 25 
+4.2.5 
+Boxing ................................................................................................................................. 27 
+4.3 
+Section Setup ...................................................................................................................... 28 
+4.4 
+Frame Types ....................................................................................................................... 32 
+4.4.1 
+Creating Frame Types ....................................................................................................... 32 
+4.5 
+Exporting Frame Types and Machine Setups ................................................................ 39 
+4.6 
+Importing Frame Types and Machine Setups ............................................................... 39 
+Contents 
+
+
+===== PAGE 5 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+iv 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+5 
+FRAMECAD Detailer Components 
+40 
+5.1 
+Menu Bar ............................................................................................................................ 40 
+5.1.1 
+File ....................................................................................................................................... 41 
+5.1.2 
+Edit ...................................................................................................................................... 42 
+5.1.3 
+Draw (includes command shortcuts) ............................................................................. 43 
+5.1.4 
+Snaps/Aids .......................................................................................................................... 43 
+5.1.5 
+Tools .................................................................................................................................... 44 
+5.1.6 
+View .................................................................................................................................... 45 
+5.1.7 
+Help ..................................................................................................................................... 45 
+5.2 
+Toolbar ................................................................................................................................ 45 
+5.3 
+Project Tree ......................................................................................................................... 47 
+5.3.1 
+Merge Plans ........................................................................................................................ 48 
+5.3.2 
+Production Sort Order ...................................................................................................... 48 
+5.4 
+Project Information ........................................................................................................... 48 
+5.5 
+Creating and Deleting Plans ............................................................................................ 49 
+6 
+Plan View Tools 
+50 
+6.1 
+Toolbar 1 ............................................................................................................................. 50 
+6.2 
+Toolbar 2 ............................................................................................................................. 67 
+7 
+Assigning Properties to a Frame 
+82 
+7.1 
+General ................................................................................................................................ 83 
+7.2 
+Cloned Frames ................................................................................................................... 84 
+7.3 
+Multiple Selected Frame Properties ................................................................................ 85 
+7.4 
+Script Basics ........................................................................................................................ 85 
+7.5 
+Script Selection ................................................................................................................... 85 
+7.6 
+Setting the Variables ......................................................................................................... 85 
+7.7 
+Picking ................................................................................................................................ 86 
+7.8 
+Array’s – Multi-Value Variables ...................................................................................... 86 
+7.9 
+Additional Features........................................................................................................... 86 
+7.10 
+Wall Frame Properties ...................................................................................................... 86 
+7.10.1 
+Machine Setup ................................................................................................................... 86 
+7.10.2 
+Main .................................................................................................................................... 88 
+7.10.3 
+Openings ............................................................................................................................. 92 
+7.10.4 
+Triples ................................................................................................................................. 94 
+8 
+Detailing Frames 
+97 
+8.1 
+Automated Building ......................................................................................................... 98 
+8.2 
+Manual Building and Modifications ............................................................................... 98 
+8.3 
+Placing Studs and Plates ................................................................................................. 101 
+8.4 
+Inserting Braces................................................................................................................ 102 
+8.5 
+Stick Properties ................................................................................................................ 103 
+8.6 
+Multiple Box Reinforcing of Members ......................................................................... 103 
+9 
+Detailing a Roof 
+106 
+9.1 
+Creating Roof Plane Lines .............................................................................................. 106 
+9.2 
+Roof Block Input .............................................................................................................. 108 
+9.3 
+Creating Roof Lines – Automatic Method ................................................................... 109 
+
+
+===== PAGE 6 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+v 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+9.4 
+Roof Truss Block Input ................................................................................................... 110 
+9.5 
+Panel Roofs ....................................................................................................................... 115 
+10 
+Project Finalisation 
+117 
+10.1 
+Design Checks .................................................................................................................. 118 
+10.2 
+Housekeeping (keeping the file system tidy) .............................................................. 119 
+11 
+Creating 3 Dimensional Views 
+120 
+11.1 
+Elevation Settings ............................................................................................................ 120 
+11.2 
+File Type Information ..................................................................................................... 121 
+11.3 
+Exporting to 3D ................................................................................................................ 121 
+11.4 
+3D Pitch Settings .............................................................................................................. 121 
+12 
+Import and Export Options 
+123 
+12.1 
+Import Options ................................................................................................................ 123 
+12.1.1 
+XML File Import .............................................................................................................. 123 
+12.2 
+Export Options ................................................................................................................. 128 
+12.3 
+RFY Files ........................................................................................................................... 130 
+13 
+Working with External Programs 
+132 
+13.1 
+Importing to Detailer ...................................................................................................... 132 
+13.2 
+Exporting from Detailer ................................................................................................. 132 
+14 
+Layers 
+133 
+14.1 
+A Single Layer .................................................................................................................. 133 
+14.2 
+Plan View .......................................................................................................................... 134 
+15 
+Coordinate System 
+135 
+15.1 
+Absolute Coordinate Entry ............................................................................................ 135 
+15.2 
+Angular Coordinate Entry ............................................................................................. 136 
+15.3 
+Polar Coordinate Entry ................................................................................................... 136 
+15.4 
+Relative Coordinate Entry .............................................................................................. 136 
+15.5 
+Relative Polar Coordinate Entry.................................................................................... 136 
+15.6 
+Last Point Snap ................................................................................................................ 136 
+15.7 
+Direct Distance Entry ...................................................................................................... 137 
+16 
+Basic Actions 
+138 
+16.1 
+Action Keys ...................................................................................................................... 138 
+16.2 
+Object Selection ................................................................................................................ 139 
+16.2.1 
+Single Object Selection .................................................................................................... 139 
+16.2.2 
+Multiple Object Selection................................................................................................ 139 
+16.2.3 
+Unselecting ....................................................................................................................... 139 
+16.2.4 
+Selection by Fencing ........................................................................................................ 139 
+16.3 
+Deleting Objects ............................................................................................................... 140 
+16.4 
+Mouse ................................................................................................................................ 140 
+16.4.1 
+Wheel Mouse Zooming .................................................................................................. 140 
+16.4.2 
+Mouse wheel zoom all .................................................................................................... 141 
+16.4.3 
+Panning ............................................................................................................................. 141 
+
+
+===== PAGE 7 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+vi 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+16.5 
+Moving Objects and Dragging ...................................................................................... 141 
+16.6 
+Tool / Command Structure ............................................................................................ 141 
+16.7 
+Tool / Command Options ............................................................................................... 142 
+17 
+Index 
+145 
+  
+
+
+===== PAGE 8 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+1 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The FRAMECAD® Detailer Basic Skills manual is for new users to the FRAMECAD Detailer software.  
+No previous knowledge of CAD systems is required; however a basic understanding of computer 
+systems and their file structures is required.  The user must have an understanding of building design 
+requirements and a knowledge of local building code compliance. 
+Please note that although we do our best to automate your production process, you are responsible 
+for verifying that all measurements and material lists are correct and that the design and any 
+substitutions or modifications made meets all local building codes and requirements. You must verify 
+that all design criteria and materials are consistent with conditions of the constructions site, including 
+bracing and bridging. You should review the design with a qualified engineer and / or the appropriate 
+local authorities.  For more information on FRAMECAD Ltd terms & conditions of sale visit 
+http://framecad.com/terms-and-conditions-of-sales. 
+ 
+ 
+1.1 
+PRE-REQUISITES 
+• 
+Basic understanding of Computers and the Windows Operating System is required. 
+ 
+ 
+1.2 
+SYSTEM REQUIREMENTS 
+FRAMECAD Detailer requires the following minimum system requirements to run:  
+• 
+Intel® Core i5 processor or Equivalent 
+• 
+8GB RAM 
+• 
+100Mb free disk space (more for saved job files) 
+• 
+Windows7 / Windows8.1 / Windows10 (must be a genuine and legal version of Windows)  
+ 
+ 
+1 
+Introduction 
+
+
+===== PAGE 9 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+2 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+2.1 
+INSTALLATION TYPES 
+There are two types of installers available: 
+• 
+A read only version installer 
+• 
+A full version installer 
+The full version will only operate if a valid HASP/dongle is connected to the computer (refer to the 
+dongle usage section below). The read only version does not require any security devices to operate 
+and has the same functionality as the full version with the exception of saving and exporting to the 
+machine. 
+ 
+2.1.1 
+Installation 
+• 
+Download FRAMECAD Detailer from the MyFRAMECAD website: https://my.framecad.com.   
+• 
+Access information for the MyFRAMECAD Customer website is provided on your software 
+purchase. If you require further assistance contact the FRAMECAD Aftersales Team at 
+support@framecad.com . 
+• 
+Once logged in, the ‘Software Updates’ will be in the left hand list under ‘My Product’: 
+ 
+2 
+Software Installation 
+
+
+===== PAGE 10 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+3 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+• 
+Installations and Updates are available under the Detailer section:  
+ 
+ 
+• 
+Save the download file then double click on it to install the software. 
+• 
+Select the correct Language from the Installer Language dialogue box then click on ‘OK’. 
+ 
+
+
+===== PAGE 11 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+4 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+• 
+When the Welcome screen appears, click ‘next’. 
+ 
+• 
+Read the Licence Agreement, and if you accept the terms of the agreement, click ‘Install’.  If you 
+do not agree with the terms of the agreement, click ‘Cancel’. 
+ 
+• 
+FRAMECAD Detailer will now install. 
+ 
+
+
+===== PAGE 12 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+5 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+• 
+During the installation process, a dialogue box will appear asking if you would like to download 
+and install Visual Enterprise Viewer for viewing 3D vrml files. Earlier installations came with 
+DeepView. Visual Enterprise Viewer replaces the DeepView software. If you already have Visual 
+Enterprise Viewer from a previous installation, click on ‘No’. 
+ 
+• 
+Click on ‘next’. 
+ 
+• 
+To start FRAMECAD Detailer immediately, leave the ‘Run FRAMECAD Detailer’ checkbox ticked. 
+If you would like a shortcut placed on your desktop then leave the ‘Add desktop shortcut’ 
+checkbox ticked. Click Finish. 
+ 
+
+
+===== PAGE 13 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+6 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+2.2 
+DONGLE USAGE 
+A  Dongle/HASP is a hardware security device that is connected to a USB port on the computer.  
+FRAMECAD Detailer will only run if a valid dongle can be found (with the exception of the read only 
+version). 
+A valid dongle will contain a licence that includes a unique ID number and a licence expiry date.  As 
+part of the installation process, the drivers for the dongle will be installed as well as a service that runs 
+in the background that will monitor the status of any connected HASPs.  
+ 
+The above screen can be displayed by running FRAMECAD Detailer and clicking License information 
+under the Help menu (assuming your license hasn’t already expired). Alternatively you can open up a 
+browser and go the following URL: http://localhost:1947/_int_/devices.html and click features on the 
+corresponding connected HASP you want more information about it. 
+ 
+
+
+===== PAGE 14 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+7 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+ 
+This will show all of the information relating to your connected HASP. The row which has a feature ID 
+of 70 is the FRAMECAD Detailer license information and as shown below says it will expire on the 
+start of April 2009. 
+ 
+If there are not enough USB ports available then a USB hub can be purchased which will expand the 
+possible number of ports. There are also NET dongles available that can allow a number of sessions 
+to be established by only using one computer. 
+ 
+ 
+Figure 1: Port USB Hub 
+
+
+===== PAGE 15 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+8 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+2.3 
+UPDATING YOUR LICENSE 
+To update your licence, run a program called Hasp Remote Update in Start | All Programs | 
+FRAMECAD | Detailer | Version #  with the dongle you use connected. 
+ 
+ 
+Under the Collect Key Status Information tab click collect information, this will prompt you to save a 
+"C2V" (Client to Vendor) file.  We will need this file in order to update your license information. 
+ 
+
+
+===== PAGE 16 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+9 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+After FRAMECAD Ltd has received your "C2V" file we will then generate a "V2C" (Vendor to client) file 
+that you upload by running Hasp Remote Update and under the Apply Licence Update tab click on the 
+browse button and open the V2C file. 
+ 
+ 
+You can view the status of your licence at any time by running FRAMECAD Detailer and under the 
+‘About’ menu click licence information, this will tell you when and how many days are left on your 
+licence. 
+It is also possible that you may be given an executable file (exe) from us which has the Hasp Remote 
+Update and the v2c preloaded to it, in this case you just need to run the program and click on the 
+apply update button while your hasp is connected. Generally, if you can supply your hasp ID to us 
+then there is no need to use the first method to update your license. 
+
+
+===== PAGE 17 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+10 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+3 
+Defaults and Global Settings 
+To access the Defaults and Global Settings, go to ‘Edit | Options’ in the menu bar or press Ctrl+O. 
+3.1 
+CAD 
+In the CAD tab the user can configure the CAD environment: 
+ 
+ 
+ 
+
+
+===== PAGE 18 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+11 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+3.2 
+GENERAL 
+ 
+3.2.1 
+Directories 
+Directories used for Excel Templates, User Scripts and Custom Logos.  
+To use Custom Logos, point the directory location to where your custom company logo is stored, then 
+tick on the ‘Use custom logo’ option in the ‘Printing’ option list below.  
+Note: Make sure there are no spaces contained in the file name.  
+3.2.2 
+Other 
+Draw elevation reference – Draws a line indicating the zero-level location. For a frame created in 
+Detailer it will be under the bottom plate: 
+ 
+
+
+===== PAGE 19 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+12 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Draw frame view reference – Draws an arrow to the middle of the frame indicating the side the frame 
+in looked at in elevation view.  
+Use Unicode machine files – leave ticked for use with all FRAMECAD machines.  
+Load last opened job on startup – Untick if you want a new job on startup.  
+Ignore auto extend for top and bottom plates – Tick this option to work in conjunction with the Auto 
+Extend - Multiple Member (AM) option. By default, top and bottom plates are cut back by the End 
+Clearance specified in the Machine Setups – Clearances tab. 
+ 
+3.2.3 
+Units of Measurement 
+FRAMECAD Detailer is capable of operating in either Metric (millimetres) or Imperial (feet, inches 
+and fractions).  The units of measurement are in the menu Edit | Options – Click on the General Tab 
+and select either Metric or Imperial.  
+You can also type TU (Toggle Units) into the Command Bar to change units. A plan must be added to 
+activate the Command Bar.   
+Metric measurements are shown in millimetres, and in simple number format.  1 meter is 1000 
+millimetres, and shown as 1000. 
+Imperial measurements are showing in feet (‘), inches (") and fractions thereof.  1 foot can be shown 
+as 1’ (1 foot) or 12" (12 inches).  1 and a half feet (1 foot 6 inches), can be shown as 1’6" (1 foot 6 
+inches), or 18" (18 inches).  1 and ¾ inches is described as 1-3/4".  One way to describe 6 feet, 11 
+and 31/32 inches is 6’11-31/32". 
+3.2.4 
+VRML 
+Allows the users to set background and ground colours which will be applied to the 3D VRML export 
+file. Colours for frames can be set in the Frame Types (ctrl+T) setup dialogue and in the XML Import – 
+Options dialogue for imported frames.  
+ 
+ 
+
+
+===== PAGE 20 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+13 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+3.3 
+FONTS 
+Customise the default font type and size. 
+ 
+3.4 
+DEFAULT NAMES 
+Customise the default labels for stick types: 
+
+
+===== PAGE 21 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+14 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Setups have multiple purposes within Detailer and it is important that you understand how they work 
+as they will affect how frames come out of the machine. 
+Setups are responsible for the following: 
+• 
+Telling Detailer what machine you are exporting your frames to. 
+• 
+What section shape, size, steel thickness you are using within your frames. 
+• 
+Determines how the tooling operations are calculated on the frames. 
+• 
+Determines the frames orientation, i.e. Back To Back, On Edge or On Flat (Discussed later). 
+ 
+ 
+ 
+Different types of setups: 
+• 
+Machine Setups are created in the Machine Setup dialog. They control section types, 
+available tools, tool lengths, clearences, extra fastening position, etc. Machine Setups replace 
+the ‘Machine Configurations’ found in Framecad Detailer V4 and earlier. 
+• 
+Section Setups are part of Machine Setups. A machine setup can contain 1…n section 
+setups that hold information about the section’s shape, size, gauge, steel, coating, etc. 
+• 
+Frame Setups can only be created once the Machine Setup is finalised. They control what 
+type of section and machine will be used for each frame, such as Walls, Joists, Trusses, etc. 
+They also control Tool Actions (standard, back to back, reversed, etc.). and default scripts can 
+also be configured here.  
+When you open the program for the first time you must set up your machine proprerties and section 
+profiles and then set up your frame types.  
+4.1 
+MACHINE SETUPS 
+The machine setups tell Detailer the following information: 
+• 
+Tools available for the machine. 
+• 
+Tool lengths.  
+• 
+Section profiles that the machine can produce.  
+• 
+Dimple heights (distance from the web of the steel section to the centre of the dimple), flange-hole 
+heights, etc.  
+• 
+Various other clearances.  
+This is just to give you an idea of some of the options in a machine setup. Each of the available 
+options will be shown and explained. Each machine file will be filtered by a corresponding machine 
+series. There are two types of machine setups: 
+• 
+Default Machine Setups – These configurations must be set up when you first run the 
+program before any jobs can be created. These are saved on your hard drive. 
+• 
+Project Machine Setups – These are created from any saved configurations that are being 
+used when you create a frame. It takes a copy from the ‘default machine setup’ and creates 
+the ‘project machine setup’. This means that all the information about the configuration is 
+stored within the job file and you do not need to send your saved configuration files to 
+someone else’s computer in order for them to open your job file or create a machine file. A 
+project can have multiple ‘project machine setups’. 
+4 
+Machine and Frame Type Setups 
+
+
+===== PAGE 22 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+15 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+The equals sign indicates that the section setups are identical between the project and the saved 
+machine setup.  
+The example below shows the project machine setup being not equal to the saved machine setup. 
+This occurs when a job is imported from FRAMECAD Structure® and the section profile setup in the 
+job is not identical to what has been setup in the machine settings:  
+ 
+The example below shows the project machine setup of a job that was created on another computer: 
+ 
+
+
+===== PAGE 23 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+16 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The screenshot below shows the Machine Setup for a built wall frame: 
+ 
+For this particular frame (Ex1), the setups are: 
+• 
+Machine type: F325iT 
+• 
+Sections for the stud and plate: 89S41/0.75. 
+• 
+Steel grade: G500 
+• 
+Coating class: Z275 – zinc coating of 275 g/m2 
+If there are other machine setups available, the user has the ability to change to these by clicking on a 
+machine and click on ‘Apply’. The frame will be built according to the settings of that machine.  
+
+
+===== PAGE 24 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+17 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.2 
+CREATING MACHINE SETUPS 
+In the machine setup options, only the section options, clearances and general information that is 
+applicable to the machine type selected and toolings selected for that machine will be shown.  
+ 
+1. Menu option: Edit | Machine Setups (Ctrl+M) 
+ 
+ 
+2. Select your machine model.  
+ 
+3. Once the machine is selected, press the Create button. The new machine will be placed in the 
+top - left pane of the dialogue box and the machine name will be placed in the ‘Machine Setup 
+Name’ location.  
+4. Rename the machine as desired or leave it as the default name.  
+
+
+===== PAGE 25 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+18 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+   
+ 
+A default section will appear on the screen for the selected machine.  
+5. Click on ‘Apply’ to save the machine.  
+Note: There is also the option to import a machine setup that has previously been created and 
+exported by another user. See section 4.6.  
+A selection of pre-defined machine/profile setups can be found on the software download site. These 
+can be used as a starting point if required, but please note that they only use certain generic tools and 
+settings which may not be applicable to some machines or users setting requirements. 
+If the user chooses to use one of these setup files, they must check all the tools selected against what 
+is actually in their machine, check all other settings and make any changes as required. Any additional 
+section members can be added or removed and the Machine Setup Name and Section Names can be 
+changed to suit the user’s requirements.  
+
+
+===== PAGE 26 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+19 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.2.1 
+Tools 
+1. Once the machine has been set up, go to the ‘Tools’ tab. Ensure you know what tools are 
+available on your machine, then select them from the right-hand panel (Available Tools) and 
+move them to the left-hand panel (Fitted Tools).  
+Note: Check the Profile Drawing provided with your FRAMECAD Machine to identify the 
+available tools. 
+ 
+Triple Web Hole With Bolt – Same as triple web hole except centre hole is a bolt hole. This is 
+only selectable if the Bolt Hole tool is moved from Available Tools to Fitted Tools.  
+2. Click on ‘Apply’ to save settings.  
+3. Once all the available tools have been selected, move to the next tab to set up the ‘Tool 
+Lengths’. 
+
+
+===== PAGE 27 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+20 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.2.2 
+Tool Lengths 
+The tool lengths are the physical dimensions of the operations (punches, cut-outs) that the tools make 
+on the profile, as you operate your FRAMECAD Machine. Check if the default Tool Lengths match the 
+ones on your profile drawing and change the values if needed. 
+ 
+See the profile drawing below:  
+ 
+…and the correct setup for it: 
+ 
+ 
+ 
+ 
+Click on ‘Apply’ to save settings.  
+ 
+
+
+===== PAGE 28 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+21 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.2.3 
+General 
+The ‘General’ tab shows the following options: 
+ 
+• 
+Back To Back Tooling – Determines whether ‘Web’ hole or ‘Bolt’ hole tool operations will be 
+used to fasten the frame members together (Back to Back trusses only). 
+• 
+Minimum Tag Length - The tag is the piece of steel left between two notches that are close 
+together. When this tag length drops below the designated length, the notch tool will punch it out 
+to create one large hole. 
+ 
+
+
+===== PAGE 29 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+22 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+• 
+Place Extra Chamfers – May resolve isolated factory issues with the way chamfers are 
+calculated. 
+• 
+Plate Width Differential – This setting is specific to the ST (stud and track) machines, where the 
+track member is wider than the stud members. The distance shown here will only affect what is 
+shown in plan view for detailing purposes. Basically, it will draw the walls wider than the stud 
+section size by the value indicated.  
+• 
+Suppress Fasteners – Turns off all fastener holes. 
+• 
+Triple Web Hole Spacing – This is the spacing between the centre of the middle hole and each 
+of the outer holes on the web of the section. 
+ 
+• 
+Extra Fastenings – Places extra flange holes adjacent to dimples for double screwing members. 
+Generally used for webbed joists. Only applicable if machine has flange hole tool available.  
+• 
+Extra Fastening Distance – This is the search distance to determine which side of the web 
+member that a flange hole is placed along a chord member. 9mm is the optimum distance.  
+• 
+Extra Fastening Distance (at 90°) – This is the minimum distance to the flange hole from the 
+main dimple in Options 2 and 4 below.  
+
+
+===== PAGE 30 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+23 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Option 1: This is the standard setup option.  
+ 
+Option 2: This setup is generally used for machines running a profile with a narrower 
+flange than the standard 41mm.  
+ 
+ 
+ 
+
+
+===== PAGE 31 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+24 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Option 3: This setup is recommended for machines with no dimple punch (i.e. a flat 
+dimple).   
+ 
+Option 4: This setup is recommended for machines with no dimple punch (i.e. a flat dimple) 
+and a narrow flange width.  
+ 
+ 
+Click on ‘Apply’ to save settings.  
+
+
+===== PAGE 32 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+25 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.2.4 
+Clearances 
+The ‘Clearances’ tab shows the following options: 
+ 
+• 
+B2B Stick Clearance – Clearance between back to back stud members to allow for easier 
+assembly in factory. Note: B2B studs should still be screwed together in most cases.  
+• 
+Bolt Hole To End – Minimum distance of a bolt hole to the end of a member. Applicable to back 
+to back truss setups.  
+• 
+Brace To Dimple – The distance between a standard members dimple and a brace members 
+dimple. 
+• 
+Brace To Web Hole – The distance between a standard member’s web hole and a brace 
+member’s web hole. Applicable to back to back trusses. 
+• 
+Chamfer Tolerance – When one member intersects another at an angle (e.g. a brace), this is the 
+distance that the corner of that member comes within the web side of the intersecting member 
+before a chamfer is applied. 2mm is generally sufficient for 0.75 to 0.95 material as this also 
+allows for the radius in the folds. Increase this figure for thicker material.  
+• 
+Dimple To End – Minimum distance from a dimple to the end of a member. This distance is also 
+applied when a member is edited when the Auto Extend tool is toggled on.  
+• 
+End Clearance Reference – Determines whether the clearance distances are from the outside of 
+the member or from the inside of the member relative to the material thickness.  
+• 
+End Clearance – The distance from the end of a member to the edge of the member it is 
+connected to. This is used when the ‘Auto Extend’ tool is applied.  
+• 
+End To Tab Distance – Indicates the minimum distance a locater tab will be placed from the end 
+of a track piece (applicable FL650 machine only).  
+
+
+===== PAGE 33 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+26 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+• 
+F2F Stick Clearance – Clearance between face to face stud members to allow for easier 
+assembly in factory. 
+• 
+Minimum Tab To Tab Distance – Minimum distance allowed between locator tabs (applicable 
+FL650 machine only).  
+• 
+Tool Clearance – The distance to be added to either side of a tool operation. 
+• 
+Web Hole To End – Minimum distance a web hole will be placed from the end of a member. 
+Applicable to back to back trusses.  
+ 
+Click on ‘Apply’ to save settings.  
+ 
+
+
+===== PAGE 34 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+27 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.2.5 
+Boxing 
+The ‘Boxing’ tab shows the following options: 
+ 
+• 
+Box To Box Max Hole Delta – locating hole distance for reinforced members (FL650 machine 
+only). 
+• 
+Boxed End Length – Length of boxing pieces for ‘In-plane - On edge’ trusses (Back to Back 
+machines only). 
+• 
+Boxing Max Dimple Spacing – Distance between dimples on boxed members. 
+• 
+Boxing Offset – The distance that boxing members are offset. 
+• 
+Partial Boxing Max Dimple Spacing – Distance between dimples on partially boxed members. 
+ 
+Click on ‘Apply’ to save settings.  
+ 
+Note: Once a new machine has been setup, the Demo Machine can be deleted.  
+ 
+
+
+===== PAGE 35 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+28 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.3 
+SECTION SETUP 
+Users can now setup section profiles to whatever size they like using an interactive ‘section 
+profile’ interface. Multiple sections can be setup specifically to suit one machine. These would 
+usually be differentiated by thickness (BMT) and grade but could also be different profile sizes 
+as required for multi-profile machines. This limits the user to a selection of profiles specific to 
+that machine. 
+Prior to setting up section sizes in Detailer, the user must know what profile sizes, thicknesses 
+and grades their factory’s machine is going to be running. This information can be sourced 
+from the profile drawings that are supplied with the machine.  
+Important Note: the information supplied on the profile drawings may not be exactly the same 
+as what is setup on the machine. Therefore, the user must double check what has actually 
+been setup on the machine to ensure that what is produced in Detailer is identical to what is 
+on the machine.  
+Profile drawing for the section setup: 
+ 
+ 
+1. Choose your machine model that was created in the previous section: 
+ 
+ 
+2. Go to the ‘Section Setups’ tab.  
+
+
+===== PAGE 36 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+29 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+From here you will define the section’s properties such as Shape, Web, Flanges and Lip 
+dimensions, Material Properties and Section Specific Options as needed. Refer to the profile 
+drawing provided with your FRAMECAD Machine for the correct initial specifications.  
+There will be a default Section of 89S41 which can be modified to suit if required.  
+3. In the ‘Section’ tab on the right-hand side of the dialogue box, the default ‘Section Name’ is set 
+to ‘Section’. This can be left as it is or changed to something more descriptive if required, 
+especially if more than one section is added.  
+4. Select which section shape you would like to use for the plates and studs. The options here 
+will vary according to the machine type. This is the letter that is displayed between the web 
+width and the left/right flange height. 
+- 
+‘S’ = lipped stud  
+- 
+‘U’ = unlipped track  
+- 
+‘T’ = unlipped track (specifically for the Stud and Track or ST machines)  
+5. Input the values from the profile drawing into the relevant boxes. 
+- 
+Flange Label – This indicates whether you want to show the higher, lower or both flange 
+dimensions in the RFY file label.  
+6. In the ‘Section Specific Options’ tab, check and modify any parameters as required.  
+• 
+Dimple1 Height – The distance from the web of the member to the centre of your main 
+fastener. This includes dimples and screw holes. 
+• 
+Dimple2 Height – Only applicable to machines with double dimple tooling.  
+• 
+Flange Bolt Hole Height – Only applicable to the FL650 machine. 
+• 
+Flange Hole Height – This is the distance from the web of a member to the centre of the 
+flange hole. 
+
+
+===== PAGE 37 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+30 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+7. In the ‘Material Properties’ tab, check and modify any parameters as required.  
+8. In the ‘Export Compatibility’ tab, check that the profile you have created is compatible with 
+what can be run in your machine. In some circumstances, the values represented on the 
+profile drawing may not be identical to what is set on the factory machine control.  
+If the RFX Section displays ‘Not Compatible’, uncheck the ‘Automatically Configure’ check box 
+and select the section size that is compatible with your machine.  
+The ‘Simplify RFX Section List’ will filter the list to sizes that are compatible with the machine 
+selected and closest to what has been set up in the ‘Section’ tab.  
+This profile name then needs to be replicated in the RFY Label location for either metric 
+or imperial applications. This label MUST replicate exactly what is set in your Factory 
+Control software on your machine, so take note of any spaces and capital letters.  
+9. You can create multiple sections for each machine, for example, if different steel thicknesses 
+or grades are used, copy the current section and change its properties as required. In the 
+example below, Section(1) has been created by clicking the ‘Copy Section’ button and 
+changing the base material thickness (BMT) from 0.75mm to 0.95mm.  
+  
+
+
+===== PAGE 38 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+31 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The ‘Copy Section’ option can be used after checking/changing the settings in all tabs, 
+otherwise this operation will have to be performed for each section.  
+10. When a job is created, imported or opened from an external source, the following instances 
+may occur:  
+• 
+If the Project Machine Setup is equal to (=) the Saved Machine Setup, then nothing more 
+needs to be done.  
+The example below shows the machine setup of a project that was created using the 
+saved setup:  
+ 
+The equals sign indicates that the section setups are identical between the project and the 
+saved machine setup.  
+• 
+If the Project Machine Setup is not equal (≠) to the Saved Machine Setup, then there may 
+be some differences. This generally occurs when a job is imported from FRAMECAD 
+Structure® and the section profile setup in the job is not identical to what has been setup 
+in the machine settings. There is no need to make any changes to minor variances but do 
+ensure the Export Compatibility is correct in the Project Setup. However, you can select 
+the Project’s machine setup and click on ‘Update to Default’. This will add the project’s 
+section profile to the saved setup therefore ensuring all future imported jobs are fully 
+compatible.  
+The example below shows the project machine setup being not equal to the saved 
+machine setup:  
+ 
+• 
+The example below shows the project machine setup of a job that was created on another 
+computer:  
+ 
+ 
+
+
+===== PAGE 39 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+32 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.4 
+FRAME TYPES 
+After completing the Machine Setup, the next step is to create Frame Types. Frame types 
+must be set up before you can draw a frame on a plan.  
+The Frames Types set up here are not used for importing the XML files from FRAMECAD 
+Structure®.  
+For importing XML files from FRAMECAD Structure® see section 12.1.1 – XML File Import.  
+4.4.1 
+Creating Frame Types 
+1. Go to Edit | Frame Types (or Ctrl+T) to open the Frame Type Manager.  
+ 
+The following window will appear: 
+
+
+===== PAGE 40 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+33 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+2. Click on the ‘Create New Frame Type’ button. By default, the External Wall type will be 
+created, and the ‘General’ and ‘Script’ tabs will appear in the top of the window.  
+3. Change the ‘Classification’ to the type of frame you wish to set up by selecting from the 
+following options: 
+ 
+ 
+ 
+
+
+===== PAGE 41 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+34 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4. In the ‘General’ tab you can edit the Name of the frame type, the Plan Prefix, set the 
+Dimension Location and the VRML (3D) Frame Colour if required.  
+ 
+ 
+ 
+5. If you choose to enable the ‘Draw End Profiles’ option, the sections will display in the layout 
+view once you create the frame. This option can be turned on or off for each individual frame 
+once they have been created.  
+ 
+
+
+===== PAGE 42 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+35 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+ 
+Dimension Location examples: 
+ 
+Web 
+ 
+Lip 
+ 
+ 
+ 
+ 
+ 
+
+
+===== PAGE 43 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+36 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+6. Choose from the already created Machine Setups or open the ‘Machine Setup Manager’ to 
+create a new Machine Setup.   
+ 
+ 
+Tool Action 
+7. Choose the required Tool Action from the dropdown list.  
+ 
+When you set the ‘Tool Actions’ for a Frame Type, you are also telling Detailer what 
+orientation the frame is. 
+There are three types of frame orientations: 
+- 
+On Flat – While looking at the elevation view of a frame the web of the bottom plate or 
+bottom chord section is sitting flat on the ground. This is the standard orientation for wall 
+frames, roof trusses and webbed joists.   
+- 
+Back to Back (B2B) – The webs of the plates are screwed to the webs of the studs. The 
+lips from the plate are furthest from you when looking in the elevation view while the lips of 
+the studs are closest to you. You should be able to look at the drawing to tell this as the lip 
+lines are only shown on the stud members. (Truss chords are referred to as plates and 
+truss webs are referred to as studs). 
+- 
+On Edge – While looking in the elevation view of a frame the flange of the bottom chord 
+section is sitting on the ground and all the members are in the same plane.  
+Within these frame orientations you may find various other tooling options: 
+- 
+Standard Tooling – When members pass through each other, the vertical (stud) 
+members are continuous and the horizontal (plate) members get notched. 
+- 
+Reversed Tooling – The horizontal (plate) members are continuous and the vertical 
+(stud) members get notched. This option would generally be used where ever the 
+horizontal members are the structural members e.g. in certain ‘panel roof’ situations.  
+- 
+No Boxing Swages - Any boxed or partially boxed members will not be swaged. This 
+option would generally be applied when using thicker steel to make assembly of boxed 
+members easier.  
+- 
+No Tooling – No flange cut tooling is applied on B2B members.  
+- 
+Plate over Stud tooling – the ends of nog members (generally in wall frames) are tabbed 
+over the stud that they terminate on instead of fitting inside the stud.  
+- 
+Truss tooling – boxed truss chords are notched to allow truss webs to fit inside them.  
+Looking at the Default Configuration dialogue box, you can see that the tool actions are set to 
+use ‘On Flat’ orientation with standard tooling applied.  
+
+
+===== PAGE 44 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+37 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+8. Automatic Triple Stud Connection Detection – when one wall intersects with another, triple 
+studs (or junction studs) are automatically placed. If the walls have a gap between them, 
+triples will be placed as long as the gap is within the tolerance distance indicated.  
+9. In the ‘Script’ tab you can set the default script for each Frame Type. 
+Suggested Script Examples: 
+External Wall – Wall 
+Internal Wall – Wall 
+Truss – Truss-Full 
+Joist – Truss-Parallel 
+Miscellaneous – Manual 
+Ceiling – Auto Panel 
+Roof – Auto Panel 
+Floor – Auto Floor Panel 
+The Default Script is used for frames that will be created within Detailer, but not when 
+importing frames from FRAMECAD Structure®. This feature can also be managed for each 
+individual frame once created.  
+When the Default Script is changed to ‘Wall’ for example, the Script tab gets the following 
+script settings: Openings, Triples and Beam Pockets. Please read the section about Scripts in 
+section 7.4 for more information. 
+ 
+10. Select from the available sections for Script Stud and Script Plate. If the required section can’t 
+be found in the drop-down list, click on Open Machine Setup Manager from the drop-down list 
+to create a new section. 
+Once the frame types have been set up, you can start building. 
+Note: Any demo Machine and Frame types can now be deleted.   
+
+
+===== PAGE 45 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+38 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+11. Frame Types can also be created from imported frames within a job by right clicking on a 
+frame and selecting ‘Create Frame Type From’.  
+  
+ 
+
+
+===== PAGE 46 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+39 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4.5 
+EXPORTING FRAME TYPES AND MACHINE SETUPS 
+1. Go to ‘File | Export | Frame Types / Machine Setups’.  
+ 
+2. Select the required Frame Types and/or Machine Setups.  
+3. Select ‘Export’.  
+ 
+4.6 
+IMPORTING FRAME TYPES AND MACHINE SETUPS 
+1. Go to ‘File | Import | Frame Types / Machine Setups’ 
+2. Point to the directory location for the Frame Types or Machine Setups.  
+3. Select the .sups file then click on Open.  
+4. Any Frame Types and/or Machine Setups will automatically be imported. If there are any 
+Frame Types or Machine Setups present in the program with the same name, they will be 
+renamed.  
+ 
+
+
+===== PAGE 47 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+40 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+When you open FRAMECAD Detailer, you will see the following window containing several sections. 
+ 
+ 
+ 
+5.1 
+MENU BAR 
+The Menu bar is similar to the menus found in many other programs.  Each menu contains the 
+following items. 
+ 
+These menu options are only displayed when the Project is selected.  
+ 
+These menu options are displayed only when a Project Plan is selected.  
+ 
+ 
+5 
+FRAMECAD Detailer Components 
+
+
+===== PAGE 48 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+41 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+5.1.1 
+File 
+ 
+New (Create new projects) 
+ 
+Open (Load existing projects) (Hotkey – F3) 
+ 
+Reopen (Lists previous projects to reopen) 
+ 
+Save (Save current project) (Hotkey – Ctrl+S or F2) 
+ 
+Save As (Save current project as a different file) 
+ 
+Export 
+ 
+ 
+ 
+3D VRML (Export files for viewing in 3 dimensional) - Exporting to 3D (see 
+section 11.3) 
+DXF 
+ 
+ 
+Excel - creates an excel spreadsheet using a template 
+ 
+ 
+Frame Types / Machine Setups 
+ 
+ 
+3D DFX file 
+ 
+ 
+Rollformer RFX file – for use in Factory v2 machine software 
+Rollformer RFY file – for use in Factory version 2.9 onwards 
+ 
+ 
+FIM file 
+ 
+Import 
+ 
+ 
+DXF to Lines  (Import a DXF template) 
+ 
+ 
+Frame Types / Machine Setups 
+ 
+ 
+FIM file 
+ 
+ 
+XML file 
+ 
+View 3D (Load 3D file previously exported) - Exporting to 3D (see section 11.3) 
+ 
+Print 
+ 
+Reports (Print material reports) 
+ 
+Drawings (Print frame drawings) 
+ 
+Thumbnails (Print frame thumbnails) 
+ 
+Printer Setup (Setup options for Printers) 
+
+
+===== PAGE 49 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+42 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+Drawings 
+ 
+ 
+Reports Thumbnails (Setup options for Reports and Thumbnails) 
+ 
+Exit (Close FRAMECAD Detailer) 
+ 
+ 
+5.1.2 
+Edit 
+ 
+Undo  – Ctrl+Z 
+ 
+Redo – Ctrl+Y 
+ 
+Cut – Ctrl+X 
+ 
+Copy – Ctrl+C 
+ 
+Paste – Ctrl+V 
+ 
+Cancel Active Command 
+ 
+Options.. - see Defaults and Global Settings 
+(section 3) 
+ 
+Language 
+Machine Setups – Ctrl+M (see section 4.1) 
+Frame Types – Ctrl+F (see section 4.4) 
+ 
+Note: Some of the options above only appear when a job plan is created and selected.  
+ 
+
+
+===== PAGE 50 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+43 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+5.1.3 
+Draw (includes command shortcuts) 
+ 
+Line - L 
+ 
+Polyline - PL 
+ 
+Circle - C 
+ 
+Rectangle - REC 
+ 
+Polygon - PO 
+ 
+Orthogonal Aid – F8 
+ 
+45 Aid – 45A 
+ 
+Text - TX 
+ 
+Dimension - DI 
+ 
+Place Frame - FS 
+ 
+Roof - RI  
+ 
+ 
+5.1.4 
+Snaps/Aids 
+ 
+Snap End – SE 
+ 
+Snap Intersection – SI 
+ 
+Snap Middle - SM 
+ 
+Snap Near – SN 
+ 
+Snap to Fastening - SF 
+ 
+Snap to Grid - SG 
+ 
+ 
+
+
+===== PAGE 51 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+44 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+5.1.5 
+Tools 
+ 
+Auto Build – AB 
+ 
+Auto Dimension - AD 
+ 
+Auto Extend 
+ 
+Auto Polygon - AP 
+ 
+Change Datum – DAT 
+ 
+Convert to Frame – LS 
+ 
+Convert to VRML Object - VO 
+ 
+Copy Objects - CO 
+ 
+Create Array - A 
+ 
+Erase Objects 
+ 
+Frame Break - FB 
+ 
+Frame OK – CF 
+ 
+Import Plane Lines 
+ 
+Layer Clear 
+ 
+Measure Angle – MA 
+ 
+Measure Distance - D 
+ 
+Mirror - MI 
+ 
+Move Objects - M 
+ 
+Offset – O 
+ 
+Point ID 
+ 
+Roof Block – RB  
+ 
+Roof Skeleton – RS  
+ 
+Trim/Extend – TE 
+ 
+ 
+
+
+===== PAGE 52 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+45 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+5.1.6 
+View 
+ 
+Zoom In – F9 
+ 
+Zoom Out – F10 
+ 
+Zoom Window – F11 
+ 
+Zoom All – F12 
+ 
+Properties – Alt + Enter 
+ 
+Layer Management 
+ 
+ 
+5.1.7 
+Help 
+User Manual 
+Configurations Quick Start 
+Release Log 
+Steel Colour Codes 
+About this program (Version and System Information) 
+What’s New 
+License Information 
+ 
+ 
+5.2 
+TOOLBAR 
+The Toolbar offers quick links to most of the items available in the Menus, as well as some additional 
+useful tools. 
+ 
+
+
+===== PAGE 53 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+46 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+A 
+Exit (File | Quit) 
+B 
+New project (File | New) 
+C 
+Open (File | Open) 
+D 
+Recent Projects (Dropdown menu displays 20 most recent projects opened) 
+E 
+Save project As (File | Save As) 
+F 
+Save project (File | Save) (ctrl+s) 
+G 
+Print (File | Print) 
+H 
+Export Data (File | Export Data). 
+I 
+Export 3D (File -> Export 3D). 
+J 
+View 3D (File -> View 3D). 
+K 
+Import DXF Template (Allows a template created in another application, and saved in 
+DXF format to be imported. 
+L 
+Select Template (Allows the frames and lines drawn in a FRAMECAD Detailer plan 
+to be used as the template for another). 
+M 
+Design Check (DC) - Checks for potential issues - see Design Checks (section 
+10.1) 
+ 
+ 
+N 
+Layer Management - see Layers (section 14) 
+ 
+ 
+
+
+===== PAGE 54 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+47 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+5.3 
+PROJECT TREE 
+ 
+The project tree displays every component of the current project in a hierarchic structure. 
+A 
+Delete selected plan (Deletes currently selected plans) 
+B 
+Add new plan (Creates a new plan) 
+C 
+Sort frames automatically or manually - see Production Sort Order (section 5.3.2) 
+D 
+Project (Highest level in the hierarchy) 
+E 
+Plan (Separate Plan required for Walls, Trusses, Joists, Floor Panels, Ceiling Panels, Roof 
+Panels and Miscellaneous Frames) 
+F 
+Built frame (Icon shows assembled frame) 
+G 
+Unbuilt frame (Icon shows unassembled steel studs) 
+H 
+Wall frame (Icon shows wall frame) 
+I 
+Truss frame (Icon shows truss) 
+J 
+Roof panel (Icon shows panel) 
+K 
+Subfloor frame (Icon shows joist) 
+L 
+Miscellaneous plan (Icon shows custom built frame) 
+Each level shows a + (plus) or – (minus) next to it.  When a minus is clicked on, all the lower level 
+items will be hidden.  When a plus is clicked, all lower level items will be shown.  This allows the 
+project tree to be minimised to keep it tidy and show only frames and plans which are required. 
+
+
+===== PAGE 55 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+48 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The Project Tree can be unpinned which allows it to slide away to the left of the screen. This allows for 
+a larger space on the screen for the drawing. To slide out the Project Tree again, hover your mouse 
+over the ‘Project Tree’ tab to the left on the program.  
+ 
+ 
+ 
+5.3.1 
+Merge Plans 
+Plans can be merged together by right clicking on them while holding down the Ctrl key and then 
+selecting ‘Merge’. 
+ 
+5.3.2 
+Production Sort Order 
+• 
+To change the order of the frames within a plan shown in the project tree, click on the 
+ auto sort 
+icon on the tool bar above the project tree and it will change to the 
+ manual sort icon. 
+• 
+Now you can click on the frames and drag them up or down to suit the required production order. 
+• 
+You can also change the order that the plans are displayed within the project tree. 
+ 
+ 
+5.4 
+PROJECT INFORMATION 
+The Project Information is displayed when the Project Name is selected in the Project Tree.  It is used 
+for reporting purposes.  At the top it displays the Project Name, Client Name, Job Number (Job 
+Number is user defined, not generated by FRAMECAD Detailer), and the date and time the project 
+was created.  Below this information, the Material Summary is shown.  Several tabs are available to 
+display specific information about the various components of the project. 
+ 
+ 
+
+
+===== PAGE 56 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+49 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+5.5 
+CREATING AND DELETING PLANS 
+Plans can be created in 2 ways - by clicking on the ‘Add new plan’ button in the project tree as 
+displayed in Project Tree (section 5.3) or by right mouse clicking on the Project Name and selecting 
+New Plan. 
+Plans may be deleted by selecting the plan to be deleted and clicking the ‘Delete selected plan’ button 
+or by clicking the right mouse button on the plan and selecting ‘delete’. You can also select multiple 
+plans by holding down the CTRL key and selecting the plans you wish to delete and then press the 
+‘delete’ key on your keyboard. The SHIFT key can also be held down; this will include all of the plans 
+between two selected plans. 
+ 
+
+
+===== PAGE 57 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+50 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+6.1 
+TOOLBAR 1 
+ 
+A 
+Cancel  
+ 
+Keyboard Shortcut 
+CAN 
+To cancel a drawing action which has begun by mistake, or when use of a tool is no longer required 
+(can also cancel by using the escape key on the keyboard or by pressing an action key at the 
+appropriate time). 
+B 
+Erase  
+ 
+Keyboard Shortcut 
+E 
+This tool allows you to delete objects from the plan. After starting the tool, select the objects you wish 
+to delete and then hit an action key (for safety reasons the command will unselect any selected 
+objects when the command first starts up, you can also select the objects you want to delete and just 
+press the delete key). 
+C1 
+Zoom In 
+ 
+Keyboard Shortcut 
+ZI or F9 
+Magnifies the current screen by 200% (increases the size of objects, displays less of the plan).  A 
+shortcut key F9 is available for this tool. 
+C2 
+Zoom Out 
+ 
+6 
+Plan View Tools 
+
+
+===== PAGE 58 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+51 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Keyboard Shortcut 
+ZO or F10 
+Magnifies the current screen by 50% (decreases the size of objects, displays more of the plan).  A 
+shortcut key F10 is available for this tool. 
+C3 
+Zoom Window 
+ 
+Keyboard Shortcut 
+ZW or F11 
+This zooms to a region on the screen.  Single click the mouse at one corner of the required region, 
+then again at the other corner of the region. 
+ 
+C4 
+Zoom All 
+ 
+Keyboard Shortcut 
+ZA or F12 
+Zooms to fit the extents of the drawing on the screen. 
+ 
+D 
+View/Edit Properties Tool 
+ 
+Keyboard Shortcut 
+Alt + Enter 
+This tool will open up the properties dialogue for a plan, frame or member for viewing or editing.  
+E 
+Move  
+ 
+Keyboard Shortcut 
+M 
+This tool is used to move objects in a plan or elevation using displacement points.  
+F 
+Copy  
+ 
+
+
+===== PAGE 59 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+52 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Keyboard Shortcut 
+CO 
+This tool is used to copy objects in a plan or elevation and move them using displacement points.  
+G 
+Trim/Extend  
+ 
+Keyboard Shortcut 
+TE 
+This tool will either extend an object to another, or trim an object to another. 
+To extend an object/s, first select the object to be extended to, next select the object/s that need 
+extending and press an action key. 
+• 
+Object to extend to 
+ 
+ 
+• 
+Objects to extend 
+ 
+ 
+
+
+===== PAGE 60 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+53 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+• 
+Finished operation 
+ 
+To trim, position the cursor so the object to be trimmed to is contained within the box surrounding the 
+crosshairs, and the crosshairs are positioned on the side to be trimmed off.  Finally, select the objects 
+that need to be trimmed and press an action key. 
+ 
+• 
+Object and side of object to trim 
+ 
+ 
+• 
+Select items to trim 
+ 
+ 
+• 
+Finished Trim 
+ 
+
+
+===== PAGE 61 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+54 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+When trimming, ensure the box surrounding the crosshairs contains only the object to be trimmed to, it 
+may be necessary to zoom in to allow this to happen.  Having multiple objects contained within the 
+box, may cause the object to the trimmed to the wrong point. 
+Note: If the object to be extended / trimmed to does not physically cross the object to be 
+extended / trimmed to, FRAMECAD Detailer will not make the modification.  Holding the Shift 
+key when pressing the action key after selecting the object/s to be extended / trimmed to will 
+create a virtual intersection between the two objects and will be able to make the modification. 
+ 
+• 
+Virtual Intersection Point 
+ 
+H 
+Offset  
+ 
+Keyboard Shortcut 
+O 
+This will offset an object by a specified distance.  Either accept the last used offset value (inside the 
+less than, greater then characters "<>") by pressing an action key or type in a new value and then 
+press an action key. 
+ 
+Select the object you want to offset and make sure the aperture is on the side you want to offset it 
+towards. If you hold the shift key down when you do the last click, it will move the object instead of 
+copying it. 
+ 
+ 
+Select side to offset 
+Completed offset 
+ 
+
+
+===== PAGE 62 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+55 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+I 
+Mirror 
+ 
+Keyboard Shortcut 
+MI 
+Select the mirror axis then select the items you want mirrored. 
+ 
+ 
+Before starting mirror tool 
+Select mirror axis 
+ 
+ 
+
+
+===== PAGE 63 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+56 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+Select objects to mirror 
+Finished mirror 
+J 
+Array 
+ 
+Keyboard Shortcut 
+A 
+This will let you make an array of objects from a selected object. 
+- 
+Select the object to create the array from. 
+Select the row offset distance (a positive value will offset the array from the selected object upwards, 
+while a negative will offset the rows downwards). 
+Select the column offset distance (a positive value will offset the array from the selected object 
+towards the right, while a negative value will offset the columns towards the left). 
+Select how many rows you want. 
+Select how many columns you want. 
+
+
+===== PAGE 64 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+57 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+For example, to make an array from IN1 with the below parameters will create the below array. 
+ 
+Row offset = -2000 
+Column offset = 1000 
+Rows = 2 
+Columns = 5 
+ 
+ 
+K 
+Rotate  
+ 
+Keyboard Shortcut 
+RO 
+This tool is used to rotate objects in a plan or elevation by a user defined angle.   
+L 
+Auto Extend - Multiple Member 
+ 
+Keyboard Shortcut 
+AM 
+This tool allows the user to auto-extend members to match the 'dimple to end' settings in the machines 
+configuration.  
+If frames are imported into Detailer with a set dimple to end distance which needs to be altered, the 
+user can set the required 'dimple to end' distance in the machine configuration and modify multiple 
+frames within a job or multiple members within a frame.  
+Simply select the tool on the toolbar then select the frames or members that need to be altered, then 
+right click to finish.  
+
+
+===== PAGE 65 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+58 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+If the user does not want the studs in wall frames to be auto adjusted to the top and bottom plates, go 
+to the ‘Other’ settings in Edit – Options – General, and tick the ‘Set exclude from auto extend for top 
+and bottom plates’ option. Studs should always bear on the inside of top and bottom plates therefore 
+there should be minimal clearance.  
+M1 
+Place Dimension 
+ 
+Keyboard Shortcut 
+DI 
+The Place Dimension tool is used to insert a physical dimension on a plan according to the parameters 
+that are set up in the command bar as described below.  
+Parameters: Style/Dimension/Precision/Extensions 
+Style (S) = Aligned/Vertical/Horizontal:  
+• 
+Aligned (A) 
+ 
+ 
+• 
+Vertical (V) 
+ 
+
+
+===== PAGE 66 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+59 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+• 
+Horizontal (H) 
+ 
+ 
+Dimension Size (D):  
+Changes the size of the dimension text. 
+Precision (P):  
+How many significant/decimal points should be used.  If the distance between two points is 518.12 
+then a precision of 1 will show as 520, -1 will show as 518.1 and 2 will equal 500. 
+ 
+Fixed Extensions (F) = False/True: 
+ 
+• 
+False (F) - Variable extension lengths 
+ 
+
+
+===== PAGE 67 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+60 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+• 
+True (T) - Fixed extensions 
+ 
+ 
+- 
+After setting the options select the first point you want to dimension from. 
+Select the point to dimension to. 
+Select final position of dimension. 
+M2 
+Auto Dimension 
+ 
+Keyboard Shortcut 
+AD 
+This will dimension between the intersections of a line and selected objects. 
+Parameters: Style/Intersection Rule/Dimension/Baseline/Precision 
+Style (S) = Aligned/Vertical/Horizontal 
+Intersection Rule (I) = Front/Middle/Back/Front and Back:   
+This determines what side of the wall to dimension from; front is considered the closest point to the 
+start point of the reference (see below). 
+ 
+ 
+Front (F) 
+Middle (M) 
+ 
+ 
+
+
+===== PAGE 68 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+61 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+Back (B) 
+Front and Back (Fr) 
+ 
+Dimension Size (D): 
+Size of dimension text 
+BaseLine (B) = True/False: 
+If true, will reference everything from first intersection point. 
+ 
+ 
+Precision (P):  
+How many significant/decimal points should be used.  If the distance between two points is 518.12 
+then a precision of 1 will show as 520, -1 will show as 518.1 and 2 will equal 500. 
+ 
+• 
+Process: 
+- 
+Set above options (for this example style= aligned, base line = false and fixed extensions = 
+true). 
+
+
+===== PAGE 69 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+62 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+- 
+Select the objects to dimension 
+ 
+ 
+- 
+Draw reference line 
+ 
+ 
+ 
+ 
+- 
+Select dimension location 
+ 
+ 
+ 
+
+
+===== PAGE 70 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+63 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+- 
+Finished 
+ 
+ 
+ 
+ 
+M3 
+Ordinate Dimension 
+ 
+Keyboard Shortcut 
+OD 
+Ordinate dimension will place continuous dimensions between points along an axis starting at zero. 
+Select the correct parameters in the command bar then select a dimension location then select points 
+along the required axis. 
+The following parameters are available: 
+Parameters: Style/Dimension/Precision/Extensions 
+M4 
+Measure Distance 
+ 
+Keyboard Shortcut 
+D 
+Measure distance will give you the delta x, delta y and the total distance and angle between the two 
+points. 
+- 
+Click on the first point to measure from. 
+- 
+Click on the second point to measure to.  
+- 
+The output values will appear in the command bar.  
+M5 
+Measure Angle 
+ 
+Keyboard Shortcut 
+MA 
+Measure angle will give you the angle in degrees between two lines. Output will appear in the 
+command bar.  
+ 
+M6  
+Get Coordinate 
+ 
+
+
+===== PAGE 71 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+64 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Keyboard Shortcut 
+ID 
+Get coordinate will return a coordinate ID value in the command bar of a selected point. 
+ 
+N 
+Frame Break 
+ 
+Keyboard Shortcut 
+FB 
+This is used to break a frame, this is useful if you have created a frame that is too long and you want 
+to shorten it. This will use the edge of an object to break a frame (i.e. line, polygon, frame). 
+ 
+• 
+Process: 
+- 
+Select frame to break 
+ 
+ 
+- 
+Select reference edge to break frame. If your reference edge is an ajoining wall, make sure 
+you select the side of the wall that you want the initial wall broken to.  
+ 
+
+
+===== PAGE 72 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+65 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+• 
+Result 
+ 
+ 
+ 
+Panel before break 
+Panel after break (two separate panels) 
+ 
+ 
+O 
+Create a VRML Object 
+ 
+Keyboard Shortcut 
+VO 
+This is useful for exporting objects you want to view in a 3D model.  For example you may want to 
+show where some beams will sit on your frame. 
+• 
+Process: 
+
+
+===== PAGE 73 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+66 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+1. Select object to transform, valid objects are polygons, rectangles or circles. This will be used 
+as the base shape. 
+ 
+2. Enter the elevation height of this base shape.  In our example we’ll use the height of the walls 
+which are 2440mm. 
+3. Enter extrusion distance. If you enter a positive value the shape will be extruded towards you, 
+if you use a negative value it will extrude into the screen, so we use 250mm in our example. 
+• 
+Results: 
+ 
+ 
+ 
+
+
+===== PAGE 74 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+67 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+P 
+Member Lengthen (ML) 
+ 
+Lengthens or shortens a member by a given value.  
+Q 
+Member Fillet (MF) 
+ 
+Fillets two members together. The first member selected will be the longer member.  
+R 
+Delete Objects on a Layer 
+ 
+Allows the user to select a layer and delete all objects contained within that layer. 
+ 
+S 
+Undo/Redo 
+ 
+ 
+Keyboard Shortcut 
+U or ctrl+z / R or ctrl+y 
+ 
+ 
+6.2 
+TOOLBAR 2 
+ 
+ 
+ 
+T 
+Place Frame 
+ 
+Keyboard Shortcut 
+FS 
+This tool is applicable to whatever frame type is selected in the drop down list to the left of the Place 
+Frame button on the toolbar. 
+ 
+
+
+===== PAGE 75 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+68 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Roof/Ceiling/Floor Panel Input 
+Below is the picture of an un-built roof panel frame. The reference edge is the edge closest to the label 
+RPanel1 and the frame pitches up towards the top edge. When you place a panel, it is drawn in the 
+same manner as a polygon, but the first and second point clicked will set your reference edge. 
+ 
+Roof Panels 
+A roof panel has the following setup options available to it: 
+ 
+As the image below shows, the pitching elevation for a roof panel is to the bottom face of the panel. 
+Note that if your eave distance is 0, then the intersection of the bottom face of the panel and the left 
+vertical line will be the point at which the pitching elevation is applied. 
+ 
+
+
+===== PAGE 76 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+69 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+When an Eave Offset is applied, the pitching point height is dropped below the elevation height 
+relative to the roof panel pitch. 
+ 
+Ceiling Panels 
+A ceiling panel has the following options setup available to it: 
+ 
+The above options for the ceiling and roof panels can be found in the general tab of the frame 
+properties dialogue box. The above variables for roof and ceiling panels are used to create a polygon 
+with the elevation view which the scripts use to frame (using the Panels layer). As you change the 
+shape of the frame, the template which is used is also updated and as long as no embers extend out 
+of this template then the plan view shape of the panel will be conformed to, if on the other hand you 
+place members outside of this template then it is likely that your members will clash if you have panels 
+joint together at a hip for example. The next images show the generated template polygons in the 
+elevation view for the same panel using two different pitches. Note that the panels pitch is constrained 
+to be within 0 and 89 degrees. 
+
+
+===== PAGE 77 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+70 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+Floor Panels 
+Floor Panels that use the Auto Panel script have exactly the same options as Ceiling Panels. The Auto 
+Floor Panel script is designed to be used mainly for the FL650 flooring machine steel profile but can 
+be used with any other profile if required.  
+For more information about placing these frames in conjunction with their scripts see Panel Roofs 
+(section 9.5). 
+ 
+Wall/Truss/Joist/Miscellaneous Frame Input 
+Enter start co-ordinate by either clicking or typing it in. Then enter the end coordinate, in this example 
+I’m placing an internal wall from 0,0 to 4000,0. 
+ 
+ 
+
+
+===== PAGE 78 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+71 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The wall (or other plan type object) can be placed to the left hand side of the picked coordinates by 
+holding down the ALT key or to the right by holding the CTRL key down or the centre by using the shift 
+key (by default the walls are placed about their centres unless altered using the above key 
+combinations as it will use the last used method). The below images show the various placements 
+using the different key combinations, note that the walls are drawn from bottom to top. 
+ 
+ 
+ 
+Left hand side 
+Centred 
+Right hand side 
+(ALT key) 
+(SHIFT key) 
+(CTRL key) 
+U 
+Convert Line to Frame 
+ 
+Keyboard Shortcut 
+LS 
+This tool is applicable to whatever frame type is selected in the drop down list to the left of the 'Place 
+Frame' button on the toolbar. 
+Process: 
+Select a line to convert. Note that it can also be an edge of a rectangle or polygon. The side of the line 
+that your aperture is on will dictate which side of the line the wall will be placed. 
+
+
+===== PAGE 79 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+72 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+ 
+V 
+Auto Build Tool 
+ 
+Keyboard Shortcut 
+AB 
+This tool allows you to build frames without having to open up the properties or the elevation view of 
+the frame. As a precaution, when this command starts it will deselect any objects that were previously 
+selected. Select the frames that you want built and then press an action key to begin building. If you 
+haven’t yet assigned a script to a frame, then it will build the frame using the default script for that 
+frame type as well as the default values for that script. If a script has already been assigned, it will use 
+this script and the values already set. 
+Once a frame has been built via this command, the frames’ status is set to pre-processed. This is 
+represented in the tree view with a question mark (
+). The frame will not be exported to a roll 
+former file until you have either clicked the FrameOK button (found in the elevation view) or confirmed 
+via the Confirm FrameOK command (see below). 
+W 
+Frame OK Tool 
+ 
+Keyboard Shortcut 
+CF 
+If the properties of a frame changes then that frames status is said to be modified and is represented 
+in the tree view by a red cross 
+. Also, as described in the AutoBuild tool section, a frames 
+status can be pre-processed. If a frame is in either of these two states then Detailer will not allow you 
+to export it to the roll former. There are two ways in which you can change the status of a frame to 
+‘built’, one is to use the ‘Frame OK’ button in the frames elevation view and the other is to use this 
+command. 
+Once this command has started, you will be asked to select the frames that you wish to confirm the 
+status of. 
+X 
+Draw Roof Tool  
+ 
+Keyboard Shortcut 
+RI 
+This tool is used to create a planed roof with overhangs (where required) from the wall outline of a 
+building. 
+See Roof Block Input (section 9.2) 
+
+
+===== PAGE 80 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+73 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Y 
+Create Roof Block Tool 
+ 
+Keyboard Shortcut 
+RB 
+This tool is used to input sets of roof trusses onto a Roof object using a truss block input method.  
+See Roof Truss Block Input (section 9.4) 
+Z 
+Roof Skeleton Tool 
+ 
+Keyboard Shortcut 
+RS 
+This is used to generate the roof plane lines from the outline of the roof. It assumes that the pitches of 
+all the faces are equal. 
+See Creating Roof Plane Lines – Automatic Method (section 9.3) 
+AA 
+Line Tool 
+ 
+Keyboard Shortcut 
+L 
+ 
+This tool draws lines. After you finish drawing a line, the start position of the next line is the end of the 
+line you’ve just drawn. 
+Process: 
+- 
+Choose start point. 
+Choose end point. 
+ 
+AB 
+PolyLine Tool 
+ 
+
+
+===== PAGE 81 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+74 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Keyboard Shortcut 
+PL 
+This allows you to draw a polyline; it is drawn in the same manner as the line tool. Pick the coordinates 
+of each of the vertices and press an action key to finish placing the polyline. 
+AC 
+Circle 
+ 
+Keyboard Shortcut 
+C 
+This allows you to draw circles by giving a centre coordinate and a radius. 
+Process: 
+- 
+Choose the centre by clicking or typing in a coordinate. 
+Either press an action key to use the last used radius, type in a new radius or drag the circle to its 
+desired radius. 
+ 
+ 
+AD 
+Rectangle 
+ 
+Keyboard Shortcut 
+REC 
+This draws Rectangles. 
+Process: 
+- 
+Choose start point. 
+Choose end point. 
+AE1 
+Polygon Tool 
+ 
+
+
+===== PAGE 82 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+75 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Keyboard Shortcut 
+P 
+Either click or type the co-ordinates that make up a polygon. At least 3 points are required for a 
+polygon. If you press an action key when less than 3 points have been placed, the polygon will cancel. 
+If you press the action key when more than 2 points have been inserted, it will close the polygon (as 
+indicated by ‘Vertex location <Close Polygon>:' on the command line). 
+AE2 
+Auto polygon 
+ 
+Keyboard Shortcut 
+AP 
+This tool will automatically create a polygon by tracing around the edges of objects. Options control 
+which objects are included. Depending on where you click will determine whether the inside or outside 
+is traced. 
+Options: 
+Lines included (true or false). Do you want to include lines? 
+Rectangle included (true or false). Do you want to include rectangles? 
+Polygon included (true or false). Do you want to include polygons? 
+Frames included (true or false). Do you want to include frames? 
+Process: 
+- 
+In this example Lines, Rectangles and frames have been set to true. 
+- 
+Choose an edge to start tracing from. The side of the aperture determines if it traces the inside 
+or outside. 
+ 
+ 
+Outside location 
+Inside location 
+ 
+
+
+===== PAGE 83 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+76 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+• 
+Select where you want to place the resulting polygon. 
+ 
+ 
+AF 
+Text 
+ 
+Keyboard Shortcut 
+TX 
+This will let you place your own text in the plan. 
+Options: 
+Size – The size of the text to use. 
+Angle in degrees – The orientation of the text.  0 degrees = Left to Right. 
+Process: 
+In this example we use a size of 200 and an angle of 45 degrees. 
+- 
+Select the location of the text. 
+Either press an action key to accept last used text or enter some new text then press an action key. 
+ 
+
+
+===== PAGE 84 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+77 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+Snaps 
+Snaps force an object that is being drawn or moved to align automatically to an exact point on another 
+object. Small red rectangles are used to indicate where an item will snap to if the mouse button is 
+clicked. 
+Of the snaps, End Snap and Intersection Snap may always be on.  However, only one of Middle Snap 
+or Nearest Snap may be on at any point in time.  It is recommended to always leave End Snap, 
+Intersection Snap, and Nearest Snap on as these are the most commonly used.  If Middle Snap is 
+required, turn it on. 
+AG 
+End Snap 
+ 
+Keyboard Shortcut 
+SE 
+Snaps the mouse cursor to the end point of a line.  To use this snap, ensure it is selected (it should 
+appear slightly depressed against the toolbar), position the cursor so that the end of the line to snap to 
+is contained within the box surrounding the crosshairs, and click the mouse button.  The crosshairs 
+should ‘jump’ to the end of the line. 
+ 
+AH 
+Intersection Snap 
+ 
+Keyboard Shortcut 
+SI 
+Snaps the cursor to the junction of two lines.  To use this snap, ensure it is selected, position the 
+cursor so that the junction is contained within the box surrounding the crosshairs, and click the mouse 
+button.  The crosshairs should ‘jump’ to the junction of the 2 lines. 
+ 
+AI 
+Middle Snap 
+ 
+
+
+===== PAGE 85 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+78 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Keyboard Shortcut 
+SM 
+Snaps the cursor to the centre of a line.  To use this snap ensure it is selected, position the cursor so 
+that the line to find the centre of is contained within the box surrounding the crosshairs, and click the 
+mouse.  Ensure the endpoint of the line is not contained in the box, as this will cause it to snap to the 
+end if the end snap is enabled.  The crosshairs should jump to the centre point of the line. 
+ 
+AJ 
+Nearest Snap 
+ 
+Keyboard Shortcut 
+SN 
+Snaps the cursor to the nearest point.  This snap works like the Middle Snap, however, jumps the 
+crosshairs to the nearest point possible contained within the box surrounding the crosshairs.  This is 
+very useful when laying out lines and walls to boundaries. 
+ 
+AK 
+Auto Extend 
+ 
+Keyboard Shortcut 
+AE 
+If enabled, walls (and other similar plan type objects) will automatically extend or trim to one another to 
+try and make clean connections. 
+ 
+
+
+===== PAGE 86 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+79 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Result of placing In3 with auto extend disabled 
+ 
+Result of placing Ln3 with auto extend enabled 
+ 
+Grid And Reset Datum 
+The Grid and Reset Datum tools are drawing aids to assist in the layout of the plan. 
+ 
+AL 
+Datum 
+ 
+Keyboard Shortcut 
+DAT 
+The datum aid allows the coordinate origin to be moved.  By moving the origin, any coordinate entry 
+will be referenced back to the new origin. 
+To set the datum (origin), select the Datum aid icon, and click the required point.  For accuracy, object 
+snaps should be used. 
+To reset the datum back to its original position (True point 0,0), Click on the Datum button and then 
+you will see down in the command box "Location (‘R’ to reset)" enter ‘R’ then use an action key to 
+reset the datum back to its original location. 
+ 
+AM 
+Grid Snap 
+ 
+Keyboard Shortcut 
+SG 
+The grid will snap the mouse cursor to a predefined distance.  To turn the grid on, click the Grid aid 
+icon.  When the mouse is moved within the drawing area, it will jump between grid points. 
+To change the Grid Spacing, go to the edit menu and click options and click the CAD tab then change 
+Grid Snap 
+The cursor will now snap to this spacing. 
+To turn the Grid Aid off, click the icon again. 
+ 
+
+
+===== PAGE 87 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+80 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Constraint Aids 
+Orthogonal and the 45 degree aid constrain lines to 90° increments.  These aids make the Direct 
+Distance Coordinate Entry Method a very efficient method of laying out a building. 
+If an object is required to be drawn at an angle not constrained by the Constraint Aids, ensure neither 
+is selected. 
+ 
+AN 
+Orthogonal Aid 
+ 
+Keyboard Shortcut 
+ORT or F8 
+When orthogonal aid is selected, drawing objects is restricted to the following angles. 
+• 
+0° 
+• 
+90° 
+• 
+180° 
+• 
+270° 
+ 
+AO 
+45 Degree Aid 
+ 
+Keyboard Shortcut 
+45A 
+When 45 degree aid is selected, drawing objects is restricted to these angles. 
+• 
+45° 
+• 
+135° 
+• 
+225° 
+• 
+315° 
+Orthogonal Aid and Degree Aid cannot be used simultaneously.  Holding down the CTRL key will 
+disable the constraint aids while the key is pressed. 
+ 
+ 
+
+
+===== PAGE 88 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+81 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+
+
+===== PAGE 89 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+82 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+When all frames are laid out, it is necessary to assign properties to them.  These properties include 
+the height of the wall, nog line heights, doors and windows, intersecting walls, etc. 
+To begin assigning properties, right click on the required frame either in the Project Tree, or on the 
+frame layout.  Click Properties.  All frames must be deselected prior to assigning properties to 
+individual frames.  If any frames are selected, press the ESC key (Escape), then open the properties 
+window. 
+ 
+Project Tree 
+ 
+ 
+Plan View 
+The Frame Properties window will appear. 
+The first tab of the Frame Properties window is the General tab.  This is standard across all frame 
+types.  It contains a summary of the frame including the frame type, its length, what layer it is on, 
+material usage, relative setup in plan view, member elevation display, etc. 
+ 
+7 
+Assigning Properties to a Frame 
+
+
+===== PAGE 90 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+83 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+7.1 
+GENERAL 
+ 
+At the top of this tab is the Name textbox.  This is automatically labelled depending on the type of 
+frame.  It can be changed to almost any value (some characters are not permitted in this field).  Do not 
+use full stop (.) as this will cause problems later when exporting the machine files. 
+Ref  - the reference textbox can only contain numbers. The up and down arrows will increase and 
+decrease this value one at a time. It is also possible to type new values into this field. The reference 
+numbers are specific to all frames using the same Name. If a frame already exists using the reference 
+number entered, an error message will appear. 
+Cloned to – covered in  Cloned Frames (section 7.2). 
+Material Usage - contains information about the lineal meters, kilograms of steel needed to build this 
+frame. It also contains the total number of fasteners required to assemble the frame (dimple holes 
+only). 
+ 
+
+
+===== PAGE 91 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+84 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Setup  
+- 
+Pitch – the angle that the frame will rotated from the vertical plane. Straight frames (walls, 
+trusses) will have a 0 pitch.  
+- 
+Elevation - Plan – the relative level to the bottom of the wall. The 'Additional' option is if 
+the user wishes to offset the frame above or below the set relative level. The ‘Total’ height 
+is obtained by adding the plan elevation and additional elevation.  
+Member Display – tick this checkbox if you wish to see the outline of the section in plan view. In the 
+example below, L1 is showing the studs, while L6 doesn’t.  
+ 
+ 
+VRML Colour – for 3D viewing.  
+Automatic Triple Stud Connection Detection – detects adjoining walls and automatically adds triple 
+studs. Adjoining walls that do not touch will be detected if they are within the Maximum Distance set.  
+Frame Script –  covered in Script Basics ( section 7.4). It’s the script that has been configured when 
+the frame type was created. In case of an imported frame, the frame script will always show ‘Auto’. 
+Tick ‘Make Default’ to make the selected script the default for this frame type.  
+Build – will switch directly to the Build Window. This is covered in Detailing Frames ( section 8). 
+ 
+7.2 
+CLONED FRAMES 
+If a plan contains two or more frames that are the same, it is possible to build one of the frames, and 
+Clone the remaining frames to the original. 
+To do this, ensure the original frame is built.  Right click on the frame you want to make cloned and 
+select Properties.  Click the checkbox ‘Cloned to’.  When the ‘Select Frame as a Template’ window 
+appears, find the original frame in the list, click on it, and click OK.  There should now be a tick in the 
+checkbox and the original frame’s name will appear next to Cloned to. 
+The frame is now cloned.  Any changes made to the original frame will be updated through to all 
+clones. The cloned frame will also show the name of the original frame in brackets next to its original 
+name. 
+ 
+
+
+===== PAGE 92 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+85 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+7.3 
+MULTIPLE SELECTED FRAME PROPERTIES 
+If multiple frames are selected and the Properties Window is opened, a reduced set of options will be 
+displayed. 
+This reduced options window gives the opportunity to change properties for frames on mass, but only 
+properties that are consistent throughout the frames. 
+It is possible to change the Name (label) of a group of frames at one time.  It is also possible to clone 
+multiple frames to one original frame all at once. The process for each of these is the same as for a 
+single frame. Set the property, then click OK to close the Frame Properties Window. 
+ 
+7.4 
+SCRIPT BASICS 
+At the bottom of the Frame Properties window, in the General tab, is a drop down menu labelled 
+Frame Script. 
+In FRAMECAD Detailer, scripts handle the building of the frames. 
+A script is provided for each different frame type.  The scripts will appear in the drop down menu at the 
+bottom of the Frame Properties window.  Scripts will only appear for frames on plans of the correct 
+type. 
+Each script has different properties which need to be set.  For instance, a wall frame has openings and 
+triple stud connection (stud layout when an intersecting wall exists), whereas trusses do not.  The 
+Frame Properties window will change to suit the script.  These properties are displayed in the tabs 
+across the top of Frame Properties window.  In addition to the General tab, all scripts will have a Main 
+tab, which contains most of the information required for a frame.  Other tabs will appear as necessary. 
+ 
+7.5 
+SCRIPT SELECTION 
+Scripts are specific to particular frame types and will only appear for frames of the correct type. 
+One option which is available across all frame types is Manual.  This is not a script as described 
+above, and starts the frame with nothing but a blank screen.  This is for use when a complicated frame 
+is required, and it is not possible to use any of the scripts as a starting point. 
+If a particular script is being used a lot, it is possible to set it as the default script to be used when the 
+Frame Properties window is opened for a frame type (Internal Wall, Truss).  To do this, select the 
+required script, tick the Make Default checkbox, and click Apply. 
+ 
+7.6 
+SETTING THE VARIABLES 
+As described in Script Basics ( section 7.4), applying different variables to a script will result in a 
+different frame being created.  Many of the variables for frames throughout a building will be the same, 
+though some may be individual.  
+A script will have a set of default variables assigned to it, which are applied when the script is firsts 
+assigned to that frame.  It is then possible to change these values as needed.  If the values are the 
+same across a number of frames, it is easier to set them to be the new default values for the script.  
+To do this, set all the values required, and click the Default button.  The default values can be 
+changed as often as needed. 
+The default values for a script will only be assigned to a frame when the Frame is assigned a script.  
+After a frame has had values assigned to it and then built, all values are particular to that frame. 
+ 
+
+
+===== PAGE 93 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+86 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+7.7 
+PICKING 
+Some scripts may have the ability to allow some variables to be ‘picked’ from the plan.  If the option is 
+available, the Pick button in the Pick Feature area will be available.  When this button is clicked, a 
+window will appear showing the floor plan.  Along the bottom of the window will be instructions on 
+which points are to be selected. 
+Once selected, the window will close, returning to the Frame Properties window with the updated 
+variable values. 
+ 
+7.8 
+ARRAY’S – MULTI-VALUE VARIABLES 
+Some variables allow for more than 1 value to be stored in them.  If a variable is capable of containing 
+more than 1 value, it will appear in the list with <array> in the value.  To modify the values, click the 
+small button to the right of <array> which shows ellipses (…).  You can then use the Add, Remove, 
+and Modify buttons to create between 0 and 8 values of whatever values are required. 
+It is also possible to pick these values from the plan.  Simply select the value to be picked, and click 
+the Pick button.  This will open a window showing the plan, awaiting a point to be selected. 
+ 
+7.9 
+ADDITIONAL FEATURES 
+Some scripts may have tabs in addition to the Main tab.  These are for features which appear in a 
+frame, which require their own set of properties, such as doors and windows. 
+When one of these tabs is selected, a name box with Plus (+) and Minus (–) buttons to the right of it.  
+The box underneath these will contain the variables, when a feature has been added. 
+To add a feature, click the Plus (+) button.  A list of variables and values will appear.  These values 
+are the default values set for the script.  Entering a new set of values to the list, and clicking the 
+Default button will set them to the default for future openings. 
+ 
+7.10 
+WALL FRAME PROPERTIES 
+In addition to the ‘General’ tab, the Wall Frame Properties window shows Machine Setup, Main, 
+Openings, Triples and Beam Pockets tabs. The General tab is explained at the beginning of this 
+section.  
+Note: Imported frames only have the ‘General’ and ‘Machine Setup' tabs 
+ 
+7.10.1 Machine Setup 
+This tells you what machine, tooling action, section and script is being used for this frame.  
+Stud and plate sections can be altered if required along with other parameters.  
+
+
+===== PAGE 94 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+87 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+Auto Configure:  
+Wall script – will remove all existing triples and re-input them based on any intersecting walls.  
+Auto Frame script – will remove all existing openings and re-input them based on existing polylines 
+and remove triples and re-input them based on any intersecting walls. 
+
+
+===== PAGE 95 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+88 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+7.10.2 Main 
+The Main Tab will only be displayed for the following Frame Scripts  
+• 
+Auto Frame 
+• 
+Wall 
+ 
+Length – Length of frame.  This is determined by the length as drawn in the plan view.  This 
+dimension can only be changed by extending or trimming the frame on the plan view. 
+Height – Starting height of frame. 
+Pitch – Pitch of the frame.  If the frame is a level frame, this should be set to 0.  If the frame is raked, 
+the left side of the frame will be set to the Height and the frame will rake up to the right. 
+Pitching Offset – Only applicable to raking walls. Distance from point of Height.  The actual starting 
+height of the frame will be calculated by the rise over Offset at Pitch from Height. 
+ 
+
+
+===== PAGE 96 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+89 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Input parameters: 
+ 
+ 
+Output: 
+ 
+Stud Spacing – Standard distance between studs.  Taken from start of wall to centre of stud.  If stud 
+spacing is 600mm, and the stud is 40mm wide, the first stud will be at 580mm. 
+Stud References – A point to begin calculating the Stud Spacing from.  This will usually be set to 0.  
+Multiple Frame References may be used (up to 8).  If a Framing Reference is set before the start of 
+the frame (negative value), the Stud Spacing will be calculated from this point, but studs will not be 
+drawn until contained within the frame.  If a Framing Reference is set after the start of the frame (or 
+even after the end of the frame) (positive value), the Stud Spacing will be calculated both forwards and 
+backwards from this spacing.  If multiple are set (i.e. one before the start of the frame, and one after 
+the start of the frame, studs will be placed up to the reference inside the frame, and then will continue 
+from there. 
+Use Nog – Turns nog input on or off. 
+
+
+===== PAGE 97 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+90 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Nog Heights – Allows up to 8 rows of nogs to be input where specified. The Pick feature will allow the 
+user to select a nog height location in elevation view. 
+Nog Type – Can choose from 5 types: 
+ 
+Nog Offset – Option is valid only if the Nog Type is different to Continuous. For a nog offset of 10mm, 
+the nogs will be offset by 10mm each form the defined nog heights, allowing for a 20 mm distance in 
+between: 
+ 
+Service Hole (Horizontal) – Turns on horizontal service holes. 
+Service Hole (Heights) – Set service hole heights. 
+Service Hole (Vertical) – Turn option on to place vertical service holes next to each stud. 
+Bottom Plate Bolt Holes – Turns bottom plate bolt holes on or off. If your machine doesn’t have a 
+bolt hole, but has a web hole, a web hole will be placed instead of a bolt hole.  
+Auto Dimension – Automatically dimensions the frame to varying options. 
+Frame Offset – Will reduce the frame’s length by the specified distance. Very useful when tolerances 
+between frames are required.  
+ 
+
+
+===== PAGE 98 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+91 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+
+
+===== PAGE 99 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+92 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+7.10.3 Openings 
+ 
+The Opening tab contains all information about doors and windows.  When the Opening tab is first 
+opened, the box at the top (which shows Op1 in the image below) as well as the box beneath, will be 
+empty. 
+The first text box (Dropdown menu) contains the name of the opening.  The large box contains all the 
+information relevant to that opening.  A frame may contain many openings. 
+To add an opening to the frame, click on the Plus button (+).  To remove the current opening, click the 
+Minus button (-). 
+When an opening has been added, the following variables will be shown: 
+
+
+===== PAGE 100 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+93 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+Head – Nominal distance from the ground to the top of the opening.  Do not allow for clearance here. 
+Height – Nominal height of opening. Do not allow for clearance here. 
+Sill – Actual distance from the ground to the underside of the opening. This value is automatically 
+populated from the difference between the Head height and the Opening height. If the sill value is 
+altered then the opening height will change to suit. 
+Width – Nominal width of the opening.  Do not allow for clearance here.  If the opening is to be picked, 
+do not set this variable.  If the option is to be centred (see below), this variable must be set first. 
+Offset – Nominal distance from the start of the wall to the start of the opening.  Do not allow for 
+clearance here.  Do not set this variable if the opening is to be picked. 
+Pick to Centre – Tick this option to modify the Pick option.  The opening will be centred between two 
+picked points (the width must be set first). 
+Head Clearance – Total vertical clearance required.  The value specified will be added to the top of 
+the opening only. 
+Side Clearance – Total opening width clearance required.  The value specified will be divided and 
+split to both sides of the opening. 
+Extra Studs – Places one additional stud next to the trim stud on both sides of the opening. 
+Head Spacing – Maximum horizontal distance between head members (studs or webs) 
+Head Spacing Type – Choose between Even or Absolute. Even spacing will divide the header into 
+equal web/stud distances. We recommend using the absolute option when the head fill type is set to 
+Studs. A stud will be placed in each Stud Reference point.  
+Head Fill Type – Choose between None, Studs, Framecad Default or Pratt. Each of them comes with 
+a different pre-defined framing pattern. 
+Head Split – Option to divide the head horizontally. 
+Head Split Height – Determines the head height for the main head. 
+Head Split Position – Choose to have the main head positioned at the bottom or at the top within the 
+head.  
+Head Split Stud Spacing Type – same as Head Spacing Type 
+Sill Spacing – Maximum horizontal distance between sill members (studs or webs) 
+
+
+===== PAGE 101 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+94 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Sill Spacing Type – same as Head Spacing Type 
+Sill Fill Type – same as Head Fill Type 
+Sill Split – same as Head Split 
+Sill Split Height – same as Head Split Type 
+Sill Split position - same as Head Split Position 
+Sill Split Stud Spacing Type – same as Head Spacing Type 
+Notch Door Sill – Add or remove web notches in the bottom plate either side of a door opening. This 
+notch aids in the easy removal of the sill on site. 
+Jack Stud – Add or remove end vertical jacks up against the jamb studs. 
+Invert Webs – reverse the orientation of the webs used in the head  
+Allow Nog Pass Through – This allows the standard wall nog to continue below or above an opening 
+where relevant. 
+ 
+7.10.4 Triples 
+The Triples tab contains all information about triple stud connections.  A triple stud connection is the 
+intersection of 2 walls. 
+ 
+The above image displays the 2 types of triple stud connections.  Connection A shows the intersection 
+at the end of two walls, and Connection B shows the intersection of the end of a wall into another wall. 
+The studs are positioned to give fixing on all points of the wall to allow for internal linings to have fixing 
+at that point. 
+The first text box (Dropdown menu) contains the name of the triple stud connection.  The large box 
+contains all the information relevant to that triple.  A frame may contain many triples.  Only the frame 
+which will have 2 of the studs should have the triple stud connection added. 
+To add a triple to the frame, click on the Plus button (+).  To remove the current triple, click the Minus 
+button (-). 
+
+
+===== PAGE 102 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+95 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+When a triple has been added, the following variables will be shown: 
+Offset – Distance from the start of the frame, to the start of the triple stud connection (i.e. the side of 
+the connecting frame).  
+Width – Width of the connecting frame. 
+Dimension To Centre – Will either show the dimension to the centre or to the side of the triple on the 
+elevation. 
+ 
+When a triple has been added to the properties, it is possible to pick the position, as opposed to 
+entering the dimensions manually.  To do this, click the ‘Pick’ button.  A new window will appear 
+showing the wall.  Simply click on the intersecting wall to select the position. 
+By clicking on Auto Configure at the bottom of the Triples Tab, Detailer will automatically detect 
+intersections with other walls and place plaster studs in those locations.  
+
+
+===== PAGE 103 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+96 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+Make sure the Automatically detect triple stud connections checkbox is selected prior to this in the 
+General tab. 
+ 
+ 
+ 
+Beam Pockets 
+ 
+ 
+
+
+===== PAGE 104 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+97 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+When a frame has properties assigned to it, it is necessary to build the frame.  Frames are built in the 
+‘Build Window’ which is an area similar to the drawing area.  There are a number of ways of opening 
+the Build Window. 
+In the Frame Properties window, next to the Frame Script dropdown menu, is the Build button.  
+Clicking this button will open the Build Window.  Another method is to right click on the frame in either 
+the Project Tree or Drawing Area.  A small popup menu will appear.  Select Build. The other method is 
+to double left click on a frame in the plan view or tree view (if it has already been built). If the frame 
+hasn’t had its variables assigned, then double clicking will bring up the frame properties window. 
+ 
+ 
+ 
+ 
+ 
+8 
+Detailing Frames 
+
+
+===== PAGE 105 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+98 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+8.1 
+AUTOMATED BUILDING 
+When the Build Window is opened for the first time on a new frame, FRAMECAD Detailer will 
+automatically Build from script.  Whenever the Build Window is opened after this, the frame will not be 
+automatically built from script.  This is to protect any manual changes made to the frame.  See Manual 
+Building and Modifications (section 8.2).  
+If the properties of the frame are changed, but the frame is not rebuilt from script, the frame will 
+become unusable until it is rebuilt.  These frames will appear in the Project Tree with a red cross 
+through them ( 
+ ) and the elevation view will also have a red cross though it.  These frames will not 
+export to the roll former, and must be rebuilt from the script before becoming usable.  Alternately you 
+can override this by clicking on the ‘Frame OK’ button (by clicking this you are saying that the frame is 
+fine). This situation can also occur if you drag a built frame or an auto extend is done to it. 
+ 
+ 
+8.2 
+MANUAL BUILDING AND MODIFICATIONS 
+If required, frames may be built manually from scratch. If a specialised frame is required, it may be 
+easier to start with a blank page (Use the 'Manual Frame' Script for this). 
+The Build Window is similar to the Drawing Area. There are several different tools available on the 
+toolbar. 
+ 
+ 
+A 
+Flipped - Place stud or plate section in flipped direction (explained later) 
+B 
+Section Modification (Dropdown Menu - Hold mouse button down to drop menu, release to 
+select) 
+ 
+ 
+Convert to back to back.  Converts the selected single stud to 2 studs, back to back, 
+around the centre of the original stud. 
+ 
+ 
+Convert to face to face.  Converts the selected single stud to 2 studs, face to face, 
+around the centre of the original stud. 
+ 
+ 
+Flip the selected stud or plate. 
+
+
+===== PAGE 106 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+99 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+C 
+Boxing/Reinforcing. See Multiple Box Reinforcing of Members (section 8.6). 
+D 
+Convert line to Stud / Plate (Dropdown Menu - Hold mouse button down to drop menu, release 
+to select) 
+ 
+ 
+Convert line to stud.  Converts existing line to stud section.  Crosshairs of mouse 
+cursor to be placed on side of line the stud is to be created, with the box around the 
+crosshairs covering the line.  The section will be created with its origin at the same end 
+as the origin of the original line. 
+ 
+ 
+Convert line to plate.  Converts existing line to plate section.  Crosshairs of the mouse 
+cursor to be placed on side of the line the plate is to be created, with the box around 
+the crosshairs covering the line.  The section will be created with its origin at the same 
+end as the origin of the original line. 
+
+
+===== PAGE 107 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+100 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+E 
+Place Service Hole Route.  Places a line representing a route of service holes through a frame.  
+Drawn just like a line.  Specify a start point, followed by an end point, by either clicking the 
+mouse, or by any of the coordinate entry methods. 
+F 
+Select Explicit Tool Operation.  Selects tool operation to be placed by G. 
+G 
+Place Explicit Tool Operation.  Places a line representing a series of tool operations on which 
+ever section it crosses.  The tool selected in H specifies the tool to be placed. 
+H 
+Steel section to be used.  
+I 
+Place Stud Section.  Places stud section.  See Placing Studs and Plates (section 8.3). 
+J 
+Place Plate Section.  Places plate section.  See Placing Studs and Plates (section 8.3). 
+K 
+Place Bracing.  See Inserting Braces (section 8.4). 
+L 
+Line Tool.  Draws a line.  Line specified by a start coordinate followed by an end coordinate, 
+entered with either a mouse click or any of the coordinate entry methods. 
+M 
+Polyline Tool. This allows you to draw a polyline; it is drawn in the same manner as the line 
+tool. Pick the coordinates of each of the vertices and press an action key to finish placing the 
+polyline. 
+N 
+Circle Tool.  Draws a Circle by giving a centre coordinate and a radius. 
+O 
+Rectangle Tool.  Draws a rectangle.  Rectangle specified by a start coordinate (one corner) 
+followed by an end coordinate (opposite corner), entered with either a mouse click or any of the 
+coordinate entry methods. 
+P 
+Polygon Tool.  Allows you to place multiple lines to make any closed shape. You can enter any 
+dimension or place a line by clicking the left hand mouse button; you can also use the 
+orthogonal and 45 aids freely to suit. 
+Q 
+Text Tool.  Allows for the placement of text labels.  Point provided (by either mouse click or co-
+ordinate entry method) positions the text label by the upper left corner.  To edit the label, use 
+the right mouse button, and click on the label.  
+R 
+End Snap 
+S 
+Intersection Snap 
+T 
+Centre Snap 
+U 
+V 
+Near Snap 
+Fastening Snap (SF) 
+W 
+Auto Extend 
+X 
+Change Datum Location 
+Y 
+Grid Snap 
+Z 
+Toggle Orthagonal Aid 
+
+
+===== PAGE 108 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+101 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Z1 
+Toggle 45° Aid 
+ 
+8.3 
+PLACING STUDS AND PLATES 
+FRAMECAD Detailer has the ability to place stud and plate sections separately.  For most framing 
+systems, there is no difference between the two.  
+Sections are placed in much the same fashion as wall frames.  The only difference is a section has 2 
+directions it can be placed, dependant on which direction the web of the section should be placed. 
+The default is for the web to be to the left of the section when the section is drawn upwards, and to 
+pivot. 
+ 
+By ticking the Flipped checkbox - A in Manual Building and Modifications (section 8.2), the web will 
+be positioned on the opposite side. 
+ 
+When placing sections, ensure Auto-Extend is on, and check the section begins and ends correctly 
+inside sections, and doesn’t extend through the web. 
+ 
+
+
+===== PAGE 109 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+102 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+8.4 
+INSERTING BRACES 
+Select the section type that you wish to use for the brace from the dropdown list, then type B or click 
+on the Place Bracing icon  
+ 
+ 
+ 
+Braces should be placed from the bottom to the top.  This is so the brace will be produced from the 
+machine in the correct direction.  It must always span from the Bottom Plate to a Stud and from a Stud 
+to the underside of the Top Plate.  The brace should never pass over or through any other part, 
+connecting only at each end.  If the brace passes over another part, it creates a connection which is 
+not only hard to assemble, but also a potential structural weak point.
+ 
+Also, braces should never ‘share’ the dimple of another connection as this can become very difficult to 
+assemble. 
+The Web of the Brace (indicated by the double lines on the section in FRAMECAD Detailer), should 
+always face away from the stud it is connected to, where practical.  This can be achieved either by 
+clicking the ‘Flipped’ checkbox in FRAMECAD Detailer while placing the brace, or selecting the ‘Flip 
+Selected Plate/Stud’ button on the small drop down menu. 
+
+
+===== PAGE 110 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+103 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+8.5 
+STICK PROPERTIES 
+ 
+Each individual section (stick) has its own individual properties.  This can be viewed by using the right 
+mouse button, and single clicking on the required stick (Multiple stick properties can be modified by 
+selecting the sticks, and clicking on any one of them using the right mouse button). 
+The Name can be set as required to almost any alpha-numeric combination.  Any sticks with the same 
+name will be numbered consecutively.  The names are case sensitive, so PT, Pt, pT, and pt are all 
+different, and will have their own individual numbering scheme. 
+A stick can be changed to a different section via the Section Setup dropdown list. 
+The sticks Type and Usage can also be changed, just be aware that these changes might affect the 
+tooling at stick intersections. 
+The No Export option creates the stick for the purpose of creating punches in other sections, and then 
+will not manufacture the part.  If a stick runs through another part, and then has the No Export option 
+selected, it will not be manufactured, though the part it runs through will have a Dimple, Lip Notch, and 
+Web Notch punched. 
+ 
+8.6 
+MULTIPLE BOX REINFORCING OF MEMBERS 
+Members can have multiple reinforcing members attached them as boxing pieces. One reason for this 
+is so that full member boxing pieces don’t pass through member junctions (e.g. where truss webs 
+connect to chords) potentially causing a structurally weak tooling connection. Another reason for this 
+may be that only multiple isolated sections of a member may require strengthening to satisfy 
+engineering requirements. There are 2 methods of achieving this as outlined below. 
+Method 1: 
+- 
+In elevation view, click on the 
+ symbol on the toolbar or type ‘BX’ for Boxing. Make sure to 
+turn on/off the snaps that are required to place the reinforcing section (all snaps could be 
+turned off).     
+
+
+===== PAGE 111 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+104 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+- 
+Use the mouse to select the start and finish points for the reinforcing members. 
+To delete a reinforcing piece, right click on the member, select the piece within the dialogue box under 
+‘Length’ then press the Delete key. You may also alter the length and offset of individual pieces from 
+within here. 
+ 
+Method 2: 
+- 
+Right mouse click on the member to be reinforced. 
+In the stick properties dialogue box, go to the ‘Boxing’ tab and select ‘Partially Boxed’ under 
+‘Strengthen Options’. 
+ 
+Next, click in the space below ‘Offset’ and type in the starting point offset distance of your first 
+reinforcing piece from the starting end of the member (indicated by the double line). 
+Tab to the next space to type in the reinforcing length. 
+Tab to go to the next line for additional pieces. 
+If you wish to box the whole member, tick the Fully Boxed option instead of Partially Boxed. 
+
+
+===== PAGE 112 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+105 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+To delete a reinforcing piece, right click on the member, select the piece within the dialogue box under 
+‘Length’ then press the Delete key. You may also alter the length and offset of individual pieces from 
+within here. 
+ 
+
+
+===== PAGE 113 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+106 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+9.1 
+CREATING ROOF PLANE LINES 
+To layout the Hip, Valley and Ridge lines of a roof, begin with an outline of the external side of the wall 
+frames. 
+ 
+ 
+Divide the building into boxes.  Any boxes where the corners cross, such as in the following example 
+are completely separate boxes. 
+ 
+If 2 defined areas can be divided, and will share a side, as in the following examples, divide them to 
+create the largest box with the greatest width possible.  This will become the Major area.  The other 
+area will be referred to as the Minor area. 
+ 
+9 
+Detailing a Roof 
+
+
+===== PAGE 114 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+107 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Create a hip roof within all Major roofs. 
+ 
+Create an add on hip end roof within all Minor roofs towards the connecting Major roof with a shared 
+side and Valleys on all internal corners. 
+ 
+In the areas of overlapping boxes that required valley lines to be drawn, connect the intersections of 
+the hip lines and valley lines across the narrowest section of the box. 
+ 
+Trim the hips which pass ridges at the outside end and valleys at the inside end. 
+ 
+
+
+===== PAGE 115 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+108 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Trim all box outlines that are internal to the complete outline. 
+ 
+Roof plane lines can also be input automatically using the Roof Skeleton command. See Creating 
+Roof Plane Lines – Automatic Method (section 9.3). 
+ 
+9.2 
+ROOF BLOCK INPUT 
+A roof block is placed in a Roof object, so begin by placing a roof (Draw Roof - RI) or click on the icon 
+. No roof skeleton lines are required for the roof block command to operate. A template plan of the 
+walls can be created on a new plan for the purpose of tracing your roof outline. 
+When creating the roof, the initial options are the pitch and eave. Set these correctly as the roof block 
+will use them, however, they can be modified after the roof is created. 
+When the roof is placed, go to the Layer Clear 
+ command and delete the objects on the Imported 
+Lines layer or delete any initial setout lines or polylines. Now you can right click on the roof line (not 
+the eaves) to display the object properties. Any changes made to the Pitch and Heel Height will 
+change for the entire roof, whereas changing the Eave will only change for the edge selected. 
+ 
+The Calculate Height button will set the Heel Height to the vertical measurement of the currently 
+selected Plate Web Width at the currently set Pitch. When the roof is placed, this is the Heel Height 
+the roof will default to. Manually entering a heel height will override this. The roof block will build the 
+roof with this value as the heel height of each truss. 
+ 
+
+
+===== PAGE 116 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+109 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+9.3 
+CREATING ROOF LINES – AUTOMATIC METHOD 
+Roof plane lines can be automatically created using the Roof Skeleton command on the toolbar 
+. 
+This allows you to create roof plane lines on a building outline created by using either lines or a 
+polygon. It does not work on polylines. 
+• 
+Options:  
+Mode – Auto or manual. 
+Auto – will use the auto polygon tool to automatically find a polygon to use. 
+Manual – Add points in manually. 
+• 
+Process:  
+If Auto then select boundary to mark the polygon from. The side of the edge that the aperture is on 
+determines how it will try and create the polygon (refer to auto polygon tool). 
+ 
+ 
+Choose boundary line 
+Result 
+ 
+ 
+Inside boundary 
+Result 
+Manual mode involves selecting the points of the outline yourself; it will close the polygon when you 
+click on the first point entered. 
+ 
+ 
+Manually Selecting Points 
+Result 
+ 
+ 
+
+
+===== PAGE 117 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+110 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+9.4 
+ROOF TRUSS BLOCK INPUT 
+Once a roof is created and set up, use the Roof Block 
+ command (RB) to place each truss block. 
+When the command is first run, the command line will say "Click corner of roof block or enter for 
+properties". Press Enter, or right click to enter the roof block properties dialogue. 
+ 
+
+
+===== PAGE 118 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+111 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Description of Fields 
+Truss Spacing - Standard truss spacing to use for roof block. 
+• 
+Equal Spacing - Total space to be filled by trusses, divided to closest distance less than truss 
+spacing. 
+• 
+Absolute Spacing (From Start) - Will place trusses at Truss Spacing starting from leading end of 
+roof block and leaving remaining space between last 2 trusses. 
+• 
+Absolute Spacing (From End) - Will place trusses at Truss Spacing starting from trailing end of 
+roof block and leaving remaining space between first 2 trusses. 
+• 
+Absolute Spacing (To Centre) - Will place trusses at Truss Spacing from each end of the roof 
+block, leaving remaining space between central trusses. 
+First Truncated Truss - Distance from end of roof block to first truncated truss when building a hip end. 
+Truncated Truss Spacing - Spacing to be used between truncated trusses from first truncated truss 
+when building a hip end. 
+• 
+Equal Spacing - Distance from First Truncated Truss to First full truss divided equally to less than 
+truss spacing and trusses placed at that spacing. 
+• 
+Absolute Spacing - Trusses placed at Truss spacing starting at first truncated truss, leaving 
+remaining space between last truncated truss and first full truss. 
+Hip Method: 
+• 
+Truss Style - Places Half/Jack trusses on hip ends (Truncated truss top chords will be set down by 
+flange height of plate). 
+• 
+Rafter Style - Places Rafters on hip ends (Truncated truss top chords will be set down by web 
+width of plate). 
+First Jack - Distance to first Half/Jack truss from corner of block 
+Gable Overhang Method: 
+• 
+None - No framing is built for gable end. Gable end truss will be the same height as the standard 
+trusses in that block. 
+• 
+Panel – Gable overhang frames (Panels) will be built from the gable eave line to the first standard 
+truss inside the roof block. The first truss space will be increased if the absolute spacing is left too 
+small. 
+• 
+Outrigger - Outrigger frames (L Frames) will be built from gable eave to first standard truss inside 
+the roof block. The first truss space will be increased if the absolute spacing is left too small. 
+Outriggers are designed to cap over the roof battens to create fascia fixing. 
+Batten Spacing - Spacing of battens on roof. Used to position outriggers 
+Fascia Height - Depth of fascia framing required.  Used to set height of face section on outrigger 
+Make default button will remember settings. 
+Once the settings have been made, click on ‘OK’ and select the two corner points at one end of a roof 
+block and then a third selection to define the other end of the block. Points should be selected on the 
+building outline, not the eaves line. The eaves lines are not selectable. 
+
+
+===== PAGE 119 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+112 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+
+
+===== PAGE 120 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+113 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+When the 3 points have been selected, the command will ask what type of roof each end of the block 
+will have: 
+• 
+Hip (H) - No further options 
+• 
+Gable (G) - No further options 
+• 
+Dutch Gable (D) - Setback distance required, either click a point on the face of the dutch gable or 
+enter the setback distance. The First Full truss will be placed at the setback distance with either 
+Half/Jack trusses or Rafters placed to the end of the block 
+• 
+Saddle (S) - Saddle trusses will be placed to create valleys to connecting roof. Trusses will be 
+spaced at Truss Spacing from final full truss (Girder). 
+When the first roof block input command has been completed, continue to any other blocks present in 
+the roof plan. Once all blocks have been populated, the trusses will have been built and ready for 
+export (see images below). 
+ 
+
+
+===== PAGE 121 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+114 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+ 
+ 
+
+
+===== PAGE 122 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+115 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+ 
+9.5 
+PANEL ROOFS 
+ 
+
+
+===== PAGE 123 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+116 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The way you input roof and ceiling panels is very similar to drawing a polygon, setting the script 
+variables and then you can build as per normal and you will end up with something like below (note 
+that the members are superimposed on each panel). 
+ 
+After creating your roof layout in Roof Plan, select Roof Panel (FR) or Ceiling Panel (FC) from the 
+frame type drop down box then click on ‘Place Frame’ (FS) 
+. After placing a panel, it works in the 
+same way as any other frame does. Therefore, you right click on the panel and navigate to the 
+properties menu. Select ‘Auto Panel’ from the Frame Script. Ensure that you select the Make Default 
+check box if you always intend using this script for Roof Panels in future. Go to the Main tab. The 
+variables used for the Auto Panel script are shown below. 
+• 
+Length – A read only variable that is equal to the length of your reference edge 
+• 
+Vertical spacing – The spacing used between the vertical members 
+• 
+Horizontal spacing – The spacing used between the horizontal members 
+• 
+Vertical References – You can use this to choose reference points which are used for the vertical 
+spacing (this is the same as the references you can use for a Wall stud spacing, you can also pick 
+reference points as well 
+• 
+Horizontal References – Same as Vertical but for the horizontal members. 
+After assigning variables, you build the script in the same was as any other frame. Select the Make 
+Default button if these values are to be used on future Roof Panels. 
+ 
+
+
+===== PAGE 124 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+117 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+10 Project Finalisation 
+
+
+===== PAGE 125 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+118 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+10.1 
+DESIGN CHECKS 
+This function automatically checks the design for potential issues. Keyboard shortcut ‘DC’ or ‘?!’ button 
+on toolbar. 
+ 
+Under State column the user has the possibility to pick how the checks should be reports: as an Error, 
+as a Warning, or Disable the check. By default, all checks are set to report errors.  
+The left hand pane shows the items that can be checked for: 
+- 
+Unassigned Configuration Files 
+- 
+Frame Status 
+- 
+Frame is either not built or has been modified. 
+- 
+Web Notches 
+- 
+Checks Top Chord, Bottom Chord, Top Plate, Bottom Plate members for Web Notches. 
+Does not check for explicit tool Web Notches. Note: Frames that are imported from 
+FRAMECAD Structure® do not yet include information about what each stick is (i.e. Top 
+Plate, Nog, Brace, etc.) and therefore cannot be checked. 
+- 
+Bad Tooling 
+- 
+Any bad tooling will be highlighted with a red circle. 
+- 
+Maximum Frame Size 
+- 
+Maximum height & length for each Frame Type can be set on the Parameters tab. 
+- 
+Overlapping Parallel Sticks 
+- 
+Checks for sticks in the same location or incorrectly overlapping 
+- 
+Overlapping Frames 
+- 
+Excludes Trusses 
+Clicking on the ‘State’ next to these items brings up the option to create either an ‘Error’ or a ‘Warning’ 
+or ‘Disable’ the check item. 
+
+
+===== PAGE 126 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+119 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Once displayed, errors can be grouped by ‘Check’ type or by ‘Plan/Frame/Stick’. 
+ 
+Double-clicking on an item opens the frame and highlights the stick in question. Once rectified, closing 
+the frame returns the user back to the Errors dialogue box. 
+ 
+10.2 
+HOUSEKEEPING (KEEPING THE FILE SYSTEM TIDY) 
+FRAMECAD Detailer uses FRAMECAD Detailer Project Files for saving projects.  This file saves all 
+information regarding the project.  The file can be named anything; however, for good ‘housekeeping’ 
+of the file system, it should be named the same as the project. 
+The project will automatically create a backup file in the same directory as your project file every 10 
+minutes. If the original project was "MyGarage.fcp" then the backup file will be called 
+"MyGarage_Backup_.fcp. Don’t forget to rename the backed up file and delete the word "Backup" out 
+of it if you ever need to use it. It is also highly recommended that backup files be saved regularly by 
+using the Save As option.  These should be named something such as the Job Name, Job Number, 
+file version or file date.  For example, ProjectName-Date-Time.fcp (Date format – DDMMYY, Time 
+format – HHMM). 
+It is generally best to store this file inside a folder named to suit the project, as other files, such as 
+AutoCAD Drawings (dwg) or DXF files may also need to be stored. 
+ 
+
+
+===== PAGE 127 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+120 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+11.1 
+ELEVATION SETTINGS 
+Each plan and frame in FRAMECAD Detailer has its own elevation values.  These elevation settings 
+set the relative heights for the 3D views only. 
+The height specified is to the underside of the bottom plate. 
+ 
+As each plan will generally be a different level of the house, at a different height, the Plan is the best 
+place to specify heights.  The heights are polar (relative to point 0), so it is generally best to leave the 
+ground floor walls at height 0, and set all others to suit (i.e. trusses at 2440, if walls are 2440mm high). 
+It is also possible to set a height for an individual frame relative to the Plan elevation by entering an 
+additional value in the Setup area of the Frames properties. 
+ 
+11 Creating 3 Dimensional Views 
+
+
+===== PAGE 128 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+121 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+This is useful when just a few frames are at a different height to the others.  Heights of individual 
+frames are relative to the plan it is on.  (A frame with an elevation of -400 on a plan with an elevation 
+of 2440 will be 2040 above a plan with an elevation of 0). 
+ 
+11.2 
+FILE TYPE INFORMATION 
+FRAMECAD Detailer creates a VRML file (uses a .wrl extension) for 3 Dimensional Views.  A VRML 
+viewer is required to view these files.  FRAMECAD recommend the Deep View VRML Viewer, 
+available for free as part of the FRAMECAD Detailer install process. 
+ 
+11.3 
+EXPORTING TO 3D 
+To create the VRML file for 3D viewing, either open the File menu and click Export as 3D or click the 
+Export 3D button.  
+ 
+Browse to the location to export the files to and click OK. Select the items to be exported then click the 
+Export button. 
+To view the 3D image, open the File menu and click View 3D or click the View 3D button.  
+  Browse 
+to the location of the VRML file, and click on it.  Click OK.  Alternatively, open My Computer, browse to 
+the location of the VRML file and double click on it. 
+ 
+11.4 
+3D PITCH SETTINGS 
+The 3D Pitch setting indicates the roll of the frame.  This is a value in metric degrees, away from 90 
+degrees (vertical). 
+The frame rolls around the Right Snap Point of the Frame.  The red lines indicate the roll point of the 
+frame, assuming the frames are drawn from the centre outwards. 
+ 
+
+
+===== PAGE 129 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+122 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Below is a 3D example of a job created in Detailer. 
+ 
+ 
+
+
+===== PAGE 130 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+123 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+12 Import and Export Options 
+12.1 
+IMPORT OPTIONS 
+Jobs created in other software and saved in a format that Detailer can interpret, can be imported into 
+Detailer. To do so, go to File - Import and choose the file format you wish to import. Frames exported 
+from FRAMECAD Structure® using the ‘CNC’ output command are saved as XML type files.  
+12.1.1  XML File Import 
+1. Click on ‘XML file’ to import frames created in FRAMECAD Structure®.   
+ 
+
+
+===== PAGE 131 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+124 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+2. In the left-hand pane of the XML Import dialogue, set the default machine setup and tool 
+action for each Plan Type.  
+Tool Action 
+Choose the required Tool Action from the dropdown list.  
+ 
+When you set the ‘Tool Actions’ for a Frame Type, you are also telling Detailer what 
+orientation the frame is. 
+There are three types of frame orientations: 
+- 
+On Flat – While looking at the elevation view of a frame the web of the bottom plate or 
+bottom chord section is sitting flat on the ground. This is the standard orientation for wall 
+frames, roof trusses and webbed joists.   
+
+
+===== PAGE 132 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+125 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+- 
+Back to Back (B2B) – The webs of the plates are screwed to the webs of the studs. The 
+lips from the plate are furthest from you when looking in the elevation view while the lips of 
+the studs are closest to you. You should be able to look at the drawing to tell this as the lip 
+lines are only shown on the stud members. (Truss chords are referred to as plates and 
+truss webs are referred to as studs). 
+- 
+On Edge – While looking in the elevation view of a frame the flange of the bottom chord 
+section is sitting on the ground and all the members are in the same plane.  
+Within these frame orientations you may find various other tooling options: 
+- 
+Standard Tooling – When members pass through each other, the vertical (stud) 
+members are continuous and the horizontal (plate) members get notched. 
+- 
+Reversed Tooling – The horizontal (plate) members are continuous and the vertical 
+(stud) members get notched. This option would generally be used where ever the 
+horizontal members are the structural members e.g. in certain ‘panel roof’ situations.  
+- 
+No Boxing Swages - Any boxed or partially boxed members will not be swaged. This 
+option would generally be applied when using thicker steel to make assembly of boxed 
+members easier.  
+- 
+No Tooling – No flange cut tooling is applied on B2B members.  
+- 
+Plate over Stud tooling – the ends of nog members (generally in wall frames) are tabbed 
+over the stud that they terminate on instead of fitting inside the stud.  
+- 
+Truss tooling – boxed truss chords are notched to allow truss webs to fit inside them.  
+ 
+3. Other Plan Type import options can be set by clicking on ‘Options’ and going into ‘Frame 
+Options’. Refer to section 4.4.1. 
+ 
+
+
+===== PAGE 133 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+126 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+4. Go to the ‘General’ tab and make sure the correct Steel Spec is selected for your region.  
+ 
+5. Click on ‘OK’ to go back to the ‘XML Import’ dialogue.  
+6. Click on ‘Add’ and locate the XML file(s).  
+7. Tick the box in front of the available plans (or click on ‘Select All’).  
+8. Select the desired ‘Import Method’. Once a part of a job (walls for example) has been 
+imported, select the ‘Add to current project’ option, otherwise a new project will be created and 
+the already imported plan will not be contained within it.  
+9. Click on ‘Import’ to import the selected plans into Detailer.  
+10. If an explicit tool used in the job is missing from the default machine setup, a pop-up window 
+will warn the user about it. The user has 2 options: 
+ 
+• 
+Check that the explicit tool is fitted to the machine by looking at the profile drawing 
+provided with the roll-forming machine. If the tool is present on the profile drawing, then 
+the machine setup should be updated accordingly. 
+
+
+===== PAGE 134 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+127 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+• 
+Go to the ‘Explicit Tool Transforms’ tab by clicking the ‘Options’ button on the ‘XML 
+Import’ dialogue, then replace the explicit tool that is missing with an appropriate tool that 
+is available on the machine. For example, if a machine only has a triple web hole punch 
+and no bolt hole punch, the bolt holes from the imported job can be transformed into web 
+holes.  
+ 
+• 
+If, for example, the user forgot to add the web hole punch in the machine setup, check the 
+profile drawing provided with the roll-forming machine and confirm that the web hole 
+punch is fitted on your machine. Go to Edit-> Machine Setups-> Tools and move over the 
+Web Hole from the right column to the left. See section 4.2.1.   
+11. Once the job is imported, a plan will be created and populated with frames. You can now go 
+back into the Machine Setups (ctrl+M) to see if the imported profile is compatible with the 
+profiles that have initially been set up.  
+• 
+If the Project Machine Setup is equal to (=) the Saved Machine Setup, then nothing more 
+needs to be done.  
+The example below shows the machine setup of a project that was created using the 
+saved setup:  
+ 
+The equals sign indicates that the section setups are identical between the project and the 
+saved machine setup.  
+
+
+===== PAGE 135 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+128 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+• 
+If the Project Machine Setup is not equal (≠) to the Saved Machine Setup, then there may 
+be some differences. This occurs when a job is imported from FRAMECAD Structure® 
+and the section profile setup in the job is not identical to what has been setup in the 
+machine settings. There is no need to make any changes to minor variances but do 
+ensure the Export Compatibility is correct in the Project Setup. However, you can select 
+the Project’s machine setup and click on ‘Update to Default’. This will add the project’s 
+section profile to the saved setup therefore ensuring all future imported jobs are fully 
+compatible.  
+The example below shows the project machine setup being not equal to the saved 
+machine setup:  
+ 
+• 
+The example below shows the project machine setup of a job that was created on another 
+computer:  
+ 
+12.2 
+EXPORT OPTIONS 
+To export the design ready for production, it must be exported from the FCP (FRAMECAD Project) file 
+to a RFY (Rollformer) file for the Machine Control Software to read. You should always use our latest 
+machine control software and machine file format. 
+To do this, go to File | Export | Rollformer file  
+
+
+===== PAGE 136 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+129 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+
+
+===== PAGE 137 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+130 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Select the location to save your file to (generally this should be saved to a portable USB device to be 
+transferred to the machine).  
+Selecting the Project (Top Level) by right clicking on it will export the entire project, selecting a Plan by 
+right clicking on it will export all the frames contained within that plan, and selecting an individual frame 
+will export just that frame. Right click again on a project, plan or frame to deselect it. 
+The export order is able to be changed from the default output to either a plates first or studs first 
+output if required. 
+NB. Ensure the ‘Export progress’ indicator at the bottom of the dialogue box has finished before 
+removing any portable USB device being saved to.  
+12.3 
+RFY FILES 
+RFY files are our latest machine file format, introduced in version 2.9 of FRAMECAD Factory (roll 
+former’s control software). We advise all our customers to use the latest machine file formats which 
+means that your machines will need the latest version of FRAMECAD Factory to be able to open .rfy 
+files. Once your machine has been updated, your Detailer HASP can then be updated to enable .rfy 
+export.  
+ 
+The advantages of using rfy are:  
+ 
+- 
+“Length” tools (e.g. Webnotch, Swage etc.) are given a range with start and end positions, rather 
+than a series of individual punch operations 
+- 
+Factory can then figure out where to place punches to give the right punched length on the stick 
+- 
+Because Factory has a complete understanding of the tooling required, it can perform a variety of 
+scrap cut operations to: 
+- 
+Allow combining operations across sticks 
+- 
+Allow very short tool operations on the ends of sticks, without affecting neighbouring sticks 
+- 
+Prevent tools with long lead-in/lead-out (e.g. Swage) from affecting neighbouring sticks 
+ 
+Lines, text, and other items that are set to Export in the Layers dialogue box (see below) will be 
+included in the .rfy file and will be visible on the machine - this is for both plan view as well as elevation 
+view. 
+
+
+===== PAGE 138 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+131 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+
+
+===== PAGE 139 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+132 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+ 
+13.1 
+IMPORTING TO DETAILER 
+- 
+Open Detailer 
+- 
+Select File-> Import-> FIM File 
+- 
+Select 'Import Method' 
+- 
+Click on 'Open' and go to the .fim file location 
+- 
+Select the file and open.  
+- 
+In the FIM Import dialogue box, click on 'Select All' then 'Import'.  
+- 
+The imported frames will appear in a new plan.  
+- 
+Right click on a frame and select either 'Build' or 'Properties'  
+- 
+From the 'Frame Script' drop down select 'Auto Frame' 
+- 
+Click on 'Build' 
+• 
+Your frame will now be generated  
+ 
+13.2 
+EXPORTING FROM DETAILER 
+- 
+Select -> File -> Export -> Export FIM file  
+- 
+Select a file location to export to and then select the frames you wish to export.  
+- 
+Click on 'Export'  
+ 
+13 Working with External Programs 
+
+
+===== PAGE 140 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+133 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Layers have a number of useful features that allow you to manipulate the way objects are drawn to the 
+screen. A single layer will have a name as well as some visual and state properties (explained later) 
+that describe all of the objects on that layer. You could think of layers as being like a collection of 
+transparent plastic sheets that are laid on top of one another. Each sheet of plastic represents a layer 
+and the order of which you place each sheet of plastic determines how it would appear from above. 
+For example you may have drawn a red circle on one sheet and then a blue square on the other, 
+having the red circle sheet on top of the blue square sheet will look different compared to having them 
+the opposite way around. When you place an object in FRAMECAD Detailer the item is placed on the 
+currently selected layer (unless disabled from the options menu). An objects layer will determine what 
+pen colour, pen style, brush colour and brush style the object uses to draw itself.  
+ 
+14.1 
+A SINGLE LAYER 
+ 
+The above image shows how a single layer is represented, from left to right the image shows: 
+A 
+Name 
+B 
+Visibility (On/Off) 
+C 
+Locked/Unlocked 
+D 
+Pen Colour 
+E 
+Pen Style 
+F 
+Brush Colour 
+G 
+Brush Style 
+H 
+Export (to RFY file) 
+Visibility is either on or off. If a layer is locked it means that you cannot select any items that are drawn 
+on that layer but you can still snap to them. The pen colour is the colour used to draw the edges of an 
+object and the pen style shows how the edges are represented. The brush colour is the fill colour used 
+and the brush style shows what pattern is used on the fill. The export option determines whether the 
+drawing objects on this layer should be exported to the RFX file. Machines will need an updated 
+version of FRAMECAD Factory to be able to open .rfy files. Once your machine has been updated, 
+your Detailer HASP can then be updated to enable .rfy export. 
+If you were to draw an object with the above Panels layer selected then the edges would be solid 
+black lines and there would be no fill colour. 
+ 
+14 Layers 
+
+
+===== PAGE 141 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+134 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+14.2 
+PLAN VIEW 
+ 
+To change the layer of an object other than a frame, right click on it to view the object’s properties. 
+From here you can click on the change layer button. 
+ 
+ 
+ 
+
+
+===== PAGE 142 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+135 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The Coordinate System plays a very important part in the accuracy of FRAMECAD Detailer.  It is very 
+important to understand this section.  There are several other options available for entering 
+coordinates.  The most basic is Absolute Coordinates. 
+ 
+15.1 
+ABSOLUTE COORDINATE ENTRY 
+By entering any of the coordinate methods described below, the mouse cursor will automatically be 
+snapped to that point.  Coordinates can be used for any purpose that a position needs to be specified. 
+If accuracy is not required, a mouse click can be used instead. 
+The plan view is divided into 2 axes.  The ‘x’ axis is horizontal, and the ‘y’ axis is vertical. 
+ 
+The axes extend infinitely in each direction.  Coordinates are described by stating the x position first, 
+followed by a comma (,) and the y position. 
+All coordinates are described from a point called the Origin.  In metric, this point is described as 0,0 (or 
+0mm on the x axis and 0mm on the y axis).  In imperial, the origin is described as 0’,0’ (0 feet on the x 
+axis and 0 feet on the y axis) or 0",0" (0 inches on the x axis and 0 inches on the y axis). 
+When describing Metric coordinates, the distance is stated in millimetres, and only the number is 
+stated.  For instance, a point 1 meter above x axis and 1 meter in front of the y axis, is described as 
+1000,1000.  Negative coordinates are also possible, and are as simple as placing a minus (-) in front 
+of the number.  For instance, 1.5m below the x axis and 400mm in front of the y axis is shown as –
+1500,400. 
+Imperial coordinates are very similar.  The only difference is, instead of using millimetres to show 
+distances, feet, inches and fractions are used.  An example of an imperial co-ordinate is 7’1",–4’3-2/3".  
+This coordinate describes a point 7 feet and 1 inch above the x axis, and 4 feet, 3 and 2/3 inches 
+behind the y axis. 
+When drawing buildings in FRAMECAD Detailer, it is a good idea to use a specific point on the house 
+as the origin, and draw all layouts from this point, positioned at 0,0 or 0",0".  If a corner of a house is 
+used, this corner should be the same throughout all layouts.  If the house has a soffit/eave line, it 
+should be inside the soffit line. 
+ 
+ 
+15 Coordinate System 
+
+
+===== PAGE 143 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+136 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+15.2 
+ANGULAR COORDINATE ENTRY 
+Some of the entry methods describe a measurement and an angle, as opposed to 2 measurements.  
+The angle given, is in decimal degrees, and is taken anti-clockwise from the positive x-axis. 
+ 
+ 
+15.3 
+POLAR COORDINATE ENTRY 
+Polar Coordinates describe a point by a given dimension, the less-than symbol (<) (signifies angle), 
+followed by an angle, relative to the origin (0,0).  For instance, 30<20 calculates 20°, and travels in 
+that direction 30 and uses that point. 
+ 
+ 
+15.4 
+RELATIVE COORDINATE ENTRY 
+Relative Coordinates are quite a lot more useful that Absolute Coordinates.  The syntax is the same as 
+that of the Absolute Coordinate, with the addition of the ‘at’ symbol (@) in front of the coordinates 
+entered.  Using relative coordinates will move both distances, however, it will move relative to the 
+starting point.  For instance, if a line was being drawn and its start position was 10,20, typing a relative 
+coordinate of 10,10 would move the mouse and finish the line at the absolute coordinate of 20,30 (10 
+in each direction from the original point of 10,20. 
+ 
+15.5 
+RELATIVE POLAR COORDINATE ENTRY 
+Relative Polar Coordinates are just like Polar Coordinates, but relative to the current point, just as 
+Relative Coordinates are described above.  The syntax for a relative polar coordinate is as follows: 
+@distance<angle 
+I.e. If the start point is 10,20 and the Relative Polar Coordinate of @20<25 is used, a line will be drawn 
+from 10,20 20 long, at 25° anticlockwise. 
+ 
+15.6 
+LAST POINT SNAP 
+To draw from the last point, simply type @ (at symbol) and press an action key to snap to the last 
+point. 
+ 
+
+
+===== PAGE 144 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+137 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+15.7 
+DIRECT DISTANCE ENTRY 
+The final input method is Direct Distance Entry.  This is the quickest and most efficient way of drawing 
+buildings when they have 90° and 45° walls and trusses.  To use this method, begin drawing the 
+object, using either the snaps or any of the coordinate entry methods described above, drag the 
+mouse (and object) in the direction required.  Enter the length of the object, and press an action key.  
+The object will be drawn in the direction it was pointing to the length entered. 
+ 
+
+
+===== PAGE 145 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+138 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+16.1 
+ACTION KEYS 
+The right mouse button, enter key and spacebar are referred to as action keys and depending on what 
+is currently being done they will do different things. 
+• 
+If there is no active command/tool and there is no typed text in the command prompt, and you 
+press an action key, it will unselect any selected items or if there are no items selected it will start 
+up the last used command/tool if available. 
+• 
+If there are no active commands, and you have typed text into the command prompt and you 
+press an action key, FRAMECAD Detailer will check if the characters match a command shortcut 
+and if so will start up the relevant command otherwise it will try and use it as the start coordinate 
+for a fence. 
+• 
+If you are using a command/tool and the command prompt doesn’t show a "< >" then an action 
+key will cancel the active command otherwise an action key will do whatever is prompted inside 
+the less then and greater then characters. For example if you are drawing a polygon and after the 
+second point has been placed the command prompt says "vertex location", so if you were to hit 
+the action key it would cancel the use of the polygon tool. (A polygon needs 3 or more points) 
+ 
+• 
+After you’ve placed three points the command prompt changes to the below picture so if you hit 
+the action key it would close the polygon. 
+ 
+• 
+*Note that sometimes the spacebar is disconnected from the action keys (i.e. when asked to enter 
+text) as it is needed as a character. 
+ 
+16 Basic Actions 
+
+
+===== PAGE 146 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+139 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+16.2 
+OBJECT SELECTION 
+After an object is drawn, it is possible to select it for the purpose of modifying or deleting it. 
+ 
+16.2.1 Single Object Selection 
+To select a single object, simply click on it.  The object will appear blue with small grip boxes at each 
+end. 
+ 
+ 
+16.2.2 Multiple Object Selection 
+To select multiple objects, click on each object successively.  All selected objects will appear blue with 
+blue grip boxes at each end. 
+ 
+ 
+16.2.3 Unselecting 
+You can unselect an object by holding down the "shift" key and clicking on it. 
+ 
+16.2.4 Selection by Fencing 
+Selection by Fencing is a very efficient way of selecting multiple objects. The fence is visually 
+represented by a rectangle and the direction you draw the fence in will determine which objects are 
+selected. 
+To start fencing, click on a clear place on the plan when no commands/tools are activated. When you 
+move your mouse, you will notice a transparent rectangle and the colour will indicate what mode the 
+fence is in. If you move the mouse to the right of the start point, it is in "all in" mode and if you move 
+towards the left of the start point it will be in "any in" mode. If the fence is in "all in" mode it will only 
+select/deselect objects that are completely within the rectangle and if it’s in "any in" mode it will 
+select/deselect any objects that are partly or completely within the rectangle. If you hold the shift key 
+down when you finish a fence, it will deselect objects according to the mode the fence is in. 
+ 
+
+
+===== PAGE 147 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+140 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Objects completely contained in fence 
+ 
+Objects selected 
+ 
+Objects enclosed or crossed by the fence 
+ 
+Objects Selected 
+ 
+16.3 
+DELETING OBJECTS 
+To delete an object which is not required on the plan, select it using one of the methods listed above, 
+and press the Delete key (DEL) on your keyboard.  It is possible to delete multiple selected objects. 
+ 
+16.4 
+MOUSE 
+16.4.1 Wheel Mouse Zooming 
+It is possible to zoom using the wheel on many modern computer mice.  To Zoom In, rotate the wheel 
+forwards.  This will zoom in, centring the new view on the mouse cursor. 
+ 
+
+
+===== PAGE 148 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+141 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+To Zoom Out, rotate the wheel backwards.  This will zoom out, centring the new view on the mouse 
+cursor. 
+ 
+ 
+16.4.2 Mouse wheel zoom all 
+By clicking the middle mouse button the draw area will zoom to the extents of the object/s. 
+ 
+16.4.3 Panning 
+By holding down the middle mouse button for more than a second or using the arrow keys you can 
+pan your drawing. 
+ 
+16.5 
+MOVING OBJECTS AND DRAGGING 
+To adjust the position of any objects, select the object/s that need repositioning.  Multiple objects can 
+be selected by clicking on each item, or selecting them using the selection by fencing method. 
+Once selected, each object will appear with blue grip boxes. By using the left mouse button to click on 
+any of these, it will become gripped and this node can then be dragged to another location (either left 
+click new location or use a coordinate entry method). 
+Holding down the SHIFT key while clicking on a grip box, will allow you to move all of the selected 
+objects to a new position. 
+After a drag or move has started you can press an action key to cancel a drag or move. This will return 
+the objects back to their original positions. 
+ 
+A Selected Line 
+ 
+16.6 
+TOOL / COMMAND STRUCTURE 
+All of the commands within FRAMECAD Detailer follow are similar structure and there are two different 
+types of command structures used: 
+The user starts a command and it does something immediately with no other input required 
+
+
+===== PAGE 149 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+142 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The user starts a command, sets any available options and the command then uses some kind of 
+input from the user (mouse moves, clicks or keyboard characters), when the command has finished 
+the tool will stay active until the user cancels the command or starts up another command. 
+An example of the first type of command would be something like the zoom in or zoom out tool, while 
+the place line tool uses the second type of structure. The below diagram illustrates these structures. 
+ 
+ 
+16.7 
+TOOL / COMMAND OPTIONS 
+Some commands require options to be set prior to using the command. The image below shows the 
+options that are available for the dimension command. 
+ 
+In this particular case you can see that the style is currently set to Aligned, its dimension size is 200, 
+its precision is 2 and fixed extensions is set to false. The commands remember the last used options 
+and will display these when the command starts up. You may also notice the "<Accept>" at the right 
+hand end of the options and as explained in Action Keys (in section 16.1), this means if you press an 
+action key you accept the values that are currently set and will then start to use the command. If you 
+want to change any of the options then type in the character/s that are within the brackets and press 
+an action key, this will then list the settings available for this option. For example if we wanted to 
+change the style we would type "s" (it’s not case sensitive) and then press an action key and would get 
+the below image 
+ 
+
+
+===== PAGE 150 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+143 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+The above image shows that the style is currently set to 'aligned' and also lists that aligned, vertical 
+and horizontal are the available settings for this option. If we wanted to change it to horizontal, you 
+would type "h" and press an action key and you would be returned to the options listing to see the 
+updated changes. Not all option settings will be listed as above, some may just require some text or a 
+number as in the dimension size as shown below. 
+ 
+Therefore, in this case you would either accept the value of 200 or type in a new value then press an 
+action key. 
+ 
+ 
+
+
+===== PAGE 151 =====
+
+
+
+===== PAGE 152 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+145 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+ 
+Q. How do I change my frames to use a different machine for an existing job?  
+A. Select all the frames in a plan (excluding cloned frames), go to the Properties and change the 
+machine in the Machine Setup tab.  
+17 How To’s
+
+
+===== PAGE 153 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+146 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+3 
+3D PITCH SETTINGS • 121 
+4 
+45 Degree Aid • 80 
+A 
+A SINGLE LAYER • 133 
+ABSOLUTE COORDINATE ENTRY • 135 
+Action Keys • 142 
+ACTION KEYS • 138 
+ADDITIONAL FEATURES • 86 
+ANGULAR COORDINATE ENTRY • 136 
+ARRAY TOOL • 56 
+ARRAY’S – MULTI-VALUE VARIABLES • 86 
+Assigning Properties to a Frame • 82 
+AUTO BUILD TOOL • 72 
+Auto Dimension • 60 
+AUTO EXTEND • 78 
+AUTO EXTEND - MULTIPLE MEMBER • 57 
+AUTO POLYGON • 75 
+AUTOMATED BUILDING • 98 
+C 
+CANCEL TOOL • 50 
+CIRCLE • 74 
+Cloned Frames • 83 
+CLONED FRAMES • 84 
+Confidentiality • i 
+Configurations • 14 
+CONSTRAINT AIDS • 80 
+CONVERT LINE TO FRAME • 71 
+COPY TOOL • 51 
+CREATE A VRML OBJECT • 65 
+CREATE ROOF BLOCK TOOL • 73 
+Creating 3 Dimensional Views • 120 
+CREATING AND DELETING PLANS • 49 
+CREATING ROOF PLANE LINES • 106 
+Creating Roof Plane Lines – Automatic Method • 73, 108 
+CREATING ROOF PLANE LINES – AUTOMATIC METHOD • 109 
+D 
+Datum • 79 
+Defaults and Global Settings • 42 
+DELETE OBJECTS ON A LAYER • 67 
+DELETING OBJECTS • 140 
+Design Checks • 46 
+DESIGN CHECKS • 118 
+Detailing a Roof • 106 
+Detailing Frames • 84, 97 
+DIRECT DISTANCE ENTRY • 137 
+Disclaimer • i 
+DONGLE USAGE • 6 
+18 Index 
+
+
+===== PAGE 154 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+147 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Draw (includes command shortcuts) • 43 
+DRAW ROOF TOOL • 72 
+E 
+Edit • 42 
+ELEVATION SETTINGS • 120 
+End Snap • 77 
+ERASE TOOL • 50 
+EXPORTING FROM DETAILER • 132 
+Exporting the Project • 123 
+Exporting to 3D • 41 
+EXPORTING TO 3D • 121 
+F 
+File • 41 
+FILE TYPE INFORMATION • 121 
+FRAME BREAK • 64 
+FRAME OK TOOL • 72 
+FRAMECAD DETAILER COMPONENTS • 40 
+G 
+Get Coordinate • 63 
+GRID AND RESET DATUM • 79 
+Grid Snap • 79 
+H 
+Help • 45 
+HOUSEKEEPING (KEEPING THE FILE SYSTEM TIDY) • 119 
+I 
+Important Contact Information • ii 
+IMPORTING TO DETAILER • 132 
+INSERTING BRACES • 102 
+Installation • 2 
+INSTALLATION TYPES • 2 
+Intellectual Property Notice • i 
+Intersection Snap • 77 
+Introduction • 1 
+L 
+LAST POINT SNAP • 136 
+Layers • 46 
+LINE TOOL • 73 
+M 
+MACHINES • 14 
+Main Tab • 88 
+Manual Building and Modifications • 98, 101 
+MANUAL BUILDING AND MODIFICATIONS • 98 
+Measure Angle • 63 
+Measure Distance • 63 
+MENU BAR • 40 
+Merge Plans • 48 
+Middle Snap • 77 
+MIRROR TOOL • 55 
+MOUSE • 140 
+
+
+===== PAGE 155 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+148 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+Mouse wheel zoom all • 141 
+MOVE TOOL • 51 
+MOVING OBJECTS AND DRAGGING • 141 
+MULTIPLE BOX REINFORCING OF MEMBERS • 103 
+Multiple Object Selection • 139 
+MULTIPLE SELECTED FRAME PROPERTIES • 85 
+N 
+Nearest Snap • 78 
+O 
+OBJECT SELECTION • 139 
+OFFSET TOOL • 54 
+Opening Tab • 92 
+Ordinate Dimension • 63 
+Orthogonal Aid • 80 
+P 
+Panel Roofs • 70 
+PANEL ROOFS • 115 
+Panning • 141 
+PICKING • 86 
+Place Dimension • 58 
+PLACE FRAME • 67 
+PLACING STUDS AND PLATES • 101 
+Plan View Tools • 50 
+POLAR COORDINATE ENTRY • 136 
+POLYGON TOOL • 74 
+POLYLINE TOOL • 73 
+PRE-REQUISITES • 1 
+Production Sort Order • 47, 48 
+Project Finalisation • 117 
+PROJECT INFORMATION • 48 
+Project Tree • 49 
+PROJECT TREE • 47 
+R 
+RECTANGLE • 74 
+RELATIVE COORDINATE ENTRY • 136 
+RELATIVE POLAR COORDINATE ENTRY • 136 
+RFX FILES • 130 
+Roof Block Input • 72 
+ROOF BLOCK INPUT • 108 
+ROOF SKELETON TOOL • 73 
+Roof Truss Block Input • 73 
+ROOF TRUSS BLOCK INPUT • 110 
+Roof/Ceiling/Floor Panel Input • 68 
+ROTATE TOOL • 57 
+S 
+Script Basics • 84, 85 
+SCRIPT BASICS • 85 
+SCRIPT SELECTION • 85 
+Selection by Fencing • 139 
+SETTING THE VARIABLES • 85 
+Setup • 2 
+Single Object Selection • 139 
+
+
+===== PAGE 156 =====
+
+©2019 FRAMECAD Licensing Ltd    www.framecad.com 
+149 
+FRAMECAD Detailer User Manual v5.0 June 2019 
+ 
+SNAPS • 77 
+Snaps/Aids • 43 
+STICK PROPERTIES • 103 
+SYSTEM REQUIREMENTS • 1 
+T 
+Tekla Integration • 132 
+TEXT • 76 
+TOOL / COMMAND OPTIONS • 142 
+TOOL / COMMAND STRUCTURE • 141 
+TOOLBAR • 45 
+TOOLBAR 1 • 50 
+TOOLBAR 2 • 67 
+Tools • 44 
+TRIM/EXTEND TOOL • 52 
+Triples Tab • 94 
+U 
+UNDO/REDO • 67 
+UNITS OF MEASUREMENT • 12 
+Unselecting • 139 
+UPDATING YOUR LICENSE • 8 
+V 
+View • 45 
+VIEW/EDIT PROPERTIES TOOL • 51 
+W 
+WALL FRAME PROPERTIES • 86 
+Wall/Truss/Joist/Misc Frame Input • 70 
+Wheel Mouse Zooming • 140 
+Z 
+Zoom All • 51 
+Zoom In • 50 
+Zoom Out • 50 
+Zoom Window • 51 
+ 

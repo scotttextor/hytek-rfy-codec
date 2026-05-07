@@ -137,53 +137,115 @@ def render_pdf(rule_num: int, rule_text_short: str, headline: str, jobnum: str,
     matched = stick.get("matchedCount", 0)
     length = stick.get("oursLength") or stick.get("refLength") or 1000.0
 
-    # Figure with two strips (codec emit on top, ref on bottom)
-    fig = plt.figure(figsize=(11.5, 7.5))
-    plt.subplots_adjust(left=0.04, right=0.98, top=0.92, bottom=0.04)
+    # Figure layout: BIG left margin (axes start at 0.18) so the strip-row
+    # labels render fully without clipping. Strip labels live in figure
+    # coordinates between 0.01 and 0.17.
+    fig = plt.figure(figsize=(14, 8.5))
 
-    ax_top = fig.add_axes([0.04, 0.62, 0.94, 0.18])    # codec emit row
-    ax_stick = fig.add_axes([0.04, 0.50, 0.94, 0.10])   # the stick itself
-    ax_bot = fig.add_axes([0.04, 0.30, 0.94, 0.18])    # ref ops row
-    ax_text = fig.add_axes([0.04, 0.04, 0.94, 0.22])
+    ax_top = fig.add_axes([0.18, 0.55, 0.80, 0.22])
+    ax_stick = fig.add_axes([0.18, 0.45, 0.80, 0.07])
+    ax_bot = fig.add_axes([0.18, 0.22, 0.80, 0.22])
+    ax_text = fig.add_axes([0.04, 0.02, 0.94, 0.16])
     ax_text.axis("off")
+
+    # Figure-coordinate strip labels — independent of the data axes, never clipped
+    fig.text(0.02, 0.66, "CODEC", fontsize=12, fontweight="bold", color="#C62828", ha="left")
+    fig.text(0.02, 0.635, "EMITS", fontsize=12, fontweight="bold", color="#C62828", ha="left")
+    fig.text(0.02, 0.61, "(extra)", fontsize=8, color="#666", ha="left", style="italic")
+    fig.text(0.02, 0.585, "Detailer", fontsize=8, color="#666", ha="left", style="italic")
+    fig.text(0.02, 0.565, "doesn't", fontsize=8, color="#666", ha="left", style="italic")
+    fig.text(0.02, 0.545, "have these", fontsize=8, color="#666", ha="left", style="italic")
+
+    fig.text(0.02, 0.36, "DETAILER", fontsize=12, fontweight="bold", color="#C62828", ha="left")
+    fig.text(0.02, 0.335, "REF", fontsize=12, fontweight="bold", color="#C62828", ha="left")
+    fig.text(0.02, 0.31, "(missing)", fontsize=8, color="#666", ha="left", style="italic")
+    fig.text(0.02, 0.285, "codec", fontsize=8, color="#666", ha="left", style="italic")
+    fig.text(0.02, 0.265, "should have", fontsize=8, color="#666", ha="left", style="italic")
+    fig.text(0.02, 0.245, "emitted these", fontsize=8, color="#666", ha="left", style="italic")
 
     # Stick bar
     ax_stick.add_patch(Rectangle((0, 0.2), length, 0.6, facecolor=C_STICK, edgecolor=C_STICK_BORDER, linewidth=1.5))
     ax_stick.set_xlim(-length * 0.04, length * 1.04)
     ax_stick.set_ylim(0, 1)
     ax_stick.set_yticks([])
-    ax_stick.set_xlabel(f"Stick length: {length:.1f} mm", fontsize=9)
-    ax_stick.text(0, 0.5, " start ", ha="right", va="center", fontsize=8, color="#666")
-    ax_stick.text(length, 0.5, " end ", ha="left", va="center", fontsize=8, color="#666")
+    ax_stick.set_xlabel(f"Position along stick (mm) — total length {length:.0f} mm", fontsize=9)
+    ax_stick.text(0, 0.5, "start", ha="right", va="center", fontsize=8, color="#666", weight="bold")
+    ax_stick.text(length, 0.5, "end", ha="left", va="center", fontsize=8, color="#666", weight="bold")
 
-    def draw_ops_strip(ax, ops_list, label, ok_set, side="top"):
+    def get_op_x(parsed, length):
+        typ, kind, a, b = parsed
+        if kind == "span": return (a + b) / 2
+        if kind == "point": return a
+        if kind == "anchor": return 0 if a == "start" else length
+        return None
+
+    def draw_ops_strip(ax, ops_list, label_main, label_sub, side="top"):
+        """side='top' means strip is ABOVE the stick (codec emits).
+        side='bottom' means strip is BELOW the stick (Detailer ref / missing)."""
         ax.set_xlim(-length * 0.04, length * 1.04)
         ax.set_ylim(0, 1)
         ax.set_yticks([])
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.spines["left"].set_visible(False)
-        ax.text(-length * 0.03, 0.5, label, ha="right", va="center", fontsize=10, fontweight="bold")
-        ax.tick_params(axis="x", labelsize=7)
+        ax.set_xticks([])
+        for sp in ("top", "right", "left", "bottom"):
+            ax.spines[sp].set_visible(False)
+        # (Strip labels are drawn in figure coords by the caller — see fig.text() block above.)
+        # Suppress unused-arg warning by referencing them
+        _ = (label_main, label_sub)
+
+        # Sort ops left-to-right and assign stagger levels (4 lanes) by index
+        # so labels don't overlap.
+        op_xs = []
         for opstr in ops_list:
             parsed = parse_op(opstr)
             if parsed is None:
                 continue
+            x = get_op_x(parsed, length)
+            if x is None:
+                continue
+            op_xs.append((x, opstr, parsed))
+        op_xs.sort(key=lambda t: t[0])
+
+        # 4 stagger lanes; the lane-Y depends on whether we're top or bottom strip
+        # Top strip: ops sit between y=0.05 (near stick) and y=0.95 (label area)
+        # Lanes for labels (top): 0.95, 0.78, 0.62, 0.45 (descending toward stick)
+        # Bottom strip mirrored.
+        if side == "top":
+            lanes = [0.92, 0.74, 0.56, 0.38]
+            stick_anchor_y = 0.0  # bottom of strip = next to stick
+        else:
+            lanes = [0.08, 0.26, 0.44, 0.62]
+            stick_anchor_y = 1.0  # top of strip = next to stick
+
+        for i, (x, opstr, parsed) in enumerate(op_xs):
             typ, kind, a, b = parsed
-            color = "#C62828" if opstr not in ok_set else "#2E7D32"
-            label_y = 0.85 if side == "top" else 0.15
-            stick_y = 0.05 if side == "top" else 0.95
+            lane_y = lanes[i % len(lanes)]
+            color = "#C62828"  # always red — these are the "wrong" ops on this strip
+            # Body of the op (rectangle for spans, vertical line for points/anchors)
             if kind == "span":
-                ax.add_patch(Rectangle((a, 0.30), b - a, 0.40, facecolor=color, alpha=0.5, edgecolor=color, linewidth=1.0))
-                ax.text((a + b) / 2, label_y, f"{typ}", ha="center", va="center", fontsize=7, color=color)
+                bar_y = 0.10 if side == "top" else 0.78
+                ax.add_patch(Rectangle((a, bar_y), b - a, 0.12,
+                                       facecolor=color, alpha=0.45, edgecolor=color, linewidth=1.0))
+                center_x = (a + b) / 2
+                # Leader line from bar to label lane
+                ax.plot([center_x, center_x], [bar_y + (0.12 if side == "top" else 0), lane_y - (0.02 if side == "top" else -0.02)],
+                        color=color, linewidth=0.8, alpha=0.5)
+                label_text = f"{typ} {a:.0f}..{b:.0f}"
             elif kind == "point":
-                ax.plot([a, a], [0.20, 0.80], color=color, linewidth=2.0)
-                ax.scatter([a], [0.50], color=color, s=40, zorder=3)
-                ax.text(a, label_y, f"{typ}@{a:.0f}", ha="center", va="center", fontsize=7, color=color, rotation=0)
+                ax.plot([x, x], [stick_anchor_y, lane_y], color=color, linewidth=1.0, alpha=0.6)
+                ax.scatter([x], [lane_y], color=color, s=20, zorder=3)
+                label_text = f"{typ}@{x:.0f}"
             elif kind == "anchor":
                 pos = 0 if a == "start" else length
-                ax.plot([pos, pos], [0.20, 0.80], color=color, linewidth=2.5)
-                ax.text(pos, label_y, f"{typ}@{a}", ha="center", va="center", fontsize=7, color=color)
+                ax.plot([pos, pos], [stick_anchor_y, lane_y], color=color, linewidth=1.5, alpha=0.7)
+                label_text = f"{typ} @{a}"
+            else:
+                continue
+
+            # Background-boxed label so neighbours don't crash visually
+            ax.text(x, lane_y, label_text,
+                    ha="center", va="center", fontsize=7.5, color=color, weight="bold",
+                    bbox=dict(facecolor="white", edgecolor=color, alpha=0.85,
+                              boxstyle="round,pad=0.15", linewidth=0.5))
 
     # Identify matched ops by looking at the intersection of extras vs missing
     # (an op that appears in BOTH 'extras' and 'missing' is a near-miss; in the diff
@@ -193,20 +255,17 @@ def render_pdf(rule_num: int, rule_text_short: str, headline: str, jobnum: str,
     extras_set = set(extras)
     missing_set = set(missing)
 
-    # Top: codec emit — show extras (red) + matched (green). Matched isn't enumerated
-    # in the diff JSON though — only extras. So we colour everything red here as "extra"
-    # which is OK since this row IS the extras list.
-    draw_ops_strip(ax_top, extras, "CODEC\nEMITS\n(extras)", set(), side="top")
-    draw_ops_strip(ax_bot, missing, "DETAILER\nREF\n(missing)", set(), side="bottom")
+    draw_ops_strip(ax_top, extras, "CODEC EMITS", "(extra — Detailer doesn't have these)", side="top")
+    draw_ops_strip(ax_bot, missing, "DETAILER REF", "(missing — codec should have emitted these)", side="bottom")
 
-    # Title
+    # Title at very top
     fig.suptitle(
         f"Rule #{rule_num} — {rule_text_short}",
-        fontsize=14, fontweight="bold", y=0.98
+        fontsize=15, fontweight="bold", y=0.985
     )
-    fig.text(0.04, 0.94, f"Example: {jobnum}  |  plan {plan_name}  |  frame {frame_name}  |  stick {stick_name}",
-             fontsize=9, color="#444")
-    fig.text(0.04, 0.92, headline, fontsize=9, color="#222", style="italic")
+    fig.text(0.10, 0.94, f"Example: {jobnum}  |  plan {plan_name}  |  frame {frame_name}  |  stick {stick_name}",
+             fontsize=10, color="#444")
+    fig.text(0.10, 0.91, headline, fontsize=9.5, color="#222", style="italic", wrap=True)
 
     # Bottom text — totals + headline
     ax_text.text(0.0, 1.0,

@@ -25,6 +25,31 @@ with open(os.path.join(PDFS, "_arch_pdfs.json"), encoding="utf-8") as f:
     ARCH = json.load(f)
 with open(os.path.join(PDFS, "_affected.json"), encoding="utf-8") as f:
     AFFECTED = json.load(f)
+empirical_path = os.path.join(PDFS, "_empirical_findings.json")
+EMPIRICAL = {}
+if os.path.exists(empirical_path):
+    with open(empirical_path, encoding="utf-8") as f:
+        raw = json.load(f)
+    EMPIRICAL = {int(k): v for k, v in raw.items()}
+
+
+def empirical_text(rule_num):
+    """Format empirical finding for the spreadsheet cell."""
+    fnd = EMPIRICAL.get(rule_num)
+    if not fnd:
+        return ""
+    lines = [f"MINED FROM {fnd['total_sticks']:,} STICKS — overall {fnd['overall_pct']}% match",
+             f'"{fnd["headline"]}"',
+             ""]
+    # Show first 1-2 cuts, top 5 rows each
+    for cut in fnd["cuts"][:2]:
+        if not cut["rows"]:
+            continue
+        lines.append(f"By {cut['cut_by']}:")
+        for row in cut["rows"][:5]:
+            lines.append(f"  {row['key']:<32} {row['with']:>5}/{row['total']:<5} = {row['pct']:>5.1f}%")
+        lines.append("")
+    return "\n".join(lines).strip()
 
 # (rule_num) -> (frame_name, stick_name) — must match the EXAMPLES in
 # render_rule_pdfs.py so the diff PDF and the lookup label refer to the
@@ -415,6 +440,7 @@ HEADERS = [
     "What we emit (plain English)",
     "Status",
     "Source / what to implement",
+    "Empirical pattern (mined from 388-pair corpus)",
     "Look up in Detailer (job / plan / frame / stick)",
     "Specific question",
     "Affected (sticks / pairs in 388-pair corpus)",
@@ -525,9 +551,12 @@ for row_idx, row in enumerate(ROWS, start=2):
         frame, stick = loc
         lookup_label = f"{ex_job}\n{ex_plan}\nframe {frame}\nstick {stick}"
 
+    empirical = empirical_text(rule_num)
+
     cells = [
         rule_num, section, role, profile, when, what_we_emit, status,
         source_text,
+        empirical,
         lookup_label,
         specific_q if status == "No" else ("(see Source col)" if status == "Spec'd" else ""),
         affected_str,
@@ -557,35 +586,40 @@ for row_idx, row in enumerate(ROWS, start=2):
         sure_cell.font = Font(name="Arial", size=10, bold=True, color="E65100")
         # Make the lookup cell stand out
         if lookup_label:
-            lookup_cell = ws.cell(row=row_idx, column=9)
+            lookup_cell = ws.cell(row=row_idx, column=10)
             lookup_cell.font = Font(name="Arial", size=10, bold=True, color="231F20")
             lookup_cell.fill = PatternFill("solid", start_color="FFF3CD")
-        # Tall row to fit the source/implementation text
-        line_count = source_text.count("\n") + max(1, len(source_text) // 70)
-        ws.row_dimensions[row_idx].height = max(70, min(line_count * 14, 200))
+        # Highlight empirical column if data present
+        if empirical:
+            ws.cell(row=row_idx, column=9).fill = PatternFill("solid", start_color="E1F5FE")
+        line_count = source_text.count("\n") + max(1, len(source_text) // 70) + empirical.count("\n")
+        ws.row_dimensions[row_idx].height = max(80, min(line_count * 14, 260))
     else:  # No
         sure_cell.fill = fill_no
         sure_cell.font = Font(name="Arial", size=10, bold=True, color="C62828")
-        # Highlight correction cell (now col 14 after inserting Source col 8 + lookup col 9)
-        ws.cell(row=row_idx, column=14).fill = fill_correction
+        # Highlight correction cell (now col 15 after Source + Empirical + Lookup)
+        ws.cell(row=row_idx, column=15).fill = fill_correction
         if lookup_label:
-            lookup_cell = ws.cell(row=row_idx, column=9)
+            lookup_cell = ws.cell(row=row_idx, column=10)
             lookup_cell.font = Font(name="Arial", size=10, bold=True, color="231F20")
             lookup_cell.fill = PatternFill("solid", start_color="FFF3CD")
-        line_count = long.count("\n") + max(1, len(long) // 90)
-        ws.row_dimensions[row_idx].height = max(120, min(line_count * 13, 320))
+        if empirical:
+            ws.cell(row=row_idx, column=9).fill = PatternFill("solid", start_color="E1F5FE")
+        line_count = max(long.count("\n"), empirical.count("\n")) + max(1, len(long) // 90)
+        ws.row_dimensions[row_idx].height = max(140, min(line_count * 13, 380))
 
-    # Make hyperlink cells render as blue underlined (cols 15-19 now)
-    for col in (15, 16, 17, 18, 19):
+    # Make hyperlink cells render as blue underlined (cols 16-20 now)
+    for col in (16, 17, 18, 19, 20):
         cell = ws.cell(row=row_idx, column=col)
         if cell.value:
             cell.font = font_link
 
 widths = {1: 5, 2: 9, 3: 26, 4: 11, 5: 32, 6: 42, 7: 10,
-          8: 60,  # Source / what to implement
-          9: 22,  # Look up in Detailer
-          10: 50, 11: 18, 12: 22, 13: 70, 14: 50,
-          15: 22, 16: 30, 17: 30, 18: 30, 19: 30}
+          8: 55,  # Source / what to implement
+          9: 60,  # Empirical pattern
+          10: 22,  # Look up in Detailer
+          11: 50, 12: 18, 13: 22, 14: 65, 15: 50,
+          16: 22, 17: 30, 18: 30, 19: 30, 20: 30}
 for col, w in widths.items():
     ws.column_dimensions[get_column_letter(col)].width = w
 
@@ -646,7 +680,7 @@ ws2.cell(row=31, column=1, value="Current codec parity: 77.46% across 388-pair c
 ws2.cell(row=32, column=1, value="Implementing the 15 Spec'd rules (orange): estimated +15-25pp -> 90%+.")
 ws2.cell(row=33, column=1, value="Answering the 25 No rules (red): closes the rest.")
 
-OUT = os.path.join(ROOT, "docs", "rules-review-v3.xlsx")
+OUT = os.path.join(ROOT, "docs", "rules-review-v4.xlsx")
 wb.save(OUT)
 print(f"Wrote: {OUT}")
 print(f"Rules: {len(ROWS)}")

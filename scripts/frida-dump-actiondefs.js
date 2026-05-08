@@ -514,9 +514,14 @@ function installHook_ApplyRule() {
             let slotsDump = null;
             try {
                 slotsDump = dumpMaskSlots(this.actionsArrPtr);
-                if (slotsDump.length === 0 && !this.eax.equals(this.actionsArrPtr)) {
+                // If the args[] read returned nothing (negative length implies
+                // unreadable memory) AND EAX differs, retry from EAX.
+                if (slotsDump.length < 0 && !this.eax.equals(this.actionsArrPtr)) {
                     const slotsViaEax = dumpMaskSlots(this.eax);
-                    if (slotsViaEax.length > 0) slotsDump = slotsViaEax;
+                    if (slotsViaEax.length > 0) {
+                        slotsDump = slotsViaEax;
+                        slotsDump.via_eax_fallback = true;
+                    }
                 }
             } catch (e) {
                 slotsDump = { read_error: String(e) };

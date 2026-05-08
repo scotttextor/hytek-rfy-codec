@@ -239,6 +239,24 @@ export const RULE_TABLE: RuleGroup[] = [
         predicate: (ctx) => ctx.role !== "Kb",
         notes: "H end swage span 43mm" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high" },
+      // Service holes — Kb cripples on wall plans (LBW + NLBW). Mining DT-2026-05-08
+      // (n=2,713; conf 95-97%): Detailer puts ~2 InnerService holes on
+      // 95-97% of Kb sticks in wall plans. Same 296/446mm spacing pattern
+      // as STUD_ROLES (see :154-166).
+      {
+        toolType: "InnerService", kind: "point",
+        anchor: { kind: "startAnchored", offset: 296 },
+        confidence: "medium",
+        predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 296 + 200,
+        notes: "Kb cripple electrical service hole at ~300mm (DT-miner 2026-05-08, conf 95-97%)",
+      },
+      {
+        toolType: "InnerService", kind: "point",
+        anchor: { kind: "startAnchored", offset: 446 },
+        confidence: "medium",
+        predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
+        notes: "Kb cripple paired service hole at 446mm (DT-miner 2026-05-08)",
+      },
     ],
   },
 
@@ -252,6 +270,21 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "medium" },
       { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 50 }, spanLength: 50, confidence: "low" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "medium" },
+      // Service holes — same pattern as 70mm Kb. Mining DT-2026-05-08.
+      {
+        toolType: "InnerService", kind: "point",
+        anchor: { kind: "startAnchored", offset: 296 },
+        confidence: "medium",
+        predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 296 + 200,
+        notes: "89mm Kb cripple electrical service hole at ~300mm (DT-miner 2026-05-08)",
+      },
+      {
+        toolType: "InnerService", kind: "point",
+        anchor: { kind: "startAnchored", offset: 446 },
+        confidence: "medium",
+        predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
+        notes: "89mm Kb cripple paired service hole at 446mm (DT-miner 2026-05-08)",
+      },
     ],
   },
 

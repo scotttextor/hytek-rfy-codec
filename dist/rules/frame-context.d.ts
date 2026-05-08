@@ -44,6 +44,19 @@ export declare function layoutFrame(frame: RfyFrame): StickWithBox[];
  * rules add LIP NOTCH + DIMPLE pairs at crossings.
  */
 export declare function generateFrameContextOps(frame: RfyFrame, setup?: MachineSetup): Map<string, RfyToolingOp[]>;
+/** Append ops from `addOps` (action-defs source) to `legacyOps` (already
+ *  populated by the legacy crossings code), but skip any addOp that has a
+ *  near-duplicate already in legacyOps.
+ *
+ *  Crucially: we do NOT dedup WITHIN legacyOps. Detailer reference RFYs
+ *  often contain duplicate ops at the same position (e.g. paired
+ *  InnerDimples on N nogs from multi-direction crossings). A global dedup
+ *  would erroneously collapse them and regress matched count.
+ *
+ *  Tolerance 0.15mm — same as Detailer's geometry epsilon. Applies to
+ *  pos for point ops, startPos+endPos for spanned ops.
+ */
+export declare function mergeActionDefsOps(legacyOps: RfyToolingOp[], addOps: RfyToolingOp[]): void;
 /**
  * Mutates `stickOps` in-place: merges any LipNotch ops whose endPos is within
  * `gap` mm of the next LipNotch's startPos into a single wider notch.

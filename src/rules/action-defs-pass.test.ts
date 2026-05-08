@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import {
   isActionDefsPassEnabled,
   runActionDefsPass,
   emptyActionDefsPass,
 } from "./action-defs-pass.js";
+import { mergeActionDefsOps, type StickWithBox } from "./frame-context.js";
 import { getDefaultMachineSetup } from "../machine-setups.js";
-import type { StickWithBox } from "./frame-context.js";
-import type { RfyStick } from "../format.js";
+import type { RfyStick, RfyToolingOp } from "../format.js";
 
 function mkStick(over: Partial<RfyStick> = {}): RfyStick {
   return {
@@ -104,6 +104,59 @@ describe("emptyActionDefsPass", () => {
     for (const info of r.values()) {
       expect(info.handled).toBe(false);
     }
+  });
+});
+
+describe("mergeActionDefsOps — preserves legacy duplicates", () => {
+  it("preserves duplicate legacy ops at the same position", () => {
+    // Detailer's reference RFYs sometimes contain paired InnerDimples on N
+    // nogs from multi-direction crossings. A naive global dedup would
+    // collapse them to one and regress matched count.
+    const legacy: RfyToolingOp[] = [
+      { kind: "point", type: "InnerDimple", pos: 62.157 },
+      { kind: "point", type: "InnerDimple", pos: 62.157 },
+      { kind: "point", type: "InnerDimple", pos: 236.0 },
+      { kind: "point", type: "InnerDimple", pos: 236.0 },
+    ];
+    const added: RfyToolingOp[] = [];  // action-defs adds nothing here
+    mergeActionDefsOps(legacy, added);
+    // Both legacy duplicates retained.
+    expect(legacy.length).toBe(4);
+  });
+
+  it("skips action-defs ops with a near-duplicate already in legacy", () => {
+    const legacy: RfyToolingOp[] = [
+      { kind: "spanned", type: "LipNotch", startPos: 100, endPos: 145 },
+    ];
+    const added: RfyToolingOp[] = [
+      { kind: "spanned", type: "LipNotch", startPos: 100.05, endPos: 144.95 },  // within 0.15mm tol
+    ];
+    mergeActionDefsOps(legacy, added);
+    // The action-defs op is suppressed — only the legacy op remains.
+    expect(legacy.length).toBe(1);
+    expect(legacy[0]).toEqual({ kind: "spanned", type: "LipNotch", startPos: 100, endPos: 145 });
+  });
+
+  it("appends action-defs ops with no legacy match", () => {
+    const legacy: RfyToolingOp[] = [
+      { kind: "spanned", type: "LipNotch", startPos: 100, endPos: 145 },
+    ];
+    const added: RfyToolingOp[] = [
+      { kind: "spanned", type: "LipNotch", startPos: 500, endPos: 545 },  // far away
+    ];
+    mergeActionDefsOps(legacy, added);
+    expect(legacy.length).toBe(2);
+  });
+
+  it("treats different ToolTypes at the same position as distinct", () => {
+    const legacy: RfyToolingOp[] = [
+      { kind: "point", type: "InnerDimple", pos: 100 },
+    ];
+    const added: RfyToolingOp[] = [
+      { kind: "point", type: "Bolt", pos: 100 },  // different type, same pos
+    ];
+    mergeActionDefsOps(legacy, added);
+    expect(legacy.length).toBe(2);
   });
 });
 

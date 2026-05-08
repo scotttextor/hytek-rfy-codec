@@ -129,12 +129,16 @@ export function generateFrameContextOps(frame, setup) {
     //
     // When CODEC_USE_ACTION_DEFS=1, run the new path: classify each crossing
     // via the 28-name classifier, look up the matching ActionDefsManager
-    // section/slot/alternative, emit ops via action-emit. Result is APPENDED
-    // to the per-stick `result` (the legacy crossings code below still runs);
-    // a final dedup pass removes near-duplicate spans.
+    // section/slot/alternative, emit ops via action-emit. The pass output is
+    // STAGED in `actionDefsOpsByStick` and merged at the END via
+    // `mergeActionDefsOps` — that merge only adds an action-defs op when no
+    // near-duplicate already exists in the legacy result. This preserves
+    // legacy duplicates (e.g. paired InnerDimples from multi-direction
+    // crossings) which a global dedup would erroneously collapse.
     //
     // Default OFF for first-cut: legacy path runs alone, parity unchanged.
     // ---------------------------------------------------------------------
+    const actionDefsOpsByStick = new Map();
     if (isActionDefsPassEnabled()) {
         const passResult = runActionDefsPass(layout, {
             enabled: true,
@@ -143,9 +147,7 @@ export function generateFrameContextOps(frame, setup) {
         });
         for (const [stickName, info] of passResult.entries()) {
             if (info.handled && info.ops.length > 0) {
-                const arr = result.get(stickName);
-                if (arr)
-                    arr.push(...info.ops);
+                actionDefsOpsByStick.set(stickName, info.ops);
             }
         }
     }
@@ -1100,33 +1102,38 @@ export function generateFrameContextOps(frame, setup) {
             }
         }
     }
-    // Final dedup pass — removes near-duplicate ops the action-defs pass and
-    // the legacy crossings code may have both emitted (only meaningful when
-    // CODEC_USE_ACTION_DEFS is on; otherwise this is a no-op since the legacy
-    // path doesn't produce duplicates of itself).
+    // Final merge pass — for each stick the action-defs pass produced ops for,
+    // append only the action-defs ops that DON'T have a near-duplicate already
+    // in the legacy result. This avoids double-emitting at intersection points
+    // both paths handle, while preserving legacy-emitted duplicates that
+    // Detailer's reference also has (e.g. paired InnerDimples from multi-
+    // direction crossings on N nogs). Only meaningful when
+    // CODEC_USE_ACTION_DEFS is on; otherwise actionDefsOpsByStick is empty.
     if (isActionDefsPassEnabled()) {
-        for (const [, ops] of result.entries()) {
-            dedupeNearDuplicates(ops);
+        for (const [stickName, addOps] of actionDefsOpsByStick.entries()) {
+            const arr = result.get(stickName);
+            if (!arr)
+                continue;
+            mergeActionDefsOps(arr, addOps);
         }
     }
     return result;
 }
-/** Mutate `ops` in-place: remove ops with EXACT duplicates (same type, same
- *  positions to 0.1mm). Conservative — preserves all legacy ops, only drops
- *  literal repeats. The action-defs pass tends to emit centred LipNotches at
- *  intersection points where legacy already has one, so even strict dedup
- *  removes a meaningful fraction.
+/** Append ops from `addOps` (action-defs source) to `legacyOps` (already
+ *  populated by the legacy crossings code), but skip any addOp that has a
+ *  near-duplicate already in legacyOps.
  *
- *  Iterates LATER → EARLIER (preserving the first/legacy occurrence and
- *  dropping later/action-defs duplicates).
+ *  Crucially: we do NOT dedup WITHIN legacyOps. Detailer reference RFYs
+ *  often contain duplicate ops at the same position (e.g. paired
+ *  InnerDimples on N nogs from multi-direction crossings). A global dedup
+ *  would erroneously collapse them and regress matched count.
+ *
+ *  Tolerance 0.15mm — same as Detailer's geometry epsilon. Applies to
+ *  pos for point ops, startPos+endPos for spanned ops.
  */
-function dedupeNearDuplicates(ops) {
+export function mergeActionDefsOps(legacyOps, addOps) {
     const TOL = 0.15;
-    const seen = [];
-    for (let i = 0; i < ops.length; i++) {
-        const op = ops[i];
-        if (!op)
-            continue;
+    function key(op) {
         let a, b;
         if (op.kind === "point") {
             a = op.pos;
@@ -1140,16 +1147,18 @@ function dedupeNearDuplicates(ops) {
             a = 0;
             b = 0;
         }
-        const dupIdx = seen.findIndex((s) => s.type === op.type &&
-            s.kind === op.kind &&
-            Math.abs(s.a - a) <= TOL &&
-            Math.abs(s.b - b) <= TOL);
-        if (dupIdx >= 0) {
-            ops.splice(i, 1);
-            i--;
-        }
-        else {
-            seen.push({ type: op.type, kind: op.kind, a, b });
+        return { type: op.type, kind: op.kind, a, b };
+    }
+    const legacyKeys = legacyOps.map(key);
+    for (const op of addOps) {
+        const k = key(op);
+        const dup = legacyKeys.some((s) => s.type === k.type &&
+            s.kind === k.kind &&
+            Math.abs(s.a - k.a) <= TOL &&
+            Math.abs(s.b - k.b) <= TOL);
+        if (!dup) {
+            legacyOps.push(op);
+            legacyKeys.push(k);
         }
     }
 }

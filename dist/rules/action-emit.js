@@ -1,3 +1,4 @@
+import { getToolDef } from "./tooldef-table.js";
 // ---------------------------------------------------------------------------
 // Verb → tool-type table
 // ---------------------------------------------------------------------------
@@ -111,11 +112,19 @@ export function emitAction(op, ec) {
     if (srcPos === null || dstPos === null) {
         return { ops: [], trace: `${op.raw} → unresolved pos (src=${op.src}→${srcPos}, dst=${op.dst}→${dstPos})` };
     }
-    // RightFlange / LeftFlange variants: per detailer-rule-decoded.md these
-    // are flange-edge cuts. In our codec they're spanned ops from the
-    // intersection to the stick end. The src/dst encoding tells us which
-    // direction the cut runs.
-    if (tt === "RightFlange" || tt === "LeftFlange" ||
+    // ---------------------------------------------------------------------
+    // TToolDef table lookup (per docs/cracked/tooldef-table.json).
+    // The table tells us authoritatively whether the verb's span is
+    // GEOMETRY-DRIVEN (src..dst position pair) or FIXED-LENGTH centred
+    // on the crossing.
+    // ---------------------------------------------------------------------
+    const td = getToolDef(verb);
+    // Geometry-driven verbs (LeftFlange / RightFlange) — the span is the
+    // src..dst position pair. NEVER override with a fixed length.
+    // PartialFlange variants aren't in the table (no corpus samples) but
+    // share the same geometry semantics — keep the legacy branch.
+    if (td?.lengthMm === "geometry" ||
+        tt === "RightFlange" || tt === "LeftFlange" ||
         tt === "RightPartialFlange" || tt === "LeftPartialFlange") {
         const lo = Math.min(srcPos, dstPos);
         const hi = Math.max(srcPos, dstPos);
@@ -132,11 +141,21 @@ export function emitAction(op, ec) {
             trace: `${op.raw} → ${tt} ${round(lo)}..${round(hi)}`,
         };
     }
-    // Internal notches (LipNotch / Swage / InnerNotch) — span centred on the
-    // crossing position with lipNotchSpan width.
-    // CONSERVATIVE: if src≡dst (most common — both resolve to intersectionPos),
-    // emit a span of width `lipNotchSpan` centred at intersectionPos.
-    // If src and dst differ (e.g. ww→wend), emit from src to dst (clamped).
+    // Fixed-length spanned verbs (LipNotch / Swage / InnerNotch / variants).
+    // Detailer's TToolDef.OperationType for these is otSpannedTool with a
+    // nominal Lengthh1P drawn from the machine setup. We use the EmitContext
+    // lipNotchSpan / webNotchSpan (already profile-aware via
+    // lipNotchToolLength(setup)) — that's more accurate than the corpus-wide
+    // 45mm modal in tooldef-table.ts because LipNotch length actually varies
+    // 48–75mm by profile.
+    //
+    // Span semantics: CENTRED on the crossing position. The empirical corpus
+    // confirms centred is correct (mode = 45mm centred on intersectionPos).
+    // Anchored ([anchor, anchor+L]) would push the span past the joint by
+    // L/2 — verified to regress vs ref in 2026-05-08 A/B test.
+    //
+    // If src ≠ dst (e.g. ww→wend), the action-defs grammar is asking for an
+    // anchored span — emit src..dst clamped.
     const useCentred = srcPos === dstPos;
     let startPos;
     let endPos;

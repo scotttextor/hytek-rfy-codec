@@ -300,17 +300,18 @@ export const RULE_TABLE: RuleGroup[] = [
       // T-plate Service holes — re-enabled 2026-05-08 for NLBW (DT-miner #4, n=1,791, conf 90%).
       // The 2026-05-04 disable was based on the HG260001 PK1-PK5 LBW sample
       // which had ZERO. Full-corpus mining (66k sticks) shows NLBW T-plates
-      // have 89.5% emission with mean 3.1 ops/stick at first~285.75, gap~600
-      // (matches setup.largeServiceToLeadingEdgeDistance=600). The position
-      // is empirically driven by stud-crossings beneath the plate, not a
-      // fixed offset — this is a low-confidence approximation. LBW emission
-      // is 75% per DT #6 — re-enabling that too in fix #3.
+      // have 89.5% emission with mean 3.1 ops/stick. Empirical first-position
+      // distribution is bimodal at ~275 (480 sticks) and ~200-300 (multiple
+      // peaks), with 600mm spacing matching setup.largeServiceToLeadingEdge
+      // Distance. The Detailer position is stud-crossing-driven, not a fixed
+      // offset — this is a low-confidence approximation. LBW emission is 75%
+      // per DT #6 — re-enabling that too in fix #3.
       {
         toolType: "InnerService", kind: "point",
-        anchor: { kind: "spaced", firstOffset: 285.75, spacing: 600, lastOffset: 200 },
+        anchor: { kind: "spaced", firstOffset: 275, spacing: 600, lastOffset: 200 },
         confidence: "low",
         predicate: (ctx) => /(NLBW|NON-LOAD)/i.test(ctx.planName ?? "") && ctx.length >= 500,
-        notes: "NLBW T-plate InnerService — first ~285.75, spaced ~600 (DT-miner 2026-05-08)",
+        notes: "NLBW T-plate InnerService — first ~275, spaced ~600 (DT-miner 2026-05-08)",
       },
     ],
   },

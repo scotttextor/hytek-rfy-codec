@@ -124,7 +124,17 @@ export function generateFrameContextOps(frame, setup) {
     const internalSpanFromSetup = lipNotchToolLength(resolvedSetup) - 3;
     const internalDimpleOffsetFromSetup = internalSpanFromSetup / 2;
     // Studs: narrow vertical members (S, J). Filter out wide outlines (Kb/H).
-    const studs = layout.filter(sb => STUD_ROLES.has(sb.role) && (sb.box.xMax - sb.box.xMin) <= STUD_MAX_WIDTH);
+    // 2026-05-07 Swap A: use the SHORT dimension as the "width" check. Most
+    // studs run vertically so width = bbox-w. In rotated RP frames they run
+    // horizontally so width = bbox-h. Either way the perpendicular dimension
+    // is the C-section flange (~41mm) and we want to filter out wide cripples.
+    const studs = layout.filter(sb => {
+        if (!STUD_ROLES.has(sb.role))
+            return false;
+        const w = sb.box.xMax - sb.box.xMin;
+        const h = sb.box.yMax - sb.box.yMin;
+        return Math.min(w, h) <= STUD_MAX_WIDTH;
+    });
     // Truss webs (W): vertical posts AND diagonal members in trusses. They
     // cross top/bottom chords like studs but for diagonals the bbox.cx isn't
     // meaningful — we use line-intersection geometry to find the actual
@@ -201,6 +211,18 @@ export function generateFrameContextOps(frame, setup) {
         // Track stud crossing positions on this plate so we can emit InnerService
         // at midpoints between adjacent studs (panel-point grid).
         const studCrossingsOnPlate = [];
+        // 2026-05-07 Swap A: detect plate axis. Most wall plates run along X
+        // (bbox-w >> bbox-h). RP frames have plates rotated 90° (bbox-h >> bbox-w)
+        // — the long axis is Y, and studs run perpendicular along X.
+        const plateW = plate.box.xMax - plate.box.xMin;
+        const plateH = plate.box.yMax - plate.box.yMin;
+        const plateAxisIsY = plateH > plateW * 2;
+        // Long-axis range used for "is this crossing inside the plate body?"
+        const plateLongLo = plateAxisIsY ? plate.box.yMin : plate.box.xMin;
+        const plateLongHi = plateAxisIsY ? plate.box.yMax : plate.box.xMax;
+        // Cross-axis range used for "does the stud overlap the plate's width?"
+        const plateCrossLo = plateAxisIsY ? plate.box.xMin : plate.box.yMin;
+        const plateCrossHi = plateAxisIsY ? plate.box.xMax : plate.box.yMax;
         // Plate centerline y for diagonal-W intersection calc
         const plateCenterY = (plate.box.yMin + plate.box.yMax) / 2;
         // Process REAL studs first, then virtual Kb edges. Virtual Kb-edge
@@ -221,15 +243,22 @@ export function generateFrameContextOps(frame, setup) {
         // requires an extra notch in the plate to clear it.
         const realStudInfos = [];
         for (const stud of allCrossingStuds) {
-            const yOverlap = stud.box.yMax >= plate.box.yMin && stud.box.yMin <= plate.box.yMax;
-            if (!yOverlap)
+            // Swap A 2026-05-07: axis-aware crossing. For horizontal plates (axis=X)
+            // we look for studs whose box overlaps the plate's Y range and use
+            // stud.cx as the crossing position. For vertical plates (axis=Y, e.g.
+            // rotated RP frames), we look for studs whose box overlaps the plate's
+            // X range and use stud.cy.
+            const studLongLo = plateAxisIsY ? stud.box.xMin : stud.box.yMin;
+            const studLongHi = plateAxisIsY ? stud.box.xMax : stud.box.yMax;
+            const crossOverlap = studLongHi >= plateCrossLo && studLongLo <= plateCrossHi;
+            if (!crossOverlap)
                 continue;
-            const crossingX = stud.box.cx;
-            if (crossingX < plate.box.xMin + 50)
+            const crossingX = plateAxisIsY ? stud.box.cy : stud.box.cx;
+            if (crossingX < plateLongLo + 50)
                 continue;
-            if (crossingX > plate.box.xMax - 50)
+            if (crossingX > plateLongHi - 50)
                 continue;
-            const localPos = plateLocalPosition(plate, crossingX);
+            const localPos = crossingX - plateLongLo;
             if (localPos < span + 5)
                 continue;
             if (localPos > plate.stick.length - span - 5)
@@ -286,8 +315,13 @@ export function generateFrameContextOps(frame, setup) {
                 continue;
             seenPositions.add(quantizedPos);
             studCrossingsOnPlate.push(localPos);
-            // Internal lip notch: spanned, centred on stud, span 45mm typically
-            const studWidth = stud.box.xMax - stud.box.xMin;
+            // Internal lip notch: spanned, centred on stud, span 45mm typically.
+            // Swap A 2026-05-07: stud width is the dimension PERPENDICULAR to the
+            // plate's long axis. For horizontal plates this is the X-dimension of
+            // the stud bbox; for vertical (rotated RP) plates it's Y.
+            const studWidth = plateAxisIsY
+                ? (stud.box.yMax - stud.box.yMin)
+                : (stud.box.xMax - stud.box.xMin);
             const lipSpan = Math.max(internalSpan, Math.min(studWidth + 4, 80)); // cap at 80 to avoid huge spans
             const startPos = localPos - lipSpan / 2;
             const endPos = startPos + lipSpan;
@@ -295,10 +329,18 @@ export function generateFrameContextOps(frame, setup) {
                 kind: "spanned", type: "LipNotch",
                 startPos: round(startPos), endPos: round(endPos),
             });
-            // Dimple inside the lip notch
+            // Dimple inside the lip notch.
+            // Swap A 2026-05-07: when lipSpan == internalSpan (the typical 45mm
+            // case), the dimple sits at startPos + internalDimpleOffset which is
+            // the same as localPos. When lipSpan is wider (B2B partner pairs in
+            // walls), the dimple keeps the original off-center placement. Use
+            // localPos directly when the stud width matches the standard span.
+            const dimplePos = lipSpan === internalSpan
+                ? localPos
+                : startPos + internalDimpleOffset;
             stickOps.push({
                 kind: "point", type: "InnerDimple",
-                pos: round(startPos + internalDimpleOffset),
+                pos: round(dimplePos),
             });
         }
         // Truss W/V members crossing this chord — use the agent-derived edge

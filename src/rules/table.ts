@@ -724,12 +724,19 @@ export const RULE_TABLE: RuleGroup[] = [
     ],
   },
 
-  // ----------- BRACE / Ribbon sticks on 70S41 (NOT truss webs, NOT lintels) -----------
+  // ----------- BRACE sticks on 70S41 (NOT truss webs, NOT rails, NOT lintels) -----------
   // Brace dimple offset 11mm (vs 16.5 for studs); span 41mm (vs 39 for studs).
   // Pulled from W|70S41|500-1500 sample data — note this is for wall braces,
   // truss webs (W) and lintels (L) are handled in dedicated rules above.
+  //
+  // 2026-05-07 (Scott Rule 11): Rails (R role) are HORIZONTAL truss members
+  // (named differently from chords T/B to avoid confusion). They get standard
+  // stud-style tooling (39mm Swage + 16.5mm dimple), NOT the brace-specific
+  // 41/11mm pattern. Removed R from this rolePattern; R sticks now fall
+  // through to the truss-web rule (W) or default stud rule which uses
+  // SPAN_70 + DIMPLE_OFFSET_70.
   {
-    rolePattern: /^(Br|R)$/,
+    rolePattern: /^Br$/,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
@@ -737,6 +744,35 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 11 }, confidence: "medium", notes: "Brace dimple at 11mm" },
       { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 41 }, spanLength: 41, confidence: "medium" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 11 }, confidence: "medium" },
+    ],
+  },
+
+  // ----------- RAILS (R) on 70S41 — Scott Rule 11 -----------
+  // Rails are HORIZONTAL truss members. Get stud-style end caps (Swage 39mm
+  // + ID@16.5). Same as truss-W / FJ-joist treatment. Verified vs HG260001
+  // GF-TIN ref: rails like R4 in TN8-1 emit Swage 0..39 + ID@16.5 caps.
+  {
+    rolePattern: /^R$/,
+    profilePattern: /^70S41$/,
+    lengthRange: [0, Infinity],
+    rules: [
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+    ],
+  },
+
+  // ----------- RAILS (R) on 89S41 — Scott Rule 11 -----------
+  {
+    rolePattern: /^R$/,
+    profilePattern: /^89S41$/,
+    lengthRange: [0, Infinity],
+    rules: [
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
     ],
   },
 ];

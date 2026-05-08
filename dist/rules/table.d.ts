@@ -37,6 +37,12 @@ export declare const RULE_TABLE: RuleGroup[];
 export declare function isWallPlan(ctx: {
     planName?: string;
 }): boolean;
+/** RP = Raked Pitch (sloped roof). RP plans use 10mm InnerDimple offset
+ *  on S/T/B/N profile-70 sticks — not the standard 16.5mm.
+ *  DT-miner 2026-05-08 finding #12, #15, #20 (S finding #5 reverted). */
+export declare function isRpPlan(ctx: {
+    planName?: string;
+}): boolean;
 /** Ground-floor wall plan (slab-bearing) — gets Web@8 + slab anchor bolts.
  *  Upper-floor walls (1F, 2F, etc.) sit on the floor structure and don't get
  *  these slab-attachment ops. Plan name pattern: "...GF-LBW-..." or

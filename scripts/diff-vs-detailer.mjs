@@ -560,8 +560,15 @@ function buildOurProject(xmlText) {
                   stick.tooling.splice(i, 1);
                 }
               }
+              // 2026-05-07 swap (Scott rule loop): FJ joist diagonal-W END
+              // dimples sit at @length-12 (not @length-10). Verified vs
+              // HG260012 TH01/TH02 GF+2F FJ corpora: 1096 W end-dimples want
+              // offset 12 from end. Start dimples remain @10 (verified
+              // matched in same corpora). Wall plans keep @length-10.
+              const isFjPlan = /-(?:FJ|JOIST)-/i.test(plan.name);
+              const endOff = isFjPlan ? 12 : 10;
               stick.tooling.push({ kind: "point", type: "InnerDimple", pos: 10 });
-              stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round((length-10)*10)/10 });
+              stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round((length-endOff)*10)/10 });
 
               // Variable-span Swage for diagonal W: span = profile_width / sin(θ).
               // For 89mm web with profile flange 41mm: cap span ≈ 41/sin(θ).

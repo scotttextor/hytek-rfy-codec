@@ -88,14 +88,42 @@ describe("emitAction — single ops", () => {
     });
   });
 
-  it("swage@ww-wend → span from intersection to stick end", () => {
+  it("swage@ww-wend → fixed-length anchored span (forward from ww)", () => {
+    // ww=intersectionPos=1350, wend=length=2700, dst>src → forward anchor.
+    // Span = lipNotchSpan = 45mm anchored at 1350.
     const r = emitAction(op("swage", "ww", "wend"), EC);
     expect(r.ops.length).toBe(1);
     expect(r.ops[0]).toMatchObject({
       kind: "spanned",
       type: "Swage",
       startPos: 1350,
-      endPos: 2700,
+      endPos: 1395,
+    });
+  });
+
+  it("swage@ww-wend on short stick → forward-anchored, clamped to stick end", () => {
+    // PC7-1 W4 case: ww=660.9, wend=length=710.4. Forward anchor 45mm from
+    // ww would be 705.9 → end=705.9 (within stick), so [660.9, 705.9].
+    // (Detailer's empirical 49.5mm = uses tool length 55 minus clamp; we use
+    // 45mm tool span which is the lipNotchSpan default.)
+    const ec2: EmitContext = { ...EC, length: 710.4, intersectionPos: 660.9 };
+    const r = emitAction(op("swage", "ww", "wend"), ec2);
+    expect(r.ops.length).toBe(1);
+    expect(r.ops[0]!.startPos).toBe(660.9);
+    // endPos = min(710.4, 660.9 + 45) = min(710.4, 705.9) = 705.9
+    expect(r.ops[0]!.endPos).toBe(705.9);
+  });
+
+  it("swage@we-wstart → fixed-length anchored span (backward from we)", () => {
+    // we=intersectionPos=1350, wstart=0, dst<src → backward anchor.
+    // Span = 45mm anchored at 1350 going backward → [1305, 1350].
+    const r = emitAction(op("swage", "we", "wstart"), EC);
+    expect(r.ops.length).toBe(1);
+    expect(r.ops[0]).toMatchObject({
+      kind: "spanned",
+      type: "Swage",
+      startPos: 1305,
+      endPos: 1350,
     });
   });
 
@@ -116,10 +144,16 @@ describe("emitAction — single ops", () => {
     expect(r.ops[0]).toMatchObject({ type: "LeftFlange" });
   });
 
-  it("webnotch@ww-wend → spanned InnerNotch", () => {
+  it("webnotch@ww-wend → InnerNotch anchored 45mm forward from ww", () => {
+    // webnotch uses webNotchSpan (45mm). dst>src → forward anchor.
     const r = emitAction(op("webnotch", "ww", "wend"), EC);
     expect(r.ops.length).toBe(1);
-    expect(r.ops[0]).toMatchObject({ type: "InnerNotch" });
+    expect(r.ops[0]).toMatchObject({
+      kind: "spanned",
+      type: "InnerNotch",
+      startPos: 1350,
+      endPos: 1395,
+    });
   });
 
   it("'>' relation also produces spans (lipnotch@rl_rf>ww)", () => {
@@ -155,6 +189,67 @@ describe("emitAction — single ops", () => {
     // explicit src/dst path. With intersectionPos=length, lo=hi=50.
     const r = emitAction(op("rightflange", "ww", "wend"), ec2);
     expect(r.ops.length).toBe(0);
+  });
+});
+
+describe("anchored-span emit semantics (fixed-length spanned tools)", () => {
+  it("CODEC_ANCHOR_DIRECTION=forward forces forward emit even when dst<src", () => {
+    const orig = process.env.CODEC_ANCHOR_DIRECTION;
+    process.env.CODEC_ANCHOR_DIRECTION = "forward";
+    try {
+      const r = emitAction(op("swage", "we", "wstart"), EC);
+      // Even though wstart < we, forward override → [1350, 1395].
+      expect(r.ops[0]).toMatchObject({ startPos: 1350, endPos: 1395 });
+    } finally {
+      if (orig === undefined) delete process.env.CODEC_ANCHOR_DIRECTION;
+      else process.env.CODEC_ANCHOR_DIRECTION = orig;
+    }
+  });
+
+  it("CODEC_ANCHOR_DIRECTION=backward forces backward emit even when dst>src", () => {
+    const orig = process.env.CODEC_ANCHOR_DIRECTION;
+    process.env.CODEC_ANCHOR_DIRECTION = "backward";
+    try {
+      const r = emitAction(op("swage", "ww", "wend"), EC);
+      // Forced backward: [1305, 1350].
+      expect(r.ops[0]).toMatchObject({ startPos: 1305, endPos: 1350 });
+    } finally {
+      if (orig === undefined) delete process.env.CODEC_ANCHOR_DIRECTION;
+      else process.env.CODEC_ANCHOR_DIRECTION = orig;
+    }
+  });
+
+  it("anchored emit clamps to stick start when going backward off-edge", () => {
+    // Crossing at 20mm with backward 45mm anchor → [-25, 20] → clamped to [0, 20].
+    const ec2: EmitContext = { ...EC, length: 1000, intersectionPos: 20 };
+    const r = emitAction(op("swage", "we", "wstart"), ec2);
+    expect(r.ops.length).toBe(1);
+    expect(r.ops[0]).toMatchObject({ startPos: 0, endPos: 20 });
+  });
+
+  it("interior crossing with anchored-forward emit produces 45mm fixed span", () => {
+    // PC2-1 W4 case: stick length 1451, ww=725.5 (deep interior).
+    // Old geometric semantics emitted [725.5, 1451] (725.5mm wide, full
+    // stick-end span) — wrong. New anchored-forward emit: [725.5, 770.5]
+    // (45mm fixed). Still doesn't match Detailer's empirical [703, 748]
+    // centred at 725.5, but no longer a junk full-stick-end span.
+    const ec2: EmitContext = { ...EC, length: 1451, intersectionPos: 725.5 };
+    const r = emitAction(op("swage", "ww", "wend"), ec2);
+    expect(r.ops.length).toBe(1);
+    expect(r.ops[0]).toMatchObject({
+      kind: "spanned",
+      type: "Swage",
+      startPos: 725.5,
+      endPos: 770.5,
+    });
+  });
+
+  it("anchored emit picks direction by sign(dst - src)", () => {
+    // wend > ww → forward. lend < ww → not actually a real grammar pair,
+    // but test the sign logic with a synthetic backward case using wstart.
+    const ec2: EmitContext = { ...EC, length: 1000, intersectionPos: 500 };
+    expect(emitAction(op("swage", "ww", "wend"), ec2).ops[0]!.startPos).toBe(500);
+    expect(emitAction(op("swage", "ww", "wstart"), ec2).ops[0]!.endPos).toBe(500);
   });
 });
 

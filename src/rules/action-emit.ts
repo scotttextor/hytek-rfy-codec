@@ -241,13 +241,23 @@ export function emitAction(op: ActionOp, ec: EmitContext): EmitResult {
   // 45mm modal in tooldef-table.ts because LipNotch length actually varies
   // 48–75mm by profile.
   //
-  // Span semantics: CENTRED on the crossing position. The empirical corpus
-  // confirms centred is correct (mode = 45mm centred on intersectionPos).
-  // Anchored ([anchor, anchor+L]) would push the span past the joint by
-  // L/2 — verified to regress vs ref in 2026-05-08 A/B test.
+  // Span semantics (per docs/action-defs-input-pipeline-2026-05-08.md TODO,
+  // closed 2026-05-08 by anchored-span fix):
   //
-  // If src ≠ dst (e.g. ww→wend), the action-defs grammar is asking for an
-  // anchored span — emit src..dst clamped.
+  //   - src == dst (e.g. `swage@ww-ww`): centred on src. Empirical corpus
+  //     confirms centred for these ambiguous-corner cases.
+  //   - src != dst with finite tool length (e.g. `swage@ww-wend`,
+  //     `lipnotch@le-lend`): ANCHORED at src, fixed length, direction
+  //     toward dst. The dst token is a directional sentinel — `wend`/`lend`
+  //     mean "anchor extends toward stick end". This matches Detailer's
+  //     `RToolDef.OperationType=otSpannedTool + Lengthh1P` placement rule.
+  //     End-leaning crossings (where ww is near wend) get clamped to a
+  //     short geometric span; interior crossings get a fixed-length anchored
+  //     span that's much narrower than the old src..dst geometric span.
+  //
+  // The anchor-direction (forward = toward higher pos, backward = toward
+  // lower pos) is governed by sign(dst - src). Override via env
+  // CODEC_ANCHOR_DIRECTION="forward"|"backward" for empirical testing.
   const useCentred = srcPos === dstPos;
   let startPos: number;
   let endPos: number;
@@ -256,10 +266,23 @@ export function emitAction(op: ActionOp, ec: EmitContext): EmitResult {
     startPos = srcPos - span / 2;
     endPos = srcPos + span / 2;
   } else {
-    const lo = Math.min(srcPos, dstPos);
-    const hi = Math.max(srcPos, dstPos);
-    startPos = lo;
-    endPos = hi;
+    // Anchored fixed-length span. Width = profile-aware lipNotchSpan /
+    // webNotchSpan (already accounts for tool length per profile).
+    const span = (tt === "InnerNotch") ? ec.webNotchSpan : ec.lipNotchSpan;
+    // Direction: dst > src → forward (toward stick end), else backward.
+    // Override via env for empirical A/B testing.
+    const dir = process.env.CODEC_ANCHOR_DIRECTION === "backward"
+      ? -1
+      : process.env.CODEC_ANCHOR_DIRECTION === "forward"
+        ? +1
+        : (dstPos > srcPos ? +1 : -1);
+    if (dir > 0) {
+      startPos = srcPos;
+      endPos = srcPos + span;
+    } else {
+      startPos = srcPos - span;
+      endPos = srcPos;
+    }
   }
 
   // Clamp to stick bounds.

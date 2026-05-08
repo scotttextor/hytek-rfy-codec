@@ -1,6 +1,13 @@
 export { decode, decodeXml } from "./decode.js";
 export { decryptRfy, encryptRfy, RFY_KEY, RFY_ALGORITHM, RFY_IV_LENGTH } from "./crypto.js";
 export { planToCsv, documentToCsvs } from "./csv.js";
+export {
+  generateHowickCsv,
+  documentToHowickCsvs,
+  generateCsv,
+  type HowickCsvOptions,
+  type CsvOptions,
+} from "./howick-csv.js";
 export { parseCsv, validateCsv, type CsvPlan, type CsvComponent } from "./csv-parse.js";
 export { parseXmlTree, buildXml, encodeXml, encodeTree, type XmlNode } from "./encode.js";
 export { applyCsvToRfy, type ApplyResult } from "./apply.js";

@@ -515,7 +515,13 @@ function buildOurProject(xmlText) {
         // InnerNotch[0..39] + LipNotch[0..39] start cap (paired notch)
         // and Swage[44..83] end cap. Currently W rule emits Swage at both
         // ends — wrong start for short V's.
-        if (/^V\d/.test(stickName) && usage === "web" && length < 100) {
+        //
+        // 2026-05-07 swap (Scott rule loop): gate by upper-floor FJ plans.
+        // GF FJ V<100mm sticks (217 across HG260012) want Swage-only;
+        // 2F FJ V<100mm sticks (180 across HG260012) want InnerNotch+LipNotch
+        // additively. The 2026-05-02 verification was on 2F frames only.
+        const isFjUpperPlan = /-(?:1F|2F|3F|UPPER)-FJ-/i.test(plan.name);
+        if (/^V\d/.test(stickName) && usage === "web" && length < 100 && isFjUpperPlan) {
           // Remove start-cap Swage[0..39]
           for (let i = stick.tooling.length - 1; i >= 0; i--) {
             const op = stick.tooling[i];

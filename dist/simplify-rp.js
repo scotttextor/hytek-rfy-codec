@@ -208,19 +208,41 @@ export function simplifyRpFrame(frame) {
     const horizontalsRewritten = [];
     const studStartsRewritten = [];
     const studEndsChamfered = [];
-    // Scott Rule 7: detect whether THIS frame contains any sloped plates.
-    // If no plate in the frame is sloped, the frame is a horizontal panel-roof
-    // wall and the chord-style/plate-over-plate cap rewrites should NOT apply.
-    // Verified vs HG260012 GF-RP frames: the bulk are horizontal panel-roof
-    // walls where standard wall caps match Detailer ref exactly.
-    const frameHasSlopedPlate = frame.sticks.some((s) => isHorizontalContinuous(s) && isSlopedPlate(s));
-    if (!frameHasSlopedPlate) {
-        return {
-            frame: frame.name,
-            decision: "SKIP",
-            reason: "no sloped plates — frame is horizontal panel-roof wall, keep standard caps",
-        };
-    }
+    // Scott Rule 7 (2026-05-07 clarification): the previous simplifier was
+    // OVER-applying the chord-style / plate-over-plate caps to every RP frame.
+    // Empirical evidence across HG260012 RP-70.075 / RP-70.095 / HG260001 RP
+    // corpora: the bulk of RP frames are horizontal panel-roof walls where
+    // ref Detailer emits STANDARD wall caps (Swage/LipNotch 0..39 + ID@16.5).
+    // Even on truly sloped plates (e.g. R1202 T1 with dz=298mm) the ref ops
+    // are STANDARD wall caps, not chord-style. Only specific top-of-slope
+    // ridge plates (rare) get chord-style.
+    //
+    // Conservative posture: SKIP the entire simplifier. The standard wall caps
+    // from `table.ts` already match Detailer ref on these frames, and the
+    // stud-cap rewrite (78.5/Swage 56..101) was also empirically wrong on
+    // all studs in RP-70.095/RP-70.075 corpus. The body-cross InnerDimple
+    // panel-point pattern is a separate gap (handled by frame-context.ts
+    // crossing detection) — that piece isn't broken by skipping the simplifier.
+    //
+    // To re-enable the chord-style cap on real top-of-slope ridge plates in
+    // a future session: detect the plate at the frame's MAX z (via envelope
+    // bbox) AND verify it's not sloped itself (dz < 50mm); only that single
+    // plate per frame gets the chord-style cap. The corpus is too thin on
+    // examples (HG260001 R3 T1 is one) to derive that rule reliably here.
+    void horizontalsRewritten;
+    void studStartsRewritten;
+    void studEndsChamfered;
+    void applyHorizontalCaps;
+    void applyStudStartCap;
+    void applyStudEndChamfer;
+    return {
+        frame: frame.name,
+        decision: "SKIP",
+        reason: "Scott Rule 7 (2026-05-07): chord-style/plate-over-plate caps over-apply on RP. " +
+            "Standard wall caps from table.ts match Detailer ref. Skipping simplifier entirely.",
+    };
+    // Original loop kept below for reference / future revival.
+    // eslint-disable-next-line no-unreachable
     for (const stick of frame.sticks) {
         if (isHorizontalContinuous(stick)) {
             // Per-plate gate: only sloped plates get chord-style caps.

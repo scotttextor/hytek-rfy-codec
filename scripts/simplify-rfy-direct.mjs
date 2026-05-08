@@ -377,8 +377,19 @@ function processFrame(frameWrap) {
   // Get this frame's sticks for centreline-intersection computation
   const frameSticks = [...xmlSticks.values()].filter(s => s.frameName === frameName);
 
-  // Compute new bolt positions per stick (local mm)
-  const newBoltsPerStick = new Map(); // stickName -> [pos]
+  // Compute new bolt positions per stick (local mm).
+  //
+  // Detailer's `FUN_0053b048` (per docs/detailer-rule-decoded.md §6) walks
+  // BOTH sticks' Intersections lists per (stickA, stickB) pair and picks the
+  // SINGLE intersection with the largest minimum-clearance to both sticks'
+  // ends. We mirror that here: collect every candidate crossing per sorted
+  // pair, then pick the one with max(min(clearanceToAEnd, clearanceToBEnd)).
+  //
+  // Today our `lineIntersection` returns at most one geometric crossing per
+  // pair, so this loop is structurally a 1-element pick — but the grouping
+  // makes the semantics explicit and provides the hook for any future
+  // multi-segment / overlap logic to emit multiple candidates safely.
+  const candidatesByPair = new Map(); // sortedPairKey -> [{stickA, stickB, posA, posB, lengthA, lengthB, minClearance}]
   for (let i = 0; i < frameSticks.length; i++) {
     for (let j = i+1; j < frameSticks.length; j++) {
       // Skip web-to-web intersections. In a HYTEK Linear truss the webs are
@@ -401,11 +412,33 @@ function processFrame(frameWrap) {
       );
       const posI = Math.max(0, Math.min(lengthI, r.t * lengthI));
       const posJ = Math.max(0, Math.min(lengthJ, r.u * lengthJ));
-      const ai = newBoltsPerStick.get(frameSticks[i].stickName) ?? [];
-      ai.push(posI); newBoltsPerStick.set(frameSticks[i].stickName, ai);
-      const aj = newBoltsPerStick.get(frameSticks[j].stickName) ?? [];
-      aj.push(posJ); newBoltsPerStick.set(frameSticks[j].stickName, aj);
+      // Min clearance to either end of EITHER stick — Detailer's tie-break.
+      const clearI = Math.min(posI, lengthI - posI);
+      const clearJ = Math.min(posJ, lengthJ - posJ);
+      const minClearance = Math.min(clearI, clearJ);
+      const nameA = frameSticks[i].stickName, nameB = frameSticks[j].stickName;
+      const pairKey = nameA < nameB ? `${nameA}\x00${nameB}` : `${nameB}\x00${nameA}`;
+      const arr = candidatesByPair.get(pairKey) ?? [];
+      arr.push({
+        stickAName: nameA, stickBName: nameB,
+        posA: posI, posB: posJ,
+        minClearance,
+      });
+      candidatesByPair.set(pairKey, arr);
     }
+  }
+
+  // Per pair, pick the candidate with the largest min-clearance and emit it.
+  const newBoltsPerStick = new Map(); // stickName -> [pos]
+  for (const candidates of candidatesByPair.values()) {
+    let best = candidates[0];
+    for (let k = 1; k < candidates.length; k++) {
+      if (candidates[k].minClearance > best.minClearance) best = candidates[k];
+    }
+    const ai = newBoltsPerStick.get(best.stickAName) ?? [];
+    ai.push(best.posA); newBoltsPerStick.set(best.stickAName, ai);
+    const aj = newBoltsPerStick.get(best.stickBName) ?? [];
+    aj.push(best.posB); newBoltsPerStick.set(best.stickBName, aj);
   }
 
   // Walk frame children, find each <stick>, modify its <tooling>

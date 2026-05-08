@@ -283,6 +283,14 @@ export const RULE_TABLE = [
                 predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500,
                 notes: "Wall T-plate InnerService — first ~275, spaced ~600 (DT-miner 2026-05-08)",
             },
+            // DT-miner #16 (TB2B T-chord Web fallback) NOT applied 2026-05-08.
+            // Position pattern is paired chord-web crossings (intra-pair ~98mm,
+            // inter-pair 300-1100mm by truss bay). evenlyDistributed @800 emitted
+            // wrong-position ops (+15 matched / +2,566 extras = net production
+            // regression). TB2B simplifier (src/simplify-tb2b-truss.ts) already
+            // strips per-stick `point` ops on truss frames and re-adds geometric
+            // Web@pt at actual centerline crossings. Future improvement = extending
+            // simplifier coverage, not adding table rules.
         ],
     },
     // ----------- BOTTOM PLATES on 70S41 -----------
@@ -308,6 +316,13 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
             // InnerNotch on B plates is SELECTIVE — same as T (some sticks have it,
             // some don't). Skipping to avoid over-emission (96 extras vs 12 matches).
+            // DT-miner #19 (TB2B B-chord Web fallback) NOT applied 2026-05-08.
+            // Position pattern is paired chord-web crossings (intra-pair ~98mm,
+            // inter-pair 300-1100mm by truss bay). evenlyDistributed @600 emitted
+            // wrong-position ops (+119 matched / +2,633 extras = net production
+            // regression). TB2B simplifier (src/simplify-tb2b-truss.ts) already
+            // strips per-stick `point` ops on truss frames and re-adds geometric
+            // Web@pt at actual centerline crossings.
         ],
     },
     // ----------- TOP PLATES on 89S41 -----------

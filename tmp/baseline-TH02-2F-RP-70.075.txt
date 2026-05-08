@@ -1,0 +1,42 @@
+OP-LEVEL DIFF — TH02-2F-RP-70.075.xml vs TH02-2F-RP-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 3 | ref 3
+
+OPS:      our 278 | ref 292
+MATCHED:  208  (71.2% of ref)
+MISSING:  84  (ops Detailer has, we don't)
+EXTRAS:   70   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt           102        40       37   (72% ref-coverage)
+LipNotch@span             46        25       27   (65% ref-coverage)
+Swage@span                60        11        6   (85% ref-coverage)
+InnerNotch@span            0         8        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  R2202 (1 sticks with gaps)
+    T1       MISSING (2): InnerDimple @16.5 | InnerDimple @5679.7
+    T1       EXTRAS  (2): InnerDimple @10.0 | InnerDimple @5686.2
+
+  R2203 (1 sticks with gaps)
+    T1       MISSING (2): InnerDimple @16.5 | InnerDimple @5679.7
+    T1       EXTRAS  (2): InnerDimple @10.0 | InnerDimple @5686.2
+
+  R2204 (12 sticks with gaps)
+    T1       MISSING (18): InnerDimple @90.5 | InnerDimple @562.3 | InnerDimple @1104.1 | InnerDimple @1645.9 | InnerDimple @2187.7 ... +13
+    T1       EXTRAS  (22): InnerDimple @10.0 | InnerDimple @86.5 | InnerDimple @558.3 | InnerDimple @1100.1 | InnerDimple @1641.9 ... +17
+    T2       MISSING (26): InnerDimple @90.5 | InnerDimple @562.3 | InnerDimple @1104.1 | InnerDimple @1645.9 | InnerDimple @2187.7 ... +21
+    T2       EXTRAS  (22): InnerDimple @10.0 | InnerDimple @86.5 | InnerDimple @558.3 | InnerDimple @1100.1 | InnerDimple @1641.9 ... +17
+    B1       MISSING (18): InnerDimple @90.5 | InnerDimple @562.3 | InnerDimple @1104.1 | InnerDimple @1645.9 | InnerDimple @2187.7 ... +13
+    B1       EXTRAS  (22): InnerDimple @16.5 | InnerDimple @86.5 | InnerDimple @558.3 | InnerDimple @1100.1 | InnerDimple @1641.9 ... +17
+    S1       MISSING (2): InnerDimple @1134.5 | LipNotch 1112.0..1157.0
+    S2       MISSING (2): InnerDimple @1134.5 | Swage 1112.0..1157.0
+    S3       MISSING (2): InnerDimple @1134.5 | Swage 1112.0..1157.0
+    S4       MISSING (2): InnerDimple @1134.5 | Swage 1112.0..1157.0
+    S5       MISSING (2): InnerDimple @1134.5 | Swage 1112.0..1157.0
+    S6       MISSING (2): InnerDimple @1134.5 | Swage 1112.0..1157.0
+    S7       MISSING (2): InnerDimple @1134.5 | Swage 1112.0..1157.0

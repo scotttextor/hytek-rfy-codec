@@ -1,0 +1,34 @@
+OP-LEVEL DIFF — TH02-2F-RP-70.095.xml vs TH02-2F-RP-70.095.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 1 | ref 1
+
+OPS:      our 112 | ref 116
+MATCHED:  38  (32.8% of ref)
+MISSING:  78  (ops Detailer has, we don't)
+EXTRAS:   74   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+InnerDimple@pt            19        35       37   (35% ref-coverage)
+LipNotch@span              2        25       36   (7% ref-coverage)
+Swage@span                17        10        1   (63% ref-coverage)
+InnerNotch@span            0         8        0   (0% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  R2201 (12 sticks with gaps)
+    T1       MISSING (18): InnerDimple @90.5 | InnerDimple @600.0 | InnerDimple @1200.0 | InnerDimple @1800.0 | InnerDimple @2400.0 ... +13
+    T1       EXTRAS  (36): InnerDimple @10.0 | InnerDimple @86.5 | InnerDimple @596.0 | InnerDimple @1196.0 | InnerDimple @1796.0 ... +31
+    B1       MISSING (18): InnerDimple @90.5 | InnerDimple @600.0 | InnerDimple @1200.0 | InnerDimple @1800.0 | InnerDimple @2400.0 ... +13
+    B1       EXTRAS  (36): InnerDimple @16.5 | InnerDimple @86.5 | InnerDimple @596.0 | InnerDimple @1196.0 | InnerDimple @1796.0 ... +31
+    N1       MISSING (24): InnerDimple @90.5 | InnerDimple @600.0 | InnerDimple @1200.0 | InnerDimple @1800.0 | InnerDimple @2400.0 ... +19
+    N1       EXTRAS  (2): InnerDimple @16.5 | Swage 0.0..39.0
+    S1       MISSING (2): InnerDimple @976.0 | LipNotch 953.5..998.5
+    S2       MISSING (2): InnerDimple @976.0 | Swage 953.5..998.5
+    S3       MISSING (2): InnerDimple @976.0 | Swage 953.5..998.5
+    S4       MISSING (2): InnerDimple @976.0 | Swage 953.5..998.5
+    S5       MISSING (2): InnerDimple @976.0 | Swage 953.5..998.5
+    S6       MISSING (2): InnerDimple @976.0 | Swage 953.5..998.5
+    S7       MISSING (2): InnerDimple @976.0 | Swage 953.5..998.5

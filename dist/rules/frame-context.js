@@ -245,8 +245,52 @@ export function generateFrameContextOps(frame, setup) {
         const plateW = plate.box.xMax - plate.box.xMin;
         const plateH = plate.box.yMax - plate.box.yMin;
         const plateAxisIsY = plateH > plateW * 2;
+        // 2026-05-08 RP rake-plate offset compensation.
+        //
+        // PROBLEM: For SLOPED (rake) plates in RP-style frames, the upstream input
+        // pipeline trims `start = orig_start + endClearance*direction` AND
+        // `end = orig_end - endClearance*direction` (4mm/end on 70/89mm setups).
+        // Detailer's reference, however, only trims the END side on RP rake plates
+        // and leaves the START at the original world coord.
+        //
+        // EVIDENCE (verified 2026-05-08 vs HG250096 U1-GF-RP-70.075 R101 T1):
+        //   ref RFY outline corners: y range [-44.998 .. 1749.447]  length=1794.45
+        //   ours outline corners:    y range [-41.000 .. 1749.447]  length=1790.45
+        //   start side:  ref shows un-trimmed (-45 ≈ original projected start)
+        //                ours shows +4mm trim (-41 = -45 + endClearance)
+        //   end side:    matches exactly (both at 1749.45)
+        //
+        // CONSEQUENCE: every stud-crossing dimple emitted in this loop lands at
+        // `crossing - plateLongLo` which is 4mm SHORTER than the corresponding ref
+        // position because our `plateLongLo` is +endClearance higher than ref's.
+        // Across the RP cohort, this manifests as a +2..+15mm drift (depending on
+        // stick angle from frame Y axis) on every stud-crossing InnerDimple +
+        // LipNotch on rake plates.
+        //
+        // FIX: detect RP rake plates (sloped plate AND axis-Y orientation in
+        // frame-local) and shift `plateLongLo` back by `endClearance` to recover
+        // the un-trimmed start.
+        //
+        // SCOPE GATE: gate on `plateAxisIsY && worldStart.z != worldEnd.z`. RP
+        // frames project plates ALONG the frame Y axis (the plate runs up the
+        // slope of the rake), so axis-Y identifies them. Raked-ceiling walls on
+        // upper floors (LBW 2F with sloped TopPlate) project their top plates
+        // along the frame X axis (horizontal in elevation, even when world-z
+        // varies), so axis-X excludes them. Verified 2026-05-08 vs
+        // TH02-2F-LBW-89.075: 35 sloped TopPlate sticks have plateAxisIsY=false
+        // and are correctly excluded. Detailer DOES trim those at the start
+        // matching our codec's symmetric trim — applying this fix to them would
+        // regress LBW parity by ~0.9pp.
+        //
+        // Cross-axis ranges (plateCrossLo/Hi) are NOT affected — they describe the
+        // perpendicular dimension which the trim doesn't touch.
+        const ws = plate.stick.worldStart;
+        const we = plate.stick.worldEnd;
+        const isSlopedPlate = !!(ws && we && Math.abs(we.z - ws.z) > 1);
+        const isRakePlate = isSlopedPlate && plateAxisIsY;
+        const startTrimCompensation = isRakePlate ? resolvedSetup.endClearance : 0;
         // Long-axis range used for "is this crossing inside the plate body?"
-        const plateLongLo = plateAxisIsY ? plate.box.yMin : plate.box.xMin;
+        const plateLongLo = (plateAxisIsY ? plate.box.yMin : plate.box.xMin) - startTrimCompensation;
         const plateLongHi = plateAxisIsY ? plate.box.yMax : plate.box.xMax;
         // Cross-axis range used for "does the stud overlap the plate's width?"
         const plateCrossLo = plateAxisIsY ? plate.box.xMin : plate.box.yMin;

@@ -145,4 +145,4 @@ npm test       # 613 / 613 passing (was 602; +11 new tests)
 
 ## Commit hash
 
-(Pending commit at end of session.)
+`d1ddb0e` on `master`.

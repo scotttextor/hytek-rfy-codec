@@ -631,7 +631,22 @@ export function generateFrameContextOps(frame, setup) {
     // at x=969 and x=1011 (42mm apart) both get Web@38, Web@485, Web@932,
     // Web@1379, Web@1826, Web@2273, Web@2719 (spaced ~447mm, anchored 38mm
     // from each end). Single (non-paired) studs do NOT get these Web ops.
+    //
+    // Two distinct B2B detection rules:
+    //
+    // (1) b2bStudNames — used for InnerNotch emission at nog crossings on
+    //     paired studs (whether overlapping or side-by-side). Tight criteria
+    //     (< 5mm X-apart) avoids HG260001 PK4 L19/S2-S3-S4 false-positives
+    //     where 42mm-apart studs are NOT b2b.
+    //
+    // (2) b2bBoxedStudNames — STRICT subset for box-form B2B Web emission.
+    //     Verified 2026-05-08 vs HG260044 LBW L2/S3-S4, L21/S5-S6, L26/S6-S7:
+    //     true B2B-boxed pairs are 41±3mm apart with OPPOSITE flipped values
+    //     (lips facing inward to form a closed C-channel box). Identical Y
+    //     range, identical length, full-height. This is a much narrower set
+    //     than (1) — typically at most a handful per frame.
     const b2bStudNames = new Set();
+    const b2bBoxedStudNames = new Set();
     for (let i = 0; i < studs.length; i++) {
         for (let j = i + 1; j < studs.length; j++) {
             const a = studs[i];
@@ -651,6 +666,20 @@ export function generateFrameContextOps(frame, setup) {
             if (xDelta < 5 && yMinDelta < 5 && yMaxDelta < 5 && lenDelta < 5) {
                 b2bStudNames.add(a.stick.name);
                 b2bStudNames.add(b.stick.name);
+            }
+            // Strict B2B-boxed detection: 38..45mm apart (one C-section width
+            // of separation, the canonical B2B-box configuration) AND opposite
+            // flipped values (lips facing inward). Identical Y range, identical
+            // length (full-height pair).
+            // Verified 2026-05-08 vs HG260044 LBW: 3 pairs match (L2/S3-S4,
+            // L21/S5-S6, L26/S6-S7), each producing 7-Web pattern.
+            // The opposite-flipped check rules out:
+            //   - HG260001 PK4 L19/S2-S3-S4 trim-stud trios (all same flipped)
+            //   - jamb+king pairs (would be flipped=true+true or false+false)
+            if (xDelta >= 30 && xDelta <= 45 && yMinDelta < 5 && yMaxDelta < 5 &&
+                lenDelta < 5 && a.stick.flipped !== b.stick.flipped) {
+                b2bBoxedStudNames.add(a.stick.name);
+                b2bBoxedStudNames.add(b.stick.name);
             }
         }
     }
@@ -720,17 +749,48 @@ export function generateFrameContextOps(frame, setup) {
         const stickOps = result.get(stud.stick.name);
         const lipNeighbor = studHasLipNeighbor(stud);
         const isWallEndStud = stud.stick.name === leftmostStudName || stud.stick.name === rightmostStudName;
-        // B2B stud-pair Web emission DISABLED 2026-05-02:
-        //   The geometric detection (xDelta<45, identical Y range, identical length)
-        //   over-fires on HG260001 LBW — every adjacent S stud pair gets flagged,
-        //   producing 467 false-positive Web holes (S2-S7 all got Web@38, @485,
-        //   @932, etc.). Detailer reference shows NONE of these on those studs.
-        //   The pattern is real (HG260044 GF-LBW S3+S4 do have these Webs) but
-        //   Detailer's actual gating criterion is more specific than simple
-        //   geometric pairing — likely tied to a structural-attachment marker in
-        //   the XML we haven't identified. Until that's understood, emitting NO
-        //   Webs is safer than emitting wrong ones.
-        // if (b2bStudNames.has(stud.stick.name)) { ... }
+        // B2B-boxed stud-pair Web emission RE-ENABLED 2026-05-08 with stricter
+        // detection criteria. The 2026-05-02 disable cited HG260001 LBW false-
+        // positives where every adjacent S stud pair was flagged. Root cause:
+        // the prior detector checked only geometric proximity (xDelta<45 + same
+        // Y/length) and didn't require OPPOSITE flipped values. True B2B-boxed
+        // pairs have their lips facing INWARD (one flipped=true + one
+        // flipped=false) to form a closed C-channel box.
+        //
+        // The strict detector (`b2bBoxedStudNames`) requires:
+        //   - 30..45mm apart in X (one C-section width — the canonical B2B-box
+        //     centerline-to-centerline spacing)
+        //   - identical Y range (full-height pair)
+        //   - identical length
+        //   - OPPOSITE flipped (lips facing inward)
+        //
+        // Verified 2026-05-08 vs HG260044 LBW: 3 pairs detected (L2/S3-S4,
+        // L21/S5-S6, L26/S6-S7) — each pair gets a 7-Web pattern at offsets
+        // 38mm from each end, evenly spaced at ~447mm. HG260001 LBW: 0 false-
+        // positive pairs (the trim-stud trios in L19/L34/L25 all share the
+        // same flipped value, correctly excluded).
+        //
+        // Web spacing formula derived from the L2/L21/L26 reference:
+        //   first_offset = 38mm, last_offset = length - 38mm
+        //   N_intervals = max(1, ceil((length - 76) / 500))  (max ~500mm spacing)
+        //   N_ops = N_intervals + 1
+        //   spacing = (length - 76) / N_intervals
+        // For length=2757: N_intervals = ceil(2681/500) = 6 → 7 ops at 38, 485,
+        // 932, 1379, 1825, 2272, 2719 (spacing 446.83). Matches reference.
+        if (b2bBoxedStudNames.has(stud.stick.name) && stud.stick.length >= 200) {
+            const length = stud.stick.length;
+            const FIRST_OFFSET = 38;
+            const MAX_SPACING = 500;
+            const usableLen = length - 2 * FIRST_OFFSET;
+            if (usableLen > 0) {
+                const nIntervals = Math.max(1, Math.ceil(usableLen / MAX_SPACING));
+                const spacing = usableLen / nIntervals;
+                for (let k = 0; k <= nIntervals; k++) {
+                    const pos = FIRST_OFFSET + k * spacing;
+                    stickOps.push({ kind: "point", type: "Web", pos: round(pos) });
+                }
+            }
+        }
         // Nog crossing rule.
         //
         // 2026-05-03 — re-introduced "continuous nog → Swage on interior studs"

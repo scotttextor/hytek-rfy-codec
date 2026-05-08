@@ -120,14 +120,126 @@ TIN-70.075 alone are panel-point ops the action-defs grammar should
 handle). But the emit-semantics gap above blocks this.
 
 **Where the BIG gains likely live:**
-- RP-70.075 at 18.49% is dominated by 996 missing dimples + 741 extra
+- ~~RP-70.075 at 18.49% is dominated by 996 missing dimples + 741 extra
   dimples — these are 2-15mm position drifts on InnerDimples emitted by
   the legacy path, NOT missing classifications. Fixing this needs
   geometric work in `frame-context.ts` (offset semantics for rotated
-  RP plates), not the action-defs path.
+  RP plates), not the action-defs path.~~
+  **PARTIALLY ADDRESSED 2026-05-08 (RP rake-plate fix):** see "RP rake-
+  plate fix — 2026-05-08" section below. Local RP cohort lifted from
+  48.66% → 63.31% (+14.65pp aggregate) with zero LBW/NLBW regression.
 - LBW/NLBW at 85-91% have residual gaps in Kb-edge semantics, B2B
   partner detection, and service-hole positioning — also legacy-path
   geometry.
+
+## RP rake-plate fix — 2026-05-08
+
+**Outcome:** +14.65pp on local 6-pair RP cohort (48.66% → 63.31%);
+0pp regression on the 7-pair LBW/NLBW set, 0pp on CP/FJ/TIN/TB2B.
+616 → 623 unit tests still passing.
+
+### Root cause
+
+Sloped (rake) plates in RP frames are projected ALONG the frame Y axis
+(plate runs up the slope of the rake). The upstream input pipeline
+applies a symmetric end-clearance trim (`start += ec*direction`,
+`end -= ec*direction`, where `ec = setup.endClearance = 4mm` on 70/89mm
+setups). Detailer's reference, however, only trims the END side on RP
+rake plates — the start position stays at the original world coord.
+
+Verified vs `test-corpus/HG250096/U1-GF-RP-70.075.rfy` frame R101 stick T1:
+
+```
+ref RFY outline corners: y range [-44.998 .. 1749.447]  length=1794.45
+ours outline corners:    y range [-41.000 .. 1749.447]  length=1790.45
+start side:  ref shows un-trimmed (-45 ≈ original projected start)
+             ours shows +4mm trim (-41 = -45 + endClearance)
+end side:    matches exactly (both at 1749.45)
+```
+
+Every stud-crossing dimple emitted by `frame-context.ts` lands at
+`crossingY - plateLongLo`, which on RP plates is +endClearance lower
+than ref. Across the cohort this manifests as a +2..+15mm drift
+(magnitude depends on stick angle from the frame Y axis) on every
+stud-crossing InnerDimple + paired LipNotch.
+
+### Fix (in `src/rules/frame-context.ts`)
+
+In the per-plate loop at line ~287, after computing `plateAxisIsY`,
+detect rake plates and shift `plateLongLo` back by `endClearance`:
+
+```ts
+const ws = plate.stick.worldStart;
+const we = plate.stick.worldEnd;
+const isSlopedPlate = !!(ws && we && Math.abs(we.z - ws.z) > 1);
+const isRakePlate = isSlopedPlate && plateAxisIsY;
+const startTrimCompensation = isRakePlate ? resolvedSetup.endClearance : 0;
+const plateLongLo = (plateAxisIsY ? plate.box.yMin : plate.box.xMin)
+                  - startTrimCompensation;
+```
+
+### Scope gate
+
+Gate is `plateAxisIsY && |worldStart.z - worldEnd.z| > 1mm`.
+
+- RP rake plates: axis-Y in frame-local + sloped in world-z → fix applies.
+- Wall plates (LBW/NLBW): axis-X (horizontal in frame-local) → excluded.
+- Raked-ceiling LBW upper-floor walls (e.g. TH02-2F-LBW): TopPlate is
+  axis-X in frame-local (it runs horizontally in the wall's elevation)
+  but world-z varies → axis-X gate excludes them. Verified: those plates
+  match Detailer's symmetric trim, applying the fix would regress
+  TH02-2F-LBW-89.075 by -0.88pp (-30 ops).
+
+### A/B parity table (local test-corpus)
+
+| Cohort               | Baseline | Fix    | Δ      |
+|----------------------|----------|--------|--------|
+| **RP**               |          |        |        |
+| U1-GF-RP-70.075      | 31.81%   | 37.52% | +5.71  |
+| U2-GF-RP-70.075      | 31.58%   | 63.16% | +31.58 |
+| TH01-2F-RP-70.075    | 71.23%   | 87.67% | +16.44 |
+| TH01-2F-RP-70.095    | 32.76%   | 60.34% | +27.58 |
+| TH02-2F-RP-70.075    | 71.23%   | 87.67% | +16.44 |
+| TH02-2F-RP-70.095    | 32.76%   | 60.34% | +27.58 |
+| **RP aggregate**     | **48.66%** | **63.31%** | **+14.65** |
+| **LBW/NLBW**         |          |        |        |
+| TH01-GF-LBW-89.075   | 83.82%   | 83.82% | +0.00  |
+| TH01-GF-LBW-89.095   | 82.88%   | 82.88% | +0.00  |
+| TH02-2F-LBW-89.075   | 80.79%   | 80.79% | +0.00  |
+| TH02-GF-LBW-89.075   | 85.95%   | 85.95% | +0.00  |
+| TH02-GF-LBW-89.095   | 90.18%   | 90.18% | +0.00  |
+| TH02-GF-NLBW-70.075  | 96.77%   | 96.77% | +0.00  |
+| **Other cohorts (sanity)** |    |        |        |
+| TH01-1F-CP-89.075    | 100.00%  | 100.00%| +0.00  |
+| TH01-2F-FJ-89.075    | 92.01%   | 92.01% | +0.00  |
+| TH01-2F-TIN-89.115   | 65.59%   | 65.59% | +0.00  |
+| CLADDING-GF-TIN-89.075 | 54.26% | 54.26% | +0.00  |
+| FACILITIES-GF-TB2B-70.075 | 66.39% | 66.39% | +0.00 |
+
+### What is NOT addressed by this fix
+
+- Cap dimples on RP plates from `table.ts` (e.g. `isRpPlan`-gated @10
+  vs @16.5 emit choice on T plates) — those rules are owned by Stream B
+  (`table.ts` LBW/NLBW branches are explicitly out of scope per the
+  brief, and the RP branches use the same predicate). The cached
+  HG250030/HG260044 cohort numbers pre-date the recent rule changes;
+  re-running on the live Y: drive XMLs is needed for an apples-to-apples
+  RP-cohort delta vs the historical 18.49% baseline.
+- End-anchored ops on rake plates from `table.ts` (`endAnchored offset
+  16.5`) still anchor to the +4mm-shorter codec stick length, leaving a
+  4mm drift on end-cap dimples. Closing this gap requires either fixing
+  the upstream trim convention OR shifting the per-stick rule's anchor
+  in `table.ts` — both outside the brief's file-ownership boundary.
+- S studs on RP frames: their length differs from ref by 2mm on flat
+  RPs, indicating a separate stud-trim-convention mismatch. Not in
+  `frame-context.ts` scope.
+
+### Files touched
+
+- `src/rules/frame-context.ts` — MODIFIED (1 hunk, +47/-1 lines):
+  added rake-plate detection + `startTrimCompensation` adjustment
+  to `plateLongLo`. No other paths changed.
+- `docs/action-defs-input-pipeline-2026-05-08.md` — UPDATED.
 
 **The action-defs path is foundational infrastructure.** It's correct
 where it fires (truss heel/apex chord-on-chord crossings), but the

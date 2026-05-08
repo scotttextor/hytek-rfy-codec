@@ -1,0 +1,963 @@
+{
+  "_meta": {
+    "source": "scripts/baselines/raw-y-pairs (Detailer 'missing' diffs)",
+    "pairs_processed": 385,
+    "total_ops": 134858,
+    "note": "Each op observed is something Detailer emitted that the codec didn't. These are GROUND TRUTH for opType inference. Sample counts >50 with modal_pct>90% give high-confidence opType+length values."
+  },
+  "inferred_per_tooltype": {
+    "Bolt": {
+      "opType": "otPointTool",
+      "length": null,
+      "confidence": "high",
+      "total_samples": 491,
+      "composition": {
+        "points": 491,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "Chamfer": {
+      "opType": "otStartTool/otEndTool",
+      "length": null,
+      "confidence": "high",
+      "total_samples": 4342,
+      "composition": {
+        "points": 0,
+        "spans": 0,
+        "starts": 1828,
+        "ends": 2514
+      }
+    },
+    "InnerDimple": {
+      "opType": "otPointTool",
+      "length": null,
+      "confidence": "high",
+      "total_samples": 47662,
+      "composition": {
+        "points": 47662,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "InnerNotch": {
+      "opType": "otSpannedTool",
+      "length": 45,
+      "confidence": "high",
+      "total_samples": 6474,
+      "composition": {
+        "points": 0,
+        "spans": 6474,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 46.545,
+        "median": 45,
+        "min": 4.1,
+        "max": 259.9,
+        "stddev": 15.755,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 3803,
+            "pct": 58.7
+          },
+          {
+            "span_mm": 39,
+            "count": 1935,
+            "pct": 29.9
+          },
+          {
+            "span_mm": 87,
+            "count": 182,
+            "pct": 2.8
+          },
+          {
+            "span_mm": 99,
+            "count": 62,
+            "pct": 1
+          },
+          {
+            "span_mm": 47,
+            "count": 43,
+            "pct": 0.7
+          }
+        ],
+        "modal_pct": 58.7
+      }
+    },
+    "InnerService": {
+      "opType": "otPointTool",
+      "length": null,
+      "confidence": "high",
+      "total_samples": 7011,
+      "composition": {
+        "points": 7011,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "LeftFlange": {
+      "opType": "otSpannedTool",
+      "length": 179.3,
+      "confidence": "high",
+      "total_samples": 231,
+      "composition": {
+        "points": 0,
+        "spans": 231,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 241.503,
+        "median": 179.3,
+        "min": 2.599999999999909,
+        "max": 1092.5,
+        "stddev": 167.962,
+        "top_buckets": [
+          {
+            "span_mm": 179,
+            "count": 33,
+            "pct": 14.3
+          },
+          {
+            "span_mm": 198,
+            "count": 15,
+            "pct": 6.5
+          },
+          {
+            "span_mm": 173,
+            "count": 13,
+            "pct": 5.6
+          },
+          {
+            "span_mm": 172,
+            "count": 12,
+            "pct": 5.2
+          },
+          {
+            "span_mm": 351,
+            "count": 12,
+            "pct": 5.2
+          }
+        ],
+        "modal_pct": 14.3
+      }
+    },
+    "LipNotch": {
+      "opType": "otSpannedTool",
+      "length": 45,
+      "confidence": "high",
+      "total_samples": 26614,
+      "composition": {
+        "points": 0,
+        "spans": 26614,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 55.947,
+        "median": 45,
+        "min": -10643.4,
+        "max": 393.29999999999995,
+        "stddev": 244.795,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 9528,
+            "pct": 35.8
+          },
+          {
+            "span_mm": 39,
+            "count": 3123,
+            "pct": 11.7
+          },
+          {
+            "span_mm": 68,
+            "count": 1460,
+            "pct": 5.5
+          },
+          {
+            "span_mm": 61,
+            "count": 789,
+            "pct": 3
+          },
+          {
+            "span_mm": 81,
+            "count": 600,
+            "pct": 2.3
+          }
+        ],
+        "modal_pct": 35.8
+      }
+    },
+    "RightFlange": {
+      "opType": "otSpannedTool",
+      "length": 31,
+      "confidence": "high",
+      "total_samples": 251,
+      "composition": {
+        "points": 0,
+        "spans": 251,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 66.943,
+        "median": 31,
+        "min": 10.399999999999636,
+        "max": 1092.5,
+        "stddev": 161.461,
+        "top_buckets": [
+          {
+            "span_mm": 31,
+            "count": 45,
+            "pct": 17.9
+          },
+          {
+            "span_mm": 35,
+            "count": 30,
+            "pct": 12
+          },
+          {
+            "span_mm": 33,
+            "count": 21,
+            "pct": 8.4
+          },
+          {
+            "span_mm": 12,
+            "count": 16,
+            "pct": 6.4
+          },
+          {
+            "span_mm": 26,
+            "count": 15,
+            "pct": 6
+          }
+        ],
+        "modal_pct": 17.9
+      }
+    },
+    "ScrewHoles": {
+      "opType": "otPointTool",
+      "length": null,
+      "confidence": "high",
+      "total_samples": 677,
+      "composition": {
+        "points": 677,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "Swage": {
+      "opType": "otSpannedTool",
+      "length": 45,
+      "confidence": "high",
+      "total_samples": 26692,
+      "composition": {
+        "points": 0,
+        "spans": 26692,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 54.574,
+        "median": 45,
+        "min": 5,
+        "max": 1579.9,
+        "stddev": 31.748,
+        "top_buckets": [
+          {
+            "span_mm": 39,
+            "count": 7396,
+            "pct": 27.7
+          },
+          {
+            "span_mm": 45,
+            "count": 3828,
+            "pct": 14.3
+          },
+          {
+            "span_mm": 66,
+            "count": 1885,
+            "pct": 7.1
+          },
+          {
+            "span_mm": 41,
+            "count": 1383,
+            "pct": 5.2
+          },
+          {
+            "span_mm": 40,
+            "count": 1380,
+            "pct": 5.2
+          }
+        ],
+        "modal_pct": 27.7
+      }
+    },
+    "Web": {
+      "opType": "otPointTool",
+      "length": null,
+      "confidence": "high",
+      "total_samples": 14413,
+      "composition": {
+        "points": 14413,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    }
+  },
+  "raw_summary": {
+    "Bolt": {
+      "point_count": 491,
+      "span_count": 0,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 491,
+      "raw_examples": [
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 24.7
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 13
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 2162
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 19.3
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 576.9
+          }
+        }
+      ]
+    },
+    "Chamfer": {
+      "point_count": 0,
+      "span_count": 0,
+      "start_count": 1828,
+      "end_count": 2514,
+      "total": 4342,
+      "raw_examples": [
+        {
+          "kind": "end",
+          "payload": null
+        },
+        {
+          "kind": "end",
+          "payload": null
+        },
+        {
+          "kind": "end",
+          "payload": null
+        },
+        {
+          "kind": "end",
+          "payload": null
+        },
+        {
+          "kind": "end",
+          "payload": null
+        }
+      ]
+    },
+    "InnerDimple": {
+      "point_count": 47662,
+      "span_count": 0,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 47662,
+      "raw_examples": [
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 57.5
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 196
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 730.8
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 1265.5
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 1800.3
+          }
+        }
+      ]
+    },
+    "InnerNotch": {
+      "point_count": 0,
+      "span_count": 6474,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 6474,
+      "raw_examples": [
+        {
+          "kind": "span",
+          "payload": {
+            "start": 894,
+            "end": 933,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 894,
+            "end": 933,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 444,
+            "end": 483,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 444,
+            "end": 483,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 444,
+            "end": 483,
+            "span": 39
+          }
+        }
+      ],
+      "span_stats": {
+        "mean": 46.545,
+        "median": 45,
+        "min": 4.1,
+        "max": 259.9,
+        "stddev": 15.755,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 3803,
+            "pct": 58.7
+          },
+          {
+            "span_mm": 39,
+            "count": 1935,
+            "pct": 29.9
+          },
+          {
+            "span_mm": 87,
+            "count": 182,
+            "pct": 2.8
+          },
+          {
+            "span_mm": 99,
+            "count": 62,
+            "pct": 1
+          },
+          {
+            "span_mm": 47,
+            "count": 43,
+            "pct": 0.7
+          }
+        ],
+        "modal_pct": 58.7
+      }
+    },
+    "InnerService": {
+      "point_count": 7011,
+      "span_count": 0,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 7011,
+      "raw_examples": [
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 822.5
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 321.1
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 483.4
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 582.7
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 331.9
+          }
+        }
+      ]
+    },
+    "LeftFlange": {
+      "point_count": 0,
+      "span_count": 231,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 231,
+      "raw_examples": [
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 350.7,
+            "span": 350.7
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 644.7,
+            "end": 995.4,
+            "span": 350.69999999999993
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 350.7,
+            "span": 350.7
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 644.7,
+            "end": 995.4,
+            "span": 350.69999999999993
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 350.7,
+            "span": 350.7
+          }
+        }
+      ],
+      "span_stats": {
+        "mean": 241.503,
+        "median": 179.3,
+        "min": 2.599999999999909,
+        "max": 1092.5,
+        "stddev": 167.962,
+        "top_buckets": [
+          {
+            "span_mm": 179,
+            "count": 33,
+            "pct": 14.3
+          },
+          {
+            "span_mm": 198,
+            "count": 15,
+            "pct": 6.5
+          },
+          {
+            "span_mm": 173,
+            "count": 13,
+            "pct": 5.6
+          },
+          {
+            "span_mm": 172,
+            "count": 12,
+            "pct": 5.2
+          },
+          {
+            "span_mm": 351,
+            "count": 12,
+            "pct": 5.2
+          }
+        ],
+        "modal_pct": 14.3
+      }
+    },
+    "LipNotch": {
+      "point_count": 0,
+      "span_count": 26614,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 26614,
+      "raw_examples": [
+        {
+          "kind": "span",
+          "payload": {
+            "start": 894,
+            "end": 933,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 894,
+            "end": 933,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 444,
+            "end": 483,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 444,
+            "end": 483,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 444,
+            "end": 483,
+            "span": 39
+          }
+        }
+      ],
+      "span_stats": {
+        "mean": 55.947,
+        "median": 45,
+        "min": -10643.4,
+        "max": 393.29999999999995,
+        "stddev": 244.795,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 9528,
+            "pct": 35.8
+          },
+          {
+            "span_mm": 39,
+            "count": 3123,
+            "pct": 11.7
+          },
+          {
+            "span_mm": 68,
+            "count": 1460,
+            "pct": 5.5
+          },
+          {
+            "span_mm": 61,
+            "count": 789,
+            "pct": 3
+          },
+          {
+            "span_mm": 81,
+            "count": 600,
+            "pct": 2.3
+          }
+        ],
+        "modal_pct": 35.8
+      }
+    },
+    "RightFlange": {
+      "point_count": 0,
+      "span_count": 251,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 251,
+      "raw_examples": [
+        {
+          "kind": "span",
+          "payload": {
+            "start": 4520,
+            "end": 4922.1,
+            "span": 402.10000000000036
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 402.2,
+            "span": 402.2
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 402.2,
+            "span": 402.2
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 402.2,
+            "span": 402.2
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 402.2,
+            "span": 402.2
+          }
+        }
+      ],
+      "span_stats": {
+        "mean": 66.943,
+        "median": 31,
+        "min": 10.399999999999636,
+        "max": 1092.5,
+        "stddev": 161.461,
+        "top_buckets": [
+          {
+            "span_mm": 31,
+            "count": 45,
+            "pct": 17.9
+          },
+          {
+            "span_mm": 35,
+            "count": 30,
+            "pct": 12
+          },
+          {
+            "span_mm": 33,
+            "count": 21,
+            "pct": 8.4
+          },
+          {
+            "span_mm": 12,
+            "count": 16,
+            "pct": 6.4
+          },
+          {
+            "span_mm": 26,
+            "count": 15,
+            "pct": 6
+          }
+        ],
+        "modal_pct": 17.9
+      }
+    },
+    "ScrewHoles": {
+      "point_count": 677,
+      "span_count": 0,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 677,
+      "raw_examples": [
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 123.1
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 171.2
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 462.7
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 658
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 726.5
+          }
+        }
+      ]
+    },
+    "Swage": {
+      "point_count": 0,
+      "span_count": 26692,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 26692,
+      "raw_examples": [
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 39,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 0,
+            "end": 39,
+            "span": 39
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 1348.3,
+            "end": 1391.5,
+            "span": 43.200000000000045
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 1307.4,
+            "end": 1425.6,
+            "span": 118.19999999999982
+          }
+        },
+        {
+          "kind": "span",
+          "payload": {
+            "start": 1333.7,
+            "end": 1375.9,
+            "span": 42.200000000000045
+          }
+        }
+      ],
+      "span_stats": {
+        "mean": 54.574,
+        "median": 45,
+        "min": 5,
+        "max": 1579.9,
+        "stddev": 31.748,
+        "top_buckets": [
+          {
+            "span_mm": 39,
+            "count": 7396,
+            "pct": 27.7
+          },
+          {
+            "span_mm": 45,
+            "count": 3828,
+            "pct": 14.3
+          },
+          {
+            "span_mm": 66,
+            "count": 1885,
+            "pct": 7.1
+          },
+          {
+            "span_mm": 41,
+            "count": 1383,
+            "pct": 5.2
+          },
+          {
+            "span_mm": 40,
+            "count": 1380,
+            "pct": 5.2
+          }
+        ],
+        "modal_pct": 27.7
+      }
+    },
+    "Web": {
+      "point_count": 14413,
+      "span_count": 0,
+      "start_count": 0,
+      "end_count": 0,
+      "total": 14413,
+      "raw_examples": [
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 8
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 8
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 26.9
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 75
+          }
+        },
+        {
+          "kind": "point",
+          "payload": {
+            "pos": 366.5
+          }
+        }
+      ]
+    }
+  }
+}

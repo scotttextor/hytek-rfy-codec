@@ -1,0 +1,912 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "generated": "2026-05-08T11:41:38.847Z",
+    "description": "TToolDef table extracted from FrameCAD Detailer's Tooling.dll",
+    "method_path1_static": "PE-scan: located 11-entry verb-name table at .text:0x58fb36 (UTF-16 string ptrs + 1-byte TToolType ordinals)",
+    "method_path2_empirical": "385-pair corpus mining: each Detailer 'missing' op tells us a verb's opType + span distribution",
+    "method_path3_crossref": "Verbs' codec mapping confirmed against src/csv-parse.ts ToolType naming",
+    "coverage": {
+      "verbs_with_high_confidence_optype": 7,
+      "verbs_with_high_confidence_length": 3,
+      "verbs_with_no_corpus_evidence": 4,
+      "total_verbs": 15
+    },
+    "notes": [
+      "Verb names come from Tooling.dll string-table; TToolType IDs are the 5th byte of each entry in the table at VA 0x58fb36.",
+      "Detailer's `webnotch` verb maps to the codec's `InnerNotch` ToolType (csv name 'WEB NOTCH').",
+      "Side-aware verbs (rl_lipnotch, ll_lipnotch, rh_lipnotch, lh_lipnotch) all resolve to the SAME ToolType (LipNotch) but encode CopyType (octLeftLow/octLeftHigh/octRightLow/octRightHigh).",
+      "Fixed-length tools (LipNotch, Swage, InnerNotch) have a default length from the machine setup (typically 45–48mm).",
+      "Variable-length tools (LeftFlange, RightFlange) have spans driven by joint geometry (corner to stick-end).",
+      "Sentinels (`null`, `bad`) emit nothing — `null` is a no-op and `bad` is a debug marker.",
+      "`tab` and `webtabholes` have no equivalent in the codec's TOOL_TYPES enum and 0 samples in the 385-pair corpus — likely specialty operations not used in HYTEK plans."
+    ]
+  },
+  "verbs": {
+    "lipnotch": {
+      "detailer_verb": "lipnotch",
+      "tool_type_id": 9,
+      "codec_tool_type": "LipNotch",
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "default_length_note": "machine-setup-dependent (lipNotchToolLength); smaller adjacent mode reflects swage-clearance trim",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical-modal: 45mm (35.8%) and 39mm (11.7%); using max 45mm as nominal Lengthh1P",
+      "confidence": "high",
+      "samples": 26614,
+      "composition": {
+        "points": 0,
+        "spans": 26614,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 55.947,
+        "median": 45,
+        "min": -10643.4,
+        "max": 393.29999999999995,
+        "stddev": 244.795,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 9528,
+            "pct": 35.8
+          },
+          {
+            "span_mm": 39,
+            "count": 3123,
+            "pct": 11.7
+          },
+          {
+            "span_mm": 68,
+            "count": 1460,
+            "pct": 5.5
+          },
+          {
+            "span_mm": 61,
+            "count": 789,
+            "pct": 3
+          },
+          {
+            "span_mm": 81,
+            "count": 600,
+            "pct": 2.3
+          }
+        ],
+        "modal_pct": 35.8
+      }
+    },
+    "webnotch": {
+      "detailer_verb": "webnotch",
+      "tool_type_id": 8,
+      "codec_tool_type": "InnerNotch",
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "default_length_note": "machine-setup-dependent (lipNotchToolLength); smaller adjacent mode reflects swage-clearance trim",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical-modal: 45mm (58.7%) and 39mm (29.9%); using max 45mm as nominal Lengthh1P",
+      "confidence": "high",
+      "samples": 6474,
+      "composition": {
+        "points": 0,
+        "spans": 6474,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 46.545,
+        "median": 45,
+        "min": 4.1,
+        "max": 259.9,
+        "stddev": 15.755,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 3803,
+            "pct": 58.7
+          },
+          {
+            "span_mm": 39,
+            "count": 1935,
+            "pct": 29.9
+          },
+          {
+            "span_mm": 87,
+            "count": 182,
+            "pct": 2.8
+          },
+          {
+            "span_mm": 99,
+            "count": 62,
+            "pct": 1
+          },
+          {
+            "span_mm": 47,
+            "count": 43,
+            "pct": 0.7
+          }
+        ],
+        "modal_pct": 58.7
+      }
+    },
+    "leftflange": {
+      "detailer_verb": "leftflange",
+      "tool_type_id": 10,
+      "codec_tool_type": "LeftFlange",
+      "op_type": "otSpannedTool",
+      "length_mm": null,
+      "default_length_note": "geometry-driven (span = src..dst position pair)",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical: spans range 2.599999999999909..1092.5mm, no dominant mode (top mode only 14.3%, top-2 combined 20.8%)",
+      "confidence": "high",
+      "samples": 231,
+      "composition": {
+        "points": 0,
+        "spans": 231,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 241.503,
+        "median": 179.3,
+        "min": 2.599999999999909,
+        "max": 1092.5,
+        "stddev": 167.962,
+        "top_buckets": [
+          {
+            "span_mm": 179,
+            "count": 33,
+            "pct": 14.3
+          },
+          {
+            "span_mm": 198,
+            "count": 15,
+            "pct": 6.5
+          },
+          {
+            "span_mm": 173,
+            "count": 13,
+            "pct": 5.6
+          },
+          {
+            "span_mm": 172,
+            "count": 12,
+            "pct": 5.2
+          },
+          {
+            "span_mm": 351,
+            "count": 12,
+            "pct": 5.2
+          }
+        ],
+        "modal_pct": 14.3
+      }
+    },
+    "rightflange": {
+      "detailer_verb": "rightflange",
+      "tool_type_id": 11,
+      "codec_tool_type": "RightFlange",
+      "op_type": "otSpannedTool",
+      "length_mm": null,
+      "default_length_note": "geometry-driven (span = src..dst position pair)",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical: spans range 10.399999999999636..1092.5mm, no dominant mode (top mode only 17.9%, top-2 combined 29.9%)",
+      "confidence": "high",
+      "samples": 251,
+      "composition": {
+        "points": 0,
+        "spans": 251,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 66.943,
+        "median": 31,
+        "min": 10.399999999999636,
+        "max": 1092.5,
+        "stddev": 161.461,
+        "top_buckets": [
+          {
+            "span_mm": 31,
+            "count": 45,
+            "pct": 17.9
+          },
+          {
+            "span_mm": 35,
+            "count": 30,
+            "pct": 12
+          },
+          {
+            "span_mm": 33,
+            "count": 21,
+            "pct": 8.4
+          },
+          {
+            "span_mm": 12,
+            "count": 16,
+            "pct": 6.4
+          },
+          {
+            "span_mm": 26,
+            "count": 15,
+            "pct": 6
+          }
+        ],
+        "modal_pct": 17.9
+      }
+    },
+    "leftpartialflange": {
+      "detailer_verb": "leftpartialflange",
+      "tool_type_id": 12,
+      "codec_tool_type": "LeftPartialFlange",
+      "op_type": null,
+      "length_mm": null,
+      "op_type_source": "n/a — sentinel or no codec mapping",
+      "length_source": null,
+      "confidence": "unknown",
+      "samples": 0
+    },
+    "rightpartialflange": {
+      "detailer_verb": "rightpartialflange",
+      "tool_type_id": 13,
+      "codec_tool_type": "RightPartialFlange",
+      "op_type": null,
+      "length_mm": null,
+      "op_type_source": "n/a — sentinel or no codec mapping",
+      "length_source": null,
+      "confidence": "unknown",
+      "samples": 0
+    },
+    "swage": {
+      "detailer_verb": "swage",
+      "tool_type_id": 14,
+      "codec_tool_type": "Swage",
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "default_length_note": "machine-setup-dependent (lipNotchToolLength); smaller adjacent mode reflects swage-clearance trim",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical-modal: 39mm (27.7%) and 45mm (14.3%); using max 45mm as nominal Lengthh1P",
+      "confidence": "high",
+      "samples": 26692,
+      "composition": {
+        "points": 0,
+        "spans": 26692,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 54.574,
+        "median": 45,
+        "min": 5,
+        "max": 1579.9,
+        "stddev": 31.748,
+        "top_buckets": [
+          {
+            "span_mm": 39,
+            "count": 7396,
+            "pct": 27.7
+          },
+          {
+            "span_mm": 45,
+            "count": 3828,
+            "pct": 14.3
+          },
+          {
+            "span_mm": 66,
+            "count": 1885,
+            "pct": 7.1
+          },
+          {
+            "span_mm": 41,
+            "count": 1383,
+            "pct": 5.2
+          },
+          {
+            "span_mm": 40,
+            "count": 1380,
+            "pct": 5.2
+          }
+        ],
+        "modal_pct": 27.7
+      }
+    },
+    "tab": {
+      "detailer_verb": "tab",
+      "tool_type_id": 18,
+      "codec_tool_type": null,
+      "op_type": null,
+      "length_mm": null,
+      "op_type_source": "n/a — sentinel or no codec mapping",
+      "length_source": null,
+      "confidence": "unknown",
+      "samples": 0
+    },
+    "webtabholes": {
+      "detailer_verb": "webtabholes",
+      "tool_type_id": 21,
+      "codec_tool_type": null,
+      "op_type": null,
+      "length_mm": null,
+      "op_type_source": "n/a — sentinel or no codec mapping",
+      "length_source": null,
+      "confidence": "unknown",
+      "samples": 0
+    },
+    "bad": {
+      "detailer_verb": "bad",
+      "tool_type_id": 254,
+      "codec_tool_type": null,
+      "op_type": null,
+      "length_mm": null,
+      "op_type_source": "n/a — sentinel or no codec mapping",
+      "length_source": null,
+      "confidence": "unknown",
+      "samples": 0
+    },
+    "null": {
+      "detailer_verb": "null",
+      "tool_type_id": 255,
+      "codec_tool_type": null,
+      "op_type": null,
+      "length_mm": null,
+      "op_type_source": "n/a — sentinel or no codec mapping",
+      "length_source": null,
+      "confidence": "unknown",
+      "samples": 0
+    },
+    "rl_lipnotch": {
+      "detailer_verb": "rl_lipnotch",
+      "base_verb": "lipnotch",
+      "tool_type_id": 9,
+      "codec_tool_type": "LipNotch",
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "default_length_note": "machine-setup-dependent (lipNotchToolLength); smaller adjacent mode reflects swage-clearance trim",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical-modal: 45mm (35.8%) and 39mm (11.7%); using max 45mm as nominal Lengthh1P",
+      "confidence": "high",
+      "samples": 26614,
+      "composition": {
+        "points": 0,
+        "spans": 26614,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 55.947,
+        "median": 45,
+        "min": -10643.4,
+        "max": 393.29999999999995,
+        "stddev": 244.795,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 9528,
+            "pct": 35.8
+          },
+          {
+            "span_mm": 39,
+            "count": 3123,
+            "pct": 11.7
+          },
+          {
+            "span_mm": 68,
+            "count": 1460,
+            "pct": 5.5
+          },
+          {
+            "span_mm": 61,
+            "count": 789,
+            "pct": 3
+          },
+          {
+            "span_mm": 81,
+            "count": 600,
+            "pct": 2.3
+          }
+        ],
+        "modal_pct": 35.8
+      }
+    },
+    "ll_lipnotch": {
+      "detailer_verb": "ll_lipnotch",
+      "base_verb": "lipnotch",
+      "tool_type_id": 9,
+      "codec_tool_type": "LipNotch",
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "default_length_note": "machine-setup-dependent (lipNotchToolLength); smaller adjacent mode reflects swage-clearance trim",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical-modal: 45mm (35.8%) and 39mm (11.7%); using max 45mm as nominal Lengthh1P",
+      "confidence": "high",
+      "samples": 26614,
+      "composition": {
+        "points": 0,
+        "spans": 26614,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 55.947,
+        "median": 45,
+        "min": -10643.4,
+        "max": 393.29999999999995,
+        "stddev": 244.795,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 9528,
+            "pct": 35.8
+          },
+          {
+            "span_mm": 39,
+            "count": 3123,
+            "pct": 11.7
+          },
+          {
+            "span_mm": 68,
+            "count": 1460,
+            "pct": 5.5
+          },
+          {
+            "span_mm": 61,
+            "count": 789,
+            "pct": 3
+          },
+          {
+            "span_mm": 81,
+            "count": 600,
+            "pct": 2.3
+          }
+        ],
+        "modal_pct": 35.8
+      }
+    },
+    "rh_lipnotch": {
+      "detailer_verb": "rh_lipnotch",
+      "base_verb": "lipnotch",
+      "tool_type_id": 9,
+      "codec_tool_type": "LipNotch",
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "default_length_note": "machine-setup-dependent (lipNotchToolLength); smaller adjacent mode reflects swage-clearance trim",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical-modal: 45mm (35.8%) and 39mm (11.7%); using max 45mm as nominal Lengthh1P",
+      "confidence": "high",
+      "samples": 26614,
+      "composition": {
+        "points": 0,
+        "spans": 26614,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 55.947,
+        "median": 45,
+        "min": -10643.4,
+        "max": 393.29999999999995,
+        "stddev": 244.795,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 9528,
+            "pct": 35.8
+          },
+          {
+            "span_mm": 39,
+            "count": 3123,
+            "pct": 11.7
+          },
+          {
+            "span_mm": 68,
+            "count": 1460,
+            "pct": 5.5
+          },
+          {
+            "span_mm": 61,
+            "count": 789,
+            "pct": 3
+          },
+          {
+            "span_mm": 81,
+            "count": 600,
+            "pct": 2.3
+          }
+        ],
+        "modal_pct": 35.8
+      }
+    },
+    "lh_lipnotch": {
+      "detailer_verb": "lh_lipnotch",
+      "base_verb": "lipnotch",
+      "tool_type_id": 9,
+      "codec_tool_type": "LipNotch",
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "default_length_note": "machine-setup-dependent (lipNotchToolLength); smaller adjacent mode reflects swage-clearance trim",
+      "op_type_source": "empirical-corpus",
+      "length_source": "empirical-modal: 45mm (35.8%) and 39mm (11.7%); using max 45mm as nominal Lengthh1P",
+      "confidence": "high",
+      "samples": 26614,
+      "composition": {
+        "points": 0,
+        "spans": 26614,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 55.947,
+        "median": 45,
+        "min": -10643.4,
+        "max": 393.29999999999995,
+        "stddev": 244.795,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 9528,
+            "pct": 35.8
+          },
+          {
+            "span_mm": 39,
+            "count": 3123,
+            "pct": 11.7
+          },
+          {
+            "span_mm": 68,
+            "count": 1460,
+            "pct": 5.5
+          },
+          {
+            "span_mm": 61,
+            "count": 789,
+            "pct": 3
+          },
+          {
+            "span_mm": 81,
+            "count": 600,
+            "pct": 2.3
+          }
+        ],
+        "modal_pct": 35.8
+      }
+    }
+  },
+  "codec_tool_types": {
+    "Bolt": {
+      "op_type": "otPointTool",
+      "length_mm": null,
+      "length_source": null,
+      "confidence": "high",
+      "samples": 491,
+      "composition": {
+        "points": 491,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "Chamfer": {
+      "op_type": "otStartTool/otEndTool",
+      "length_mm": null,
+      "length_source": null,
+      "confidence": "high",
+      "samples": 4342,
+      "composition": {
+        "points": 0,
+        "spans": 0,
+        "starts": 1828,
+        "ends": 2514
+      }
+    },
+    "InnerDimple": {
+      "op_type": "otPointTool",
+      "length_mm": null,
+      "length_source": null,
+      "confidence": "high",
+      "samples": 47662,
+      "composition": {
+        "points": 47662,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "InnerService": {
+      "op_type": "otPointTool",
+      "length_mm": null,
+      "length_source": null,
+      "confidence": "high",
+      "samples": 7011,
+      "composition": {
+        "points": 7011,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "ScrewHoles": {
+      "op_type": "otPointTool",
+      "length_mm": null,
+      "length_source": null,
+      "confidence": "high",
+      "samples": 677,
+      "composition": {
+        "points": 677,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "Web": {
+      "op_type": "otPointTool",
+      "length_mm": null,
+      "length_source": null,
+      "confidence": "high",
+      "samples": 14413,
+      "composition": {
+        "points": 14413,
+        "spans": 0,
+        "starts": 0,
+        "ends": 0
+      }
+    },
+    "TrussChamfer": {
+      "op_type": null,
+      "length_mm": null,
+      "confidence": "unknown",
+      "note": "Not present in 385-pair Detailer-vs-codec MISSING corpus — either codec emits identically or both sides skip."
+    },
+    "InnerNotch": {
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "length_source": "empirical-modal: 58.7%",
+      "confidence": "high",
+      "samples": 6474,
+      "composition": {
+        "points": 0,
+        "spans": 6474,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 46.545,
+        "median": 45,
+        "min": 4.1,
+        "max": 259.9,
+        "stddev": 15.755,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 3803,
+            "pct": 58.7
+          },
+          {
+            "span_mm": 39,
+            "count": 1935,
+            "pct": 29.9
+          },
+          {
+            "span_mm": 87,
+            "count": 182,
+            "pct": 2.8
+          },
+          {
+            "span_mm": 99,
+            "count": 62,
+            "pct": 1
+          },
+          {
+            "span_mm": 47,
+            "count": 43,
+            "pct": 0.7
+          }
+        ],
+        "modal_pct": 58.7
+      }
+    },
+    "LipNotch": {
+      "op_type": "otSpannedTool",
+      "length_mm": 45,
+      "length_source": "empirical-modal (weak): 35.8%",
+      "confidence": "high",
+      "samples": 26614,
+      "composition": {
+        "points": 0,
+        "spans": 26614,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 55.947,
+        "median": 45,
+        "min": -10643.4,
+        "max": 393.29999999999995,
+        "stddev": 244.795,
+        "top_buckets": [
+          {
+            "span_mm": 45,
+            "count": 9528,
+            "pct": 35.8
+          },
+          {
+            "span_mm": 39,
+            "count": 3123,
+            "pct": 11.7
+          },
+          {
+            "span_mm": 68,
+            "count": 1460,
+            "pct": 5.5
+          },
+          {
+            "span_mm": 61,
+            "count": 789,
+            "pct": 3
+          },
+          {
+            "span_mm": 81,
+            "count": 600,
+            "pct": 2.3
+          }
+        ],
+        "modal_pct": 35.8
+      }
+    },
+    "Swage": {
+      "op_type": "otSpannedTool",
+      "length_mm": 39,
+      "length_source": "empirical-modal (weak): 27.7%",
+      "confidence": "high",
+      "samples": 26692,
+      "composition": {
+        "points": 0,
+        "spans": 26692,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 54.574,
+        "median": 45,
+        "min": 5,
+        "max": 1579.9,
+        "stddev": 31.748,
+        "top_buckets": [
+          {
+            "span_mm": 39,
+            "count": 7396,
+            "pct": 27.7
+          },
+          {
+            "span_mm": 45,
+            "count": 3828,
+            "pct": 14.3
+          },
+          {
+            "span_mm": 66,
+            "count": 1885,
+            "pct": 7.1
+          },
+          {
+            "span_mm": 41,
+            "count": 1383,
+            "pct": 5.2
+          },
+          {
+            "span_mm": 40,
+            "count": 1380,
+            "pct": 5.2
+          }
+        ],
+        "modal_pct": 27.7
+      }
+    },
+    "LeftFlange": {
+      "op_type": "otSpannedTool",
+      "length_mm": null,
+      "length_source": "geometry-driven",
+      "confidence": "high",
+      "samples": 231,
+      "composition": {
+        "points": 0,
+        "spans": 231,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 241.503,
+        "median": 179.3,
+        "min": 2.599999999999909,
+        "max": 1092.5,
+        "stddev": 167.962,
+        "top_buckets": [
+          {
+            "span_mm": 179,
+            "count": 33,
+            "pct": 14.3
+          },
+          {
+            "span_mm": 198,
+            "count": 15,
+            "pct": 6.5
+          },
+          {
+            "span_mm": 173,
+            "count": 13,
+            "pct": 5.6
+          },
+          {
+            "span_mm": 172,
+            "count": 12,
+            "pct": 5.2
+          },
+          {
+            "span_mm": 351,
+            "count": 12,
+            "pct": 5.2
+          }
+        ],
+        "modal_pct": 14.3
+      }
+    },
+    "RightFlange": {
+      "op_type": "otSpannedTool",
+      "length_mm": null,
+      "length_source": "geometry-driven",
+      "confidence": "high",
+      "samples": 251,
+      "composition": {
+        "points": 0,
+        "spans": 251,
+        "starts": 0,
+        "ends": 0
+      },
+      "span_stats": {
+        "mean": 66.943,
+        "median": 31,
+        "min": 10.399999999999636,
+        "max": 1092.5,
+        "stddev": 161.461,
+        "top_buckets": [
+          {
+            "span_mm": 31,
+            "count": 45,
+            "pct": 17.9
+          },
+          {
+            "span_mm": 35,
+            "count": 30,
+            "pct": 12
+          },
+          {
+            "span_mm": 33,
+            "count": 21,
+            "pct": 8.4
+          },
+          {
+            "span_mm": 12,
+            "count": 16,
+            "pct": 6.4
+          },
+          {
+            "span_mm": 26,
+            "count": 15,
+            "pct": 6
+          }
+        ],
+        "modal_pct": 17.9
+      }
+    },
+    "LeftPartialFlange": {
+      "op_type": null,
+      "length_mm": null,
+      "confidence": "unknown",
+      "note": "Not present in 385-pair Detailer-vs-codec MISSING corpus — either codec emits identically or both sides skip."
+    },
+    "RightPartialFlange": {
+      "op_type": null,
+      "length_mm": null,
+      "confidence": "unknown",
+      "note": "Not present in 385-pair Detailer-vs-codec MISSING corpus — either codec emits identically or both sides skip."
+    }
+  }
+}

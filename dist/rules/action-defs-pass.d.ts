@@ -51,6 +51,9 @@ export interface ActionDefsPassConfig {
 /** Whether the action-defs pass is enabled for the current run. Reads
  *  CODEC_USE_ACTION_DEFS env var. */
 export declare function isActionDefsPassEnabled(): boolean;
+/** Detailer TIntersectionType (from tooling-strings.txt:6868-6877). Each
+ *  value tells us which of the connector's edges the partner touches. */
+export type TIntersectionType = "ww_inner_edge" | "ew_inner_edge" | "ll_inner_edge" | "lw_inner_edge" | "wl_inner_edge" | "t_bchord" | "b_tchord" | "t_tchord" | "explicit_tool";
 /**
  * Run the action-defs pass over a frame's crossings. Returns a per-stick
  * map: name → handled+ops+trace.

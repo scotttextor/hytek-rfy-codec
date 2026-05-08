@@ -374,13 +374,17 @@ function installHook_LookupActionSection() {
     const addr = toolingBase.add(RVA.LookupActionSection);
     Interceptor.attach(addr, {
         onEnter(args) {
+            // Belt-and-braces: capture both args[0] AND this.context.eax,
+            // since Borland's register-fastcall passes param_1 in EAX. Frida
+            // SHOULD auto-translate, but if args[0] is wrong we still have
+            // EAX as fallback.
             this.keyArg = args[0];
-            // Try multiple interpretations: arg as direct UnicodeString and
-            // arg as pointer-to-pointer.
-            let key1 = null, key2 = null;
+            this.eaxAtEntry = this.context.eax;
+            let key1 = null, key2 = null, key3 = null;
             try { key1 = readDelphiString(args[0]); } catch (e) {}
             try { key2 = readDelphiString(args[0].readPointer()); } catch (e) {}
-            this.key = key1 || key2;
+            try { key3 = readDelphiString(this.context.eax); } catch (e) {}
+            this.key = key1 || key2 || key3;
         },
         onLeave(retval) {
             lookupCalls++;
@@ -393,6 +397,7 @@ function installHook_LookupActionSection() {
                     type: 'lookup_action_section',
                     call_index: lookupCalls,
                     key_arg_raw: this.keyArg.toString(),
+                    eax_at_entry: this.eaxAtEntry.toString(),
                     key: this.key,
                     section_ptr: sectionPtr.toString(),
                 });
@@ -413,15 +418,16 @@ function installHook_DictionaryAdd() {
     const addr = toolingBase.add(RVA.DictionaryAdd);
     Interceptor.attach(addr, {
         onEnter(args) {
-            // Delphi's TDictionary.DoAdd has 5 params. The exact register/stack
-            // mapping for Frida's args[] on Borland-style x86 Delphi is
-            // typically: args[0]=Self (EAX), args[1]=hashVal (EDX),
-            // args[2]=bucketIdx (ECX), args[3]=value (stack), args[4]=key (stack).
+            // Delphi's TDictionary.DoAdd register/fastcall: 5 params.
+            // Borland register convention: param_1=EAX, param_2=EDX,
+            // param_3=ECX, params_4+ on stack. Frida's args[] should auto-
+            // translate, but we capture raw context as backup.
             const self      = args[0];
             const hash      = args[1];
             const bucketIdx = args[2];
             const value     = args[3];
             const keyPP     = args[4];
+            const ctx = this.context;
 
             addCalls++;
 
@@ -430,32 +436,43 @@ function installHook_DictionaryAdd() {
             let dictObj = NULL;
             try { dictObj = dictSlotPtr.readPointer(); } catch (e) {}
 
-            const isOurDict = !dictObj.isNull() && self.equals(dictObj);
+            // Test both args[0] and EAX/ECX for "is this our dict".
+            const eaxIsDict = !dictObj.isNull() && ctx.eax.equals(dictObj);
+            const a0IsDict  = !dictObj.isNull() && self.equals(dictObj);
+            const isOurDict = eaxIsDict || a0IsDict;
 
-            // The 'key' arg is a pointer into the local string variable; the
-            // string itself is at *keyPP. Try both interpretations.
+            // The 'key' arg is a pointer-to-string var. Try various reads.
             let keyStr = null;
             try { keyStr = readDelphiString(keyPP); } catch (e) {}
-            if (keyStr === null) {
-                try { keyStr = readDelphiString(keyPP.readPointer()); } catch (e) {}
-            }
+            if (keyStr === null) { try { keyStr = readDelphiString(keyPP.readPointer()); } catch (e) {} }
 
-            emit({
-                type: 'dict_add',
-                call_index: addCalls,
-                self: self.toString(),
-                is_actiondefs: isOurDict,
-                hash: hash.toString(),
-                bucket_idx: bucketIdx.toString(),
-                value_ptr: value.toString(),
-                key_pp: keyPP.toString(),
-                key: keyStr,
-            });
+            // Cap dict_add events to keep log bounded. Most adds happen at
+            // startup and we expect only ~28 of them touching ActionDefsManager.
+            if (addCalls <= 1000) {
+                emit({
+                    type: 'dict_add',
+                    call_index: addCalls,
+                    self: self.toString(),
+                    eax: ctx.eax.toString(),
+                    edx: ctx.edx.toString(),
+                    ecx: ctx.ecx.toString(),
+                    is_actiondefs: isOurDict,
+                    hash: hash.toString(),
+                    bucket_idx: bucketIdx.toString(),
+                    value_ptr: value.toString(),
+                    key_pp: keyPP.toString(),
+                    key: keyStr,
+                });
+            }
 
             // If this is our dict, record + dump the section.
             if (isOurDict && keyStr) {
                 dumpedKeys.add(keyStr);
-                dumpSection(value, 'dict_add:' + keyStr);
+                // value is the stack arg. If args[] was wrong, sniff stack manually.
+                let valuePtr = value;
+                try { dumpSection(valuePtr, 'dict_add:' + keyStr); } catch (e) {
+                    emit({ type: 'dict_add_dump_err', err: String(e), key: keyStr });
+                }
             }
         },
     });
@@ -466,12 +483,18 @@ function installHook_ApplyRule() {
     const addr = toolingBase.add(RVA.ApplyRule);
     Interceptor.attach(addr, {
         onEnter(args) {
+            // Borland register: param_1=EAX (actionsArr), param_2=EDX
+            // (intersection), param_3=ECX (opsList), params 4+ stack.
             this.actionsArrPtr = args[0];
             this.intersection  = args[1];
             this.opsList       = args[2];
             this.swageL        = args[3];
             this.swageR        = args[4];
-            this.callIndex     = applyRuleCalls++;
+            // Backup capture from registers + stack peek.
+            this.eax = this.context.eax;
+            this.edx = this.context.edx;
+            this.ecx = this.context.ecx;
+            this.callIndex = applyRuleCalls++;
         },
         onLeave(retval) {
             // Trigger one-shot full-dictionary walk on first ApplyRule call.
@@ -485,9 +508,16 @@ function installHook_ApplyRule() {
             // don't have the section name here, but the actions array
             // pointer can be cross-correlated with the section_dump entries
             // emitted by lookup hook.
+            //
+            // Try both args[0] and EAX in case Frida didn't translate the
+            // Borland fastcall correctly.
             let slotsDump = null;
             try {
                 slotsDump = dumpMaskSlots(this.actionsArrPtr);
+                if (slotsDump.length === 0 && !this.eax.equals(this.actionsArrPtr)) {
+                    const slotsViaEax = dumpMaskSlots(this.eax);
+                    if (slotsViaEax.length > 0) slotsDump = slotsViaEax;
+                }
             } catch (e) {
                 slotsDump = { read_error: String(e) };
             }
@@ -511,6 +541,9 @@ function installHook_ApplyRule() {
                     type: 'apply_rule',
                     call_index: this.callIndex,
                     actions_arr_ptr: this.actionsArrPtr.toString(),
+                    eax: this.eax.toString(),
+                    edx: this.edx.toString(),
+                    ecx: this.ecx.toString(),
                     intersection_ptr: this.intersection.toString(),
                     edge_intersect_bytes: edgeBytes,
                     swage_l: this.swageL.toString(),

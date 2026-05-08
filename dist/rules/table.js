@@ -252,17 +252,19 @@ export const RULE_TABLE = [
             // InnerNotch on T plates is SELECTIVE (some short T sub-plates have it,
             // some don't — pattern not yet derivable from sample). Skipping to avoid
             // over-emission (100 extras vs 12 matches when emitted unconditionally).
-            // T-plate Service holes — DISABLED 2026-05-04.
-            // Verified empirically vs HG260001 PK1/PK2/PK4/PK5 reference:
-            // Detailer emits ZERO InnerService ops on T plates of these wall
-            // plans. The fixed schedule produced 256 extras vs only 14 missing
-            // across the 4 wall plans. Removing the rule is a net +242 op gain.
-            // (Whatever drives Detailer's T-plate InnerService emission isn't
-            //  derivable from the XML alone in this corpus — likely tied to
-            //  electrical-services data we don't import.)
-            // TODO(rules-coverage): if a future corpus DOES need T-plate
-            // InnerService, the spacing matches `setup.largeServiceToLeadingEdgeDistance`
-            // (= 600 for HYTEK setups) — wire it through ctx instead of hardcoding.
+            // T-plate Service holes — re-enabled 2026-05-08 for NLBW (DT-miner #4, n=1,791, conf 90%).
+            // The 2026-05-04 disable was based on the HG260001 PK1-PK5 LBW sample
+            // which had ZERO. Full-corpus mining (66k sticks) shows NLBW T-plates
+            // have 89.5% emission with mean 3.1 ops/stick at first~275, gap~600
+            // (matches setup.largeServiceToLeadingEdgeDistance=600). LBW emission
+            // is 75% per DT #6 — re-enabling that too in fix #3.
+            {
+                toolType: "InnerService", kind: "point",
+                anchor: { kind: "spaced", firstOffset: 275, spacing: 600, lastOffset: 200 },
+                confidence: "low",
+                predicate: (ctx) => /(NLBW|NON-LOAD)/i.test(ctx.planName ?? "") && ctx.length >= 500,
+                notes: "NLBW T-plate InnerService — first ~275, spaced ~600 (DT-miner 2026-05-08)",
+            },
         ],
     },
     // ----------- BOTTOM PLATES on 70S41 -----------

@@ -1,0 +1,64 @@
+OP-LEVEL DIFF — HG260040 LOT 7581 (3) MURRAY STREET BANYA-GF-TB2B-70.075.xml vs HG260040#1-1_PK1-GF-TB2B-70.075.rfy
+================================================================================
+Setup:    F325iT 70mm
+Frames:   our 24 | ref 4
+
+OPS:      our 349 | ref 333
+MATCHED:  297  (89.2% of ref)
+MISSING:  36  (ops Detailer has, we don't)
+EXTRAS:   52   (ops we have, Detailer doesn't)
+
+BY OP TYPE:
+Op                  Matched   Missing   Extras
+--------------------------------------------------
+Web@pt                   237        25       47   (90% ref-coverage)
+RightFlange@span          12         4        2   (75% ref-coverage)
+LeftFlange@span           12         3        2   (80% ref-coverage)
+LipNotch@span             13         3        1   (81% ref-coverage)
+InnerDimple@pt            23         1        0   (96% ref-coverage)
+
+FRAMES WITH GAPS:
+
+  TT17-1 (4 sticks with gaps)
+    T2       MISSING (1): Web @716.0
+    T2       EXTRAS  (4): Web @53.9 | Web @153.4 | Web @4921.8 | Web @5075.2
+    B1       MISSING (2): Web @3855.4 | Web @4051.4
+    B1       EXTRAS  (5): Web @3869.4 | Web @4039.6 | LeftFlange 9423.3..9580.0 | LipNotch 9547.7..9580.0 | RightFlange 9571.8..9580.0
+    H6       MISSING (9): Web @84.3 | Web @844.5 | Web @1506.8 | RightFlange 0.0..30.8 | LipNotch 0.0..54.9 ... +4
+    H6       EXTRAS  (3): Web @16.7 | Web @832.8 | Web @1574.4
+    T4       MISSING (4): InnerDimple @4378.9 | Web @4525.5 | RightFlange 4430.5..4568.3 | LipNotch 4554.9..0.0
+    T4       EXTRAS  (4): Web @166.3 | Web @319.7 | Web @4414.9 | Web @4514.4
+
+  TT18-1 (4 sticks with gaps)
+    T2       MISSING (1): Web @716.0
+    T2       EXTRAS  (4): Web @53.9 | Web @153.4 | Web @4249.8 | Web @4403.2
+    B1       MISSING (1): Web @6137.7
+    H4       MISSING (1): Web @1502.6
+    H4       EXTRAS  (2): Web @16.7 | Web @2792.5
+    T2       MISSING (1): Web @3853.5
+    T2       EXTRAS  (4): Web @166.3 | Web @319.7 | Web @4415.9 | Web @4515.4
+
+  TT19-1 (8 sticks with gaps)
+    T2       MISSING (1): Web @715.9
+    T2       EXTRAS  (4): Web @53.9 | Web @153.4 | Web @2924.7 | Web @3078.1
+    B1       MISSING (2): Web @2241.4 | Web @7338.6
+    H4       MISSING (1): Web @3710.2
+    H4       EXTRAS  (2): Web @16.7 | Web @5194.4
+    W10      MISSING (1): Web @515.0
+    W10      EXTRAS  (1): Web @500.0
+    W11      MISSING (1): Web @802.6
+    W11      EXTRAS  (1): Web @778.6
+    H5       MISSING (1): Web @732.0
+    H5       EXTRAS  (1): Web @699.6
+    W10      MISSING (1): Web @515.0
+    W10      EXTRAS  (1): Web @500.0
+    T2       MISSING (1): Web @2528.4
+    T2       EXTRAS  (4): Web @166.3 | Web @319.7 | Web @3090.9 | Web @3190.4
+
+  TT20-1 (3 sticks with gaps)
+    T2       MISSING (2): Web @91.2 | Web @1203.3
+    T2       EXTRAS  (4): Web @53.9 | Web @166.3 | Web @319.7 | Web @1828.0
+    H4       MISSING (3): Web @4432.4 | LeftFlange 7431.8..7612.9 | RightFlange 7580.3..7612.9
+    H4       EXTRAS  (4): Web @16.7 | Web @7596.2 | LeftFlange 7433.6..7612.9 | RightFlange 7582.1..7612.9
+    T2       MISSING (2): Web @715.9 | Web @1828.0
+    T2       EXTRAS  (4): Web @91.2 | Web @1599.6 | Web @1753.0 | Web @1865.3

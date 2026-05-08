@@ -274,24 +274,35 @@ export const RULE_TABLE = [
             // InnerNotch on T plates is SELECTIVE (some short T sub-plates have it,
             // some don't — pattern not yet derivable from sample). Skipping to avoid
             // over-emission (100 extras vs 12 matches when emitted unconditionally).
-            // T-plate Service holes — re-enabled 2026-05-08 for NLBW + LBW
-            // (DT-miner #4 n=1,791 conf 90%; DT-miner #6 n=1,648 conf 75%).
-            // The 2026-05-04 disable was based on the HG260001 PK1-PK5 LBW sample
-            // which had ZERO. Full-corpus mining (66k sticks) shows:
-            //   NLBW T-plates: 89.5% emission, mean 3.1 ops/stick, first~275
-            //   LBW T-plates:  75.3% emission, mean 3.3 ops/stick, first~275
-            // 600mm spacing matches setup.largeServiceToLeadingEdgeDistance. The
-            // Detailer position is stud-crossing-driven, not a fixed offset — this
-            // is a low-confidence approximation that produces some extras. Future
-            // improvement: geometry-aware version like the Kb code in
-            // diff-vs-detailer.mjs:411+.
-            {
-                toolType: "InnerService", kind: "point",
-                anchor: { kind: "spaced", firstOffset: 275, spacing: 600, lastOffset: 200 },
-                confidence: "low",
-                predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500,
-                notes: "Wall T-plate InnerService — first ~275, spaced ~600 (DT-miner 2026-05-08)",
-            },
+            // T-plate Service holes — DISABLED 2026-05-08 (sub-fix 3 attempt).
+            //
+            // History: re-enabled briefly with DT-miner #4/#6 indication of 89.5%
+            // (NLBW) / 75.3% (LBW) emission rates from a full-corpus sweep.
+            //
+            // Real-fixture verification 2026-05-08 vs HG260044 LBW + NLBW shows
+            // the fixed-offset spaced rule is a NET REGRESSION:
+            //   HG260044 LBW : 4 ref-matches missing / 121 codec-extras (45 of 49
+            //                  T plates over-emitted) — 4 right, 121 wrong
+            //   HG260044 NLBW: 0 ref-matches / 136 codec-extras — 0 right, 136 wrong
+            //   HG260001 PK4 LBW (cached): 6 missing / 4 extras — closer to balanced
+            //
+            // The Detailer rule for T-plate InnerService positions is geometry-
+            // driven (stud-crossing-anchored, like the Kb code in
+            // diff-vs-detailer.mjs:411+), NOT a fixed schedule. The fixed-offset
+            // approximation works for some builders/projects (HG260001 family) but
+            // dramatically over-fires for others (HG260044 family) where Detailer
+            // chooses NOT to emit on most T plates despite the corpus average.
+            //
+            // Disabling avoids the systematic 250+ false-positives per LBW+NLBW
+            // pair on HG260044. Re-enable only after a geometry-aware emitter
+            // lands (project_hytek_install_strategic_review note: tracked).
+            // {
+            //   toolType: "InnerService", kind: "point",
+            //   anchor: { kind: "spaced", firstOffset: 275, spacing: 600, lastOffset: 200 },
+            //   confidence: "low",
+            //   predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500,
+            //   notes: "Wall T-plate InnerService — first ~275, spaced ~600",
+            // },
             // DT-miner #16 (TB2B T-chord Web fallback) NOT applied 2026-05-08.
             // Position pattern is paired chord-web crossings (intra-pair ~98mm,
             // inter-pair 300-1100mm by truss bay). evenlyDistributed @800 emitted

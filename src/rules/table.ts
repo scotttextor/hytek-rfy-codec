@@ -210,7 +210,16 @@ export const RULE_TABLE: RuleGroup[] = [
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START only (no Chamfer-end observed)" },
+      { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START" },
+      // Chamfer @end on Kb sticks (NOT H sticks).
+      // Verified 2026-05-08 vs HG260044 LBW + NLBW: 100% of Kb sticks (46/46
+      // LBW + 12/12 NLBW) reference RFY contains Chamfer @end. The previous
+      // "Chamfer at START only" comment was based on an incomplete sample.
+      // H sticks (header cripples) do NOT receive Chamfer @end — verified
+      // 0/23 LBW + 0/7 NLBW H sticks have Chamfer @end gaps.
+      { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
+        predicate: (ctx) => ctx.role === "Kb",
+        notes: "Kb sticks: Chamfer at END (plate-attached cut tip)" },
       // Start Swage: ~42mm at the mid-wall end (cap perpendicular to Kb axis).
       // Verified 2026-05-04 vs HG260001 PK4 LBW Kb1: ref Swage 0..42.4 (span 42).
       { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 42, confidence: "high",

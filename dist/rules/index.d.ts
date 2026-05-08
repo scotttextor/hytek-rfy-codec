@@ -9,6 +9,10 @@ export type * from "./types.js";
 export { applyRule, applyRules, findGroup } from "./engine.js";
 export { RULE_TABLE, profileOffsets } from "./table.js";
 export { generateFrameContextOps, layoutFrame, computeBox, roleFromName } from "./frame-context.js";
+export { getActionSection, listSectionNames, preloadActionDefs, type ActionSection, type ActionSlot, type ActionAlternative, type ActionOp, type Condition, type ActionVerb, } from "./action-defs.js";
+export { evalCondition, evalConditions, packEdgeMask, unpackEdgeMask, type EdgeFlags, type ConditionContext, } from "./condition-eval.js";
+export { emitAction, emitActions, verbToToolType, type EmitContext, type EmitResult, } from "./action-emit.js";
+export { runActionDefsPass, isActionDefsPassEnabled, emptyActionDefsPass, type ActionDefsPassInfo, type ActionDefsPassConfig, } from "./action-defs-pass.js";
 import type { RfyToolingOp } from "../format.js";
 import type { StickContext, RuleApplicationResult } from "./types.js";
 /**

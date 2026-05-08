@@ -1,5 +1,6 @@
 import { getMachineSetupForProfile, getDefaultMachineSetup, lipNotchToolLength, } from "../machine-setups.js";
 import { profileOffsets } from "./table.js";
+import { runActionDefsPass, isActionDefsPassEnabled, } from "./action-defs-pass.js";
 /** Compute a stick's bounding box in 2D frame coords. */
 export function computeBox(stick) {
     const corners = stick.outlineCorners ?? [];
@@ -123,6 +124,31 @@ export function generateFrameContextOps(frame, setup) {
             : getDefaultMachineSetup());
     const internalSpanFromSetup = lipNotchToolLength(resolvedSetup) - 3;
     const internalDimpleOffsetFromSetup = internalSpanFromSetup / 2;
+    // ---------------------------------------------------------------------
+    // ActionDefsManager pass — env-flag-gated.
+    //
+    // When CODEC_USE_ACTION_DEFS=1, run the new path: classify each crossing
+    // via the 28-name classifier, look up the matching ActionDefsManager
+    // section/slot/alternative, emit ops via action-emit. Result is APPENDED
+    // to the per-stick `result` (the legacy crossings code below still runs);
+    // a final dedup pass removes near-duplicate spans.
+    //
+    // Default OFF for first-cut: legacy path runs alone, parity unchanged.
+    // ---------------------------------------------------------------------
+    if (isActionDefsPassEnabled()) {
+        const passResult = runActionDefsPass(layout, {
+            enabled: true,
+            setup: resolvedSetup,
+            planName: frame.planName,
+        });
+        for (const [stickName, info] of passResult.entries()) {
+            if (info.handled && info.ops.length > 0) {
+                const arr = result.get(stickName);
+                if (arr)
+                    arr.push(...info.ops);
+            }
+        }
+    }
     // Studs: narrow vertical members (S, J). Filter out wide outlines (Kb/H).
     // 2026-05-07 Swap A: use the SHORT dimension as the "width" check. Most
     // studs run vertically so width = bbox-w. In rotated RP frames they run
@@ -1074,7 +1100,58 @@ export function generateFrameContextOps(frame, setup) {
             }
         }
     }
+    // Final dedup pass — removes near-duplicate ops the action-defs pass and
+    // the legacy crossings code may have both emitted (only meaningful when
+    // CODEC_USE_ACTION_DEFS is on; otherwise this is a no-op since the legacy
+    // path doesn't produce duplicates of itself).
+    if (isActionDefsPassEnabled()) {
+        for (const [, ops] of result.entries()) {
+            dedupeNearDuplicates(ops);
+        }
+    }
     return result;
+}
+/** Mutate `ops` in-place: remove ops with EXACT duplicates (same type, same
+ *  positions to 0.1mm). Conservative — preserves all legacy ops, only drops
+ *  literal repeats. The action-defs pass tends to emit centred LipNotches at
+ *  intersection points where legacy already has one, so even strict dedup
+ *  removes a meaningful fraction.
+ *
+ *  Iterates LATER → EARLIER (preserving the first/legacy occurrence and
+ *  dropping later/action-defs duplicates).
+ */
+function dedupeNearDuplicates(ops) {
+    const TOL = 0.15;
+    const seen = [];
+    for (let i = 0; i < ops.length; i++) {
+        const op = ops[i];
+        if (!op)
+            continue;
+        let a, b;
+        if (op.kind === "point") {
+            a = op.pos;
+            b = op.pos;
+        }
+        else if (op.kind === "spanned") {
+            a = op.startPos;
+            b = op.endPos;
+        }
+        else {
+            a = 0;
+            b = 0;
+        }
+        const dupIdx = seen.findIndex((s) => s.type === op.type &&
+            s.kind === op.kind &&
+            Math.abs(s.a - a) <= TOL &&
+            Math.abs(s.b - b) <= TOL);
+        if (dupIdx >= 0) {
+            ops.splice(i, 1);
+            i--;
+        }
+        else {
+            seen.push({ type: op.type, kind: op.kind, a, b });
+        }
+    }
 }
 function round(n) { return Math.round(n * 10000) / 10000; }
 /**

@@ -291,9 +291,22 @@ export const RULE_TABLE: RuleGroup[] = [
     lengthRange: [200, Infinity],
     rules: [
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "100% of T plates have lip notch span at start" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      // InnerDimple offset is plan-type-dependent for T plates on 70mm:
+      //   default (LBW/NLBW/TIN/TB2B/etc): 16.5mm (DIMPLE_OFFSET_70)
+      //   RP plan: 10mm — DT-miner #12 (n=1,154, conf 47%): 47% of RP/T
+      //   start-dimples are at 10mm vs 21% at 16.5. End-offset analysis
+      //   confirms: end-9mm dominates (387 sticks) over end-16.5 (absent).
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high",
+        predicate: (ctx) => !isRpPlan(ctx) },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "medium",
+        predicate: (ctx) => isRpPlan(ctx),
+        notes: "RP T-plate: dimple @10 instead of 16.5 (DT-miner #12)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high",
+        predicate: (ctx) => !isRpPlan(ctx) },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "medium",
+        predicate: (ctx) => isRpPlan(ctx),
+        notes: "RP T-plate: end-dimple @10 instead of 16.5" },
       // InnerNotch on T plates is SELECTIVE (some short T sub-plates have it,
       // some don't — pattern not yet derivable from sample). Skipping to avoid
       // over-emission (100 extras vs 12 matches when emitted unconditionally).
@@ -788,6 +801,14 @@ export const RULE_TABLE: RuleGroup[] = [
 export function isWallPlan(ctx: { planName?: string }): boolean {
   if (!ctx.planName) return false;
   return /(LBW|NLBW|LOAD-BEARING|NON-LOAD)/i.test(ctx.planName);
+}
+
+/** RP = Raked Pitch (sloped roof). RP plans use 10mm InnerDimple offset
+ *  on S/T/B/N profile-70 sticks — not the standard 16.5mm.
+ *  DT-miner 2026-05-08 finding #12, #15, #20 (S finding #5 reverted). */
+export function isRpPlan(ctx: { planName?: string }): boolean {
+  if (!ctx.planName) return false;
+  return /(?:^|-)RP(?:-|$|\d)/i.test(ctx.planName);
 }
 
 /** Ground-floor wall plan (slab-bearing) — gets Web@8 + slab anchor bolts.

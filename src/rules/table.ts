@@ -399,9 +399,12 @@ export const RULE_TABLE: RuleGroup[] = [
   // ----------- RAISED B-PLATES (Bh) on 70S41 -----------
   // 70mm version of the 89mm raised B-plate rule. Same pattern: InnerNotch +
   // LipNotch at both ends, InnerDimple at 16.5 each end.
-  // LBW (load-bearing wall) frames: NO Web/Bolt — verified vs HG260001 PK4 L4/B2.
-  // NLBW frames: ALSO Web@8 + Bolt@62 — verified vs HG260001 PK1 N14/B1
-  //   (length 1872, z=61.5: ref has BOTH cap notches AND Web@8 + Bolt@62).
+  //
+  // 2026-05-07 (Scott Rule 3): Raised B-plates NEVER get slab anchors. Scott
+  // explicitly confirmed the prior NLBW raised-B Web@8 + Bolt@62 emission was
+  // "human error" in the reference data. Removed the NLBW slab-anchor sub-rules.
+  // Anchors only fire on B-plates sitting at z=0 on the slab — raised B-plates
+  // (Bh role, OR z>30) NEVER attach to the slab.
   {
     rolePattern: /^Bh$/,
     profilePattern: /^70S41$/,
@@ -410,16 +413,6 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "Raised 70mm B: InnerNotch at start clearance" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      // NLBW raised B-plates also get slab-anchor Web@8 + Bolt@62.
-      { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high",
-        predicate: (ctx) => /(NLBW)/i.test(ctx.planName ?? ""),
-        notes: "NLBW raised B plate: slab-anchor Web@8" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium",
-        predicate: (ctx) => /(NLBW)/i.test(ctx.planName ?? ""),
-        notes: "NLBW raised B plate: slab-anchor Bolt@62" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium",
-        predicate: (ctx) => /(NLBW)/i.test(ctx.planName ?? ""),
-        notes: "NLBW raised B plate: slab-anchor Bolt@end-62" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },

@@ -119,6 +119,23 @@ function isHorizontalContinuous(stick: ParsedStick): boolean {
   return /^(T|Tp|B|Bp|Bh|N|Nog)$/i.test(role);
 }
 
+/** Test whether a plate is actually SLOPED (rake plate / roof-pitch member).
+ *  Per Scott's Rule 7 (2026-05-07): in RP plans, only the top-of-slope and
+ *  bottom-of-slope plates are special. Most "RP" frames are actually horizontal
+ *  panel-roof walls where T1 + B1 + N1 are simple horizontal members and
+ *  should keep STANDARD wall-stud caps (Swage/LipNotch 0..39 + ID@16.5).
+ *
+ *  A plate is sloped when its end-z differs from start-z by > 50mm. Verified
+ *  vs HG260012 GF-RP test corpus: most RP frames have horizontal plates
+ *  (z-extent < 5mm) where Detailer ref emits STANDARD wall caps, NOT chord-style.
+ *  The previous unconditional rewrite was over-applying chord-style and causing
+ *  ~67% of RP ops to mismatch.
+ */
+function isSlopedPlate(stick: ParsedStick): boolean {
+  const dz = Math.abs(stick.end.z - stick.start.z);
+  return dz > 50;
+}
+
 /** Decide if this stick is a VERTICAL NOTCHED member under Reversed Tooling.
  *  Same role-only detection rationale as `isHorizontalContinuous`. */
 function isVerticalNotched(stick: ParsedStick): boolean {
@@ -316,13 +333,41 @@ function applyStudEndChamfer(stick: ParsedStick): boolean {
 
 /** Run the RP Reversed-Tooling simplifier on a single frame.  Mutates
  *  `frame.sticks[].tooling[]` in place.  Caller is responsible for the
- *  plan-name gate; this function blindly applies the rewrite when called. */
+ *  plan-name gate; this function blindly applies the rewrite when called.
+ *
+ *  Per Scott's Rule 7 (2026-05-07): only SLOPED plates (top-of-slope or
+ *  bottom-of-slope rake plates) get the chord-style cap rewrite. Horizontal
+ *  RP plates (the dominant case in the HG260001/HG260012 corpora) keep the
+ *  standard wall-stud caps from `table.ts`. Likewise, only VERTICAL studs
+ *  that meet a sloped plate at one end get the plate-over-plate notch start
+ *  cap; horizontal-RP studs that meet two horizontal plates on a normal
+ *  wall structure keep their standard wall caps.
+ */
 export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
   const horizontalsRewritten: string[] = [];
   const studStartsRewritten: string[] = [];
   const studEndsChamfered: string[] = [];
+
+  // Scott Rule 7: detect whether THIS frame contains any sloped plates.
+  // If no plate in the frame is sloped, the frame is a horizontal panel-roof
+  // wall and the chord-style/plate-over-plate cap rewrites should NOT apply.
+  // Verified vs HG260012 GF-RP frames: the bulk are horizontal panel-roof
+  // walls where standard wall caps match Detailer ref exactly.
+  const frameHasSlopedPlate = frame.sticks.some(
+    (s) => isHorizontalContinuous(s) && isSlopedPlate(s),
+  );
+  if (!frameHasSlopedPlate) {
+    return {
+      frame: frame.name,
+      decision: "SKIP",
+      reason: "no sloped plates — frame is horizontal panel-roof wall, keep standard caps",
+    };
+  }
+
   for (const stick of frame.sticks) {
     if (isHorizontalContinuous(stick)) {
+      // Per-plate gate: only sloped plates get chord-style caps.
+      if (!isSlopedPlate(stick)) continue;
       if (applyHorizontalCaps(stick)) {
         horizontalsRewritten.push(stick.name);
       }

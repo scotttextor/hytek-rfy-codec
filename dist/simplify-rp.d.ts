@@ -17,7 +17,16 @@ export interface SimplifyRpDecision {
 }
 /** Run the RP Reversed-Tooling simplifier on a single frame.  Mutates
  *  `frame.sticks[].tooling[]` in place.  Caller is responsible for the
- *  plan-name gate; this function blindly applies the rewrite when called. */
+ *  plan-name gate; this function blindly applies the rewrite when called.
+ *
+ *  Per Scott's Rule 7 (2026-05-07): only SLOPED plates (top-of-slope or
+ *  bottom-of-slope rake plates) get the chord-style cap rewrite. Horizontal
+ *  RP plates (the dominant case in the HG260001/HG260012 corpora) keep the
+ *  standard wall-stud caps from `table.ts`. Likewise, only VERTICAL studs
+ *  that meet a sloped plate at one end get the plate-over-plate notch start
+ *  cap; horizontal-RP studs that meet two horizontal plates on a normal
+ *  wall structure keep their standard wall caps.
+ */
 export declare function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision;
 /** Public entry point for the RP simplifier post-pass.  Walks every plan
  *  and frame in the project; for each frame inside an RP plan, runs

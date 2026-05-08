@@ -177,3 +177,98 @@ describe("runActionDefsPass — wall plate × stud crossing (suppressed cohort)"
     expect(r.get("T1")!.handled).toBe(false);
   });
 });
+
+describe("runActionDefsPass — truss panel-points NOT classified as OnFlat-Over/Swaged junk", () => {
+  // The action-defs grammar's slot 8 emits stick-end-spanning ops
+  // (`swage@we-wend, swage@lw-lend`) that are wrong for interior chord×web
+  // crossings. We confirmed this regresses parity by 50+ extra full-stick
+  // Swages across the TIN cohort. Suppression is the correct posture until
+  // we figure out the geometric semantics for interior panel-points.
+  it("default-suppresses OnFlat - Over and OnFlat - Swaged", () => {
+    const old = process.env.CODEC_SUPPRESS_OVER_SWAGED;
+    delete process.env.CODEC_SUPPRESS_OVER_SWAGED;
+    try {
+      // Truss-shape layout: a horizontal chord T2 with a diagonal web W.
+      const layout = [
+        mkLayoutEntry("T", 0, 0, 3000, 41, { name: "T2", usage: "topchord" }),
+        mkLayoutEntry("W", 1000, 41, 41, 1500, { name: "W1", usage: "web" }),
+      ];
+      const r = runActionDefsPass(layout, {
+        enabled: true,
+        setup: getDefaultMachineSetup(),
+        planName: "GF-TIN-70.075",
+      });
+      // T2 should NOT be handled — OnFlat - Swaged would emit junk full-stick
+      // swages here.
+      expect(r.get("T2")!.handled).toBe(false);
+    } finally {
+      if (old === undefined) delete process.env.CODEC_SUPPRESS_OVER_SWAGED;
+      else process.env.CODEC_SUPPRESS_OVER_SWAGED = old;
+    }
+  });
+
+  it("CODEC_SUPPRESS_OVER_SWAGED=0 un-suppresses (debug only)", () => {
+    const old = process.env.CODEC_SUPPRESS_OVER_SWAGED;
+    process.env.CODEC_SUPPRESS_OVER_SWAGED = "0";
+    try {
+      const layout = [
+        mkLayoutEntry("T", 0, 0, 3000, 41, { name: "T2", usage: "topchord" }),
+        mkLayoutEntry("W", 1000, 41, 41, 1500, { name: "W1", usage: "web" }),
+      ];
+      const r = runActionDefsPass(layout, {
+        enabled: true,
+        setup: getDefaultMachineSetup(),
+        planName: "GF-TIN-70.075",
+      });
+      // With the suppression off, classifyMixed → OnFlat - Swaged → emit ops.
+      expect(r.get("T2")!.handled).toBe(true);
+    } finally {
+      if (old === undefined) delete process.env.CODEC_SUPPRESS_OVER_SWAGED;
+      else process.env.CODEC_SUPPRESS_OVER_SWAGED = old;
+    }
+  });
+});
+
+describe("findCrossings — extended truss panel-point detection (smoke test)", () => {
+  // The widened findCrossings now detects (chord, web) pairs even when
+  // the partner isn't in the orthogonal vertical-bbox case. This unlocks
+  // truss panel-points but also fires for cases where the action-defs
+  // grammar doesn't have a useful slot — those are filtered downstream.
+  // The test here is a smoke test to ensure crossings ARE detected on a
+  // truss-style layout and don't crash.
+  it("detects truss web × chord centerline crossing without crashing", () => {
+    const old = process.env.CODEC_SUPPRESS_OVER_SWAGED;
+    process.env.CODEC_SUPPRESS_OVER_SWAGED = "0";
+    try {
+      // Diagonal web crossing horizontal chord.
+      const chord = mkLayoutEntry("T", 0, 0, 3000, 41, {
+        name: "T2", usage: "topchord", length: 3000,
+      });
+      // Web outline corners: a tilted rectangle from (1000, 41) to (1100, 1500)
+      const webStick = mkStick({
+        name: "W1", usage: "web", length: 1500,
+        outlineCorners: [
+          { x: 1000, y: 41 },
+          { x: 1050, y: 41 },
+          { x: 1100, y: 1500 },
+          { x: 1050, y: 1500 },
+        ],
+      });
+      const web: StickWithBox = {
+        stick: webStick, role: "W",
+        box: { xMin: 1000, xMax: 1100, yMin: 41, yMax: 1500, cx: 1050, cy: 770 },
+        horizontal: false,
+      };
+      const r = runActionDefsPass([chord, web], {
+        enabled: true,
+        setup: getDefaultMachineSetup(),
+        planName: "GF-TIN-70.075",
+      });
+      // T2 will fire because OnFlat - Swaged is now un-suppressed.
+      expect(r.get("T2")!.handled).toBe(true);
+    } finally {
+      if (old === undefined) delete process.env.CODEC_SUPPRESS_OVER_SWAGED;
+      else process.env.CODEC_SUPPRESS_OVER_SWAGED = old;
+    }
+  });
+});

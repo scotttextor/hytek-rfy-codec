@@ -323,13 +323,18 @@ function computeEdgeMask(
   const isEndConnector = tA < 0.05 || tA > 0.95;
   const isEndPartner = tB < 0.05 || tB > 0.95;
 
-  // ww_inner_edge / panel-point: ALL 4 corners present (mask=0xF).
+  // ww_inner_edge / panel-point: web-on-web only (mask=0x8). Conservative
+  // — Detailer's `le` flag (lip-edge) only fires when the partner's lip
+  // actually contacts the connector's web, which for an interior panel-
+  // point is rarely true. Setting all 4 bits gates `le&we` alternatives
+  // that emit junk lipnotches spanning to lend.
   if (intersectionType === "ww_inner_edge") {
-    return { ll: true, lw: true, wl: true, ww: true };
+    return { ll: false, lw: false, wl: false, ww: true };
   }
-  // ew_inner_edge: end-to-web — only 2 of the 4 corners present (mask=0x3).
+  // ew_inner_edge: end-to-web — partner end touching connector web. Sets
+  // ew (separate flag) plus ww. mask=0x8.
   if (intersectionType === "ew_inner_edge") {
-    return { ll: false, lw: true, wl: false, ww: true, ew: true };
+    return { ll: false, lw: false, wl: false, ww: true, ew: true };
   }
   // Chord-to-chord intersections: WW only (mask=0x8).
   if (intersectionType === "t_bchord" || intersectionType === "b_tchord" ||
@@ -555,9 +560,12 @@ function getSuppressedSet(): Set<JointClassification> {
     out.add("OnFlat - DualTrack PlateToStud");
     out.add("OnFlat - DualTrack StudToPlate");
   }
-  // OnFlat - Over / Swaged: only emit on truss heel/apex, not walls.
-  // legacy path handles wall over/swaged via the W-brace branch already.
-  // Set CODEC_SUPPRESS_OVER_SWAGED=0 to enable.
+  // OnFlat - Over / Swaged: classifyMixed returns these for chord×web
+  // truss crossings, but the slot grammar emits stick-end-spanning ops
+  // (`swage@ww-wend`) that aren't what Detailer's actual reference
+  // contains for interior panel-points. The legacy frame-context.ts
+  // path handles truss webs better via cluster-merge geometry. Suppress
+  // by default. Set CODEC_SUPPRESS_OVER_SWAGED=0 to un-suppress.
   if (process.env.CODEC_SUPPRESS_OVER_SWAGED !== "0") {
     out.add("OnFlat - Over");
     out.add("OnFlat - Swaged");
@@ -687,13 +695,21 @@ export function runActionDefsPass(
         }
       }
     }
-    if (handledSticks > 0) {
-      const planLabel = config.planName ?? "?";
-      console.error(
-        `[action-defs] plan=${planLabel} crossings=${crossings.length} handled=${handledSticks} ops=${totalOps} ` +
-        [...classCounts.entries()].map(([k, v]) => `${k}=${v}`).join(" ")
+    const planLabel = config.planName ?? "?";
+    const allClassCounts = new Map<string, number>();
+    for (const cr of crossings) {
+      const className = classifyJoint(
+        deriveStickProps(cr.connector, config.setup),
+        deriveStickProps(cr.connectee, config.setup),
+        flags
       );
+      allClassCounts.set(className, (allClassCounts.get(className) ?? 0) + 1);
     }
+    console.error(
+      `[action-defs] plan=${planLabel} crossings=${crossings.length} ` +
+      `handled=${handledSticks} ops=${totalOps} ` +
+      `classes={${[...allClassCounts.entries()].map(([k, v]) => `${k}:${v}`).join(", ")}}`
+    );
   }
   return out;
 }

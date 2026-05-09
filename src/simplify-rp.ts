@@ -105,6 +105,67 @@ function stripStandardStartCap(tooling: RfyToolingOp[]): number {
   return removed;
 }
 
+/** Strip end-anchored ops the standard wall rule emits on a stud:
+ *    {Swage|LipNotch} L-39..L  +  InnerDimple @L-16.5
+ *  Returns the number of ops removed. */
+function stripStandardEndCap(tooling: RfyToolingOp[], stickLen: number): number {
+  let removed = 0;
+  for (let i = tooling.length - 1; i >= 0; i--) {
+    const op = tooling[i]!;
+    if (
+      op.kind === "spanned"
+      && (op.type === "Swage" || op.type === "LipNotch")
+      && Math.abs(op.endPos - stickLen) < END_ANCHOR_TOL_MM
+      && Math.abs((op.endPos - op.startPos) - STD_END_SPAN_MM) < END_ANCHOR_TOL_MM
+    ) {
+      tooling.splice(i, 1);
+      removed++;
+      continue;
+    }
+    if (
+      op.kind === "point"
+      && op.type === "InnerDimple"
+      && Math.abs(op.pos - (stickLen - STD_DIMPLE_OFFSET_MM)) < POINT_ANCHOR_TOL_MM
+    ) {
+      tooling.splice(i, 1);
+      removed++;
+      continue;
+    }
+  }
+  return removed;
+}
+
+/** Compute stick centerline length from world coords. */
+function computeStickLength(stick: ParsedStick): number {
+  const dx = stick.end.x - stick.start.x;
+  const dy = stick.end.y - stick.start.y;
+  const dz = stick.end.z - stick.start.z;
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+/** Extend the stick's end point along its centerline by `mmToAdd`. Used to
+ *  match ref Detailer's longer stud lengths (RP studs are ~9mm longer in ref
+ *  than the raw XML centerline gives — verified 58 of 68 horizontal-mode RP
+ *  studs in HG260044). Returns true if the extension was applied. */
+function extendStickEnd(stick: ParsedStick, mmToAdd: number): boolean {
+  const dx = stick.end.x - stick.start.x;
+  const dy = stick.end.y - stick.start.y;
+  const dz = stick.end.z - stick.start.z;
+  const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  if (len < 1) return false;
+  const ux = dx / len, uy = dy / len, uz = dz / len;
+  stick.end = {
+    x: stick.end.x + ux * mmToAdd,
+    y: stick.end.y + uy * mmToAdd,
+    z: stick.end.z + uz * mmToAdd,
+  };
+  return true;
+}
+
+/** Length extension applied to RP studs in horizontal-bottom frames.
+ *  Verified vs HG260044 corpus: 58 of 68 horizontal-mode S-stud delta=9.1mm. */
+const RP_HORIZONTAL_STUD_EXTENSION_MM = 9.1;
+
 /** Decide if a stick is an RP S-stud — name starts with "S" followed by digit. */
 function isSstud(stick: ParsedStick): boolean {
   return /^S\d/.test(stick.name);
@@ -343,12 +404,34 @@ export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
   for (const stick of frame.sticks) {
     if (!isSstud(stick)) continue;
 
-    // Strip the standard wall-stud start cap regardless of mode.
-    stripStandardStartCap(stick.tooling);
-
     // Per-stud classification: does this stud's START meet a sloped (rake)
     // bottom plate? If yes → chord-style cap. Else → plate-over-plate cap.
     const isRakeStud = studStartIsOnSlopedBottom(stick, frame);
+
+    // Length extension: ref Detailer's RP studs are ~9.1mm longer than raw
+    // XML centerline. Apply ONLY on horizontal-mode studs (the dominant
+    // delta=9.1 cohort, 58/68). Rake studs have varied deltas (7.1/9.1/11.2/
+    // 14.1) and a single-value extension would create false positives there.
+    if (!isRakeStud) {
+      extendStickEnd(stick, RP_HORIZONTAL_STUD_EXTENSION_MM);
+    }
+
+    // Recompute length AFTER potential extension.
+    const stickLen = computeStickLength(stick);
+
+    // Strip the standard wall-stud start cap regardless of mode.
+    stripStandardStartCap(stick.tooling);
+
+    // Strip the standard wall-stud end cap (Swage L-39..L + ID @L-16.5).
+    // RP studs use ID @L-10 (chord-style) at the end and Swage L-66..L
+    // instead — verified vs HG260044 corpus (75 ref ID at L-10 vs 7 at L-16.5;
+    // 67 of 82 ref end-Swage span = 66.1mm). The codec's body-crossing pass
+    // emits a Swage at the body-crossing position (likely close to L-66 after
+    // length extension), so we don't re-emit Swage here.
+    stripStandardEndCap(stick.tooling, stickLen);
+
+    // Re-emit end dimple at L-10 (chord-style end).
+    stick.tooling.push({ kind: "point", type: "InnerDimple", pos: stickLen - RP_RAKE_STUD_START_DIMPLE_OFFSET_MM });
 
     if (isRakeStud) {
       // Rake stud: meets a sloped chord at its start. Ref Detailer emits

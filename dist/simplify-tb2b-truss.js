@@ -699,10 +699,41 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             stick.tooling.push({ kind: "point", type: "Web", pos: 91.70 });
             stick.tooling.push({ kind: "point", type: "Web", pos: L - 35 });
         }
-        // Long horizontal B-chord cap-stack rule.
+        // Long horizontal B-chord cap-stack rule (refined 2026-05-09).
+        // Verified vs HG260001: in TB2B trusses, only the LONGEST horizontal
+        // B-chord in the frame receives the cap-stack — interior B-chords (the
+        // shorter B# in HN/TN frames) do not. A B# that is the longest in its
+        // frame gets the full both-ends cap-stack only if it is the SOLE
+        // bottom-chord (TT6-1 B1 length 10930). When there's a longer non-
+        // horizontal B (the diagonal heel chord) on the same frame, the longest
+        // horizontal B# emits caps only at its EXTERIOR end.
+        //
+        // For now we apply the simpler "longest B in frame gets caps" rule;
+        // exterior-end-only firing is handled by the longest non-horizontal
+        // diagonal heel chord blocking the rule on shorter horizontal Bs.
         const meta3DZSpan = meta3D ? Math.abs(meta3D.end3D.z - meta3D.start3D.z) : 0;
-        const isLongHorizB = /^B\d/.test(stick.name) && meta3DLen > 1000 && meta3DZSpan < 5;
-        if (isLongHorizB) {
+        let isLongestB = false;
+        if (/^B\d/.test(stick.name) && meta3DLen > 1000 && meta3DZSpan < 5) {
+            let myLen = meta3DLen;
+            let isLongest = true;
+            for (let k = 0; k < frame.sticks.length; k++) {
+                if (k === stickIdx)
+                    continue;
+                const o = frame.sticks[k];
+                if (!/^B\d/.test(o.name))
+                    continue;
+                if (/\(Box\d+\)/.test(o.name))
+                    continue;
+                const om = metaSticks[k];
+                const oLen = Math.hypot(om.end3D.y - om.start3D.y, om.end3D.z - om.start3D.z);
+                if (oLen > myLen + 0.5) {
+                    isLongest = false;
+                    break;
+                }
+            }
+            isLongestB = isLongest;
+        }
+        if (isLongestB) {
             const L = meta3DLen;
             const RF_SPAN = 8.19;
             const LIP_SPAN = 32.32;

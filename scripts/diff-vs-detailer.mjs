@@ -365,6 +365,9 @@ function buildOurProject(xmlText) {
         const _stkDz = stick.end.z - stick.start.z;
         const _stkHoriz = Math.hypot(_stkDx, _stkDy);
         const angleFromVertical = Math.atan2(_stkHoriz, Math.abs(_stkDz)) * 180 / Math.PI;
+        // For Kb sticks, kbTopAttached = end.z > start.z (after normalization
+        // start = mid-wall, end = plate-attached). Used by chamfer-end rule.
+        const kbTopAttached = /^Kb\d/.test(stickName) && stick.end.z > stick.start.z;
         stick.tooling = generateTooling({
           role, length, profileFamily,
           gauge: profile.gauge, flipped,
@@ -373,6 +376,8 @@ function buildOurProject(xmlText) {
           stickName: stick.name,
           angleFromVertical,
           framePairedHeader,
+          inputFlipped,
+          kbTopAttached,
         });
         // Kb InnerService at horizontal Service crossings.
         //

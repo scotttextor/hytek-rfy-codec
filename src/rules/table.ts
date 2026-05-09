@@ -162,7 +162,21 @@ export const RULE_TABLE: RuleGroup[] = [
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START only (no Chamfer-end observed)" },
+      { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START" },
+      // Kb sticks ALSO get Chamfer at END when the lip-orientation
+      // (inputFlipped) matches the plate-attachment direction (kbTopAttached).
+      // The discriminator is `inputFlipped === kbTopAttached` (XNOR):
+      //   - top-attached + flipped=true   → chamfer (plate cuts the lip side)
+      //   - bottom-attached + flipped=false → chamfer
+      //   - opposite combinations → no chamfer
+      // Verified 2026-05-09 vs HG260001 PK4 LBW L1/L18/L21/L28/L30/L43/L46
+      // (every Kb classified correctly) and HG260044 LBW (~80 Kbs).
+      { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
+        predicate: (ctx) => ctx.role === "Kb"
+          && ctx.inputFlipped !== undefined
+          && ctx.kbTopAttached !== undefined
+          && ctx.inputFlipped === ctx.kbTopAttached,
+        notes: "Kb end Chamfer (inputFlipped XNOR topAttached): plate-attached angled cut" },
       // Start Swage: ~42mm at the mid-wall end (cap perpendicular to Kb axis).
       // Verified 2026-05-04 vs HG260001 PK4 LBW Kb1: ref Swage 0..42.4 (span 42).
       { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 42, confidence: "high",

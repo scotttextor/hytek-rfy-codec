@@ -46,6 +46,15 @@ export interface StickContext {
    *  — single-H frames (header without box) get no Webs. Verified 2026-05-04
    *  vs HG260001 LBW: L4/L8 single-H1 → 0 webs; L6/L41 paired-H → webs on H1. */
   framePairedHeader?: boolean;
+  /** Optional: raw XML `<flipped>` attribute before framecad-import
+   *  normalization. Required by Kb chamfer-end predicate which depends on
+   *  the raw flipped state (the diff harness overrides flipped→false for
+   *  diagonal braces). */
+  inputFlipped?: boolean;
+  /** Optional: for Kb sticks, true if the plate-attached end (end after
+   *  Kb normalization) is at the TOP of the frame (end.z > start.z). Used
+   *  by chamfer-end predicate combined with inputFlipped. */
+  kbTopAttached?: boolean;
 }
 
 /**

@@ -190,6 +190,10 @@ function studStartIsOnSlopedBottom(stud, frame) {
 function isTplate(stick) {
     return /^T\d/.test(stick.name);
 }
+/** Decide if a stick is an N-prefix nog. */
+function isNog(stick) {
+    return /^N\d/.test(stick.name);
+}
 /** Add Chamfer @start and @end to a stick if not already present. Returns
  *  number of chamfers added. */
 function addBothEndChamfers(stick) {
@@ -211,6 +215,60 @@ function addBothEndChamfers(stick) {
     }
     return added;
 }
+/** Distance between two 3D points. */
+function dist3D(a, b) {
+    const dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+/** Add Chamfer @start or @end on a B/N stick at the end where it meets a
+ *  sloped T-plate. Returns the side that was chamfered (or null if no
+ *  matching T-plate found within tolerance). */
+const PLATE_CONNECT_TOL_MM = 100;
+function chamferBottomAtTConnection(stick, frame) {
+    // Find T-plates and check which end of `stick` they connect to.
+    for (const t of frame.sticks) {
+        if (!isTplate(t))
+            continue;
+        // Skip horizontal T-plates — they don't drive a chamfer cut.
+        const tdz = Math.abs(t.end.z - t.start.z);
+        if (tdz < HORIZONTAL_BOTTOM_TOL_MM)
+            continue;
+        // Check if any T endpoint is close to stick's start
+        if (dist3D(t.start, stick.start) < PLATE_CONNECT_TOL_MM
+            || dist3D(t.end, stick.start) < PLATE_CONNECT_TOL_MM) {
+            // Connection at stick's start
+            let hasStart = false;
+            for (const op of stick.tooling) {
+                if (op.kind === "start" && op.type === "Chamfer") {
+                    hasStart = true;
+                    break;
+                }
+            }
+            if (!hasStart) {
+                stick.tooling.push({ kind: "start", type: "Chamfer" });
+                return "start";
+            }
+            return null;
+        }
+        if (dist3D(t.start, stick.end) < PLATE_CONNECT_TOL_MM
+            || dist3D(t.end, stick.end) < PLATE_CONNECT_TOL_MM) {
+            // Connection at stick's end
+            let hasEnd = false;
+            for (const op of stick.tooling) {
+                if (op.kind === "end" && op.type === "Chamfer") {
+                    hasEnd = true;
+                    break;
+                }
+            }
+            if (!hasEnd) {
+                stick.tooling.push({ kind: "end", type: "Chamfer" });
+                return "end";
+            }
+            return null;
+        }
+    }
+    return null;
+}
 /** Apply the RP stud-only rewrite to a single frame. */
 export function simplifyRpFrame(frame) {
     const studStartsRewritten = [];
@@ -230,6 +288,17 @@ export function simplifyRpFrame(frame) {
         const added = addBothEndChamfers(stick);
         if (added > 0)
             platesChamfered.push(stick.name);
+    }
+    // B/N Chamfer pass: ref Detailer emits Chamfer at exactly ONE end — the end
+    // that meets a sloped T-plate. Verified 2026-05-09 vs HG260044 GF-RP-70.075
+    // (~14 B-plates and ~9 nogs need this) — the chamfer side correlates exactly
+    // with the T-plate connection point.
+    for (const stick of frame.sticks) {
+        if (!isBplate(stick) && !isNog(stick))
+            continue;
+        const side = chamferBottomAtTConnection(stick, frame);
+        if (side)
+            platesChamfered.push(stick.name + "@" + side);
     }
     for (const stick of frame.sticks) {
         if (!isSstud(stick))

@@ -1,94 +1,41 @@
 // Reversed-Tooling simplifier for Roof-Panel (RP) plans.
 //
-// PROBLEM (manual + frida-mined evidence):
-//   The FrameCAD Detailer manual (v5.0 §"Tool Action") names six tooling
-//   regimes; our codec implicitly applies "Standard Tooling" everywhere.
-//   For RP frames the manual specifies "Reversed Tooling":
+// SCOPE (v3, 2026-05-09):
+//   Targets ONLY S-prefix studs in RP plans. The previous v2 (Scott's Rule 7)
+//   disabled the simplifier entirely after evidence that the chord-style cap
+//   rewrite over-applied on horizontal RP plates. v3 restores the high-confidence
+//   STUD-side rewrite (which gives the strongest cross-corpus signal) and leaves
+//   plates untouched.
 //
-//     "Reversed Tooling — The horizontal (plate) members are continuous and
-//      the vertical (stud) members get notched. This option would generally
-//      be used where ever the horizontal members are the structural members
-//      e.g. in certain `panel roof' situations."
+// EVIDENCE (re-verified 2026-05-09 vs HG260044 GF-RP-70.075 with v2 disabled):
+//   - 67 missing `InnerDimple @78.5` (start)
+//   - 64 missing `Swage|LipNotch 56..101` (start)  (43 Swage + 21 LipNotch)
+//   - 92 extras `InnerDimple @16.5` (the standard wall-stud start dimple)
+//   - 89 extras `Swage 0..39` (standard wall-stud start cap)
+//   - 75 missing `Chamfer @end` on studs
+//   Cross-checked vs HG260001 GF-RP-70.075 — identical pattern, similar counts.
 //
-//   Effect on emitted ops vs Standard:
-//     * Horizontal continuous members (T/B/N in RP) get TRUSS-CHORD-STYLE
-//       caps:  Chamfer @start  +  InnerDimple @10mm  (and same at end)
-//       — NOT  Swage 0..39  +  InnerDimple @16.5     (the wall-stud caps).
-//     * Vertical NOTCHED members (S in RP) get PLATE-OVER-PLATE caps:
-//       Swage|LipNotch 56..101  +  InnerDimple @78.5  at the start side
-//       (the side that butts onto the continuous horizontal). The 78.5
-//       offset = 16.5 + 62 mm (one plate web + clearance). End side gets
-//       Chamfer @end as a chord-style finishing cut.
+// Strategy:
+//   On every S-prefix stick in an RP plan:
+//     1. Remove start-anchored `Swage|LipNotch 0..39` (standard wall cap)
+//     2. Remove start-anchored `InnerDimple @16.5` (standard wall start dimple)
+//     3. Add `Swage 56..101` (RP plate-over-plate start notch) — Swage is the
+//        majority emission across HG260001+HG260044 RP corpora; LipNotch minority
+//        cases produce a same-position single-op miss that's still net positive.
+//     4. Add `InnerDimple @78.5` (RP start dimple)
+//     5. Add `Chamfer @end` if not already present
 //
-// EVIDENCE (cross-corpus, both HG260001 + HG260044 GF-RP-70.075 baselines
-// captured 2026-05-05 BEFORE this simplifier landed):
-//   HG260001 GF-RP top mismatches by role:
-//     T-plate:  20× extras "InnerDimple @16.5"  vs  13× missing "InnerDimple @10.0"
-//               16× extras "Swage 0..39"        vs  13× missing "Chamfer @start" + 14× "Chamfer @end"
-//     B-plate:   9× extras "InnerDimple @16.5"  vs   7× missing "InnerDimple @10.0"
-//     N-nog:     5× extras "InnerDimple @16.5"  vs   5× missing "InnerDimple @10.0"
-//                                                    5× missing "Chamfer @start" + 4× "Chamfer @end"
-//     S-stud:   57× extras "InnerDimple @16.5"  vs  53× missing "InnerDimple @78.5"
-//               54× extras "Swage 0..39"        vs  36× missing "Swage 56..101"
-//                                                   17× missing "LipNotch 56..101"
-//                                                   51× missing "Chamfer @end"
-//   HG260044 GF-RP top mismatches confirm same pattern with slightly larger N.
+// PLATES: Not touched. The plate-side gaps (Chamfer @start + ID @10 chord-style
+// cap, drifted body-crossing positions) involve stick-length drift between the
+// codec's geometry and Detailer's emitted geometry (~5-10mm). That's a separate
+// problem requiring length adjustment, not just end-cap rewrite.
 //
-// SCOPE (v1, conservative):
-//   Only rewrite the six end-anchored ops named above. Do NOT touch body-side
-//   crossings or service holes — those still come from the codec's
-//   crossing-detection pass and have a different cluster of misses
-//   (~InnerDimples in middle, ~LipNotch at body crossings) which is a
-//   separate gap (estimated under "Per-profile Fastener1" in the
-//   frida-mined-gaps doc). Rewriting end-caps alone should claim the
-//   ~250 ops × 2 corpora = 500-ish parity wins per corpus (Chamfer +
-//   InnerDimple @10 + InnerDimple @78.5 + Swage|LipNotch 56..101).
-//
-// ANTI-SCOPE:
-//   * Length adjustment — RP horizontals are systematically ~5-10mm shorter
-//     in our codec than in ref (the start endpoint shifts by ~5-10mm). The
-//     diff harness's downstream length-extension step (already used by TIN)
-//     could plausibly be applied, but that's a tool-table change, not an
-//     end-cap rewrite. Leave for v2.
-//   * Mid-stick rebalance — "InnerDimple @x.5" mid-body extras pair 1:1 with
-//     "InnerDimple @y.5" missings (positions ~5mm apart). That's a chord-
-//     length / start-offset issue, NOT a Reversed-Tooling end-cap issue.
-//     Leave for v2.
-//
-// REFERENCE PATTERNS (verified 2026-05-05 against ref-RFY operation lists in
-// scripts/baselines/raw/HG260001_GF-RP-70.075.txt and ditto HG260044):
-//
-//   T (top plate, horizontal continuous) — start side, length 200..6000mm:
-//     Chamfer @start
-//     InnerDimple @10
-//     [body-side InnerDimple/LipNotch handled by frame-context]
-//   T — end side:
-//     Chamfer @end
-//     InnerDimple @(L-10)
-//
-//   B (bottom plate, horizontal continuous) — same as T.
-//   N (nog, horizontal continuous) — same as T.
-//
-//   S (stud, vertical NOTCHED) — start side (the side that meets a horizontal):
-//     InnerDimple @78.5
-//     Swage 56..101 mm  (or LipNotch 56..101 — corpus-specific; favour Swage,
-//                        which is 36/53 = 68% of HG260001 RP S misses; LipNotch
-//                        is the rest, mostly on shorter studs)
-//   S — end side:
-//     Chamfer @end
-//     [end-anchored InnerDimple+Swage pair already emitted by codec rules
-//      because the codec's "S 70S41" rule emits start+end-cap symmetrically;
-//      we keep the END-side Swage and ID and only rewrite the START side.]
-//
-// FUTURE (deferred to v2):
-//   * Body-crossing emitter that knows verticals cross horizontals (instead
-//     of horizontals cross verticals). Today the codec's frame-context
-//     pass treats horizontals as plates and verticals as studs — same as
-//     walls — and finds the same crossings, so the *positions* are usually
-//     right but the *tool type* (LipNotch vs InnerNotch) is sometimes wrong.
-//   * Per-stick angle-dependent Chamfer span — RP horizontals are sometimes
-//     skewed (rake plates), and ref applies non-39mm LipNotch spans
-//     (e.g. 0..21.7, 0..66.1) on those.
+// END-CAP (stud end side): Not rewritten. The codec's per-stick rule already
+// emits `Swage L-39..L` + `ID @L-16.5` at the stud end, and ref usually emits
+// `Swage L-66..L` (or similar variable span) + a body-crossing dimple ~10mm
+// away. The end-side drift is length-dependent (matches body-crossing drift)
+// and best fixed at the rules-engine level.
+
 import type { ParsedFrame, ParsedStick } from "./synthesize-plans.js";
 import type { RfyToolingOp } from "./format.js";
 
@@ -100,105 +47,31 @@ export function isRpPlanName(planName: string): boolean {
   return /(?:^|-)RP(?:-|$|\d)/i.test(planName);
 }
 
-/** Extract the alpha prefix from a stick name (e.g. "S1" → "S", "Kb1" → "Kb"). */
-function rolePrefix(stickName: string): string {
-  return stickName.replace(/[0-9_].*$/, "");
-}
-
-/** Decide if this stick is a HORIZONTAL CONTINUOUS member under Reversed
- *  Tooling. Detection is by role prefix only — RP plans use the same role
- *  conventions as walls (T=top plate, B=bottom plate, N=nog) and the role
- *  prefix carries the IN-FRAME orientation correctly even when the frame
- *  itself is a sloped panel-roof rake (where world-space orientation is
- *  meaningless because the frame plane is tilted). Verified empirically:
- *  in HG260001 GF-RP R1, S1 has world-space horizontal extent 1494mm
- *  vs vertical 697mm because the rake plane is sloped — but in the frame's
- *  own elevation S1 is a vertical stud. */
-function isHorizontalContinuous(stick: ParsedStick): boolean {
-  const role = rolePrefix(stick.name);
-  return /^(T|Tp|B|Bp|Bh|N|Nog)$/i.test(role);
-}
-
-/** Test whether a plate is actually SLOPED (rake plate / roof-pitch member).
- *  Per Scott's Rule 7 (2026-05-07): in RP plans, only the top-of-slope and
- *  bottom-of-slope plates are special. Most "RP" frames are actually horizontal
- *  panel-roof walls where T1 + B1 + N1 are simple horizontal members and
- *  should keep STANDARD wall-stud caps (Swage/LipNotch 0..39 + ID@16.5).
- *
- *  A plate is sloped when its end-z differs from start-z by > 50mm. Verified
- *  vs HG260012 GF-RP test corpus: most RP frames have horizontal plates
- *  (z-extent < 5mm) where Detailer ref emits STANDARD wall caps, NOT chord-style.
- *  The previous unconditional rewrite was over-applying chord-style and causing
- *  ~67% of RP ops to mismatch.
- */
-function isSlopedPlate(stick: ParsedStick): boolean {
-  const dz = Math.abs(stick.end.z - stick.start.z);
-  return dz > 50;
-}
-
-/** Decide if this stick is a VERTICAL NOTCHED member under Reversed Tooling.
- *  Same role-only detection rationale as `isHorizontalContinuous`. */
-function isVerticalNotched(stick: ParsedStick): boolean {
-  const role = rolePrefix(stick.name);
-  return /^(S|J)$/i.test(role);
-}
-
-export interface SimplifyRpDecision {
-  frame: string;
-  decision: "APPLY" | "SKIP";
-  reason: string;
-  /** Sticks (T/B/N) whose end-caps were rewritten to chord-style (Chamfer + ID@10). */
-  horizontalsRewritten?: string[];
-  /** Sticks (S/J) whose start cap was rewritten to plate-over-plate notch (Swage 56..101 + ID@78.5). */
-  studStartsRewritten?: string[];
-  /** Sticks (S/J) whose end side received a Chamfer @end. */
-  studEndsChamfered?: string[];
-}
-
 /** Tolerance (mm) within which a spanned op is considered to be the
  *  end-cap span (anchored at startPos≈0 or endPos≈stickLength). */
 const END_ANCHOR_TOL_MM = 1.0;
 
 /** Tolerance (mm) within which a point op is considered to be at the
- *  end-anchored offset (e.g. ID @16.5, or ID @(L-16.5)). */
+ *  end-anchored offset (e.g. ID @16.5). */
 const POINT_ANCHOR_TOL_MM = 1.0;
 
-/** Standard wall-stud start span (Swage 0..39) emitted by the codec's
- *  generic per-stick rule. We strip this on RP horizontals to avoid
- *  double-emitting at the start. */
+/** Standard wall-stud start span (Swage|LipNotch 0..39) emitted by the codec's
+ *  generic per-stick rule. */
 const STD_END_SPAN_MM = 39;
 
-/** Standard wall-stud start dimple offset (16.5 mm). The Reversed-Tooling
- *  end-cap pattern uses 10mm instead. */
+/** Standard wall-stud start dimple offset (16.5 mm). */
 const STD_DIMPLE_OFFSET_MM = 16.5;
 
-/** RP horizontal end-cap dimple offset (10 mm — chord-style cap). */
-const RP_HORIZONTAL_DIMPLE_OFFSET_MM = 10;
-
-/** RP vertical NOTCHED start-cap dimple offset (78.5 mm) — InnerDimple
- *  centred at 78.5mm = 16.5mm wall offset + 62mm horizontal-plate clearance.
- *  62mm = 70mm web - 8mm tab clearance. */
+/** RP vertical NOTCHED start-cap dimple offset (78.5 mm). */
 const RP_STUD_START_DIMPLE_OFFSET_MM = 78.5;
 
-/** RP vertical NOTCHED start-cap span — Swage|LipNotch from 56..101 mm
- *  (45mm-wide tool, centred on the 78.5mm dimple). */
+/** RP vertical NOTCHED start-cap span — Swage from 56..101 mm. */
 const RP_STUD_START_SPAN_LO_MM = 56;
 const RP_STUD_START_SPAN_HI_MM = 101;
 
-/** Compute stick centerline length from world coords. The codec's per-stick
- *  rule emits ops anchored to this length (e.g. end-Swage at L-39). */
-function computeStickLength(stick: ParsedStick): number {
-  const dx = stick.end.x - stick.start.x;
-  const dy = stick.end.y - stick.start.y;
-  const dz = stick.end.z - stick.start.z;
-  return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-/** Strip start-anchored ops the standard wall rule emits on every stud / plate:
+/** Strip start-anchored ops the standard wall rule emits on a stud:
  *    {Swage|LipNotch} 0..39  +  InnerDimple @16.5
- *  Returns the number of ops removed (mostly used for diagnostics).
- *  We accept BOTH Swage and LipNotch since `table.ts` emits Swage on stud
- *  roles (S/J) and LipNotch on plate roles (T/Tp/B/Bp/Bh/N). */
+ *  Returns the number of ops removed. */
 function stripStandardStartCap(tooling: RfyToolingOp[]): number {
   let removed = 0;
   for (let i = tooling.length - 1; i >= 0; i--) {
@@ -226,199 +99,66 @@ function stripStandardStartCap(tooling: RfyToolingOp[]): number {
   return removed;
 }
 
-/** Strip end-anchored ops the standard wall rule emits on every stud / plate:
- *    {Swage|LipNotch} (L-39)..L  +  InnerDimple @(L-16.5)
- *  Returns the number of ops removed. */
-function stripStandardEndCap(tooling: RfyToolingOp[], stickLen: number): number {
-  let removed = 0;
-  for (let i = tooling.length - 1; i >= 0; i--) {
-    const op = tooling[i]!;
-    if (
-      op.kind === "spanned"
-      && (op.type === "Swage" || op.type === "LipNotch")
-      && Math.abs(op.endPos - stickLen) < END_ANCHOR_TOL_MM
-      && Math.abs((op.endPos - op.startPos) - STD_END_SPAN_MM) < END_ANCHOR_TOL_MM
-    ) {
-      tooling.splice(i, 1);
-      removed++;
-      continue;
-    }
-    if (
-      op.kind === "point"
-      && op.type === "InnerDimple"
-      && Math.abs(op.pos - (stickLen - STD_DIMPLE_OFFSET_MM)) < POINT_ANCHOR_TOL_MM
-    ) {
-      tooling.splice(i, 1);
-      removed++;
-      continue;
-    }
-  }
-  return removed;
+/** Decide if a stick is an RP S-stud — name starts with "S" followed by digit. */
+function isSstud(stick: ParsedStick): boolean {
+  return /^S\d/.test(stick.name);
 }
 
-/** Replace the codec's standard wall-stud end-caps on a horizontal-continuous
- *  RP stick with chord-style caps:
- *
- *    OUT:  Swage 0..39       (start)              IN:  Chamfer @start
- *          InnerDimple @16.5 (start)                   InnerDimple @10
- *          Swage (L-39)..L   (end)                     Chamfer @end
- *          InnerDimple @(L-16.5) (end)                 InnerDimple @(L-10)
- *
- *  The body-side ops (LipNotch + InnerDimple at stud crossings) are emitted
- *  by frame-context.ts and we leave them alone — the corpus shows those
- *  positions are usually correct; only the *very ends* are wrong. */
-function applyHorizontalCaps(stick: ParsedStick): boolean {
-  const stickLen = computeStickLength(stick);
-  let modified = false;
-  const removedStart = stripStandardStartCap(stick.tooling);
-  const removedEnd = stripStandardEndCap(stick.tooling, stickLen);
-  if (removedStart > 0 || removedEnd > 0) modified = true;
-
-  // Insert chord-style end-caps. Always emit both ends — the codec's standard
-  // rule did the same (symmetric cap). We use the actual stick length from
-  // the codec's geometry, not a corpus-derived L_ref, because the codec's
-  // length is what the downstream RFY encoder will write to disk.
-  stick.tooling.push(
-    { kind: "start", type: "Chamfer" },
-    { kind: "point", type: "InnerDimple", pos: RP_HORIZONTAL_DIMPLE_OFFSET_MM },
-    { kind: "point", type: "InnerDimple", pos: stickLen - RP_HORIZONTAL_DIMPLE_OFFSET_MM },
-    { kind: "end", type: "Chamfer" },
-  );
-  modified = true;
-  return modified;
+export interface SimplifyRpDecision {
+  frame: string;
+  decision: "APPLY" | "SKIP";
+  reason: string;
+  /** Sticks (S) whose start cap was rewritten. */
+  studStartsRewritten?: string[];
+  /** Sticks (S) whose end side received a Chamfer @end. */
+  studEndsChamfered?: string[];
 }
 
-/** Replace the codec's standard wall-stud start-cap on a vertical-notched
- *  RP stick with the plate-over-plate notch pattern:
- *
- *    OUT:  Swage 0..39      (start)        IN:  Swage 56..101     (start)
- *          InnerDimple @16.5 (start)            InnerDimple @78.5 (start)
- *
- *  End-side ops are NOT touched here (handled by the chamfer pass in the
- *  next stage).
- *
- *  Tool choice — Swage vs LipNotch — depends on which of the two C-section
- *  lip orientations the stud has. We don't have access to per-stud lip
- *  orientation here, so we pick the cross-corpus majority (Swage 78 vs
- *  LipNotch 38 across HG260001+HG260044) by default. The minority cases
- *  produce a "Swage 56..101 vs LipNotch 56..101" mismatch — same span, same
- *  position, different tool. That's still a 1-op miss (vs the previous
- *  ~3-op miss for the standard wall caps), so net positive. */
-function applyStudStartCap(stick: ParsedStick): boolean {
-  const removed = stripStandardStartCap(stick.tooling);
-  // Insert RP plate-over-plate notch at start.
-  stick.tooling.push(
-    { kind: "spanned", type: "Swage", startPos: RP_STUD_START_SPAN_LO_MM, endPos: RP_STUD_START_SPAN_HI_MM },
-    { kind: "point", type: "InnerDimple", pos: RP_STUD_START_DIMPLE_OFFSET_MM },
-  );
-  return removed > 0;
-}
-
-/** Add Chamfer @end on a vertical-notched RP stud (the rake-end cut where
- *  the stud meets the sloped chord). Cross-corpus evidence: 51 missing
- *  Chamfer @end on HG260001 RP studs + 75 on HG260044 RP studs (126 total)
- *  vs only 26+0 emitted as extras. The previous diff harness post-decode
- *  patch (`scripts/diff-vs-detailer.mjs:2161`) stripped Chamfer from every
- *  S stud unconditionally — that patch was based on HG260012 alone and is
- *  now overzealous. We emit Chamfer @end here and the harness patch is
- *  loosened in the same commit so emissions survive the round-trip. */
-function applyStudEndChamfer(stick: ParsedStick): boolean {
-  // Don't double-emit if the codec or another simplifier already added it.
-  for (const op of stick.tooling) {
-    if (op.kind === "end" && op.type === "Chamfer") return false;
-  }
-  stick.tooling.push({ kind: "end", type: "Chamfer" });
-  return true;
-}
-
-/** Run the RP Reversed-Tooling simplifier on a single frame.  Mutates
- *  `frame.sticks[].tooling[]` in place.  Caller is responsible for the
- *  plan-name gate; this function blindly applies the rewrite when called.
- *
- *  Per Scott's Rule 7 (2026-05-07): only SLOPED plates (top-of-slope or
- *  bottom-of-slope rake plates) get the chord-style cap rewrite. Horizontal
- *  RP plates (the dominant case in the HG260001/HG260012 corpora) keep the
- *  standard wall-stud caps from `table.ts`. Likewise, only VERTICAL studs
- *  that meet a sloped plate at one end get the plate-over-plate notch start
- *  cap; horizontal-RP studs that meet two horizontal plates on a normal
- *  wall structure keep their standard wall caps.
- */
+/** Apply the RP stud-only rewrite to a single frame. */
 export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
-  const horizontalsRewritten: string[] = [];
   const studStartsRewritten: string[] = [];
   const studEndsChamfered: string[] = [];
 
-  // Scott Rule 7 (2026-05-07 clarification): the previous simplifier was
-  // OVER-applying the chord-style / plate-over-plate caps to every RP frame.
-  // Empirical evidence across HG260012 RP-70.075 / RP-70.095 / HG260001 RP
-  // corpora: the bulk of RP frames are horizontal panel-roof walls where
-  // ref Detailer emits STANDARD wall caps (Swage/LipNotch 0..39 + ID@16.5).
-  // Even on truly sloped plates (e.g. R1202 T1 with dz=298mm) the ref ops
-  // are STANDARD wall caps, not chord-style. Only specific top-of-slope
-  // ridge plates (rare) get chord-style.
-  //
-  // Conservative posture: SKIP the entire simplifier. The standard wall caps
-  // from `table.ts` already match Detailer ref on these frames, and the
-  // stud-cap rewrite (78.5/Swage 56..101) was also empirically wrong on
-  // all studs in RP-70.095/RP-70.075 corpus. The body-cross InnerDimple
-  // panel-point pattern is a separate gap (handled by frame-context.ts
-  // crossing detection) — that piece isn't broken by skipping the simplifier.
-  //
-  // To re-enable the chord-style cap on real top-of-slope ridge plates in
-  // a future session: detect the plate at the frame's MAX z (via envelope
-  // bbox) AND verify it's not sloped itself (dz < 50mm); only that single
-  // plate per frame gets the chord-style cap. The corpus is too thin on
-  // examples (HG260001 R3 T1 is one) to derive that rule reliably here.
-  void horizontalsRewritten; void studStartsRewritten; void studEndsChamfered;
-  void applyHorizontalCaps; void applyStudStartCap; void applyStudEndChamfer;
-  return {
-    frame: frame.name,
-    decision: "SKIP",
-    reason:
-      "Scott Rule 7 (2026-05-07): chord-style/plate-over-plate caps over-apply on RP. " +
-      "Standard wall caps from table.ts match Detailer ref. Skipping simplifier entirely.",
-  };
-
-  // Original loop kept below for reference / future revival.
-  // eslint-disable-next-line no-unreachable
   for (const stick of frame.sticks) {
-    if (isHorizontalContinuous(stick)) {
-      // Per-plate gate: only sloped plates get chord-style caps.
-      if (!isSlopedPlate(stick)) continue;
-      if (applyHorizontalCaps(stick)) {
-        horizontalsRewritten.push(stick.name);
-      }
-    } else if (isVerticalNotched(stick)) {
-      applyStudStartCap(stick);
-      studStartsRewritten.push(stick.name);
-      if (applyStudEndChamfer(stick)) {
-        studEndsChamfered.push(stick.name);
-      }
+    if (!isSstud(stick)) continue;
+
+    // Replace standard wall-stud start cap with RP plate-over-plate notch.
+    const removed = stripStandardStartCap(stick.tooling);
+    stick.tooling.push(
+      { kind: "spanned", type: "Swage", startPos: RP_STUD_START_SPAN_LO_MM, endPos: RP_STUD_START_SPAN_HI_MM },
+      { kind: "point", type: "InnerDimple", pos: RP_STUD_START_DIMPLE_OFFSET_MM },
+    );
+    studStartsRewritten.push(stick.name);
+    void removed;
+
+    // Add Chamfer @end if not already present.
+    let hasEndChamfer = false;
+    for (const op of stick.tooling) {
+      if (op.kind === "end" && op.type === "Chamfer") { hasEndChamfer = true; break; }
+    }
+    if (!hasEndChamfer) {
+      stick.tooling.push({ kind: "end", type: "Chamfer" });
+      studEndsChamfered.push(stick.name);
     }
   }
-  if (
-    horizontalsRewritten.length === 0
-    && studStartsRewritten.length === 0
-    && studEndsChamfered.length === 0
-  ) {
-    return { frame: frame.name, decision: "SKIP", reason: "no rewriteable sticks found" };
+
+  if (studStartsRewritten.length === 0 && studEndsChamfered.length === 0) {
+    return { frame: frame.name, decision: "SKIP", reason: "no S-prefix studs found" };
   }
   return {
     frame: frame.name,
     decision: "APPLY",
     reason:
-      `${horizontalsRewritten.length} horizontals rewritten, ` +
       `${studStartsRewritten.length} stud starts rewritten, ` +
       `${studEndsChamfered.length} stud ends chamfered`,
-    ...(horizontalsRewritten.length ? { horizontalsRewritten } : {}),
     ...(studStartsRewritten.length ? { studStartsRewritten } : {}),
     ...(studEndsChamfered.length ? { studEndsChamfered } : {}),
   };
 }
 
-/** Public entry point for the RP simplifier post-pass.  Walks every plan
- *  and frame in the project; for each frame inside an RP plan, runs
- *  `simplifyRpFrame`. Mutates `project.plans[].frames[].sticks[]` in place. */
+/** Public entry point for the RP simplifier post-pass. Walks every plan and
+ *  frame in the project; for each frame inside an RP plan, runs `simplifyRpFrame`.
+ *  Mutates `project.plans[].frames[].sticks[]` in place. */
 export function simplifyRpFramesInProject(
   plans: ReadonlyArray<{ name: string; frames: ParsedFrame[] }>,
 ): SimplifyRpDecision[] {
@@ -431,6 +171,3 @@ export function simplifyRpFramesInProject(
   }
   return decisions;
 }
-
-// Used by future commits — keep imported so the file always type-checks.
-void (null as unknown as RfyToolingOp);

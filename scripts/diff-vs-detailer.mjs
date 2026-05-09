@@ -1427,7 +1427,8 @@ for (const plan of ourDoc.project.plans) {
         // S11 at y=5663-5704 and y=0-41 (panel edges) emit LipNotch caps;
         // S2-S10 interior emit Swage caps.
         if (/^S\d/.test(stick.name)) {
-          // Find this frame's chord (T or B with vertical projection)
+          // Find this frame's chord (T or B with elongated projection — could be
+          // vertical OR horizontal in frame-local 2D depending on RP plan layout)
           let chord = null;
           for (const other of frame.sticks) {
             if (!/^[TB]\d/.test(other.name)) continue;
@@ -1437,21 +1438,34 @@ for (const plan of ourDoc.project.plans) {
             const oxs = oc.map(c => c.x);
             const dy = Math.max(...oys) - Math.min(...oys);
             const dx = Math.max(...oxs) - Math.min(...oxs);
-            if (dy > dx * 5) { chord = { yMin: Math.min(...oys), yMax: Math.max(...oys) }; break; }
+            if (dy > dx * 5) {
+              chord = { axis: "y", lo: Math.min(...oys), hi: Math.max(...oys) };
+              break;
+            }
+            if (dx > dy * 5) {
+              chord = { axis: "x", lo: Math.min(...oxs), hi: Math.max(...oxs) };
+              break;
+            }
           }
           if (chord) {
             const sc = stick.outlineCorners ?? [];
             if (sc.length >= 4) {
-              const sys = sc.map(c => c.y);
-              const studCy = (Math.min(...sys) + Math.max(...sys)) / 2;
-              const isEdgeStud = Math.abs(studCy - chord.yMin) < 50 || Math.abs(studCy - chord.yMax) < 50;
+              const svals = sc.map(c => chord.axis === "y" ? c.y : c.x);
+              const studC = (Math.min(...svals) + Math.max(...svals)) / 2;
+              const isEdgeStud = Math.abs(studC - chord.lo) < 50 || Math.abs(studC - chord.hi) < 50;
               if (isEdgeStud) {
-                // Swap Swage caps → LipNotch caps
+                // Swap Swage caps → LipNotch caps. Cover both legacy
+                // (0..39, len-39..len) and post-simplifier (56..101 start cap)
+                // cap shapes — the simplify-rp.ts post-pass replaces standard
+                // wall-stud start caps with `Swage 56..101` (RP plate-over-plate
+                // notch) which still needs the edge-stud swap on the panel-edge
+                // sticks (~21 of HG260044 RP studs).
                 for (const op of stick.tooling) {
                   if (op.kind !== "spanned" || op.type !== "Swage") continue;
                   const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
                   const isEndCap = Math.abs(op.endPos - len) < 1 && Math.abs(op.startPos - (len - 39)) < 1;
-                  if (isStartCap || isEndCap) op.type = "LipNotch";
+                  const isPopStartCap = Math.abs(op.startPos - 56) < 1 && Math.abs(op.endPos - 101) < 1;
+                  if (isStartCap || isEndCap || isPopStartCap) op.type = "LipNotch";
                 }
               }
             }

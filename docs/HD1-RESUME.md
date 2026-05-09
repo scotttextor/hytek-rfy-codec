@@ -304,6 +304,52 @@ curl -fsSL https://raw.githubusercontent.com/scotttextor/hytek-rfy-codec/HD1/doc
 
 ---
 
+## Tooling for future Claude sessions (use these, don't grep)
+
+Two big capabilities are now available that future sessions should use:
+
+### GhidraMCP (interactive Tooling.dll queries)
+
+GhidraMCP is **installed and configured** as of 2026-05-08 (commit `dc57d6f` in this repo). When Ghidra is running with `Tooling.dll` loaded in the `DetailerCrack` project, Claude can query the binary directly via `mcp__ghidra__*` tools instead of grepping the 3 MB `decompiled-all.txt`.
+
+**Start it:**
+```cmd
+C:\Users\Scott\CLAUDE CODE\hytek-rfy-codec\scripts\start-ghidra-mcp.bat
+```
+
+Then double-click `Tooling.dll` in the project tree, and (one-time) tick `File → Configure → Developer → GhidraMCP`.
+
+**Verify it's live:**
+```cmd
+curl -s http://127.0.0.1:8080/methods | head -5
+```
+
+**Prompt to give Claude in a future session:**
+
+> "GhidraMCP is live — use the `mcp__ghidra__*` tools (e.g. `decompile_function`, `get_function_xrefs`, `list_strings`, `rename_function`, `set_decompiler_comment`) to query Tooling.dll directly. Don't grep `decompiled-all.txt` — it's stale. The Ghidra database is the source of truth and gets richer each session if you `rename_function` and `set_decompiler_comment` as you go."
+
+Setup notes: `docs/cracked/ghidra-mcp-setup.md`.
+
+### Superpowers skills (workflow discipline)
+
+These are loaded automatically as available skills. Future sessions should invoke them explicitly:
+
+| Skill | When to use |
+|---|---|
+| `superpowers:verification-before-completion` | **Before claiming any fix works.** Run the test/diff-harness, paste actual output. Don't say "shipped" without numbers. |
+| `superpowers:systematic-debugging` | When diagnosing a bug — work the symptom back to root cause before patching. |
+| `superpowers:test-driven-development` | When adding any feature — write the failing test FIRST. Catches "Agent 2's tests passed but PDF was empty" silent failures. |
+| `superpowers:dispatching-parallel-agents` | When 2+ tasks have no shared file ownership — fire them in parallel, document the boundaries. |
+| `superpowers:writing-plans` | Before any multi-step refactor (e.g. unified workspace rebuild). |
+
+**Prompt to give Claude in a future session:**
+
+> "Apply `superpowers:verification-before-completion` before claiming any fix is done. Apply `superpowers:test-driven-development` for new features. Apply `superpowers:systematic-debugging` for bug diagnosis. Don't ship + report — verify + show numbers + report."
+
+Tonight (2026-05-09) the PDF generator was committed twice with empty visible output because tests asserted byte length and page count but didn't assert any drawn pixels were on-page. TDD with proper output assertions would have caught both bugs in one round.
+
+---
+
 ## License + IP boundaries
 
 - **What's in this repo:** decompilation byproducts (rule dictionary as

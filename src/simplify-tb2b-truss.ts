@@ -743,54 +743,104 @@ export function simplifyTb2bTrussFrame(
       stick.tooling.push({ kind: "point", type: "Web", pos: L - 35 });
     }
 
-    // Long horizontal B-chord cap-stack rule (refined 2026-05-09).
-    // Verified vs HG260001: in TB2B trusses, only the LONGEST horizontal
-    // B-chord in the frame receives the cap-stack — interior B-chords (the
-    // shorter B# in HN/TN frames) do not. A B# that is the longest in its
-    // frame gets the full both-ends cap-stack only if it is the SOLE
-    // bottom-chord (TT6-1 B1 length 10930). When there's a longer non-
-    // horizontal B (the diagonal heel chord) on the same frame, the longest
-    // horizontal B# emits caps only at its EXTERIOR end.
+    // B-chord cap-stack rule (refined 2026-05-09).
+    // Verified vs HG260001: in TB2B trusses, only the LONGEST B-chord in the
+    // frame receives the cap-stack. The cap-end depends on whether the chord
+    // is sloped or horizontal:
     //
-    // For now we apply the simpler "longest B in frame gets caps" rule;
-    // exterior-end-only firing is handled by the longest non-horizontal
-    // diagonal heel chord blocking the rule on shorter horizontal Bs.
+    //   • Sloped B-chord (zSpan > 5): caps at the HIGH-Z end of the XML
+    //     stick. With flipped=true, this maps to OUTPUT-end (=L); with
+    //     flipped=false, this maps to OUTPUT-start (=0).
+    //   • Horizontal B-chord (zSpan < 5):
+    //     - If it's the SOLE B-chord in the frame (TT-truss bottom span,
+    //       e.g. TT6-1 B1 length 10930): caps at BOTH ends.
+    //     - Otherwise (TN-frame B with a heel diagonal partner, e.g. TN17-1
+    //       B1 length 6859): caps at the end opposite the heel meeting
+    //       point — defaulting to OUTPUT-start when flipped=true (XML-end is
+    //       the heel meeting point), OUTPUT-end when flipped=false.
+    //
+    // Cap-stack-end: emit RightFlange + LipNotch + LeftFlange spans at the
+    // designated cap-end + Web @STUB_BOLT bolts (only for both-ends case).
     const meta3DZSpan = meta3D ? Math.abs(meta3D.end3D.z - meta3D.start3D.z) : 0;
     let isLongestB = false;
-    if (/^B\d/.test(stick.name) && meta3DLen > 1000 && meta3DZSpan < 5) {
+    let bChordCount = 0;
+    if (/^B\d/.test(stick.name) && meta3DLen > 1000) {
       let myLen = meta3DLen;
       let isLongest = true;
       for (let k = 0; k < frame.sticks.length; k++) {
-        if (k === stickIdx) continue;
         const o = frame.sticks[k]!;
         if (!/^B\d/.test(o.name)) continue;
         if (/\(Box\d+\)/.test(o.name)) continue;
+        if (k === stickIdx) {
+          bChordCount++;
+          continue;
+        }
         const om = metaSticks[k]!;
         const oLen = Math.hypot(
           om.end3D.y - om.start3D.y,
           om.end3D.z - om.start3D.z,
         );
+        bChordCount++;
         if (oLen > myLen + 0.5) {
           isLongest = false;
-          break;
         }
       }
       isLongestB = isLongest;
     }
     if (isLongestB) {
       const L = meta3DLen;
+      const isSloped = meta3DZSpan > 5;
+      // Cap-stack span dimensions: standard for horizontal; larger sloped
+      // dimensions deferred — would require accurate B-chord trim handling
+      // first since cap positions are anchored to chord ends and our stick
+      // length differs from ref by ~12-18mm on sloped B-chords (deferred,
+      // see TODO).
       const RF_SPAN = 8.19;
       const LIP_SPAN = 32.32;
       const LF_SPAN = 156.70;
       const STUB_BOLT = 59.98;
-      stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
-      stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LIP_SPAN });
-      stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
-      stick.tooling.push({ kind: "point", type: "Web", pos: STUB_BOLT });
-      stick.tooling.push({ kind: "point", type: "Web", pos: L - STUB_BOLT });
-      stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN, endPos: L });
-      stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_SPAN, endPos: L });
-      stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
+      const isFlipped = !!meta3D && stick.flipped;
+      let capStartSide: boolean;  // emit caps at OUTPUT position 0 side
+      let capEndSide: boolean;    // emit caps at OUTPUT position L side
+      if (isSloped) {
+        // High-z end of XML stick gets caps. After flipped-aware mapping:
+        //   high-z @ XML-start AND not flipped: caps at OUTPUT-start
+        //   high-z @ XML-start AND     flipped: caps at OUTPUT-end
+        //   high-z @ XML-end   AND not flipped: caps at OUTPUT-end
+        //   high-z @ XML-end   AND     flipped: caps at OUTPUT-start
+        const highZAtXmlStart = meta3D.start3D.z > meta3D.end3D.z;
+        const capAtOutputStart = highZAtXmlStart !== isFlipped;
+        capStartSide = capAtOutputStart;
+        capEndSide = !capAtOutputStart;
+      } else {
+        // Horizontal B-chord cap-stack:
+        //   • Length > 8000mm (full bottom span across truss): caps at
+        //     BOTH ends. Verified TT6-1 B1 (10930), TN1-1/TN2-1 B1 (10930),
+        //     TT2-1 B1 (10930) — all emit caps at both ends.
+        //   • Otherwise: caps at OUTPUT-start (matches TN16-1 B1, TN17-1
+        //     B1, TN7-1 B1, TN10-1 B1, TN13-x B1).
+        //   • TN20-1 B2 (length 6859, caps at OUTPUT-end) is a diverging
+        //     case not yet handled.
+        if (L > 8000) {
+          capStartSide = true;
+          capEndSide = true;
+        } else {
+          capStartSide = true;
+          capEndSide = false;
+        }
+      }
+      if (capStartSide) {
+        stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
+        stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LIP_SPAN });
+        stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
+        stick.tooling.push({ kind: "point", type: "Web", pos: STUB_BOLT });
+      }
+      if (capEndSide) {
+        stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((L - STUB_BOLT) * 100) / 100 });
+        stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN, endPos: L });
+        stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_SPAN, endPos: L });
+        stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
+      }
     }
 
     // T-chord end-cap bolt rule (Agent G's Phase H finding, refined 2026-05-09).

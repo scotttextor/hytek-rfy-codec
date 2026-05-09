@@ -227,11 +227,44 @@ export interface SimplifyRpDecision {
   rakeMode?: string;
 }
 
+/** Decide if a stick is a T-prefix top plate. */
+function isTplate(stick: ParsedStick): boolean {
+  return /^T\d/.test(stick.name);
+}
+
+/** Add Chamfer @start and @end to a stick if not already present. Returns
+ *  number of chamfers added. */
+function addBothEndChamfers(stick: ParsedStick): number {
+  let added = 0;
+  let hasStart = false, hasEnd = false;
+  for (const op of stick.tooling) {
+    if (op.kind === "start" && op.type === "Chamfer") hasStart = true;
+    if (op.kind === "end" && op.type === "Chamfer") hasEnd = true;
+  }
+  if (!hasStart) { stick.tooling.push({ kind: "start", type: "Chamfer" }); added++; }
+  if (!hasEnd) { stick.tooling.push({ kind: "end", type: "Chamfer" }); added++; }
+  return added;
+}
+
 /** Apply the RP stud-only rewrite to a single frame. */
 export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
   const studStartsRewritten: string[] = [];
   const studEndsChamfered: string[] = [];
+  const platesChamfered: string[] = [];
   const rakeMode = frameRakeMode(frame);
+
+  // T-plate Chamfer pass: ref Detailer emits Chamfer @start AND @end on every
+  // T-plate in RP frames (verified 2026-05-09 vs HG260044 GF-RP-70.075 — 16
+  // T-plates miss BOTH chamfers, 12 miss exactly one). The codec's per-stick
+  // rule doesn't emit Chamfer on plates, and the diff-harness raking-frame
+  // chamfer rule only fires on `wall` frames (RP frames are `RoofPanel`).
+  // We emit unconditionally on T-plates here; the rules-engine doesn't emit
+  // Chamfer on plates so there's no double-emission risk.
+  for (const stick of frame.sticks) {
+    if (!isTplate(stick)) continue;
+    const added = addBothEndChamfers(stick);
+    if (added > 0) platesChamfered.push(stick.name);
+  }
 
   for (const stick of frame.sticks) {
     if (!isSstud(stick)) continue;

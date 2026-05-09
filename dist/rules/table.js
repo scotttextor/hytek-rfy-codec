@@ -63,20 +63,42 @@ export const RULE_TABLE = [
                 confidence: "high",
                 notes: "End dimple at length-16.5",
             },
-            // Service holes — only on wall studs (LBW or NLBW plans) with length >= ~500
+            // Service holes — only on wall studs (LBW or NLBW plans) with length >= ~500.
+            // 2026-05-09: anchored on world Z for GROUND-FLOOR walls. Detailer
+            // places InnerService at world z = 300 / 450 mm above slab. For
+            // UPPER-STORY walls (frameElevation > 100), Detailer offsets the
+            // schedule to be local @296 / @446 from the stud start (= same world Z
+            // distance from the upper floor as 300/450 are from the slab).
+            // Stud local pos = (300 - stickStartZ) for ground-floor, @296 for upper.
+            // Handles:
+            //  - ground-floor wall studs at z=2..2763 (elev=0): local pos ≈ 296-298
+            //  - walls with B-plate below floor at z=-43..2763 (HG260044 LBW L8):
+            //    local pos = 343 (matches ref @341 within 2mm)
+            //  - upper-story studs at z=2357..3293 (elev=2355): local pos 296 (legacy)
+            // Falls back to legacy @296/@446 if stickStartZ unavailable.
             {
                 toolType: "InnerService", kind: "point",
-                anchor: { kind: "startAnchored", offset: 296 },
+                anchor: { kind: "startAnchored", offset: 296,
+                    offsetFn: (ctx) => {
+                        if (ctx.frameElevation !== undefined && ctx.frameElevation > 100)
+                            return 296;
+                        return ctx.stickStartZ !== undefined ? 300 - ctx.stickStartZ : 296;
+                    } },
                 confidence: "medium",
                 predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 296 + 200,
-                notes: "Electrical service hole at ~300mm from start (outlet height)",
+                notes: "Electrical service hole at world z=300 (ground) or local @296 (upper)",
             },
             {
                 toolType: "InnerService", kind: "point",
-                anchor: { kind: "startAnchored", offset: 446 },
+                anchor: { kind: "startAnchored", offset: 446,
+                    offsetFn: (ctx) => {
+                        if (ctx.frameElevation !== undefined && ctx.frameElevation > 100)
+                            return 446;
+                        return ctx.stickStartZ !== undefined ? 450 - ctx.stickStartZ : 446;
+                    } },
                 confidence: "medium",
                 predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
-                notes: "Electrical service hole at ~450mm from start (paired with 296mm)",
+                notes: "Electrical service hole at world z=450 (ground) or local @446 (upper)",
             },
             // Web holes are emitted in framecad-import.ts as a post-processing step
             // (the rules engine emits one op per rule entry, but we need N evenly-
@@ -94,19 +116,31 @@ export const RULE_TABLE = [
             { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
             // Service holes — same as 70mm pattern (electrical outlet/switch heights).
+            // World z for ground-floor; local @296/@446 for upper-story (frame
+            // elev > 100). See 70mm rule above for derivation.
             {
                 toolType: "InnerService", kind: "point",
-                anchor: { kind: "startAnchored", offset: 296 },
+                anchor: { kind: "startAnchored", offset: 296,
+                    offsetFn: (ctx) => {
+                        if (ctx.frameElevation !== undefined && ctx.frameElevation > 100)
+                            return 296;
+                        return ctx.stickStartZ !== undefined ? 300 - ctx.stickStartZ : 296;
+                    } },
                 confidence: "medium",
                 predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 296 + 200,
-                notes: "89mm stud: electrical outlet hole at 296mm",
+                notes: "89mm stud: world z=300 ground / local @296 upper",
             },
             {
                 toolType: "InnerService", kind: "point",
-                anchor: { kind: "startAnchored", offset: 446 },
+                anchor: { kind: "startAnchored", offset: 446,
+                    offsetFn: (ctx) => {
+                        if (ctx.frameElevation !== undefined && ctx.frameElevation > 100)
+                            return 446;
+                        return ctx.stickStartZ !== undefined ? 450 - ctx.stickStartZ : 446;
+                    } },
                 confidence: "medium",
                 predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
-                notes: "89mm stud: paired service hole at 446mm",
+                notes: "89mm stud: world z=450 ground / local @446 upper",
             },
         ],
     },
@@ -122,7 +156,21 @@ export const RULE_TABLE = [
         profilePattern: /^70S41$/,
         lengthRange: [0, Infinity],
         rules: [
-            { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START only (no Chamfer-end observed)" },
+            { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START" },
+            // Kb sticks ALSO get Chamfer at END when the lip-orientation
+            // (inputFlipped) matches the plate-attachment direction (kbTopAttached).
+            // The discriminator is `inputFlipped === kbTopAttached` (XNOR):
+            //   - top-attached + flipped=true   → chamfer (plate cuts the lip side)
+            //   - bottom-attached + flipped=false → chamfer
+            //   - opposite combinations → no chamfer
+            // Verified 2026-05-09 vs HG260001 PK4 LBW L1/L18/L21/L28/L30/L43/L46
+            // (every Kb classified correctly) and HG260044 LBW (~80 Kbs).
+            { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
+                predicate: (ctx) => ctx.role === "Kb"
+                    && ctx.inputFlipped !== undefined
+                    && ctx.kbTopAttached !== undefined
+                    && ctx.inputFlipped === ctx.kbTopAttached,
+                notes: "Kb end Chamfer (inputFlipped XNOR topAttached): plate-attached angled cut" },
             // Start Swage: ~42mm at the mid-wall end (cap perpendicular to Kb axis).
             // Verified 2026-05-04 vs HG260001 PK4 LBW Kb1: ref Swage 0..42.4 (span 42).
             { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 42, confidence: "high",

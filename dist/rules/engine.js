@@ -1,9 +1,9 @@
-function generatePositions(anchor, length) {
+function generatePositions(anchor, length, ctx) {
     switch (anchor.kind) {
         case "startAnchored":
-            return [anchor.offset];
+            return [anchor.offsetFn && ctx ? anchor.offsetFn(ctx) : anchor.offset];
         case "endAnchored":
-            return [length - anchor.offset];
+            return [length - (anchor.offsetFn && ctx ? anchor.offsetFn(ctx) : anchor.offset)];
         case "centred":
             return [length / 2 + (anchor.offset ?? 0)];
         case "fraction":
@@ -68,7 +68,7 @@ function round(n) { return Math.round(n * 10000) / 10000; }
 export function applyRule(rule, ctx) {
     if (rule.predicate && !rule.predicate(ctx))
         return [];
-    const positions = generatePositions(rule.anchor, ctx.length);
+    const positions = generatePositions(rule.anchor, ctx.length, ctx);
     const ops = [];
     for (const p of positions) {
         if (p < 0 || p > ctx.length)

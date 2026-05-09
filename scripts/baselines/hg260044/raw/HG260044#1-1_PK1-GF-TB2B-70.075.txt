@@ -3,18 +3,18 @@ OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-TB2B-
 Setup:    F325iT 70mm
 Frames:   our 26 | ref 5
 
-OPS:      our 383 | ref 373
-MATCHED:  300  (80.4% of ref)
-MISSING:  73  (ops Detailer has, we don't)
-EXTRAS:   83   (ops we have, Detailer doesn't)
+OPS:      our 363 | ref 373
+MATCHED:  294  (78.8% of ref)
+MISSING:  79  (ops Detailer has, we don't)
+EXTRAS:   69   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Web@pt                   260        52       56   (83% ref-coverage)
-RightFlange@span           2         9        9   (18% ref-coverage)
-LeftFlange@span            0         6       11   (0% ref-coverage)
-LipNotch@span              5         6        6   (45% ref-coverage)
+Web@pt                   257        55       54   (82% ref-coverage)
+LipNotch@span              2         9        4   (18% ref-coverage)
+RightFlange@span           2         9        4   (18% ref-coverage)
+LeftFlange@span            0         6        6   (0% ref-coverage)
 InnerDimple@pt            33         0        1   (100% ref-coverage)
 
 FRAMES WITH GAPS:
@@ -22,8 +22,8 @@ FRAMES WITH GAPS:
   TT1-1 (3 sticks with gaps)
     H5       MISSING (5): Web @3478.5 | Web @5812.1 | LeftFlange 5715.4..5896.4 | LipNotch 5841.5..5896.4 | RightFlange 5863.9..5896.4
     H5       EXTRAS  (1): Web @5879.8
-    B1       MISSING (1): RightFlange 6723.3..6880.0
-    B1       EXTRAS  (6): Web @60.0 | RightFlange 0.0..8.2 | LipNotch 0.0..32.3 | LeftFlange 0.0..156.7 | LeftFlange 6723.3..6880.0 ... +1
+    B1       MISSING (3): Web @6820.0 | RightFlange 6723.3..6880.0 | LipNotch 6847.7..6880.0
+    B1       EXTRAS  (4): Web @60.0 | RightFlange 0.0..8.2 | LipNotch 0.0..32.3 | LeftFlange 0.0..156.7
     T3       MISSING (4): Web @91.2 | Web @229.6 | Web @895.7 | Web @1203.3
     T3       EXTRAS  (5): Web @361.1 | InnerDimple @628.6 | Web @1027.2 | Web @1091.0 | Web @1166.0
 
@@ -36,8 +36,8 @@ FRAMES WITH GAPS:
     W8       EXTRAS  (1): Web @944.5
     H6       MISSING (1): Web @813.5
     H6       EXTRAS  (1): Web @815.7
-    B2       MISSING (2): Web @4273.1 | RightFlange 7048.3..7205.0
-    B2       EXTRAS  (6): Web @60.0 | RightFlange 0.0..8.2 | LipNotch 0.0..32.3 | LeftFlange 0.0..156.7 | LeftFlange 7048.3..7205.0 ... +1
+    B2       MISSING (4): Web @4273.1 | Web @7145.0 | RightFlange 7048.3..7205.0 | LipNotch 7172.7..7205.0
+    B2       EXTRAS  (4): Web @60.0 | RightFlange 0.0..8.2 | LipNotch 0.0..32.3 | LeftFlange 0.0..156.7
     W9       MISSING (1): Web @1357.0
     W9       EXTRAS  (1): Web @1347.0
     W10      MISSING (1): Web @26.2
@@ -49,7 +49,7 @@ FRAMES WITH GAPS:
     T3       MISSING (1): Web @53.9
     T3       EXTRAS  (1): Web @2295.3
     B1       MISSING (2): Web @2132.0 | Web @6540.5
-    B1       EXTRAS  (6): Web @6530.6 | Web @7145.0 | LeftFlange 0.0..156.7 | LeftFlange 7048.3..7205.0 | LipNotch 7172.7..7205.0 ... +1
+    B1       EXTRAS  (2): Web @6530.6 | LeftFlange 0.0..156.7
     H6       MISSING (5): Web @84.3 | Web @3316.2 | RightFlange 0.0..30.8 | LipNotch 0.0..54.9 | LeftFlange 0.0..179.3
     H6       EXTRAS  (1): Web @16.7
     T5       MISSING (1): Web @31.9
@@ -65,7 +65,7 @@ FRAMES WITH GAPS:
     T3       MISSING (4): Web @53.9 | Web @361.8 | Web @909.3 | Web @1047.7
     T3       EXTRAS  (4): Web @91.2 | Web @166.3 | Web @230.0 | Web @777.5
     B1       MISSING (1): Web @7072.0
-    B1       EXTRAS  (6): Web @7076.5 | Web @7145.0 | LeftFlange 0.0..156.7 | LeftFlange 7048.3..7205.0 | LipNotch 7172.7..7205.0 ... +1
+    B1       EXTRAS  (2): Web @7076.5 | LeftFlange 0.0..156.7
     H6       MISSING (5): Web @84.3 | Web @3456.6 | RightFlange 0.0..32.6 | LipNotch 0.0..54.9 | LeftFlange 0.0..181.1
     H6       EXTRAS  (2): Web @16.7 | Web @3453.8
     T5       MISSING (1): Web @31.9
@@ -94,7 +94,7 @@ FRAMES WITH GAPS:
     W9       EXTRAS  (1): Web @910.0
     W10      MISSING (2): Web @895.0 | Web @1029.1
     W10      EXTRAS  (2): Web @910.0 | Web @1022.1
-    B2       MISSING (2): Web @5263.8 | RightFlange 7048.3..7205.0
-    B2       EXTRAS  (6): Web @60.0 | RightFlange 0.0..8.2 | LipNotch 0.0..32.3 | LeftFlange 0.0..156.7 | LeftFlange 7048.3..7205.0 ... +1
+    B2       MISSING (4): Web @5263.8 | Web @7145.0 | RightFlange 7048.3..7205.0 | LipNotch 7172.7..7205.0
+    B2       EXTRAS  (4): Web @60.0 | RightFlange 0.0..8.2 | LipNotch 0.0..32.3 | LeftFlange 0.0..156.7
     T4       MISSING (1): Web @2197.1
     T4       EXTRAS  (1): Web @166.3

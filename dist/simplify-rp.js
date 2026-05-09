@@ -211,8 +211,18 @@ function studStartIsOnSlopedBottom(stud, frame) {
     const bottoms = frame.sticks.filter(isBplate);
     if (bottoms.length === 0)
         return false;
-    // Check if stud's START is near any HORIZONTAL bottom plate.
-    // If yes → pop-cap. If no → chord-cap (sloped or no plate match).
+    // Check if stud's START is near any HORIZONTAL bottom plate AND the stud is
+    // long enough to actually span floor-to-roof. SHORT studs (< 600mm) in
+    // multi-T-plate frames are typically rake cripples that need chord-cap
+    // even when their start happens to coincide with a horizontal B-plate.
+    // Verified vs HG260044 R1 S3/S4 (441mm, multi-T frame, ref wants chord-cap).
+    const tplateCount = frame.sticks.filter(isTplate).length;
+    const isShortRakeStud = (tplateCount >= 2
+        && Math.sqrt((stud.end.x - stud.start.x) ** 2 +
+            (stud.end.y - stud.start.y) ** 2 +
+            (stud.end.z - stud.start.z) ** 2) < 600);
+    if (isShortRakeStud)
+        return true;
     for (const b of bottoms) {
         const isHorizontal = Math.abs(b.end.z - b.start.z) < HORIZONTAL_BOTTOM_TOL_MM;
         if (!isHorizontal)
@@ -402,22 +412,19 @@ export function simplifyRpFrame(frame) {
             stick.tooling.push({ kind: "spanned", type: "Swage", startPos: RP_STUD_START_SPAN_LO_MM, endPos: RP_STUD_START_SPAN_HI_MM }, { kind: "point", type: "InnerDimple", pos: RP_STUD_START_DIMPLE_OFFSET_MM });
         }
         studStartsRewritten.push(stick.name);
-        // Add Chamfer @end if not already present (both modes).
-        // Skip Chamfer @end on rake studs that already got Chamfer @start — ref
-        // Detailer emits Chamfer at exactly ONE end on rake studs (the meeting
-        // end, which we put on @start above).
-        if (!isRakeStud) {
-            let hasEndChamfer = false;
-            for (const op of stick.tooling) {
-                if (op.kind === "end" && op.type === "Chamfer") {
-                    hasEndChamfer = true;
-                    break;
-                }
+        // Add Chamfer @end if not already present. Both rake and standard modes
+        // want Chamfer @end (verified vs HG260044 R1/R12 S1+S3+S4 — all have
+        // Chamfer @end in ref).
+        let hasEndChamfer = false;
+        for (const op of stick.tooling) {
+            if (op.kind === "end" && op.type === "Chamfer") {
+                hasEndChamfer = true;
+                break;
             }
-            if (!hasEndChamfer) {
-                stick.tooling.push({ kind: "end", type: "Chamfer" });
-                studEndsChamfered.push(stick.name);
-            }
+        }
+        if (!hasEndChamfer) {
+            stick.tooling.push({ kind: "end", type: "Chamfer" });
+            studEndsChamfered.push(stick.name);
         }
     }
     if (studStartsRewritten.length === 0 && studEndsChamfered.length === 0) {

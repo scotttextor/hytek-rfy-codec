@@ -365,6 +365,11 @@ export function simplifyRpFrame(frame) {
         // Per-stud classification: does this stud's START meet a sloped (rake)
         // bottom plate? If yes → chord-style cap. Else → plate-over-plate cap.
         const isRakeStud = studStartIsOnSlopedBottom(stick, frame);
+        // BEFORE length extension: strip the codec's OLD end cap (positioned
+        // relative to the original stick length).
+        const origLen = computeStickLength(stick);
+        stripStandardStartCap(stick.tooling);
+        stripStandardEndCap(stick.tooling, origLen);
         // Length extension: ref Detailer's RP studs are ~9.1mm longer than raw
         // XML centerline. Apply ONLY on horizontal-mode studs (the dominant
         // delta=9.1 cohort, 58/68). Rake studs have varied deltas (7.1/9.1/11.2/
@@ -374,17 +379,18 @@ export function simplifyRpFrame(frame) {
         }
         // Recompute length AFTER potential extension.
         const stickLen = computeStickLength(stick);
-        // Strip the standard wall-stud start cap regardless of mode.
-        stripStandardStartCap(stick.tooling);
-        // Strip the standard wall-stud end cap (Swage L-39..L + ID @L-16.5).
-        // RP studs use ID @L-10 (chord-style) at the end and Swage L-66..L
-        // instead — verified vs HG260044 corpus (75 ref ID at L-10 vs 7 at L-16.5;
-        // 67 of 82 ref end-Swage span = 66.1mm). The codec's body-crossing pass
-        // emits a Swage at the body-crossing position (likely close to L-66 after
-        // length extension), so we don't re-emit Swage here.
-        stripStandardEndCap(stick.tooling, stickLen);
         // Re-emit end dimple at L-10 (chord-style end).
+        // Verified vs HG260044 corpus (75 ref ID at L-10 vs 7 at L-16.5).
         stick.tooling.push({ kind: "point", type: "InnerDimple", pos: stickLen - RP_RAKE_STUD_START_DIMPLE_OFFSET_MM });
+        // Re-emit end Swage at L-66.1..L (RP variable span, 67 of 82 ref end-
+        // Swages use this span). The codec's body-crossing pass may have emitted
+        // a duplicate Swage at the panel-point position close to L-66 — we keep
+        // that and add this end-anchored span. Slight chance of double-emit if
+        // they happen to overlap exactly.
+        stick.tooling.push({
+            kind: "spanned", type: "Swage",
+            startPos: stickLen - 66.1, endPos: stickLen,
+        });
         if (isRakeStud) {
             // Rake stud: meets a sloped chord at its start. Ref Detailer emits
             // chord-style start cap (Chamfer @start + ID@10 + Swage 0..66.1).

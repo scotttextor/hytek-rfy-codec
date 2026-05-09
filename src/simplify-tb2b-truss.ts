@@ -694,35 +694,40 @@ export function simplifyTb2bTrussFrame(
       stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
     }
 
-    // T-chord end-cap bolt rule (Agent G's Phase H finding).
-    // Apply to T# sticks where meta3D has |zSpan| > 5mm (sloped chord). Box
-    // pieces filtered above; horizontal T (no apex/heel distinction) skipped.
-    const isTChordCap = /^T\d/.test(stick.name) && !!meta3D &&
+    // T-chord end-cap bolt rule (Agent G's Phase H finding, refined 2026-05-09).
+    // Apply ONLY to TT-trusses (frame.name starts with "TT") on T# sticks where
+    // meta3D has |zSpan| > 5mm (sloped chord). Box pieces filtered above; horizontal
+    // T (no apex/heel distinction) skipped.
+    //
+    // Detailer's behaviour (verified vs HG260001):
+    //   • TT-trusses (full top-truss with two top chords meeting at apex):
+    //     emit Web @APEX_BOLT (91.21) at the OUTPUT apex-end. No heel-side bolt.
+    //   • TN/HN-trusses (half-truss or hip-truss): no @91.21 bolt — apex bolts
+    //     come from the TT-apex pair-rule at @22.85+@176.25 instead, which is
+    //     handled by the centerline-crossing logic above. No heel-side bolt.
+    //
+    // The OUTPUT apex-end depends on both XML apex position AND chord arc-reversal:
+    //   apexAtOutputEnd = apexAtXmlEnd XOR needsArcReversal(stick)
+    // This is critical — a flipped top-chord with apex at XML-start has its apex
+    // mapped to OUTPUT-end after reversal. Earlier code used XML coords directly
+    // without considering the simplifier's arc-reversal, causing apex bolts to
+    // fire at the heel side and heel bolts at the apex side.
+    const isTTFrame = /^TT/.test(frame.name);
+    const isTChordCap = isTTFrame && /^T\d/.test(stick.name) && !!meta3D &&
       Math.abs(meta3D.end3D.z - meta3D.start3D.z) > 5;
     if (isTChordCap && meta3D) {
-      const apexAtEnd = meta3D.end3D.z > meta3D.start3D.z;
-      const HEEL_BOLT = 53.90;
+      const apexAtXmlEnd = meta3D.end3D.z > meta3D.start3D.z;
+      const reverse = chordArcReversal(meta3D);
+      const apexAtOutputEnd = apexAtXmlEnd !== reverse;
       const APEX_BOLT = 91.21;
-      const startBolt = apexAtEnd ? HEEL_BOLT : APEX_BOLT;
-      const endBolt = apexAtEnd ? APEX_BOLT : HEEL_BOLT;
       const APPROX = 2.0;
-      const startExists = stick.tooling.some(
-        (o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - startBolt) < APPROX,
+      const apexPos = apexAtOutputEnd
+        ? Math.round((meta3DLen - APEX_BOLT) * 100) / 100
+        : APEX_BOLT;
+      const exists = stick.tooling.some(
+        (o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - apexPos) < APPROX,
       );
-      const endExists = stick.tooling.some(
-        (o) =>
-          o.kind === "point" &&
-          o.type === "Web" &&
-          Math.abs(o.pos - (meta3DLen - endBolt)) < APPROX,
-      );
-      if (!startExists) stick.tooling.push({ kind: "point", type: "Web", pos: startBolt });
-      if (!endExists) {
-        stick.tooling.push({
-          kind: "point",
-          type: "Web",
-          pos: Math.round((meta3DLen - endBolt) * 100) / 100,
-        });
-      }
+      if (!exists) stick.tooling.push({ kind: "point", type: "Web", pos: apexPos });
     }
 
     // Final sort by position so downstream encoding emits ops in order.

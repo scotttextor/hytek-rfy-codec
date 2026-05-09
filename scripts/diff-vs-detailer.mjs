@@ -1408,20 +1408,14 @@ for (const plan of ourDoc.project.plans) {
         }
       }
       if (isRPPlan) {
-        // RP S/Stud Chamfer policy (2026-05-05, Agent L):
-        //   keep Chamfer @end (ref has 126 across HG260001+HG260044 studs;
-        //   the simplify-rp.ts post-pass emits these as part of Reversed
-        //   Tooling stud caps).
-        //   strip Chamfer @start (codec rules don't emit it on studs anyway,
-        //   but if any other source does, ref has only 41 + 4 = 45 of those
-        //   vs 25 + 0 emitted by the codec — strip is net negative).
-        // The previous unconditional strip was based on HG260012 (single
-        // corpus) and over-fit. See simplify-rp.ts:applyStudEndChamfer.
-        if (/^S\d/.test(stick.name)) {
-          stick.tooling = stick.tooling.filter(op =>
-            !(op.kind === "start") || op.type !== "Chamfer"
-          );
-        }
+        // RP S/Stud Chamfer policy (2026-05-09, simplify-rp.ts v3):
+        //   The simplifier in src/simplify-rp.ts now classifies studs per-stick
+        //   into "rake" (start meets a sloped bottom plate → emit Chamfer @start)
+        //   vs "standard" (start meets a horizontal bottom plate → no Chamfer
+        //   @start). Cross-corpus evidence (HG260044 R4/R12) showed unconditional
+        //   strip was overzealous; keeping Chamfer @start on rake studs is now
+        //   net positive (~12 ops gained vs ~3 lost on horizontal-mode studs
+        //   that were spuriously Chamfered upstream).
         // RP edge studs (S1, S11 etc — at chord ymin or ymax): caps are
         // LipNotch instead of Swage. Verified vs HG260012 RP TH01-2F: S1 and
         // S11 at y=5663-5704 and y=0-41 (panel edges) emit LipNotch caps;

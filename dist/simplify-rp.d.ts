@@ -12,6 +12,8 @@ export interface SimplifyRpDecision {
     studStartsRewritten?: string[];
     /** Sticks (S) whose end side received a Chamfer @end. */
     studEndsChamfered?: string[];
+    /** Frame's rake mode classification. */
+    rakeMode?: string;
 }
 /** Apply the RP stud-only rewrite to a single frame. */
 export declare function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision;

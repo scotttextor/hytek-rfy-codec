@@ -3,10 +3,10 @@ OP-LEVEL DIFF — HG260001 LOT 289 COORA CRESCENT CURRIMUNDI 4551-GF-LBW-70.075.
 Setup:    F325iT 70mm
 Frames:   our 44 | ref 18
 
-OPS:      our 3507 | ref 3567
-MATCHED:  3138  (88.0% of ref)
-MISSING:  429  (ops Detailer has, we don't)
-EXTRAS:   369   (ops we have, Detailer doesn't)
+OPS:      our 3523 | ref 3567
+MATCHED:  3148  (88.3% of ref)
+MISSING:  419  (ops Detailer has, we don't)
+EXTRAS:   375   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
@@ -18,7 +18,7 @@ Web@pt                    93       123        3   (43% ref-coverage)
 InnerService@pt          353        27       38   (93% ref-coverage)
 InnerNotch@span          122        21       19   (85% ref-coverage)
 Chamfer@start             15         0       11   (100% ref-coverage)
-Chamfer@end                9        10        1   (47% ref-coverage)
+Chamfer@end               19         0        7   (100% ref-coverage)
 Bolt@pt                   80         0        0   (100% ref-coverage)
 
 FRAMES WITH GAPS:
@@ -191,9 +191,9 @@ FRAMES WITH GAPS:
     W5       EXTRAS  (3): InnerDimple @10.0 | InnerDimple @590.4 | Swage 559.6..600.4
 
   L28 (2 sticks with gaps)
-    Kb1      MISSING (3): InnerService @603.1 | Swage 1354.1..1476.6 | Chamfer @end
+    Kb1      MISSING (2): InnerService @603.1 | Swage 1354.1..1476.6
     Kb1      EXTRAS  (2): Chamfer @start | Swage 1356.2..1478.0
-    Kb2      MISSING (3): InnerService @658.4 | Swage 1263.5..1377.7 | Chamfer @end
+    Kb2      MISSING (2): InnerService @658.4 | Swage 1263.5..1377.7
     Kb2      EXTRAS  (2): Chamfer @start | Swage 1265.7..1379.2
 
   L31 (6 sticks with gaps)

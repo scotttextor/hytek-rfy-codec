@@ -4,8 +4,12 @@
 //   Targets ONLY S-prefix studs in RP plans. The previous v2 (Scott's Rule 7)
 //   disabled the simplifier entirely after evidence that the chord-style cap
 //   rewrite over-applied on horizontal RP plates. v3 restores the high-confidence
-//   STUD-side rewrite (which gives the strongest cross-corpus signal) and leaves
-//   plates untouched.
+//   STUD-side rewrite and adds a per-frame branch:
+//     * Frames with a HORIZONTAL bottom plate → studs get plate-over-plate
+//       (Swage/LipNotch 56..101 + ID@78.5) start cap.
+//     * Frames with ONLY a SLOPED bottom plate → studs get chord-style start
+//       cap (Chamfer @start + ID @10 + Swage 0..66 variable) — these are rake
+//       roof panels where the studs run along the slope.
 //
 // EVIDENCE (re-verified 2026-05-09 vs HG260044 GF-RP-70.075 with v2 disabled):
 //   - 67 missing `InnerDimple @78.5` (start)
@@ -14,16 +18,6 @@
 //   - 89 extras `Swage 0..39` (standard wall-stud start cap)
 //   - 75 missing `Chamfer @end` on studs
 //   Cross-checked vs HG260001 GF-RP-70.075 — identical pattern, similar counts.
-//
-// Strategy:
-//   On every S-prefix stick in an RP plan:
-//     1. Remove start-anchored `Swage|LipNotch 0..39` (standard wall cap)
-//     2. Remove start-anchored `InnerDimple @16.5` (standard wall start dimple)
-//     3. Add `Swage 56..101` (RP plate-over-plate start notch) — Swage is the
-//        majority emission across HG260001+HG260044 RP corpora; LipNotch minority
-//        cases produce a same-position single-op miss that's still net positive.
-//     4. Add `InnerDimple @78.5` (RP start dimple)
-//     5. Add `Chamfer @end` if not already present
 //
 // PLATES: Not touched. The plate-side gaps (Chamfer @start + ID @10 chord-style
 // cap, drifted body-crossing positions) involve stick-length drift between the
@@ -69,6 +63,18 @@ const RP_STUD_START_DIMPLE_OFFSET_MM = 78.5;
 const RP_STUD_START_SPAN_LO_MM = 56;
 const RP_STUD_START_SPAN_HI_MM = 101;
 
+/** RP chord-style start-cap dimple offset (10 mm) — used in rake frames where
+ *  the studs run along the slope rather than perpendicular to it. */
+const RP_RAKE_STUD_START_DIMPLE_OFFSET_MM = 10;
+
+/** RP chord-style start-cap span — variable up to 66.1mm. We use 66.1 as the
+ *  modal value across HG260044 R4/R12 chord-cap studs (verified 2026-05-09). */
+const RP_RAKE_STUD_START_SPAN_HI_MM = 66.1;
+
+/** Tolerance (mm) for "horizontal" bottom plate classification. A B stick
+ *  with |start.z - end.z| < this is treated as horizontal. */
+const HORIZONTAL_BOTTOM_TOL_MM = 5;
+
 /** Strip start-anchored ops the standard wall rule emits on a stud:
  *    {Swage|LipNotch} 0..39  +  InnerDimple @16.5
  *  Returns the number of ops removed. */
@@ -104,6 +110,111 @@ function isSstud(stick: ParsedStick): boolean {
   return /^S\d/.test(stick.name);
 }
 
+/** Decide if a stick is a B-prefix bottom plate. */
+function isBplate(stick: ParsedStick): boolean {
+  return /^B\d/.test(stick.name);
+}
+
+/** Determine the rake mode for a frame: "horizontal" if it has any horizontal
+ *  bottom plate, "rake" if it has only sloped bottoms, "unknown" if no B sticks.
+ *  Used as a fallback when per-stud connectivity can't be determined. */
+function frameRakeMode(frame: ParsedFrame): "horizontal" | "rake" | "unknown" {
+  let hasB = false;
+  let hasHorizontalB = false;
+  for (const stick of frame.sticks) {
+    if (!isBplate(stick)) continue;
+    hasB = true;
+    if (Math.abs(stick.end.z - stick.start.z) < HORIZONTAL_BOTTOM_TOL_MM) {
+      hasHorizontalB = true;
+    }
+  }
+  if (!hasB) return "unknown";
+  return hasHorizontalB ? "horizontal" : "rake";
+}
+
+/** Per-stud rake-cap classifier. Returns true if the stud's START side meets
+ *  a SLOPED bottom plate (chord-style cap needed). Returns false if it meets
+ *  a HORIZONTAL bottom plate (plate-over-plate cap).
+ *
+ *  Algorithm:
+ *    1. Find all bottom plates (B-prefix sticks) in the frame.
+ *    2. Check if the stud's start (or end — try both ends) is geometrically
+ *       close (within ~30mm) to any horizontal plate's centerline.
+ *    3. If start is close to a HORIZONTAL plate → pop-cap (false).
+ *    4. If start is close to a SLOPED plate, OR isn't close to any horizontal
+ *       plate → chord-cap (true).
+ *
+ *  Verified vs HG260044 R4 (mixed B1 sloped + B2 horizontal):
+ *    - S1 start=(59641,17768,3829) → not near B2 (x=62463) → chord-cap
+ *    - S6 start=(62463,21088,2513) → near B2 → pop-cap
+ *    - S8 start=(62463,21918,2513) → near B2 → pop-cap
+ *  Verified vs HG260044 R12 (only sloped B): all studs → chord-cap. */
+const STUD_TO_PLATE_TOL_MM = 30;
+
+function stickToPointDistance(
+  start: { x: number; y: number; z: number },
+  end: { x: number; y: number; z: number },
+  pt: { x: number; y: number; z: number },
+): number {
+  // Distance from `pt` to the line segment (start, end), in 3D.
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const dz = end.z - start.z;
+  const lenSq = dx * dx + dy * dy + dz * dz;
+  if (lenSq < 1e-6) {
+    // Degenerate
+    const ex = pt.x - start.x;
+    const ey = pt.y - start.y;
+    const ez = pt.z - start.z;
+    return Math.sqrt(ex * ex + ey * ey + ez * ez);
+  }
+  const t = Math.max(0, Math.min(1,
+    ((pt.x - start.x) * dx + (pt.y - start.y) * dy + (pt.z - start.z) * dz) / lenSq,
+  ));
+  const cx = start.x + t * dx;
+  const cy = start.y + t * dy;
+  const cz = start.z + t * dz;
+  const ex = pt.x - cx;
+  const ey = pt.y - cy;
+  const ez = pt.z - cz;
+  return Math.sqrt(ex * ex + ey * ey + ez * ez);
+}
+
+function studStartIsOnSlopedBottom(stud: ParsedStick, frame: ParsedFrame): boolean {
+  // Find all B sticks
+  const bottoms = frame.sticks.filter(isBplate);
+  if (bottoms.length === 0) return false;
+
+  // Check if stud's START is near any HORIZONTAL bottom plate.
+  // If yes → pop-cap. If no → chord-cap (sloped or no plate match).
+  for (const b of bottoms) {
+    const isHorizontal = Math.abs(b.end.z - b.start.z) < HORIZONTAL_BOTTOM_TOL_MM;
+    if (!isHorizontal) continue;
+    if (stickToPointDistance(b.start, b.end, stud.start) < STUD_TO_PLATE_TOL_MM) {
+      return false; // start meets horizontal plate → pop-cap
+    }
+    if (stickToPointDistance(b.start, b.end, stud.end) < STUD_TO_PLATE_TOL_MM) {
+      return false; // end meets horizontal plate → pop-cap (stud could be reversed)
+    }
+  }
+
+  // Stud's start is NOT on a horizontal bottom. If frame has any sloped B,
+  // the stud is likely a rake-stud → chord-cap.
+  for (const b of bottoms) {
+    const isSloped = Math.abs(b.end.z - b.start.z) >= HORIZONTAL_BOTTOM_TOL_MM;
+    if (!isSloped) continue;
+    if (stickToPointDistance(b.start, b.end, stud.start) < STUD_TO_PLATE_TOL_MM) {
+      return true;
+    }
+    if (stickToPointDistance(b.start, b.end, stud.end) < STUD_TO_PLATE_TOL_MM) {
+      return true;
+    }
+  }
+
+  // No definitive plate match — fall back to frame-level rake mode.
+  return frameRakeMode(frame) === "rake";
+}
+
 export interface SimplifyRpDecision {
   frame: string;
   decision: "APPLY" | "SKIP";
@@ -112,45 +223,70 @@ export interface SimplifyRpDecision {
   studStartsRewritten?: string[];
   /** Sticks (S) whose end side received a Chamfer @end. */
   studEndsChamfered?: string[];
+  /** Frame's rake mode classification. */
+  rakeMode?: string;
 }
 
 /** Apply the RP stud-only rewrite to a single frame. */
 export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
   const studStartsRewritten: string[] = [];
   const studEndsChamfered: string[] = [];
+  const rakeMode = frameRakeMode(frame);
 
   for (const stick of frame.sticks) {
     if (!isSstud(stick)) continue;
 
-    // Replace standard wall-stud start cap with RP plate-over-plate notch.
-    const removed = stripStandardStartCap(stick.tooling);
-    stick.tooling.push(
-      { kind: "spanned", type: "Swage", startPos: RP_STUD_START_SPAN_LO_MM, endPos: RP_STUD_START_SPAN_HI_MM },
-      { kind: "point", type: "InnerDimple", pos: RP_STUD_START_DIMPLE_OFFSET_MM },
-    );
-    studStartsRewritten.push(stick.name);
-    void removed;
+    // Strip the standard wall-stud start cap regardless of mode.
+    stripStandardStartCap(stick.tooling);
 
-    // Add Chamfer @end if not already present.
-    let hasEndChamfer = false;
-    for (const op of stick.tooling) {
-      if (op.kind === "end" && op.type === "Chamfer") { hasEndChamfer = true; break; }
+    // Per-stud classification: does this stud's START meet a sloped (rake)
+    // bottom plate? If yes → chord-style cap. Else → plate-over-plate cap.
+    const isRakeStud = studStartIsOnSlopedBottom(stick, frame);
+
+    if (isRakeStud) {
+      // Rake stud: meets a sloped chord at its start. Ref Detailer emits
+      // chord-style start cap (Chamfer @start + ID@10 + Swage 0..66.1).
+      stick.tooling.push(
+        { kind: "start", type: "Chamfer" },
+        { kind: "point", type: "InnerDimple", pos: RP_RAKE_STUD_START_DIMPLE_OFFSET_MM },
+        { kind: "spanned", type: "Swage", startPos: 0, endPos: RP_RAKE_STUD_START_SPAN_HI_MM },
+      );
+    } else {
+      // Standard RP stud: meets a horizontal bottom plate at start. Ref emits
+      // plate-over-plate start cap (Swage 56..101 + ID@78.5).
+      stick.tooling.push(
+        { kind: "spanned", type: "Swage", startPos: RP_STUD_START_SPAN_LO_MM, endPos: RP_STUD_START_SPAN_HI_MM },
+        { kind: "point", type: "InnerDimple", pos: RP_STUD_START_DIMPLE_OFFSET_MM },
+      );
     }
-    if (!hasEndChamfer) {
-      stick.tooling.push({ kind: "end", type: "Chamfer" });
-      studEndsChamfered.push(stick.name);
+    studStartsRewritten.push(stick.name);
+
+    // Add Chamfer @end if not already present (both modes).
+    // Skip Chamfer @end on rake studs that already got Chamfer @start — ref
+    // Detailer emits Chamfer at exactly ONE end on rake studs (the meeting
+    // end, which we put on @start above).
+    if (!isRakeStud) {
+      let hasEndChamfer = false;
+      for (const op of stick.tooling) {
+        if (op.kind === "end" && op.type === "Chamfer") { hasEndChamfer = true; break; }
+      }
+      if (!hasEndChamfer) {
+        stick.tooling.push({ kind: "end", type: "Chamfer" });
+        studEndsChamfered.push(stick.name);
+      }
     }
   }
 
   if (studStartsRewritten.length === 0 && studEndsChamfered.length === 0) {
-    return { frame: frame.name, decision: "SKIP", reason: "no S-prefix studs found" };
+    return { frame: frame.name, decision: "SKIP", reason: "no S-prefix studs found", rakeMode };
   }
   return {
     frame: frame.name,
     decision: "APPLY",
     reason:
-      `${studStartsRewritten.length} stud starts rewritten, ` +
+      `${studStartsRewritten.length} stud starts rewritten (${rakeMode}), ` +
       `${studEndsChamfered.length} stud ends chamfered`,
+    rakeMode,
     ...(studStartsRewritten.length ? { studStartsRewritten } : {}),
     ...(studEndsChamfered.length ? { studEndsChamfered } : {}),
   };

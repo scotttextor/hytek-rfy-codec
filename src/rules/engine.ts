@@ -8,12 +8,12 @@
 import type { RfyToolingOp } from "../format.js";
 import type { Anchor, OpRule, RuleGroup, RuleApplicationResult, StickContext } from "./types.js";
 
-function generatePositions(anchor: Anchor, length: number): number[] {
+function generatePositions(anchor: Anchor, length: number, ctx?: StickContext): number[] {
   switch (anchor.kind) {
     case "startAnchored":
-      return [anchor.offset];
+      return [anchor.offsetFn && ctx ? anchor.offsetFn(ctx) : anchor.offset];
     case "endAnchored":
-      return [length - anchor.offset];
+      return [length - (anchor.offsetFn && ctx ? anchor.offsetFn(ctx) : anchor.offset)];
     case "centred":
       return [length / 2 + (anchor.offset ?? 0)];
     case "fraction":
@@ -76,7 +76,7 @@ function round(n: number): number { return Math.round(n * 10000) / 10000; }
 /** Apply a single rule to a stick context — emits 0..n ops. */
 export function applyRule(rule: OpRule, ctx: StickContext): RfyToolingOp[] {
   if (rule.predicate && !rule.predicate(ctx)) return [];
-  const positions = generatePositions(rule.anchor, ctx.length);
+  const positions = generatePositions(rule.anchor, ctx.length, ctx);
   const ops: RfyToolingOp[] = [];
   for (const p of positions) {
     if (p < 0 || p > ctx.length) continue;

@@ -374,6 +374,9 @@ function buildOurProject(xmlText) {
         // For Kb sticks, kbTopAttached = end.z > start.z (after normalization
         // start = mid-wall, end = plate-attached). Used by chamfer-end rule.
         const kbTopAttached = /^Kb\d/.test(stickName) && stick.end.z > stick.start.z;
+        // Stick start Z (post-trim). Used by InnerService rule to anchor on
+        // world Z (electrical schedule) instead of stick-local offset.
+        const stickStartZ = Math.min(stick.start.z, stick.end.z);
         stick.tooling = generateTooling({
           role, length, profileFamily,
           gauge: profile.gauge, flipped,
@@ -384,6 +387,8 @@ function buildOurProject(xmlText) {
           framePairedHeader,
           inputFlipped,
           kbTopAttached,
+          stickStartZ,
+          frameElevation,
         });
         // Kb InnerService at horizontal Service crossings.
         //

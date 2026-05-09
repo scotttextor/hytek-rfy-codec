@@ -101,20 +101,33 @@ export const RULE_TABLE: RuleGroup[] = [
         confidence: "high",
         notes: "End dimple at length-16.5",
       },
-      // Service holes — only on wall studs (LBW or NLBW plans) with length >= ~500
+      // Service holes — only on wall studs (LBW or NLBW plans) with length >= ~500.
+      // 2026-05-09: anchored on world Z. Detailer's electrical schedule places
+      // InnerService at world z = 300 / 450 mm. Stud local pos =
+      // (300 - stickStartZ) and (450 - stickStartZ). Handles:
+      //  - ground-floor wall studs at z=2..2763: local pos ≈ 296-298 (matches
+      //    legacy @296)
+      //  - walls with B-plate below floor at z=-43..2763 (HG260044 LBW L8):
+      //    local pos = 343 (matches ref @341 within 2mm)
+      //  - upper-story studs at z=2357..3293: pos = -2057, suppressed by
+      //    engine `if (p < 0)` filter, matching ref which doesn't emit
+      //    InnerService on upper-story walls
+      // Falls back to legacy @296/@446 if stickStartZ unavailable.
       {
         toolType: "InnerService", kind: "point",
-        anchor: { kind: "startAnchored", offset: 296 },
+        anchor: { kind: "startAnchored", offset: 296,
+          offsetFn: (ctx) => ctx.stickStartZ !== undefined ? 300 - ctx.stickStartZ : 296 },
         confidence: "medium",
         predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 296 + 200,
-        notes: "Electrical service hole at ~300mm from start (outlet height)",
+        notes: "Electrical service hole at world z=300 (outlet height)",
       },
       {
         toolType: "InnerService", kind: "point",
-        anchor: { kind: "startAnchored", offset: 446 },
+        anchor: { kind: "startAnchored", offset: 446,
+          offsetFn: (ctx) => ctx.stickStartZ !== undefined ? 450 - ctx.stickStartZ : 446 },
         confidence: "medium",
         predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
-        notes: "Electrical service hole at ~450mm from start (paired with 296mm)",
+        notes: "Electrical service hole at world z=450 (paired with 300)",
       },
       // Web holes are emitted in framecad-import.ts as a post-processing step
       // (the rules engine emits one op per rule entry, but we need N evenly-
@@ -133,19 +146,22 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
       // Service holes — same as 70mm pattern (electrical outlet/switch heights).
+      // Anchored on world Z (see 70mm rule above for derivation).
       {
         toolType: "InnerService", kind: "point",
-        anchor: { kind: "startAnchored", offset: 296 },
+        anchor: { kind: "startAnchored", offset: 296,
+          offsetFn: (ctx) => ctx.stickStartZ !== undefined ? 300 - ctx.stickStartZ : 296 },
         confidence: "medium",
         predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 296 + 200,
-        notes: "89mm stud: electrical outlet hole at 296mm",
+        notes: "89mm stud: electrical outlet hole at world z=300",
       },
       {
         toolType: "InnerService", kind: "point",
-        anchor: { kind: "startAnchored", offset: 446 },
+        anchor: { kind: "startAnchored", offset: 446,
+          offsetFn: (ctx) => ctx.stickStartZ !== undefined ? 450 - ctx.stickStartZ : 446 },
         confidence: "medium",
         predicate: (ctx) => isWallPlan(ctx) && ctx.length >= 500 && ctx.length >= 446 + 200,
-        notes: "89mm stud: paired service hole at 446mm",
+        notes: "89mm stud: paired service hole at world z=450",
       },
     ],
   },

@@ -474,16 +474,27 @@ export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
     }
     studStartsRewritten.push(stick.name);
 
-    // Add Chamfer @end if not already present. Both rake and standard modes
-    // want Chamfer @end (verified vs HG260044 R1/R12 S1+S3+S4 — all have
-    // Chamfer @end in ref).
-    let hasEndChamfer = false;
-    for (const op of stick.tooling) {
-      if (op.kind === "end" && op.type === "Chamfer") { hasEndChamfer = true; break; }
-    }
-    if (!hasEndChamfer) {
-      stick.tooling.push({ kind: "end", type: "Chamfer" });
-      studEndsChamfered.push(stick.name);
+    // Chamfer @end policy (verified vs HG260044):
+    //   Most RP studs want Chamfer @end, but rake studs in mixed-bottom frames
+    //   (one sloped B + one horizontal B, like R4) don't because their end
+    //   meets a sloped T-plate inside the panel rather than the corner edge.
+    //   Specifically: R4 S1-S4 are long rakes in mixed-B; their @end is at a
+    //   panel-internal slope-meet, no chamfer.
+    const stickLengthForChamfer = computeStickLength(stick);
+    const isShortRakeCripple = isRakeStud && stickLengthForChamfer < 600;
+    const inMixedBFrame = rakeMode === "horizontal"
+      && frame.sticks.some(s => isBplate(s) && Math.abs(s.end.z - s.start.z) >= HORIZONTAL_BOTTOM_TOL_MM);
+    const isLongRakeInMixed = isRakeStud && !isShortRakeCripple && inMixedBFrame;
+
+    if (!isLongRakeInMixed) {
+      let hasEndChamfer = false;
+      for (const op of stick.tooling) {
+        if (op.kind === "end" && op.type === "Chamfer") { hasEndChamfer = true; break; }
+      }
+      if (!hasEndChamfer) {
+        stick.tooling.push({ kind: "end", type: "Chamfer" });
+        studEndsChamfered.push(stick.name);
+      }
     }
   }
 

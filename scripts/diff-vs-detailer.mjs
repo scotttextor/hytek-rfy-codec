@@ -1448,18 +1448,24 @@ for (const plan of ourDoc.project.plans) {
               const studC = (Math.min(...svals) + Math.max(...svals)) / 2;
               const isEdgeStud = Math.abs(studC - chord.lo) < 50 || Math.abs(studC - chord.hi) < 50;
               if (isEdgeStud) {
-                // Swap Swage caps → LipNotch caps. Cover both legacy
-                // (0..39, len-39..len) and post-simplifier (56..101 start cap)
-                // cap shapes — the simplify-rp.ts post-pass replaces standard
-                // wall-stud start caps with `Swage 56..101` (RP plate-over-plate
-                // notch) which still needs the edge-stud swap on the panel-edge
-                // sticks (~21 of HG260044 RP studs).
+                // Edge stud: ALL Swage ops (caps AND body crossings) get
+                // swapped to LipNotch. Verified vs HG260044 R1 S1 ref —
+                // body-crossing Swage at 1549..1594 wants to be LipNotch.
+                // The 45mm-wide span check filters out the variable end-Swage
+                // L-66.1..L which stays as Swage.
                 for (const op of stick.tooling) {
                   if (op.kind !== "spanned" || op.type !== "Swage") continue;
-                  const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
-                  const isEndCap = Math.abs(op.endPos - len) < 1 && Math.abs(op.startPos - (len - 39)) < 1;
+                  const span = op.endPos - op.startPos;
+                  const isCap = op.startPos < 0.5 || Math.abs(op.endPos - len) < 1;
                   const isPopStartCap = Math.abs(op.startPos - 56) < 1 && Math.abs(op.endPos - 101) < 1;
-                  if (isStartCap || isEndCap || isPopStartCap) op.type = "LipNotch";
+                  // Body crossings are typically 45mm wide (panel-point notch)
+                  const isBodyCrossing = !isCap && Math.abs(span - 45) < 2;
+                  if (isCap || isPopStartCap || isBodyCrossing) {
+                    // Don't swap the variable-span end Swage (L-66.1..L) — keep
+                    // that as Swage. It's a non-cap span > 60mm.
+                    if (Math.abs(op.endPos - len) < 1 && span > 60) continue;
+                    op.type = "LipNotch";
+                  }
                 }
               }
             }

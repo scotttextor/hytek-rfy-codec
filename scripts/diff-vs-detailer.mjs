@@ -1471,13 +1471,9 @@ for (const plan of ourDoc.project.plans) {
             }
           }
         }
-        // For T/B chords: swap LipNotch caps to Swage caps (RP convention).
-        // Verified vs HG260012 RP T1 ref: caps are Swage[0..39], we emit LipNotch.
-        // 2026-05-09: DISABLED on T plates — HG260044 corpus shows ref uses
-        // variable-span LipNotch (0..21.7, 0..58.9, 0..66.1) on sloped T
-        // plates rather than Swage 0..39. The swap was reverting that to
-        // standard Swage and creating 48 net-negative ops on HG260044. Keep
-        // for B plates (R6/R8 etc B1 ref does want Swage caps).
+        // For B chords: swap LipNotch caps to Swage caps (RP convention).
+        // Verified vs HG260012/HG260044: most B-plate caps want Swage; some
+        // (R2 B1) keep LipNotch and create 1-2 extras, but net positive.
         if (/^B\d/.test(stick.name) && len > 100) {
           for (const op of stick.tooling) {
             if (op.kind !== "spanned" || op.type !== "LipNotch") continue;

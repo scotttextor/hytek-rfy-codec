@@ -290,14 +290,26 @@ export function computeTb2bWebPositions(sticks: ReadonlyArray<MetaStick>): Map<s
         recordChordWeb(keyB, keyA, posB, dot);
       }
       // Chord-chord apex 2-bolt pair rule.
+      // Verified vs HG260001 PK6/PK10/PK12: this pair-bolt fires only when
+      // both top-chords meet AT THE TRUSS APEX (the highest-z point in the
+      // frame). Earlier the rule fired at any chord-chord meeting point in
+      // an end-zone, which produced extras at heel-side T-T meetings (e.g.
+      // T4-T7 in TN6-1 PK10) where Detailer doesn't emit the pair.
       const APEX_PAIR_OFFSET = 153.4;
       const APEX_END_THRESHOLD = 50;
+      const APEX_Z_TOLERANCE = 50;  // mm — meeting z must be within this of frame max-z
       if (aIsChord && bIsChord) {
         const aAtEnd = Math.min(posA, inter.L1 - posA) < APEX_END_THRESHOLD;
         const bAtEnd = Math.min(posB, inter.L2 - posB) < APEX_END_THRESHOLD;
         const isTApex = (sA.usage === "topchord" || sB.usage === "topchord");
         const isTTApex = sA.usage === "topchord" && sB.usage === "topchord";
-        if (aAtEnd && bAtEnd && isTTApex) {
+        // Meeting z = the z-coordinate of the chord-chord intersection.
+        // For top chords meeting at apex this is at frame max-z; for
+        // top chords meeting at heel/eaves this is at frame min-z (or
+        // somewhere in between for partial-truss configurations).
+        const meetingZ = sA.start3D.z + inter.t * (sA.end3D.z - sA.start3D.z);
+        const atApexZ = (ranges.z[1] - meetingZ) < APEX_Z_TOLERANCE;
+        if (aAtEnd && bAtEnd && isTTApex && atApexZ) {
           const aNearStart = posA < inter.L1 / 2;
           const bNearStart = posB < inter.L2 / 2;
           const sign_a = aNearStart ? +1 : -1;
@@ -306,7 +318,7 @@ export function computeTb2bWebPositions(sticks: ReadonlyArray<MetaStick>): Map<s
           const pairB = posB + sign_b * APEX_PAIR_OFFSET;
           if (pairA >= 0 && pairA <= inter.L1) push(keyA, pairA);
           if (pairB >= 0 && pairB <= inter.L2) push(keyB, pairB);
-        } else if (isTApex && (aAtEnd || bAtEnd)) {
+        } else if (isTApex && (aAtEnd || bAtEnd) && atApexZ) {
           if (aAtEnd && !bAtEnd && sB.usage === "topchord") {
             const bNearStart = posB < inter.L2 / 2;
             const sign_b = bNearStart ? +1 : -1;
@@ -604,6 +616,62 @@ export function simplifyTb2bTrussFrame(
       meta3D.end3D.y - meta3D.start3D.y,
       meta3D.end3D.z - meta3D.start3D.z,
     );
+
+    // Outer-vertical-W InnerDimple rule (HN-frames in particular).
+    // Verified vs HG260001 PK9 HN18-1: vertical Web sticks (e.g. W14, W17)
+    // that have a Box-pair partner (another vertical W at the same y but with
+    // z range inset by ~50mm at each end) are the "outer" piece of a
+    // back-to-back pair and receive 3 InnerDimples evenly spaced from @100
+    // to @(L-100). The Box-pair partner (the "inner" piece) gets only its
+    // own InnerDimples via the box-piece detection elsewhere; the codec
+    // currently doesn't pair-merge so we just add the InnerDimples on the
+    // outer where Detailer expects them.
+    //
+    // Detection: stick.name matches /^W\d/ AND meta3D is vertical (horiz
+    // span < 1mm) AND meta3DLen > 1500mm AND another stick in the frame
+    // with same y-range start (within 1mm) but z-range INSET by 40-60mm
+    // at both ends exists.
+    if (/^W\d/.test(stick.name)) {
+      const dy = meta3D.end3D.y - meta3D.start3D.y;
+      const dz = meta3D.end3D.z - meta3D.start3D.z;
+      const horizSpan = Math.hypot(dy, dz === 0 ? 1 : 0);  // |Δy|
+      const isVerticalW = Math.abs(dy) < 1.0 && Math.abs(dz) > 100;
+      if (isVerticalW && meta3DLen > 1500) {
+        const myY = meta3D.start3D.y;
+        const myZmin = Math.min(meta3D.start3D.z, meta3D.end3D.z);
+        const myZmax = Math.max(meta3D.start3D.z, meta3D.end3D.z);
+        let hasBoxPair = false;
+        for (let k = 0; k < metaSticks.length; k++) {
+          if (k === stickIdx) continue;
+          const o = metaSticks[k]!;
+          if (!/^W\d/.test(o.name)) continue;
+          if (Math.abs(o.start3D.y - myY) > 1.0) continue;
+          if (Math.abs(o.end3D.y - myY) > 1.0) continue;
+          const oZmin = Math.min(o.start3D.z, o.end3D.z);
+          const oZmax = Math.max(o.start3D.z, o.end3D.z);
+          // partner is "inset" by 40-60mm at each end
+          const insetStart = oZmin - myZmin;
+          const insetEnd = myZmax - oZmax;
+          if (insetStart > 40 && insetStart < 60 && insetEnd > 40 && insetEnd < 60) {
+            hasBoxPair = true;
+            break;
+          }
+        }
+        if (hasBoxPair) {
+          const L = meta3DLen;
+          const positions = [100, L / 2, L - 100];
+          for (const p of positions) {
+            const exists = stick.tooling.some(
+              (o) => o.kind === "point" && o.type === "InnerDimple" && Math.abs(o.pos - p) < 1,
+            );
+            if (!exists) {
+              stick.tooling.push({ kind: "point", type: "InnerDimple", pos: Math.round(p * 100) / 100 });
+            }
+          }
+        }
+      }
+      void horizSpan;
+    }
 
     // Box-piece InnerDimple ops (chord-on-chord overlap rule). The raw
     // dimple positions from `computeBoxDimples` are in the chord's

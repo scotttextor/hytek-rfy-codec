@@ -313,13 +313,13 @@ export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
   const platesChamfered: string[] = [];
   const rakeMode = frameRakeMode(frame);
 
-  // T-plate Chamfer pass: ref Detailer emits Chamfer @start AND @end on every
-  // T-plate in RP frames (verified 2026-05-09 vs HG260044 GF-RP-70.075 — 16
-  // T-plates miss BOTH chamfers, 12 miss exactly one). The codec's per-stick
-  // rule doesn't emit Chamfer on plates, and the diff-harness raking-frame
-  // chamfer rule only fires on `wall` frames (RP frames are `RoofPanel`).
-  // We emit unconditionally on T-plates here; the rules-engine doesn't emit
-  // Chamfer on plates so there's no double-emission risk.
+  // T-plate Chamfer pass: ref Detailer emits Chamfer at both ends on most
+  // T-plates in RP frames. Strategy: emit on every T-plate (the unconditional
+  // approach netted +3.6pp on HG260044 vs +0pp baseline, with ~14 over-
+  // emissions on horizontal-or-single-T frames being a small fraction of the
+  // 50+ wins). A finer per-stick predicate (skip horizontal T-plates that
+  // don't meet a sloped neighbour) is a follow-up — see B/N pattern below for
+  // template (chamferBottomAtTConnection's connection-side classifier).
   for (const stick of frame.sticks) {
     if (!isTplate(stick)) continue;
     const added = addBothEndChamfers(stick);
@@ -328,10 +328,14 @@ export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
 
   // B/N Chamfer pass: ref Detailer emits Chamfer at exactly ONE end — the end
   // that meets a sloped T-plate. Verified 2026-05-09 vs HG260044 GF-RP-70.075
-  // (~14 B-plates and ~9 nogs need this) — the chamfer side correlates exactly
-  // with the T-plate connection point.
+  // (~14 B-plates and ~9 nogs need this) — the chamfer side correlates with
+  // the T-plate connection point. Only fire on HORIZONTAL B/N sticks, since
+  // sloped B-plates (R4 B1, R12 B1) follow a different chamfer convention
+  // and would receive false-positives.
   for (const stick of frame.sticks) {
     if (!isBplate(stick) && !isNog(stick)) continue;
+    const isHorizontal = Math.abs(stick.end.z - stick.start.z) < HORIZONTAL_BOTTOM_TOL_MM;
+    if (!isHorizontal) continue;
     const side = chamferBottomAtTConnection(stick, frame);
     if (side) platesChamfered.push(stick.name + "@" + side);
   }

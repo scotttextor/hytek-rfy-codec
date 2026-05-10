@@ -27,10 +27,21 @@ export interface SimplifyTinDecision {
  *  for the plan-name + frame-name gate; this function blindly applies the
  *  rewrite when called. */
 export declare function simplifyTinTrussFrame(frame: ParsedFrame): SimplifyTinDecision;
+/** Marker key on a `ParsedStick`: when set, downstream `mergeStickTooling`
+ *  skips the frame-context ops merge for that stick. Used by the HN
+ *  panel-point rule to prevent the codec's per-web-crossing context ops
+ *  from re-polluting top chords after this rule's strip+emit pass.
+ *  Exported so `synthesize-plans.ts` can read the marker. */
+export declare const HN_PANELPOINT_APPLIED_KEY = "_tinHnPanelPatternApplied";
 /** Public entry point for the TIN simplifier post-pass.  Walks every plan
  *  and frame in the project.
  *
- *  Two scoped sub-rules run:
+ *  Sub-rules (run order matters):
+ *   (0) HN-frame top-chord panel-point pattern (Agent TIN3 2026-05-11).
+ *       MUST run BEFORE `simplifyTinTrussFrame` mutates web coordinates,
+ *       because the simplifier's vertical-W trim (6.5mm on long verticals)
+ *       creates a length-dependent ~2mm chord-projection drift that
+ *       degrades panel-point match.
  *   (a) The original truss simplifier (`simplifyTinTrussFrame`) gated to
  *       frame names matching `/^(HN|TN|TS|TI)\d/i`. Handles vertical-W trim,
  *       diagonal-W chamfer-strip, bottom-chord ScrewHoles cleanup.

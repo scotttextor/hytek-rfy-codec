@@ -740,6 +740,62 @@ export function generateFrameContextOps(
     }
   }
 
+  // IDS (2026-05-11): cripple-companion S studs receive an additional shoulder-
+  // fill InnerDimple pattern that ours otherwise misses. A "cripple-companion"
+  // S stud is one with usage="Stud" that has a SECOND, shorter stud at the same
+  // bbox.cx (a vertically-stacked cripple companion that starts ~50mm above
+  // the bottom plate and ends ~50mm below the top plate, length = parent - 100).
+  //
+  // These pairs occur at wall-ends and around stepped/raked top-plate transitions.
+  // Detailer adds shoulder dimples 81.5mm INWARD from each cap dimple (so @98
+  // and @length-98), plus a midpoint bisection between the start shoulder and
+  // the first nog crossing, plus a midpoint bisection between the last nog
+  // crossing and the end shoulder when that gap exceeds ~1200mm.
+  //
+  // Predicate verified 2026-05-11 vs HG260001 PK4-LBW (10/10 sticks), PK5-LBW
+  // (4/4), HG260044 GF-LBW (21/21). HG260044 GF-LBW L6 short studs (length<1000)
+  // do NOT receive the pattern (no nog crossing inside the body). Predicate
+  // therefore additionally requires at least one nog crossing on this stud's body
+  // — the first nog dimple position is reused as the bisection anchor.
+  //
+  // Scope: LBW plans only. NLBW pairs (4 sticks in HG260001 PK1+PK2 NLBW) use
+  // a different sill-style pattern (@57.5 + bisection) handled elsewhere.
+  //
+  // The end shoulder position depends on the companion's TOP-Z extent:
+  //   end-shoulder local pos = (companion.yMax - stud.yMin) - 48
+  //
+  // For all 35+ corpus sticks where the companion is exactly 50mm inset at the
+  // top (companion.yMax = stud.yMax - 50, length=parent-100), this resolves to
+  // length - 98. For HG260001 PK5 L38/S4 the companion S5 is 46mm inset at the
+  // top (length=parent-96), so the end-shoulder lands at 2358 = length-94.
+  // Verified by matching all 35 ref sticks across HG260001 + HG260044 LBW with
+  // this single formula. (See Agent IDS analysis docs for the derivation.)
+  const crippleCompanionByStudName = new Map<string, StickWithBox>();
+  for (let i = 0; i < studs.length; i++) {
+    const a = studs[i]!;
+    if (String(a.stick.usage ?? "").toLowerCase() !== "stud") continue;
+    if (a.role !== "S") continue;
+    let bestCompanion: StickWithBox | null = null;
+    for (let j = 0; j < studs.length; j++) {
+      if (i === j) continue;
+      const b = studs[j]!;
+      if (String(b.stick.usage ?? "").toLowerCase() !== "stud") continue;
+      if (b.role !== "S") continue;
+      // Same bbox.cx (within 1mm) — paired vertically-stacked stud column.
+      if (Math.abs(a.box.cx - b.box.cx) > 1) continue;
+      // 'a' is the LONGER stud of the pair (the one that gets the shoulder pattern).
+      // The companion 'b' must be shorter (cripple inset from both ends).
+      if (a.stick.length <= b.stick.length) continue;
+      // Pick the longest qualifying companion (handles 3+-stud columns).
+      if (bestCompanion === null || b.stick.length > bestCompanion.stick.length) {
+        bestCompanion = b;
+      }
+    }
+    if (bestCompanion !== null) {
+      crippleCompanionByStudName.set(a.stick.name, bestCompanion);
+    }
+  }
+
   // Per-stud lip-side neighbor detection. At any horizontal-member crossing
   // on a stud, Detailer emits Swage if another stud's web is within ~45mm on
   // the lip-facing side (lip flange pinned by partner web), else LipNotch.
@@ -1099,6 +1155,76 @@ export function generateFrameContextOps(
         ? startPos + 9
         : endPos - 9;
       stickOps.push({ kind: "point", type: "InnerDimple", pos: round(dimplePos) });
+    }
+
+    // IDS (2026-05-11): shoulder-fill InnerDimples for cripple-companion S studs
+    // in LBW plans. See `crippleCompanionByStudName` predicate above for scope.
+    //
+    // Pattern (verified vs HG260001 PK4 + PK5 LBW, HG260044 GF-LBW):
+    //   start cap dimple @16.5  (already emitted by base rule)
+    //   start shoulder  @98     (NEW — fixed offset, +81.5 from start cap)
+    //   lower bisection @(98+nogPos)/2     (NEW — midpoint of shoulder→nog)
+    //   nog dimple      @nogPos (already emitted by per-nog loop above)
+    //   upper bisection @(nogPos+endShoulder)/2  (NEW — IF gap > 1200mm)
+    //   end shoulder    @(companion.yMax - stud.yMin - 52)  (NEW — companion-anchored)
+    //   end cap dimple  @length-16.5  (already emitted by base rule)
+    const crippleCompanion = crippleCompanionByStudName.get(stud.stick.name);
+    if (
+      crippleCompanion !== undefined &&
+      isWallPlan({ planName: planNameForStuds }) &&
+      /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(planNameForStuds)
+    ) {
+      // Locate the canonical body-nog crossing on this stud (the same nog the
+      // per-nog loop above emitted a dimple for). All matched corpus sticks
+      // have a single canonical nog at z≈1330; if there are multiple nog
+      // dimples already emitted, use the one closest to the stud's mid-length
+      // since the shoulder-fill rule treats it as the central anchor.
+      let canonicalNogPos: number | null = null;
+      for (const nog of nogs) {
+        const xOverlap = nog.box.xMax >= stud.box.xMin && nog.box.xMin <= stud.box.xMax;
+        if (!xOverlap) continue;
+        const crossingY = nog.box.cy;
+        if (crossingY < stud.box.yMin - 1 || crossingY > stud.box.yMax + 1) continue;
+        const localPos = studLocalPosition(stud, crossingY) + studShift;
+        if (localPos < 50) continue;
+        if (localPos > stud.stick.length - 50) continue;
+        // Pick the crossing nearest to mid-length (handles the unusual
+        // multi-nog stud; canonical wall studs only have one mid-body nog).
+        if (canonicalNogPos === null ||
+            Math.abs(localPos - stud.stick.length / 2) <
+            Math.abs(canonicalNogPos - stud.stick.length / 2)) {
+          canonicalNogPos = localPos;
+        }
+      }
+      // Only emit the shoulder fill when there's a body-nog anchor; without it
+      // the bisection logic has no meaningful pivot, and the corpus shows that
+      // nog-less short studs (HG260044 L6, length<1000) DO NOT get the pattern.
+      if (canonicalNogPos !== null) {
+        const SHOULDER_OFFSET = 98;     // fixed start-shoulder pos (matches @98)
+        const BISECT_THRESHOLD = 1200;  // bisect upper segment if gap exceeds this
+        const startShoulder = SHOULDER_OFFSET;
+        // End shoulder anchored to the companion's TOP-Z extent (handles the
+        // L38/S4 outlier where the companion is 46mm inset at top instead of 50).
+        // 48mm offset is calibrated against post-end-trim companion.yMax (which
+        // is the original companion top-z minus 2mm of end-trim). The original
+        // 50mm pre-trim inset + 2mm trim - 4mm gap to dimple = 48mm here.
+        const endShoulder = (crippleCompanion.box.yMax - stud.box.yMin) - 48;
+        // Start shoulder + lower-region bisection (always — gap shoulder→nog is
+        // ~1227mm, above threshold).
+        stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startShoulder) });
+        const lowerGap = canonicalNogPos - startShoulder;
+        if (lowerGap > BISECT_THRESHOLD) {
+          stickOps.push({ kind: "point", type: "InnerDimple",
+            pos: round((startShoulder + canonicalNogPos) / 2) });
+        }
+        // Upper region: bisect if gap nog→endShoulder exceeds threshold.
+        const upperGap = endShoulder - canonicalNogPos;
+        if (upperGap > BISECT_THRESHOLD) {
+          stickOps.push({ kind: "point", type: "InnerDimple",
+            pos: round((canonicalNogPos + endShoulder) / 2) });
+        }
+        stickOps.push({ kind: "point", type: "InnerDimple", pos: round(endShoulder) });
+      }
     }
   }
 

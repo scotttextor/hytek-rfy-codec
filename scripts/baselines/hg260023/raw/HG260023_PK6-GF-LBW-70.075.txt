@@ -3,15 +3,15 @@ OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-LBW-70.075.
 Setup:    F325iT 70mm
 Frames:   our 12 | ref 12
 
-OPS:      our 1946 | ref 1912
-MATCHED:  1892  (99.0% of ref)
-MISSING:  20  (ops Detailer has, we don't)
-EXTRAS:   54   (ops we have, Detailer doesn't)
+OPS:      our 1944 | ref 1912
+MATCHED:  1896  (99.2% of ref)
+MISSING:  16  (ops Detailer has, we don't)
+EXTRAS:   48   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-LipNotch@span            309         8       28   (97% ref-coverage)
+LipNotch@span            313         4       22   (99% ref-coverage)
 InnerService@pt          252         8       13   (97% ref-coverage)
 Swage@span               366         2        6   (99% ref-coverage)
 InnerNotch@span           86         2        3   (98% ref-coverage)
@@ -30,8 +30,8 @@ FRAMES WITH GAPS:
     S2       EXTRAS  (1): Swage 2578.0..2623.0
 
   L19 (2 sticks with gaps)
-    Kb1      MISSING (2): InnerService @873.5 | Swage 1434.2..1476.6
-    Kb1      EXTRAS  (2): Swage 1354.8..1476.6 | Chamfer @end
+    Kb1      MISSING (1): InnerService @873.5
+    Kb1      EXTRAS  (1): Chamfer @end
     Kb2      MISSING (4): InnerService @814.3 | InnerService @891.1 | InnerService @1054.4 | Swage 1334.4..1377.7
     Kb2      EXTRAS  (4): InnerService @304.4 | InnerService @467.8 | Swage 1264.2..1377.7 | Chamfer @end
 
@@ -45,15 +45,11 @@ FRAMES WITH GAPS:
     S7       MISSING (1): LipNotch 2578.0..2623.0
     S7       EXTRAS  (3): InnerService @296.0 | InnerService @446.0 | Swage 2578.0..2623.0
 
-  L22 (7 sticks with gaps)
+  L22 (5 sticks with gaps)
     T1       EXTRAS  (3): LipNotch 58.0..200.3 | LipNotch 500.2..548.3 | LipNotch 2633.0..2672.0
     B1       EXTRAS  (1): LipNotch 58.0..97.0
     B3       EXTRAS  (1): LipNotch 508.0..547.0
     B5       EXTRAS  (2): LipNotch 36.0..81.0 | LipNotch 93.0..132.0
-    H1       MISSING (2): LipNotch 195.2..309.8 | LipNotch 544.2..658.8
-    H1       EXTRAS  (4): LipNotch 192.1..242.1 | LipNotch 262.9..312.9 | LipNotch 541.1..591.1 | LipNotch 611.9..661.9
-    H2       MISSING (2): LipNotch 270.2..322.0 | LipNotch 779.1..831.0
-    H2       EXTRAS  (2): LipNotch 272.2..322.2 | LipNotch 781.2..831.2
     S11      EXTRAS  (2): InnerService @296.0 | InnerService @446.0
 
   L27 (5 sticks with gaps)
@@ -68,8 +64,8 @@ FRAMES WITH GAPS:
 
   L43 (3 sticks with gaps)
     N1       EXTRAS  (1): InnerService @113.0
-    Kb1      MISSING (1): InnerService @603.1
-    Kb1      EXTRAS  (1): Chamfer @start
+    Kb1      MISSING (2): InnerService @603.1 | Swage 1354.1..1476.6
+    Kb1      EXTRAS  (2): Chamfer @start | Swage 1434.6..1476.6
     Kb2      MISSING (3): InnerService @323.3 | InnerService @486.7 | InnerService @563.5
     Kb2      EXTRAS  (1): Chamfer @start
 

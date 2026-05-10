@@ -3,19 +3,19 @@ OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-TB2B-70.075
 Setup:    F325iT 70mm
 Frames:   our 24 | ref 4
 
-OPS:      our 371 | ref 393
-MATCHED:  321  (81.7% of ref)
-MISSING:  72  (ops Detailer has, we don't)
-EXTRAS:   50   (ops we have, Detailer doesn't)
+OPS:      our 387 | ref 393
+MATCHED:  333  (84.7% of ref)
+MISSING:  60  (ops Detailer has, we don't)
+EXTRAS:   54   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Web@pt                   258        50       40   (84% ref-coverage)
-RightFlange@span           9         7        3   (56% ref-coverage)
-LeftFlange@span            9         6        3   (60% ref-coverage)
+Web@pt                   262        46       40   (85% ref-coverage)
+RightFlange@span          11         5        5   (69% ref-coverage)
+LeftFlange@span           11         4        5   (73% ref-coverage)
 InnerDimple@pt            34         4        3   (89% ref-coverage)
-LipNotch@span             11         5        1   (69% ref-coverage)
+LipNotch@span             15         1        1   (94% ref-coverage)
 
 FRAMES WITH GAPS:
 
@@ -24,7 +24,8 @@ FRAMES WITH GAPS:
     T2       EXTRAS  (10): Web @91.2 | Web @166.3 | Web @230.0 | Web @1057.2 | Web @1155.5 ... +5
     B1       MISSING (4): Web @3855.8 | Web @4051.8 | Web @5528.2 | Web @5724.2
     B1       EXTRAS  (7): Web @3869.6 | Web @4040.8 | Web @5539.1 | Web @5718.7 | LeftFlange 9423.3..9580.0 ... +2
-    H6       MISSING (8): Web @84.3 | Web @1505.9 | RightFlange 0.0..32.5 | LipNotch 0.0..54.9 | LeftFlange 0.0..181.1 ... +3
+    H6       MISSING (2): LeftFlange 1409.2..1590.2 | RightFlange 1557.7..1590.2
+    H6       EXTRAS  (2): LeftFlange 1411.0..1590.2 | RightFlange 1559.5..1590.2
     T4       MISSING (16): Web @91.2 | Web @229.6 | Web @648.9 | Web @746.9 | InnerDimple @1132.2 ... +11
     T4       EXTRAS  (13): Web @350.5 | InnerDimple @1167.2 | Web @1258.0 | Web @1356.0 | InnerDimple @2284.4 ... +8
 
@@ -32,7 +33,8 @@ FRAMES WITH GAPS:
     T3       MISSING (6): Web @1361.0 | Web @1459.0 | Web @2590.4 | Web @2688.4 | Web @3543.5 ... +1
     T3       EXTRAS  (7): Web @166.3 | Web @492.2 | Web @1535.3 | Web @1634.2 | Web @2678.2 ... +2
     B1       MISSING (1): Web @6139.4
-    H5       MISSING (9): Web @84.3 | Web @1237.1 | Web @2728.3 | RightFlange 0.0..32.6 | LipNotch 0.0..54.9 ... +4
+    H5       MISSING (3): Web @1237.1 | LeftFlange 2631.6..2812.6 | RightFlange 2780.1..2812.6
+    H5       EXTRAS  (2): LeftFlange 2633.3..2812.6 | RightFlange 2781.8..2812.6
     T3       MISSING (7): Web @716.4 | Web @1028.2 | Web @1791.7 | Web @1889.7 | Web @2933.7 ... +2
     T3       EXTRAS  (6): Web @1023.6 | Web @1878.7 | Web @1976.7 | Web @3108.1 | Web @3207.1 ... +1
 

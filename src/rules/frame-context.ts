@@ -761,25 +761,26 @@ export function generateFrameContextOps(
   // raked-wall full-height detection. In raked walls (T1.start.z != T1.end.z),
   // wall-end studs have DIFFERENT lengths (the low-end stud is shorter than
   // the high-end stud), so a strict `yMax >= plateYMax - 60` check rejects
-  // the low-end stud. Instead, compare every stud's yMax to the LONGEST
-  // stud's yMax — both wall-end studs in a raked wall should still be
-  // within ~ wall-height-of-rake of the longest.
+  // the low-end stud. New rule: tolerance grows with the actual top-plate
+  // Y range (rakeSpan), so non-raked walls keep the original 60mm tolerance
+  // while raked walls allow up to (rakeSpan + 60). Restricting to actual
+  // top-plate slope avoids over-broadening on flat walls (which would let
+  // mid-wall studs above an opening qualify as wall-end).
   // 2026-05-09 (Agent S) — verified vs HG260044 LBW L11/L13: T1 z=2536-2738
   // (rake span 202mm), S1.yMax=2552, S3.yMax=2743. Old rule rejected S1
   // (2552 < 2738-60 = 2678). New rule allows both as full-height.
-  let longestStudYMax = -Infinity;
-  for (const s of studs) {
-    if (s.box.yMin <= plateYMin + 60 && s.box.yMax > longestStudYMax) {
-      longestStudYMax = s.box.yMax;
-    }
+  let rakeSpan = 0;
+  for (const p of plates) {
+    const usage = String(p.stick.usage ?? "").toLowerCase();
+    if (usage !== "topplate") continue;
+    const dy = Math.abs(p.box.yMax - p.box.yMin);
+    if (dy > rakeSpan) rakeSpan = dy;
   }
-  // Non-raked walls: this collapses to the original check (plateYMax ≈
-  // longestStudYMax). Raked walls: longestStudYMax ≈ high-end stud's yMax,
-  // which is the natural ceiling for "full height" in this frame.
+  const fullHeightTolerance = 60 + rakeSpan;
   const fullHeightStuds = studs.filter(s =>
     plates.length >= 2 &&
     s.box.yMin <= plateYMin + 60 &&
-    s.box.yMax >= longestStudYMax - 250,  // 250mm tolerance covers typical rake spans
+    s.box.yMax >= plateYMax - fullHeightTolerance,
   );
   let leftmostStudName: string | null = null;
   let rightmostStudName: string | null = null;

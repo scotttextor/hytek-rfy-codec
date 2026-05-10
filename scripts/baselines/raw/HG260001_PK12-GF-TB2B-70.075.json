@@ -1,22 +1,32 @@
 {
   "inputXml": "Y:/(17) 2026 HYTEK PROJECTS/CORAL HOMES/HG260001 LOT 289 (29) COORA CRESENT CURRIMUNDI/03 DETAILING/03 FRAMECAD DETAILER/01 XML OUTPUT/HG260001 LOT 289 COORA CRESCENT CURRIMUNDI 4551-GF-TB2B-70.075.xml",
   "reference": "Y:/(17) 2026 HYTEK PROJECTS/CORAL HOMES/HG260001 LOT 289 (29) COORA CRESENT CURRIMUNDI/06 MANUFACTURING/04 ROLLFORMER FILES/Split_HG260001/HG260001_PK12-GF-TB2B-70.075.rfy",
-  "generated": "2026-05-10T14:36:06.643Z",
+  "generated": "2026-05-10T15:34:24.261Z",
   "setup": {
     "id": "2",
     "name": "F325iT 70mm"
   },
   "totals": {
-    "ours": 753,
+    "ours": 758,
     "ref": 792,
-    "matched": 706,
-    "missing": 86,
-    "extras": 47
+    "matched": 708,
+    "missing": 84,
+    "extras": 50
   },
   "byFrame": [
     {
       "name": "TN1-1",
       "sticks": [
+        {
+          "name": "T5",
+          "oursLength": 6702.5551,
+          "refLength": 6702.55525124184,
+          "matchedCount": 15,
+          "extras": [
+            "RightFlange 6667.1..6702.6"
+          ],
+          "missing": []
+        },
         {
           "name": "W12",
           "oursLength": 1644.2492,
@@ -70,6 +80,16 @@
     {
       "name": "TN2-1",
       "sticks": [
+        {
+          "name": "T5",
+          "oursLength": 6702.5551,
+          "refLength": 6702.55527890016,
+          "matchedCount": 15,
+          "extras": [
+            "RightFlange 6667.1..6702.6"
+          ],
+          "missing": []
+        },
         {
           "name": "W12",
           "oursLength": 1644.2492,
@@ -127,14 +147,13 @@
           "name": "T2",
           "oursLength": 2940.0356,
           "refLength": 2940.03574227501,
-          "matchedCount": 7,
+          "matchedCount": 8,
           "extras": [],
           "missing": [
             "Web @43.3",
             "Web @935.4",
             "LipNotch 0.0..13.9",
-            "RightFlange 0.0..138.3",
-            "RightFlange 2904.6..2940.0"
+            "RightFlange 0.0..138.3"
           ]
         },
         {
@@ -360,14 +379,13 @@
           "name": "T5",
           "oursLength": 3613.0112,
           "refLength": 3613.01125859563,
-          "matchedCount": 8,
+          "matchedCount": 9,
           "extras": [
             "Web @91.2",
             "Web @176.7"
           ],
           "missing": [
-            "Web @173.6",
-            "RightFlange 0.0..35.4"
+            "Web @173.6"
           ]
         },
         {
@@ -466,7 +484,8 @@
           "refLength": 3613.01084588245,
           "matchedCount": 9,
           "extras": [
-            "Web @91.2"
+            "Web @91.2",
+            "RightFlange 0.0..35.4"
           ],
           "missing": []
         },

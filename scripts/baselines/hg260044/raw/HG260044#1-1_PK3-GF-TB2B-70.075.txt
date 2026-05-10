@@ -3,16 +3,16 @@ OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-TB2B-
 Setup:    F325iT 70mm
 Frames:   our 26 | ref 9
 
-OPS:      our 519 | ref 535
-MATCHED:  459  (85.8% of ref)
-MISSING:  76  (ops Detailer has, we don't)
-EXTRAS:   60   (ops we have, Detailer doesn't)
+OPS:      our 524 | ref 535
+MATCHED:  462  (86.4% of ref)
+MISSING:  73  (ops Detailer has, we don't)
+EXTRAS:   62   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 Web@pt                   357        48       54   (88% ref-coverage)
-RightFlange@span           7        12        2   (37% ref-coverage)
+RightFlange@span          10         9        4   (53% ref-coverage)
 LipNotch@span             17         7        2   (71% ref-coverage)
 LeftFlange@span           17         7        2   (71% ref-coverage)
 InnerDimple@pt            61         2        0   (97% ref-coverage)
@@ -38,21 +38,20 @@ FRAMES WITH GAPS:
     T3       MISSING (1): Web @715.9
     T3       EXTRAS  (1): Web @5469.4
     B1       MISSING (1): Web @4332.0
-    T5       MISSING (1): RightFlange 0.0..35.4
     T5       EXTRAS  (1): Web @91.2
 
   TT8-1 (4 sticks with gaps)
     T2       MISSING (1): Web @715.9
     T2       EXTRAS  (1): Web @5469.4
     B1       MISSING (1): Web @4332.0
-    T4       MISSING (2): Web @2003.5 | RightFlange 0.0..35.4
+    T4       MISSING (1): Web @2003.5
     T4       EXTRAS  (2): Web @91.2 | Web @2020.4
     W13      MISSING (1): Web @1235.8
     W13      EXTRAS  (1): Web @1228.8
 
   TT9-1 (6 sticks with gaps)
     T2       MISSING (1): Web @715.9
-    T2       EXTRAS  (1): Web @5469.4
+    T2       EXTRAS  (2): Web @5469.4 | RightFlange 5525.2..5560.6
     B1       MISSING (2): Web @4528.0 | Web @5790.6
     B1       EXTRAS  (1): Web @5782.1
     T4       MISSING (2): Web @1399.4 | RightFlange 0.0..35.4
@@ -72,7 +71,7 @@ FRAMES WITH GAPS:
 
   TT12-1 (9 sticks with gaps)
     T2       MISSING (1): Web @715.9
-    T2       EXTRAS  (1): Web @5469.4
+    T2       EXTRAS  (2): Web @5469.4 | RightFlange 5525.2..5560.6
     B1       MISSING (1): Web @4528.0
     B1       EXTRAS  (1): Web @4523.2
     T4       MISSING (2): Web @516.9 | RightFlange 0.0..35.4
@@ -113,5 +112,4 @@ FRAMES WITH GAPS:
     R8       EXTRAS  (1): Web @1658.2
     W16      MISSING (1): Web @960.1
     W16      EXTRAS  (1): Web @920.1
-    T5       MISSING (1): RightFlange 0.0..35.4
     T5       EXTRAS  (1): Web @91.2

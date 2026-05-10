@@ -10,6 +10,73 @@
  */
 import type { RfyToolingOp, ToolType } from "../format.js";
 
+/**
+ * Per-project Detailer configuration — a small set of switches that change
+ * which rules fire depending on the source project's machine setup or
+ * builder profile. Plumbed through `SynthesizePlansOptions.projectConfig`
+ * (and synonymously via `StickContext.projectConfig`) so rule predicates
+ * can read it.
+ *
+ * Rationale (2026-05-09): Two prior agents (C2 + SVC) hit the same wall —
+ * the Chamfer @end and Kb-InnerService rules verified on HG260001 LBW
+ * over-emit on HG260023 PK6 LBW (uniform-flipped Kbs) and under-emit on
+ * HG260044 LBW + NLBW (also uniform-flipped Kbs). The discriminator is
+ * **per-frame**: frames with all-Kbs-flipped-the-same-way emit BOTH
+ * end-Chamfers regardless of `inputFlipped`, while frames with mixed-
+ * flipped Kbs use the XNOR rule. We capture this as a `kbChamferMode`
+ * that the diff harness sets per-frame from the simple "uniform-vs-mixed"
+ * signal in the input XML.
+ *
+ * This config is **opt-in / backward-compat**. Un-configured projects
+ * keep the existing XNOR @end Chamfer behaviour and the legacy 28°
+ * W-Chamfer threshold — no regressions on HG260001/HG260023.
+ */
+export interface ProjectConfig {
+  /**
+   * How to emit Kb @end Chamfers on cripple-stud sticks.
+   *
+   *   "xnor-paired"        — fires when `inputFlipped === kbTopAttached`
+   *                          (default; matches HG260001/HG260023 mixed-flipped
+   *                          frames). Emits 1 chamfer per Kb.
+   *   "uniform-both-ends"  — fires unconditionally on every Kb regardless of
+   *                          flipped/topAttached. Use when the frame's Kbs
+   *                          all share the same flipped value (HG260044 LBW
+   *                          + NLBW). Emits 2 chamfers per Kb (start + end).
+   *
+   * The Chamfer @start rule fires unconditionally in BOTH modes — it is
+   * the @end rule that varies. The diff harness picks the mode per-frame
+   * by counting distinct `flipped` values among Kb sticks in the frame
+   * (uniform = 1 distinct value; mixed = 2+).
+   */
+  kbChamferMode?: "xnor-paired" | "uniform-both-ends";
+
+  /**
+   * Minimum stick angle (degrees from vertical) for W (wall-brace) sticks
+   * to receive `Chamfer @start` and `Chamfer @end`.
+   *
+   * Default: 28 (verified vs HG260001 LBW W's). HG260044 LBW frames have
+   * shorter brace runs at ~23-24° that DO get chamfered in Detailer's
+   * reference RFY — projects targeting HG260044 should set this to ~22 to
+   * include them. The diff harness sets this per-jobnum heuristic.
+   *
+   * Set to a very high value (e.g. 1e9) to disable W-Chamfers entirely.
+   */
+  wChamferAngleThreshold?: number;
+
+  /**
+   * Per-project offset applied to Kb-on-horizontal-Service-crossing
+   * `InnerService` positions. The base formula in the diff harness is
+   *   pos = |zh - z_plate| / sinθ - 10
+   * Empirically the `-10` term is project-dependent: HG260001 wants
+   * approximately the default, HG260044 wants ~+9mm relative shift, and
+   * HG260023 wants ~+16mm. Plumbed for completeness — the @end Chamfer
+   * fix is the higher-leverage change.
+   *
+   * Default: 0 (no extra shift; preserves the existing -10 baseline).
+   */
+  kbInnerServiceOffsetExtra?: number;
+}
+
 /** What we know about the stick when applying rules. */
 export interface StickContext {
   /** Role inferred from stick name prefix (e.g. "S", "T", "B", "N", "Kb", "W"). */
@@ -66,6 +133,30 @@ export interface StickContext {
    *  at z<0 or z=0) and upper-story walls (elev=2355, stud at z=2357 etc.)
    *  with the same formula. */
   frameElevation?: number;
+  /**
+   * Optional: true if EVERY Kb stick in the containing frame has the same
+   * `flipped` XML attribute. False if the frame has both flipped=true and
+   * flipped=false Kbs side-by-side. Undefined if the caller hasn't computed
+   * it.
+   *
+   * Used by the Kb @end Chamfer rule (when `projectConfig.kbChamferMode ===
+   * "uniform-both-ends"` is unset) as an automatic discriminator: uniform-
+   * flipped frames want both-end chamfers, mixed-flipped frames want the
+   * XNOR(inputFlipped × kbTopAttached) rule. Verified 2026-05-09 against
+   * HG260001 GF-LBW (12/12 frames mixed) and HG260044 GF-LBW (21/22 frames
+   * uniform). When projectConfig overrides the mode, this flag is ignored.
+   */
+  kbFrameUniformFlipped?: boolean;
+  /**
+   * Optional: per-project Detailer configuration. Resolved by the caller
+   * (typically the diff harness or `hytek-rfy-tools`' framecad-import) and
+   * passed down so rule predicates can dispatch on it without a global.
+   *
+   * When undefined, every config field falls back to its default — i.e.
+   * the existing pre-2026-05-09 behaviour, so older callers don't have to
+   * change anything.
+   */
+  projectConfig?: ProjectConfig;
 }
 
 /**

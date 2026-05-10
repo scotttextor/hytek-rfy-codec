@@ -186,6 +186,27 @@ export interface SynthesizePlansOptions {
   date?: string;
   /** If true, log warnings instead of throwing on stick out-of-plane / non-rectangular envelope. */
   lenient?: boolean;
+  /**
+   * Per-project Detailer configuration — selects rule variants whose
+   * behaviour depends on the source project's machine setup or builder
+   * profile (NOT on the stick itself). Plumbed all the way down to rule
+   * predicates via `StickContext.projectConfig`.
+   *
+   * Resolution priority for caller-supplied vs auto-derived defaults:
+   *   1. Whatever the caller passes in (used by hytek-rfy-tools to pin
+   *      a known machine setup).
+   *   2. If absent, `resolveProjectConfigFromHints(project)` infers a
+   *      sensible default from `project.jobNum` (HG260044 → uniform Kb
+   *      mode; HG260001/HG260023 → xnor-paired Kb mode). The inference
+   *      is best-effort and conservative — unknown projects keep the
+   *      legacy defaults.
+   *
+   * Backward-compat: undefined here means rule predicates fall back to
+   * their pre-2026-05-09 behaviour (xnor-paired Kb chamfer + 28° W
+   * threshold + zero InnerService offset). Existing callers don't have to
+   * change anything.
+   */
+  projectConfig?: import("./rules/types.js").ProjectConfig;
 }
 
 export interface SynthesizePlansResult {

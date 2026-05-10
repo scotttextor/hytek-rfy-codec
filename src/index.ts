@@ -62,7 +62,9 @@ export {
   RULE_TABLE, profileOffsets,
   generateFrameContextOps, layoutFrame, computeBox, roleFromName,
   type StickContext, type Anchor, type OpRule, type RuleGroup, type RuleApplicationResult,
+  type ProjectConfig,
 } from "./rules/index.js";
+export { resolveProjectConfigFromHints, type ProjectConfigHints } from "./project-config.js";
 export {
   STICK_TYPES,
   TOOL_TYPES,

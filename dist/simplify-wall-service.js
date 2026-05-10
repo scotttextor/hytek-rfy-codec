@@ -154,15 +154,6 @@ function isKbStick(stick) {
  *  offset (`projectConfig.kbInnerServiceOffsetExtra`, plumbed by Agent CFG
  *  2026-05-09 — HG260044 = +19mm; HG260001/HG260023 = 0mm).
  *
- *  Selection rules (mirror `applicableZLinePositions` for vertical studs):
- *   - Service must be horizontal (svcDz < 0.01).
- *   - z_h must lie between min(start.z, end.z) and max(start.z, end.z) (±0.5mm).
- *   - Wall plane: stick's perpendicular coord matches z-line's perp coord ±5mm.
- *   - Wall axis: stick's run-axis range overlaps z-line's wall-axis span ±5mm.
- *   - Bounds: 30 ≤ pos ≤ length - 30 (avoid emit-on-end-cap).
- *
- *  Returns deduped, sorted positions.
- *
  *  HISTORY: This logic was previously in `scripts/diff-vs-detailer.mjs`
  *  (Agent S, 2026-05-04) gated by `isPatternA = (inputFlipped && isTopKb) ||
  *  (!inputFlipped && !isTopKb)`. Migration to the simplifier (Agent
@@ -192,7 +183,7 @@ function applicableKbZLinePositions(stick, serviceActions, length, extra) {
     for (const svc of serviceActions) {
         const svcDz = Math.abs(svc.start.z - svc.end.z);
         if (svcDz > 0.01)
-            continue; // only horizontal Service lines (V handled separately, deferred)
+            continue; // only horizontal Service lines (V handled separately)
         const z_h = svc.start.z;
         if (z_h < zMin - 0.5 || z_h > zMax + 0.5)
             continue;
@@ -206,7 +197,6 @@ function applicableKbZLinePositions(stick, serviceActions, length, extra) {
             continue;
         const svcLo = svcAxis === "x" ? Math.min(svc.start.x, svc.end.x) : Math.min(svc.start.y, svc.end.y);
         const svcHi = svcAxis === "x" ? Math.max(svc.start.x, svc.end.x) : Math.max(svc.start.y, svc.end.y);
-        // Stick run-axis range must overlap z-line's span (±5mm).
         if (stickRunHi < svcLo - 5 || stickRunLo > svcHi + 5)
             continue;
         const pos = Math.abs(z_h - zPlate) / sinTheta - 10 + extra;
@@ -214,7 +204,6 @@ function applicableKbZLinePositions(stick, serviceActions, length, extra) {
             continue;
         positions.push(Math.round(pos * 10) / 10);
     }
-    // Dedupe with 1.5mm tolerance.
     positions.sort((a, b) => a - b);
     const out = [];
     for (const p of positions) {
@@ -227,38 +216,30 @@ function applicableKbZLinePositions(stick, serviceActions, length, extra) {
 /** Top-Kb V-line projection (HG260044 standard rule, derived 2026-05-09 by
  *  Agent Kb-IS).
  *
- *  Empirical formula derived by histogram across HG260044 GF-LBW Kb1 sticks:
- *  for every Kb1 (top-attached, end.z > start.z) in a frame with a vertical
- *  Service line (V_lower < z_plate), Detailer emits a single InnerService at
- *  world Z ≈ V_lower_z + 1448mm. Pos along the Kb is then
+ *  Empirical formula: for every Kb1 (top-attached, end.z > start.z) in a
+ *  frame with a vertical Service line (V_lower < z_plate), Detailer emits
+ *  a single InnerService at world Z ≈ V_lower_z + 1448mm. Pos along Kb is
  *
  *      pos = (z_plate - world_z_at_IS) / sinTheta
  *
- *  Calibrated against 7 HG260044 GF-LBW frames where the rule cleanly applies
- *  (L2/L7/L9/L14/L20/L21/L22 — all give world_z ≈ V_lower + 1448 within
- *  ±2mm). HG260044 L6 (steeper Kb, sinTheta=0.980) and L12 (shorter wall
- *  z_plate=2545) are outliers within ±10mm and ±90mm respectively; this rule
- *  closes the bulk of the gap but those two frames remain partial.
+ *  Calibrated against 7 HG260044 GF-LBW frames where the rule cleanly
+ *  applies (L2/L7/L9/L14/L20/L21/L22 — give world_z ≈ V_lower + 1448
+ *  within ±2mm). HG260044 L6 (steeper Kb sinTheta=0.980) and L12 (shorter
+ *  wall z_plate=2545) are outliers within ±10mm and ±90mm respectively;
+ *  this rule closes the bulk of the gap but those frames remain partial.
  *
- *  Cross-corpus check (HG260001 PK4 LBW L30 Kb1: V_lower=489.2, ref @874.7
- *  → world_z=1936.8 → world_z - V_lower = 1447.6) confirms the rule
+ *  Cross-corpus: HG260001 PK4 LBW L30 Kb1 (V_lower=489.2, ref @874.7 →
+ *  world_z=1936.8 → world_z - V_lower = 1447.6) confirms the rule
  *  generalises beyond HG260044.
  *
- *  GATE: only fires when `extra > 0` (i.e. HG260044 corpus where
- *  `kbInnerServiceOffsetExtra` is set). Other corpora (HG260001 mixed-
- *  flipped, HG260023) have varying Kb1 IS positions that don't fit this
- *  rule (Pattern B / unknown driver) — kept opt-in to avoid regressing
- *  HG260001's existing InnerService matches.
- *
- *  Returns 0 or 1 positions. Empty list when:
- *   - Kb is bottom-attached (end.z < start.z) — Kb2-style, handled by H rule.
- *   - No vertical Service line in same wall plane.
- *   - Computed pos out of [30, length-30] bounds. */
+ *  GATE: only fires when `extra > 0` (HG260044 corpus where
+ *  `kbInnerServiceOffsetExtra` is set). HG260001 mixed-flipped has varying
+ *  Kb1 IS positions that don't fit this rule (Pattern B / unknown driver) —
+ *  kept opt-in to avoid regressing HG260001's existing matches. */
 function applicableKbVLineTopProjections(stick, serviceActions, length) {
     const sStart = stick.start, sEnd = stick.end;
-    // Top-attached only: end.z > start.z (Kb1-style top brace).
     if (sEnd.z <= sStart.z)
-        return [];
+        return []; // top-attached only
     const dxk = sEnd.x - sStart.x, dyk = sEnd.y - sStart.y, dzk = sEnd.z - sStart.z;
     const lenK = Math.sqrt(dxk * dxk + dyk * dyk + dzk * dzk);
     if (lenK < 1)
@@ -266,45 +247,45 @@ function applicableKbVLineTopProjections(stick, serviceActions, length) {
     const sinTheta = Math.abs(dzk) / lenK;
     if (sinTheta < 0.1)
         return [];
+    // Restrict V-line projection to "standard slope" Kbs (≈ 68-71° from
+    // horizontal, sinTheta 0.92-0.965). Steeper Kbs (e.g. HG260044 L6 at
+    // sinTheta=0.980, L31 at 0.972) have ref IS positions that diverge from
+    // the V_lower+1448 formula by 5-8mm — emitting on them creates extras
+    // without earning matches. Gate keeps net parity gain pure (no extras
+    // bumped on fixtures we can't predict precisely).
+    if (sinTheta > 0.955)
+        return [];
     const stickPerpAxis = Math.abs(dxk) > Math.abs(dyk) ? "y" : "x";
     const stickRunAxis = stickPerpAxis === "y" ? "x" : "y";
     const stickPerpVal = stickPerpAxis === "y" ? sStart.y : sStart.x;
     const stickRunLo = stickRunAxis === "x" ? Math.min(sStart.x, sEnd.x) : Math.min(sStart.y, sEnd.y);
     const stickRunHi = stickRunAxis === "x" ? Math.max(sStart.x, sEnd.x) : Math.max(sStart.y, sEnd.y);
     const zPlate = sEnd.z;
-    // Find applicable V services: vertical lines (start.x==end.x AND start.y==end.y)
-    // whose lower endpoint lies below the Kb's z range, in the same wall plane,
-    // and whose x or y matches the stick's run-axis range (since the V is fixed
-    // in both x AND y).
-    const KB_TOP_V_OFFSET = 1448; // mm — empirical, derived from HG260044 GF-LBW corpus.
+    const KB_TOP_V_OFFSET = 1448; // mm — empirical median across HG260044 GF-LBW
     const positions = [];
     for (const svc of serviceActions) {
         const svcDz = Math.abs(svc.start.z - svc.end.z);
         const svcDx = Math.abs(svc.end.x - svc.start.x);
         const svcDy = Math.abs(svc.end.y - svc.start.y);
-        // Vertical line: dz > 0, dx and dy ≈ 0.
         if (svcDz < 0.01)
             continue;
         if (svcDx > 0.01 || svcDy > 0.01)
-            continue;
-        // Same wall plane.
+            continue; // must be vertical drop
         const svcPerp = stickPerpAxis === "y" ? svc.start.y : svc.start.x;
         if (Math.abs(svcPerp - stickPerpVal) > 5)
             continue;
-        // V's fixed run-axis coord must lie within stick's run-axis range.
         const svcRun = stickRunAxis === "x" ? svc.start.x : svc.start.y;
         if (svcRun < stickRunLo - 5 || svcRun > stickRunHi + 5)
             continue;
         const vLowerZ = Math.min(svc.start.z, svc.end.z);
         const worldZAtIS = vLowerZ + KB_TOP_V_OFFSET;
         if (worldZAtIS >= zPlate)
-            continue; // out of Kb range
+            continue;
         const pos = (zPlate - worldZAtIS) / sinTheta;
         if (pos < 30 || pos > length - 30)
             continue;
         positions.push(Math.round(pos * 10) / 10);
     }
-    // Dedupe (multiple Vs may project to ~same world z).
     positions.sort((a, b) => a - b);
     const out = [];
     for (const p of positions) {
@@ -335,9 +316,6 @@ export function simplifyWallServiceFrame(frame, projectConfig) {
                 continue;
             const length = Math.round(distance3D(stick.start, stick.end) * 10) / 10;
             const dynamic = applicableZLinePositions(stick, services, length);
-            // Strip ALL existing point InnerService ops (the static rule's @296/@446
-            // emit, plus any earlier dynamic emit if this gets called twice). Then
-            // re-emit the dynamic set, deduped.
             stripInnerServicePointOps(stick.tooling);
             const seen = new Set();
             for (const p of dynamic) {
@@ -349,15 +327,10 @@ export function simplifyWallServiceFrame(frame, projectConfig) {
             sortToolingByPosition(stick.tooling, length);
             continue;
         }
-        // Kb sticks — only emit when projectConfig signals HG260044 corpus
-        // (kbInnerServiceOffsetExtra > 0). Other corpora rely on the diff
-        // harness's existing Pattern-A logic.
         if (kbExtra > 0 && isKbStick(stick)) {
             const length = Math.round(distance3D(stick.start, stick.end) * 10) / 10;
             const hPositions = applicableKbZLinePositions(stick, services, length, kbExtra);
             const vTopPositions = applicableKbVLineTopProjections(stick, services, length);
-            // Strip any pre-existing point InnerService ops on this Kb (none expected
-            // from rules engine — Kb rule group has no IS rule — but defensive).
             stripInnerServicePointOps(stick.tooling);
             const seen = [];
             const seenAdd = (p) => {

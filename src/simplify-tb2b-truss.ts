@@ -1514,6 +1514,39 @@ export function simplifyTb2bTrussFrame(
     }
 
     // ────────────────────────────────────────────────────────────────────
+    // Agent RF (2026-05-11): T-chord apex 35.42mm RightFlange cap emission.
+    // ────────────────────────────────────────────────────────────────────
+    //
+    // Emit a 35.42mm RightFlange span at the apex side of the per-frame
+    // "winning" T-chord (selected pre-loop above by length/box-count
+    // cascade). Verified vs HG260044 PK1-4 + HG260001 PK7/PK9/PK10/PK12.
+    //
+    // The span lands flush against the apex doublet (@22.85+@176.25 pair):
+    //   apex@OUTPUT-START → RightFlange 0..35.42
+    //   apex@OUTPUT-END   → RightFlange (L-35.42)..L
+    if (rfWinningStickIdx === stickIdx && /^T\d/.test(stick.name) && !!meta3D) {
+      const RF_CAP_SPAN_T = 35.42;
+      const apexPos = rfWinningApexAtOutputEnd
+        ? meta3DLen - RF_CAP_SPAN_T
+        : 0;
+      const apexEnd = rfWinningApexAtOutputEnd ? meta3DLen : RF_CAP_SPAN_T;
+      const APPROX_DEDUP_RF = 0.5;
+      const exists = stick.tooling.some(
+        (o) => o.kind === "spanned" && o.type === "RightFlange" &&
+               Math.abs(o.startPos - apexPos) < APPROX_DEDUP_RF &&
+               Math.abs(o.endPos - apexEnd) < APPROX_DEDUP_RF,
+      );
+      if (!exists) {
+        stick.tooling.push({
+          kind: "spanned",
+          type: "RightFlange",
+          startPos: Math.round(apexPos * 100) / 100,
+          endPos: Math.round(apexEnd * 100) / 100,
+        });
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────────
     // Agent T5 (2026-05-09): H-header chord-chord crossing suppression.
     // ────────────────────────────────────────────────────────────────────
     //

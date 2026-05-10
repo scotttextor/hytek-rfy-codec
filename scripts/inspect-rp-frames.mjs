@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 // Inspect RP frames to find Pattern A discriminator (single T-plate, eave-side start).
-// Usage: node scripts/inspect-rp-frames.mjs <xml-path> [comma-separated-frame-names]
 import fs from "node:fs";
 import { XMLParser } from "fast-xml-parser";
 
@@ -25,6 +24,7 @@ for (const p of root.plan ?? []) {
     const tplates = sticks.filter(s => /^T\d/.test(s["@_name"]));
     const bplates = sticks.filter(s => /^B\d/.test(s["@_name"]));
 
+    // Frame envelope
     const env = (f.envelope?.vertex ?? []).map(v => parseTriple(typeof v==="string" ? v : v["#text"]));
     const fzMin = env.length ? Math.min(...env.map(v=>v.z)) : null;
     const fzMax = env.length ? Math.max(...env.map(v=>v.z)) : null;
@@ -41,22 +41,6 @@ for (const p of root.plan ?? []) {
       const en = parseTriple(String(b.end ?? "0,0,0"));
       const dz = en.z - st.z;
       console.log(`    ${b["@_name"]}: start=(${st.x.toFixed(1)},${st.y.toFixed(1)},${st.z.toFixed(1)}) end=(${en.x.toFixed(1)},${en.y.toFixed(1)},${en.z.toFixed(1)}) dz=${dz.toFixed(1)}`);
-    }
-    // Compute T1 start to nearest B endpoint
-    if (tplates.length && bplates.length) {
-      for (const t of tplates) {
-        const tst = parseTriple(String(t.start ?? "0,0,0"));
-        let minD = Infinity;
-        for (const b of bplates) {
-          const bs = parseTriple(String(b.start ?? "0,0,0"));
-          const be = parseTriple(String(b.end ?? "0,0,0"));
-          for (const bp of [bs, be]) {
-            const d = Math.sqrt((tst.x-bp.x)**2 + (tst.y-bp.y)**2 + (tst.z-bp.z)**2);
-            if (d < minD) minD = d;
-          }
-        }
-        console.log(`    ${t["@_name"]}.start to nearest B endpoint: ${minD.toFixed(1)}mm`);
-      }
     }
   }
 }

@@ -143,6 +143,124 @@ function fixTinDiagonalDimplePosition(stick) {
     }
     return rewritten;
 }
+/** Agent TIN5 (2026-05-11): compute the diagonal-W length-extension that
+ *  closes the ours-vs-ref length gap on TGI/PC trusses (HG260044 cohort).
+ *
+ *  Quadratic fit in `tan(angle)` from the 12-paired length-delta corpus
+ *  (HG260044 GF-TIN-70.075 TGI/PC diagonal Ws spanning 2.7°–19.4° from
+ *  vertical):
+ *
+ *      delta = 12.949 - 40.254·tan + 14.270·tan²
+ *
+ *  Empirical residuals (max 0.03mm across 12 points — essentially exact):
+ *
+ *    angle=2.7°  → ref Δ=11.09 predicted 11.08 residual=+0.01
+ *    angle=3.6°  → ref Δ=10.46 predicted 10.47 residual=-0.01
+ *    angle=8.9°  → ref Δ= 7.01 predicted  7.00 residual=+0.01
+ *    angle=13.0° → ref Δ= 4.43 predicted  4.42 residual=+0.01
+ *    angle=13.6° → ref Δ= 4.05 predicted  4.05 residual=+0.00
+ *    angle=14.5° → ref Δ= 3.46 predicted  3.49 residual=-0.03
+ *    angle=15.1° → ref Δ= 3.10 predicted  3.13 residual=-0.03
+ *    angle=17.2° → ref Δ= 1.88 predicted  1.86 residual=+0.02
+ *    angle=17.4° → ref Δ= 1.76 predicted  1.74 residual=+0.02
+ *    angle=17.8° → ref Δ= 1.49 predicted  1.50 residual=-0.01
+ *    angle=17.9° → ref Δ= 1.44 predicted  1.44 residual=+0.00
+ *    angle=19.4° → ref Δ= 0.53 predicted  0.54 residual=-0.01
+ *
+ *  The quadratic crosses zero just past 19.5° and goes negative beyond —
+ *  matching the corpus observation that diagonals at angle ≥ 20° show
+ *  zero length delta. The result is therefore floored at 0 and the rule
+ *  is gated to `angle < 20`. */
+function tinPcDiagonalLengthExtension(angleFromVerticalDeg) {
+    const a = Math.max(0, angleFromVerticalDeg);
+    if (a >= 20)
+        return 0;
+    const rad = (a * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    if (cos < 1e-6)
+        return 0;
+    const tan = Math.sin(rad) / cos;
+    const fit = 12.949 - 40.254 * tan + 14.270 * tan * tan;
+    return Math.max(0, fit);
+}
+/** Extend a TGI/PC truss diagonal W-stick so its end matches Detailer's
+ *  reference length, then propagate the shift to end-anchored ops AND
+ *  rewrite both start- and end-anchored InnerDimples to the angle-derived
+ *  offset from `tinDiagonalDimpleOffset(angle)`. Mutates `stick` in place.
+ *  Returns the length shift applied (0 if the stick wasn't eligible).
+ *
+ *  Gates (must all pass):
+ *    - usage = "web"
+ *    - name matches `^W\d`
+ *    - horiz delta ≥ 1mm (diagonal, not vertical)
+ *    - angle from vertical strictly > 1° and < 20° (the formula's valid band)
+ *    - stick length ≥ 800mm (avoid touching short panel-fillers where the
+ *      formula hasn't been verified)
+ *
+ *  The end-Swage span is NOT rewritten here — `fixTinDiagonalEndSwage`
+ *  runs after this and re-spans the end-Swage to the formula width against
+ *  the new (correct) length. Likewise the harness-emitted Chamfer@end at
+ *  pos = oldLen gets shifted to the new end via `shiftEndAnchoredOpsByDelta`.
+ *
+ *  Co-existence with prior TIN agents: this rule only fires on TGI/PC
+ *  frames in TIN plans, which were previously left to the codec's defaults
+ *  for length (no extension applied). The existing per-stick fixers
+ *  (`fixTinDiagonalEndSwage`, `fixTinDiagonalDimplePosition`) continue to
+ *  run after this — their `len` recomputation from `stick.end - stick.start`
+ *  picks up the new length automatically. */
+function extendTinPcDiagonalWLength(stick) {
+    if ((stick.usage ?? "").toLowerCase() !== "web")
+        return 0;
+    if (!/^W\d/.test(stick.name))
+        return 0;
+    const dx = stick.end.x - stick.start.x;
+    const dy = stick.end.y - stick.start.y;
+    const dz = stick.end.z - stick.start.z;
+    const horiz = Math.sqrt(dx * dx + dy * dy);
+    if (horiz < 1.0)
+        return 0;
+    const oldLen = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (oldLen < 800)
+        return 0;
+    const angle = Math.abs(dz) < 1e-6 ? 90 : (Math.atan2(horiz, Math.abs(dz)) * 180) / Math.PI;
+    if (angle <= 1 || angle >= 20)
+        return 0;
+    const lengthShift = tinPcDiagonalLengthExtension(angle);
+    if (lengthShift < 0.1)
+        return 0;
+    // Snapshot the end-anchored InnerDimple positions BEFORE extending so we
+    // can identify them by their pre-shift offset from oldLen. The harness
+    // emits the end-dimple at `oldLen - 10`; `shiftEndAnchoredOpsByDelta`
+    // only shifts ops within 1mm of oldLen (Chamfer@end, end-Swage anchors),
+    // so the end-dimple at oldLen-10 will NOT be shifted automatically —
+    // we must rewrite it explicitly here against the new (extended) length.
+    const offset = tinDiagonalDimpleOffset(angle);
+    const dimpleTargets = [];
+    if (Math.abs(offset - 10) >= 0.05) {
+        for (const op of stick.tooling) {
+            if (op.kind !== "point")
+                continue;
+            if (op.type !== "InnerDimple")
+                continue;
+            if (Math.abs(op.pos - 10) < 0.5) {
+                dimpleTargets.push({ op, isStart: true });
+            }
+            else if (Math.abs(op.pos - (oldLen - 10)) < 0.5) {
+                dimpleTargets.push({ op, isStart: false });
+            }
+        }
+    }
+    if (!extendStickEnd(stick, lengthShift))
+        return 0;
+    shiftEndAnchoredOpsByDelta(stick.tooling, oldLen, lengthShift);
+    // Now rewrite the start- and end-anchored InnerDimples to the angle-
+    // derived offset against the corrected length.
+    const newLen = oldLen + lengthShift;
+    for (const t of dimpleTargets) {
+        t.op.pos = t.isStart ? offset : newLen - offset;
+    }
+    return lengthShift;
+}
 /** Replace start- and end-anchored Swage spans on a TIN diagonal W-stick
  *  (TGI/PC frames) with the production-formula span. Mutates `stick.tooling`
  *  in place. Returns the count of Swage ops rewritten.
@@ -1636,6 +1754,211 @@ function emitTsnPanelPatternsForFrame(frame) {
     }
     return total;
 }
+// Agent TIN5b (2026-05-11): TGI/PC web-vs-horizontal-chord/rail crossing
+// pattern. For each W stick on a TGI/PC truss frame, find every horizontal
+// element (BottomChord, Rail) whose z-plane intersects strictly between
+// the W's endpoints (with a generous edge-tolerance) and emit a panel-
+// point pair: InnerDimple at the crossing + Swage span 45mm centered on
+// the crossing.
+//
+// Coordinate model: each W's intersection with a horizontal element at
+// z = Z_h is the point where the W's z reaches Z_h, expressed as a
+// distance along W from W's start (i.e. parameterized by length, not z).
+//
+// Drift sources accounted for:
+//   - The codec's wall-rule extends vertical Ws by +11mm (specifically a
+//     -5.5mm shift on the start side and +5.5mm on the end side). We
+//     compute the crossing distance from the EXTENDED-start position
+//     (not the raw XML start) so the dimple lands at the same place
+//     Detailer puts it.
+//   - Diagonal Ws are NOT extended by the wall rule (verified by checking
+//     PC2-1 W5/W6 raw vs ours length — they match to <0.1mm). The
+//     TIN5 length-extension (`extendTinPcDiagonalWLength`) fires AFTER
+//     this rule (chronologically, in the project loop), so we compute
+//     crossings against the raw stick length here.
+//
+// Bleed-safety: gated to `isTinPcFrameName` (PC|TGI). HG260001 GF-TIN
+// has no PC/TGI frames; HG260023, HG260030 similarly. Verified the rule
+// is additive (no rewriting of existing tooling — we only push new ops).
+//
+// Per-stick safety:
+//   - emit only when the crossing-distance from the W's start is at
+//     least 50mm AND at most stickLen-50mm (excludes start-cap / end-cap
+//     regions where existing rules apply).
+//   - emit only ONCE per (stick, crossing-z) — duplicate-crossing tolerance
+//     50mm avoids emitting two panel-points when the W passes near two
+//     close-but-non-identical chord z-levels.
+//   - do nothing if the W already has an InnerDimple within 5mm of the
+//     intended crossing position (`hasNearbyOp`) — preserves any
+//     hand-tuned per-frame overrides from prior agents.
+/** Half-width of the Swage emitted at each web-crossing panel point.
+ *  Width grows linearly with `tan(angle)` to match the way Detailer
+ *  draws a chord-perpendicular Swage strip on diagonal Ws:
+ *
+ *      span = 45 + 48·tan(angle)  → half-span = 22.5 + 24·tan(angle)
+ *
+ *  Empirical fit on PC2-1 W5 (17.2°→59.7mm), W6 (14.5°→57.8mm), TGI1-1
+ *  W5 (17.8°→60.4mm), W6 (15.1°→57.8mm). Residuals < 0.5mm. Verticals
+ *  (angle=0) land at exactly 45mm (22.5mm half-span). */
+const TIN_PC_WEB_CROSSING_BASE_HALF_SPAN_MM = 22.5;
+const TIN_PC_WEB_CROSSING_TAN_COEFF_MM = 24.0;
+/** Minimum distance from either end of the W where a crossing is
+ *  considered "interior". Below this threshold we leave the crossing to
+ *  the existing start/end-cap rules. */
+const TIN_PC_WEB_CROSSING_MIN_EDGE_MM = 50;
+/** Net length extension applied by the codec's wall-rule to TIN-plan
+ *  vertical Ws (+11mm total, with +5.5mm on each end relative to the
+ *  raw XML z range). The crossing-distance formula needs to add this
+ *  half-shift to align with Detailer's reference dimple positions. */
+const TIN_PC_VERTICAL_W_HALF_EXTENSION_MM = 5.5;
+/** Diagonal-W crossing-distance drift compensation. Detailer's reference
+ *  emits the dimple ~2-5mm beyond the geometric crossing point at low
+ *  angles (3-9° from vertical), tapering smoothly to zero at ~17°. Fit
+ *  derived from TGI1-1 W7 (8.9°→drift 2.45) + W8 (3.6°→drift 4.10), with
+ *  W5 (17.8°→0.0) + W6 (15.1°→matched) as zero-crossing pinning. Floored
+ *  at 0 so it doesn't subtract at higher angles where the geometric
+ *  crossing already matches. Same fit basis as the angle-derived
+ *  length-extension formula tinPcDiagonalLengthExtension — both rules
+ *  describe codec-vs-Detailer behaviour on low-angle diagonal Ws of TGI/PC
+ *  trusses. */
+function tinPcDiagonalCrossingShift(angleFromVerticalRad) {
+    const tan = Math.tan(angleFromVerticalRad);
+    const fit = 5.22 - 17.75 * tan;
+    return Math.max(0, fit);
+}
+/** Tolerance for "near-existing-op" suppression: we skip emission when
+ *  there's already an InnerDimple within 5mm of the intended position. */
+const TIN_PC_NEARBY_OP_TOL_MM = 5.0;
+function tinPcHorizontalElementZ(stick) {
+    // Treat a stick as a "horizontal element" if it's a chord/rail in the
+    // strict sense AND has |dz| < 1mm along its length. Returns the
+    // z-plane on success, null otherwise.
+    const usage = (stick.usage ?? "").toLowerCase();
+    if (usage !== "bottomchord" && usage !== "rail" && usage !== "topchord") {
+        return null;
+    }
+    const dz = stick.end.z - stick.start.z;
+    if (Math.abs(dz) >= 1.0)
+        return null;
+    return (stick.start.z + stick.end.z) / 2;
+}
+function tinPcWebExtendedLength(stick) {
+    const dx = stick.end.x - stick.start.x;
+    const dy = stick.end.y - stick.start.y;
+    const dz = stick.end.z - stick.start.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+/** Compute the distance along W (from start) where the W's z coordinate
+ *  equals `zPlane`. Returns null if W is purely horizontal or zPlane is
+ *  outside the W's z range. */
+function tinPcCrossingDistFromStart(stick, zPlane) {
+    const dz = stick.end.z - stick.start.z;
+    if (Math.abs(dz) < 0.01)
+        return null;
+    const t = (zPlane - stick.start.z) / dz;
+    if (t < 0 || t > 1)
+        return null;
+    return t * tinPcWebExtendedLength(stick);
+}
+function tinPcHasNearbyDimple(stick, pos) {
+    for (const op of stick.tooling) {
+        if (op.kind !== "point")
+            continue;
+        if (op.type !== "InnerDimple")
+            continue;
+        if (Math.abs(op.pos - pos) < TIN_PC_NEARBY_OP_TOL_MM)
+            return true;
+    }
+    return false;
+}
+/** Walk every W stick of a TGI/PC frame and emit dimple + Swage at each
+ *  interior chord/rail crossing. Mutates `frame.sticks[].tooling[]` in
+ *  place. Returns the count of crossings emitted across the frame. */
+function emitTinPcWebChordCrossings(frame) {
+    if (!isTinPcFrameName(frame.name))
+        return 0;
+    const horizontalElements = [];
+    for (const s of frame.sticks) {
+        const z = tinPcHorizontalElementZ(s);
+        if (z == null)
+            continue;
+        horizontalElements.push({ z, usage: (s.usage ?? "").toLowerCase() });
+    }
+    if (horizontalElements.length === 0)
+        return 0;
+    // Deduplicate close-by z planes so we don't emit two panel-points for
+    // adjacent chord copies (e.g. PC frames sometimes have two parallel
+    // bottom chords B1+B2 at the same z).
+    const uniqZ = [];
+    for (const h of horizontalElements) {
+        if (uniqZ.some(z => Math.abs(z - h.z) < 30))
+            continue;
+        uniqZ.push(h.z);
+    }
+    let emitted = 0;
+    for (const stick of frame.sticks) {
+        const usage = (stick.usage ?? "").toLowerCase();
+        if (usage !== "web")
+            continue;
+        if (!/^W\d/.test(stick.name))
+            continue;
+        const dx = stick.end.x - stick.start.x;
+        const dy = stick.end.y - stick.start.y;
+        const dz = stick.end.z - stick.start.z;
+        const horiz = Math.sqrt(dx * dx + dy * dy);
+        const isVertical = horiz < 1.0;
+        const stickLen = tinPcWebExtendedLength(stick);
+        if (stickLen < 200)
+            continue;
+        const angleFromVertRad = isVertical
+            ? 0
+            : Math.abs(dz) < 1e-6
+                ? Math.PI / 2
+                : Math.atan2(horiz, Math.abs(dz));
+        const tanAngle = Math.tan(angleFromVertRad);
+        const swageHalfSpan = TIN_PC_WEB_CROSSING_BASE_HALF_SPAN_MM +
+            TIN_PC_WEB_CROSSING_TAN_COEFF_MM * tanAngle;
+        for (const zPlane of uniqZ) {
+            // Skip the chord-plane that COINCIDES with the W's own start or end
+            // (within 30mm). Such crossings live at the very edge of the stick
+            // and are handled by the start/end-cap rules.
+            if (Math.abs(zPlane - stick.start.z) < 30)
+                continue;
+            if (Math.abs(zPlane - stick.end.z) < 30)
+                continue;
+            const rawDist = tinPcCrossingDistFromStart(stick, zPlane);
+            if (rawDist == null)
+                continue;
+            // For verticals (codec's wall-rule extends each end by 5.5mm),
+            // shift the crossing by +5.5mm so it lands at the same offset
+            // from the extended-start that Detailer uses. For diagonals,
+            // apply the angle-derived crossing-distance shift (vanishes
+            // above ~17°, grows to ~5mm at very low angles).
+            const pos = isVertical
+                ? rawDist + TIN_PC_VERTICAL_W_HALF_EXTENSION_MM
+                : rawDist + tinPcDiagonalCrossingShift(angleFromVertRad);
+            if (pos < TIN_PC_WEB_CROSSING_MIN_EDGE_MM)
+                continue;
+            if (pos > stickLen - TIN_PC_WEB_CROSSING_MIN_EDGE_MM)
+                continue;
+            if (tinPcHasNearbyDimple(stick, pos))
+                continue;
+            stick.tooling.push({
+                kind: "point",
+                type: "InnerDimple",
+                pos,
+            });
+            stick.tooling.push({
+                kind: "spanned",
+                type: "Swage",
+                startPos: pos - swageHalfSpan,
+                endPos: pos + swageHalfSpan,
+            });
+            emitted++;
+        }
+    }
+    return emitted;
+}
 /** Public entry point for the TIN simplifier post-pass.  Walks every plan
  *  and frame in the project.
  *
@@ -1705,6 +2028,30 @@ export function simplifyTinTrussFramesInProject(plans) {
             // regressing any of the truss-style frames whose vertical-W rule is
             // independent (verticals are filtered out by the per-stick gate via
             // horiz<1).
+            // 2026-05-11 (Agent TIN5b): TGI/PC web-vs-horizontal-chord/rail
+            // crossing pattern. For each W stick on a PC/TGI truss, emit a
+            // dimple + Swage panel-point at every interior crossing with a
+            // BottomChord/Rail z-plane. MUST run BEFORE the diagonal-W length
+            // extension and BEFORE fixTinDiagonalEndSwage so that crossing
+            // distances are computed against raw stick coords (TIN5 length
+            // shift happens AFTER and propagates end-anchored ops only;
+            // crossing positions sit ≥ 50mm from each end so they aren't
+            // affected by end-anchored shifts).
+            emitTinPcWebChordCrossings(frame);
+            // 2026-05-11 (Agent TIN5): TGI/PC diagonal-W length extension.
+            // Closes the ~0.5–11mm length gap between ours and ref on TGI/PC
+            // truss diagonal Ws (angle < 20° from vertical). The shift is
+            // angle-dependent (quadratic fit in tan, max residual 0.03mm). This
+            // MUST run BEFORE `fixTinDiagonalEndSwage` so that the end-Swage
+            // re-span computes against the corrected length. See
+            // `extendTinPcDiagonalWLength` for the gate set + verification.
+            // Restricted to TGI/PC frames — HG260044 cohort only; HG260001
+            // GF-TIN has no TGI/PC frames so no bleed risk there.
+            if (isTinPcFrameName(frame.name)) {
+                for (const stick of frame.sticks) {
+                    extendTinPcDiagonalWLength(stick);
+                }
+            }
             if (isTinPcFrameName(frame.name) || isTinTrussFrameName(frame.name)) {
                 for (const stick of frame.sticks) {
                     fixTinDiagonalEndSwage(stick);

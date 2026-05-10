@@ -20,7 +20,7 @@ import {
   getDefaultMachineSetup,
   lipNotchToolLength,
 } from "../machine-setups.js";
-import { profileOffsets } from "./table.js";
+import { profileOffsets, isWallPlan } from "./table.js";
 import {
   runActionDefsPass,
   isActionDefsPassEnabled,
@@ -700,6 +700,17 @@ export function generateFrameContextOps(
   const otherHorizontal = layout.filter(sb =>
     !NOG_ROLES.has(sb.role) && !STUD_ROLES.has(sb.role) && !ALL_PLATE_ROLES.has(sb.role) && sb.horizontal
   );
+  // Raised bottom-plate sub-plates: B sticks at z > 30 (sill plates above
+  // window/door openings — distinct from the main B at z=20.5). When a
+  // TRIMSTUD passes through such a raised B-plate, Detailer adds a paired
+  // InnerDimple at the local crossing position (typically @57.5).
+  // Verified 2026-05-11 vs HG260044 GF-LBW (12 TRIMSTUDs across L7/L14/L15/
+  // L19/L20/L36) and GF-NLBW (20 TRIMSTUDs across N1/N5/N6/N8/N15/N19/N24/
+  // N29/N35/N42/N52/N57). Frames without raised B-plates (N22, L6/L8/L12/
+  // L23/L25/L27/L28/L29/L30/L31/L35) have NO @57.5 dimples on their TRIMSTUDs.
+  const raisedBPlates = layout.filter(sb =>
+    BOT_PLATE_ROLES.has(sb.role) && sb.box.cy > 30 && sb.horizontal
+  );
   // Detect back-to-back (B2B) stud pairs: two studs with centerlines within
   // ~50mm of each other. Verified 2026-05-01 against HG260044 GF-LBW: S3+S4
   // at x=969 and x=1011 (42mm apart) both get Web@38, Web@485, Web@932,
@@ -977,6 +988,28 @@ export function generateFrameContextOps(
       } else {
         stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
         stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + internalDimpleOffsetFromSetup) });
+      }
+    }
+
+    // Raised B-plate (sill) crossing on TRIMSTUDs in wall plans — Detailer
+    // emits a paired InnerDimple at the local crossing position (~57.5mm
+    // for a B-plate centered at z=61.5 on a stud starting at z=4).
+    // The local Swage span 0..80 is already produced by the start-anchored
+    // Swage rule + this crossing's matched startPos, so we ONLY add the
+    // missing InnerDimple. Verified 2026-05-11 vs HG260044 + HG260001 NLBW
+    // PK1: 22 NLBW + 12 LBW TRIMSTUDs gain matched dimples; frames without
+    // raised B-plates (N22, L6, L8, L12, L23..L31, L35) emit nothing here.
+    if (isTrimStud && isWallPlan({ planName: planNameForStuds })) {
+      for (const rb of raisedBPlates) {
+        const xOverlap = rb.box.xMax >= stud.box.xMin && rb.box.xMin <= stud.box.xMax;
+        if (!xOverlap) continue;
+        const crossingY = rb.box.cy;
+        if (crossingY < stud.box.yMin - 1 || crossingY > stud.box.yMax + 1) continue;
+        const localPos = studLocalPosition(stud, crossingY) + studShift;
+        // Skip if the crossing is far from start (we only want the start-side
+        // sill pattern at @57.5, not raised B-plates in the middle of a stud).
+        if (localPos < 30 || localPos > 100) continue;
+        stickOps.push({ kind: "point", type: "InnerDimple", pos: round(localPos) });
       }
     }
 

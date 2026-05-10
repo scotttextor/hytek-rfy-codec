@@ -1144,7 +1144,12 @@ export function simplifyTb2bTrussFrame(
         const LN_SPAN = 54.90;
         const LF_SPAN = isLargeVariant ? 181.06 : 179.28;
         const BOLT_OFFSET = 84.3;
-        if (t6CapAtOutputStart) {
+        // For long H7 sticks (L>1500) with cap@output-start, the existing
+        // H7Header rule (below) emits the WIDE+DUAL+L-35 pattern. Defer to
+        // it instead of emitting our NARROW+SINGLE here. Verified: HG260001
+        // PK12 TT2-1 H7 (L=7316) wants WIDE/DUAL.
+        const deferToH7Header = isH7Header && t6CapAtOutputStart;
+        if (t6CapAtOutputStart && !deferToH7Header) {
           stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
           stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LN_SPAN });
           stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
@@ -1160,11 +1165,14 @@ export function simplifyTb2bTrussFrame(
     }
 
     // Existing H7Header rule (preserved for HG260001 PK6-12 / HG260044 PK4
-    // where the cap@start WIDE pattern is correct). Skip if T6 rule already
-    // emitted any cap (would otherwise double-emit / emit wrong-end).
+    // where the cap@start WIDE+DUAL+L-35 pattern is correct). Fires when:
+    //  (a) T6 didn't activate (non-TT/TTI frame, sloped, etc.), OR
+    //  (b) T6 deferred to it (cap@output-start on long H7).
+    // Skip only when T6 emitted cap@output-end ONLY (existing rule's
+    // cap@start would be wrong-end).
     if (isH7Header) {
-      const t6Took = isPk1HHeader && (t6CapAtOutputStart || t6CapAtOutputEnd);
-      if (!t6Took) {
+      const t6CapElsewhere = isPk1HHeader && t6CapAtOutputEnd && !t6CapAtOutputStart;
+      if (!t6CapElsewhere) {
         const L = meta3DLen;
         stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: 43.72 });
         stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 65.72 });

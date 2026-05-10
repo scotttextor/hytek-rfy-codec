@@ -191,6 +191,119 @@ function fixTinDiagonalDimplePosition(stick: ParsedStick): number {
   return rewritten;
 }
 
+/** Agent TIN5 (2026-05-11): compute the diagonal-W length-extension that
+ *  closes the ours-vs-ref length gap on TGI/PC trusses (HG260044 cohort).
+ *
+ *  Quadratic fit in `tan(angle)` from the 12-paired length-delta corpus
+ *  (HG260044 GF-TIN-70.075 TGI/PC diagonal Ws spanning 2.7°–19.4° from
+ *  vertical):
+ *
+ *      delta = 12.949 - 40.254·tan + 14.270·tan²
+ *
+ *  Empirical residuals (max 0.03mm across 12 points — essentially exact):
+ *
+ *    angle=2.7°  → ref Δ=11.09 predicted 11.08 residual=+0.01
+ *    angle=3.6°  → ref Δ=10.46 predicted 10.47 residual=-0.01
+ *    angle=8.9°  → ref Δ= 7.01 predicted  7.00 residual=+0.01
+ *    angle=13.0° → ref Δ= 4.43 predicted  4.42 residual=+0.01
+ *    angle=13.6° → ref Δ= 4.05 predicted  4.05 residual=+0.00
+ *    angle=14.5° → ref Δ= 3.46 predicted  3.49 residual=-0.03
+ *    angle=15.1° → ref Δ= 3.10 predicted  3.13 residual=-0.03
+ *    angle=17.2° → ref Δ= 1.88 predicted  1.86 residual=+0.02
+ *    angle=17.4° → ref Δ= 1.76 predicted  1.74 residual=+0.02
+ *    angle=17.8° → ref Δ= 1.49 predicted  1.50 residual=-0.01
+ *    angle=17.9° → ref Δ= 1.44 predicted  1.44 residual=+0.00
+ *    angle=19.4° → ref Δ= 0.53 predicted  0.54 residual=-0.01
+ *
+ *  The quadratic crosses zero just past 19.5° and goes negative beyond —
+ *  matching the corpus observation that diagonals at angle ≥ 20° show
+ *  zero length delta. The result is therefore floored at 0 and the rule
+ *  is gated to `angle < 20`. */
+function tinPcDiagonalLengthExtension(angleFromVerticalDeg: number): number {
+  const a = Math.max(0, angleFromVerticalDeg);
+  if (a >= 20) return 0;
+  const rad = (a * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  if (cos < 1e-6) return 0;
+  const tan = Math.sin(rad) / cos;
+  const fit = 12.949 - 40.254 * tan + 14.270 * tan * tan;
+  return Math.max(0, fit);
+}
+
+/** Extend a TGI/PC truss diagonal W-stick so its end matches Detailer's
+ *  reference length, then propagate the shift to end-anchored ops AND
+ *  rewrite both start- and end-anchored InnerDimples to the angle-derived
+ *  offset from `tinDiagonalDimpleOffset(angle)`. Mutates `stick` in place.
+ *  Returns the length shift applied (0 if the stick wasn't eligible).
+ *
+ *  Gates (must all pass):
+ *    - usage = "web"
+ *    - name matches `^W\d`
+ *    - horiz delta ≥ 1mm (diagonal, not vertical)
+ *    - angle from vertical strictly > 1° and < 20° (the formula's valid band)
+ *    - stick length ≥ 800mm (avoid touching short panel-fillers where the
+ *      formula hasn't been verified)
+ *
+ *  The end-Swage span is NOT rewritten here — `fixTinDiagonalEndSwage`
+ *  runs after this and re-spans the end-Swage to the formula width against
+ *  the new (correct) length. Likewise the harness-emitted Chamfer@end at
+ *  pos = oldLen gets shifted to the new end via `shiftEndAnchoredOpsByDelta`.
+ *
+ *  Co-existence with prior TIN agents: this rule only fires on TGI/PC
+ *  frames in TIN plans, which were previously left to the codec's defaults
+ *  for length (no extension applied). The existing per-stick fixers
+ *  (`fixTinDiagonalEndSwage`, `fixTinDiagonalDimplePosition`) continue to
+ *  run after this — their `len` recomputation from `stick.end - stick.start`
+ *  picks up the new length automatically. */
+function extendTinPcDiagonalWLength(stick: ParsedStick): number {
+  if ((stick.usage ?? "").toLowerCase() !== "web") return 0;
+  if (!/^W\d/.test(stick.name)) return 0;
+  const dx = stick.end.x - stick.start.x;
+  const dy = stick.end.y - stick.start.y;
+  const dz = stick.end.z - stick.start.z;
+  const horiz = Math.sqrt(dx * dx + dy * dy);
+  if (horiz < 1.0) return 0;
+  const oldLen = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  if (oldLen < 800) return 0;
+  const angle =
+    Math.abs(dz) < 1e-6 ? 90 : (Math.atan2(horiz, Math.abs(dz)) * 180) / Math.PI;
+  if (angle <= 1 || angle >= 20) return 0;
+  const lengthShift = tinPcDiagonalLengthExtension(angle);
+  if (lengthShift < 0.1) return 0;
+
+  // Snapshot the end-anchored InnerDimple positions BEFORE extending so we
+  // can identify them by their pre-shift offset from oldLen. The harness
+  // emits the end-dimple at `oldLen - 10`; `shiftEndAnchoredOpsByDelta`
+  // only shifts ops within 1mm of oldLen (Chamfer@end, end-Swage anchors),
+  // so the end-dimple at oldLen-10 will NOT be shifted automatically —
+  // we must rewrite it explicitly here against the new (extended) length.
+  const offset = tinDiagonalDimpleOffset(angle);
+  type PointTool = Extract<RfyToolingOp, { kind: "point" }>;
+  const dimpleTargets: { op: PointTool; isStart: boolean }[] = [];
+  if (Math.abs(offset - 10) >= 0.05) {
+    for (const op of stick.tooling) {
+      if (op.kind !== "point") continue;
+      if (op.type !== "InnerDimple") continue;
+      if (Math.abs(op.pos - 10) < 0.5) {
+        dimpleTargets.push({ op, isStart: true });
+      } else if (Math.abs(op.pos - (oldLen - 10)) < 0.5) {
+        dimpleTargets.push({ op, isStart: false });
+      }
+    }
+  }
+
+  if (!extendStickEnd(stick, lengthShift)) return 0;
+  shiftEndAnchoredOpsByDelta(stick.tooling, oldLen, lengthShift);
+
+  // Now rewrite the start- and end-anchored InnerDimples to the angle-
+  // derived offset against the corrected length.
+  const newLen = oldLen + lengthShift;
+  for (const t of dimpleTargets) {
+    t.op.pos = t.isStart ? offset : newLen - offset;
+  }
+  return lengthShift;
+}
+
 /** Replace start- and end-anchored Swage spans on a TIN diagonal W-stick
  *  (TGI/PC frames) with the production-formula span. Mutates `stick.tooling`
  *  in place. Returns the count of Swage ops rewritten.
@@ -1794,6 +1907,20 @@ export function simplifyTinTrussFramesInProject(
       // regressing any of the truss-style frames whose vertical-W rule is
       // independent (verticals are filtered out by the per-stick gate via
       // horiz<1).
+      // 2026-05-11 (Agent TIN5): TGI/PC diagonal-W length extension.
+      // Closes the ~0.5–11mm length gap between ours and ref on TGI/PC
+      // truss diagonal Ws (angle < 20° from vertical). The shift is
+      // angle-dependent (quadratic fit in tan, max residual 0.03mm). This
+      // MUST run BEFORE `fixTinDiagonalEndSwage` so that the end-Swage
+      // re-span computes against the corrected length. See
+      // `extendTinPcDiagonalWLength` for the gate set + verification.
+      // Restricted to TGI/PC frames — HG260044 cohort only; HG260001
+      // GF-TIN has no TGI/PC frames so no bleed risk there.
+      if (isTinPcFrameName(frame.name)) {
+        for (const stick of frame.sticks) {
+          extendTinPcDiagonalWLength(stick);
+        }
+      }
       if (isTinPcFrameName(frame.name) || isTinTrussFrameName(frame.name)) {
         for (const stick of frame.sticks) {
           fixTinDiagonalEndSwage(stick);

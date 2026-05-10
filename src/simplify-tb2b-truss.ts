@@ -353,9 +353,20 @@ export function computeTb2bWebPositions(
       // chord/rail crossings: shift by (half_depth - boltHoleToEnd) /
       // |sin(angle)|. Verified vs HG260001 W14∩R9 +15 perpendicular,
       // W18∩R9 +28 diagonal.
+      //
+      // Agent T8 (2026-05-11): Extended to also fire when the chord member
+      // is a HORIZONTAL top-chord (H-header like H5/H6/H7). Discriminator
+      // `zSpan < 5` separates flat H-headers (zSpan ≈ 0) from sloped apex
+      // T-chords (zSpan ≥ 800mm) cleanly. Verified vs HG260001 PK12 TT2-1
+      // W15/W17/W18/W19 — closes -15mm / +15mm web-side drift on
+      // chord-Web crossings where the chord is a horizontal H-header.
       const sin = Math.sqrt(Math.max(0, 1 - dot * dot));
-      const aIsHorizMember = (bIsRail || sB.usage === "bottomchord");
-      const bIsHorizMember = (aIsRail || sA.usage === "bottomchord");
+      const aIsHorizTopChord = sA.usage === "topchord"
+        && Math.abs(sA.end3D.z - sA.start3D.z) < 5;
+      const bIsHorizTopChord = sB.usage === "topchord"
+        && Math.abs(sB.end3D.z - sB.start3D.z) < 5;
+      const aIsHorizMember = bIsRail || sB.usage === "bottomchord" || bIsHorizTopChord;
+      const bIsHorizMember = aIsRail || sA.usage === "bottomchord" || aIsHorizTopChord;
       if (sA.usage === "web" && aIsHorizMember && sin > 0.05) {
         const offset = WEB_VS_RAIL_OFFSET / sin;
         const sign = posA_arc < inter.L1 / 2 ? +1 : -1;

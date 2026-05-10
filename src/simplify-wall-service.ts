@@ -22,6 +22,7 @@
 
 import type { ParsedFrame, ParsedStick, ServiceAction } from "./synthesize-plans.js";
 import type { RfyToolingOp } from "./format.js";
+import type { ProjectConfig } from "./rules/types.js";
 
 /** True iff the plan is a wall plan whose vertical wall studs participate in
  *  the dynamic InnerService rule. Matches `-LBW-` and `-NLBW-` plan suffixes
@@ -177,8 +178,4 @@ export function simplifyWallServiceInProject(
 ): void {
   for (const plan of plans) {
     if (!isWallServicePlanName(plan.name)) continue;
-    for (const frame of plan.frames) {
-      simplifyWallServiceFrame(frame);
-    }
-  }
-}
+    for (const frame of plan.frames) {

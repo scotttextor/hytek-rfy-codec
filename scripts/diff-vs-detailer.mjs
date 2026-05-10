@@ -378,7 +378,25 @@ function buildOurProject(xmlText) {
           nogTStart = nogEndTrim(start);
           nogTEnd = nogEndTrim(end);
         }
+        // Stud trim: full-height S studs (>=2000mm) get 2mm/end. SHORT S
+        // studs (<2000mm) in LBW plans get only 1.5mm/end (= 3mm total).
+        // Verified 2026-05-09 (Agent LBW3) by mining ref-vs-raw lengths
+        // across HG260001 PK4/PK5 LBW + HG260044 GF-LBW + HG260023 PK6 LBW
+        // + PK3 LBW 89.075:
+        //   long S studs: 4mm trim (uniform across all corpora)
+        //   short S studs in LBW: 3mm trim (uniform across all corpora)
+        //   short S studs in NLBW: mixed 4mm/3mm — keep 4mm default
+        // Closes ~7-10 cripple-stud Swage+InnerDimple drift pairs per LBW
+        // plan (current -2/-2 drift moves to within tolerance). Also
+        // incidentally closes most W-brace short-Swage pairs in LBW
+        // (W=Stud usage in LBW so they match the same predicate).
+        // Same fix applied in hytek-rfy-tools/lib/framecad-import.ts.
+        const isLBWPlan = /-LBW-/i.test(plan.name);
+        const dxRaw0 = end.x - start.x, dyRaw0 = end.y - start.y, dzRaw0 = end.z - start.z;
+        const rawLen0 = Math.sqrt(dxRaw0*dxRaw0 + dyRaw0*dyRaw0 + dzRaw0*dzRaw0);
+        const isShortLBWStud = isFullStud && isLBWPlan && rawLen0 < 2000;
         const T = (isLINHeader || isTB2BHeader) ? 0
+          : isShortLBWStud ? 1.5
           : ((isFullStud || isJoistWeb) ? 2.0
             : isNog ? 0 // handled per-end below
             : isHeader ? 1.0

@@ -799,9 +799,42 @@ export function simplifyTb2bTrussFrame(
       const LIP_SPAN = 32.32;
       const LF_SPAN = 156.70;
       const STUB_BOLT = 59.98;
+      // Stub-end (Type C/D) cap-stack: 2-op only — RF=156.70 + LN=32.32, NO LF.
+      // Used on multi-B-chord TT/TTI frames where the longest B-chord
+      // terminates as a stub against another B-chord at the LOW-y end.
+      // Verified 2026-05-09 vs HG260044 PK1 (5/5 sticks):
+      //   TT1-1 B1, TT2-1 B2, TT3-1 B1, TT4-1 B1, TTI1-1 B2 — all
+      //   horizontal long B-chords with a peer B-chord meeting at LOW-y end
+      //   emit only RF=156.70 + LN=32.32 at the cap end (no LF), plus a
+      //   single Web bolt @60 (or @L-60 if cap is at OUTPUT-END).
+      // Anti-case: TT7-1 B1 (HG260044 PK3, 6530, +y) has B2 (400mm) meeting
+      // at HIGH-y end → uses STANDARD 3-op pattern (LF+LN+RF narrow).
+      const STUB_RF_SPAN = 156.70;
+      const STUB_LN_SPAN = 32.32;
       const isFlipped = !!meta3D && stick.flipped;
       let capStartSide: boolean;  // emit caps at OUTPUT position 0 side
       let capEndSide: boolean;    // emit caps at OUTPUT position L side
+      // STUB-end pattern detection: in TT/TTI frames with bChordCount >= 2,
+      // long horizontal B-chord (>5000mm), where the stick's LOW-y endpoint
+      // is shared (within 1mm) with another B-chord's endpoint. The LOW-y
+      // shared-endpoint rule discriminates TT3-1/TT4-1 (stub) from TT7-1
+      // (standard) which has its peer B-chord at HIGH-y end.
+      let isStubB = false;
+      if (bChordCount >= 2 && !isSloped && /^TTI?\d/.test(frame.name) && meta3DLen > 5000 && meta3D) {
+        const lowYAtStart = meta3D.start3D.y < meta3D.end3D.y;
+        const myLowY = lowYAtStart ? meta3D.start3D.y : meta3D.end3D.y;
+        for (let k = 0; k < frame.sticks.length; k++) {
+          if (k === stickIdx) continue;
+          const o = frame.sticks[k]!;
+          if (!/^B\d/.test(o.name)) continue;
+          if (/\(Box\d+\)/.test(o.name)) continue;
+          const om = metaSticks[k]!;
+          if (Math.abs(om.start3D.y - myLowY) < 1 || Math.abs(om.end3D.y - myLowY) < 1) {
+            isStubB = true;
+            break;
+          }
+        }
+      }
       if (isSloped) {
         // High-z end of XML stick gets caps. After flipped-aware mapping:
         //   high-z @ XML-start AND not flipped: caps at OUTPUT-start
@@ -810,6 +843,14 @@ export function simplifyTb2bTrussFrame(
         //   high-z @ XML-end   AND     flipped: caps at OUTPUT-start
         const highZAtXmlStart = meta3D.start3D.z > meta3D.end3D.z;
         const capAtOutputStart = highZAtXmlStart !== isFlipped;
+        capStartSide = capAtOutputStart;
+        capEndSide = !capAtOutputStart;
+      } else if (isStubB && meta3D) {
+        // STUB-end pattern: cap goes at the LOW-y end of the world chord.
+        // After flipped-aware mapping (output-start = XML-end if flipped):
+        //   capAtOutputStart = (lowYAtXmlEnd === flipped)
+        const lowYAtXmlEnd = meta3D.end3D.y < meta3D.start3D.y;
+        const capAtOutputStart = lowYAtXmlEnd === isFlipped;
         capStartSide = capAtOutputStart;
         capEndSide = !capAtOutputStart;
       } else {
@@ -830,16 +871,32 @@ export function simplifyTb2bTrussFrame(
         }
       }
       if (capStartSide) {
-        stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
-        stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LIP_SPAN });
-        stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
-        stick.tooling.push({ kind: "point", type: "Web", pos: STUB_BOLT });
+        if (isStubB) {
+          // Stub-end at OUTPUT-START: 2-op (RF wide + LN), no LF, plus Web @60
+          // (Web bolt on SAME side as cap). Verified vs HG260044 PK1 TT3-1 B1.
+          stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: STUB_RF_SPAN });
+          stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: STUB_LN_SPAN });
+          stick.tooling.push({ kind: "point", type: "Web", pos: STUB_BOLT });
+        } else {
+          stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
+          stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LIP_SPAN });
+          stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
+          stick.tooling.push({ kind: "point", type: "Web", pos: STUB_BOLT });
+        }
       }
       if (capEndSide) {
-        stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((L - STUB_BOLT) * 100) / 100 });
-        stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN, endPos: L });
-        stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_SPAN, endPos: L });
-        stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
+        if (isStubB) {
+          // Stub-end at OUTPUT-END: 2-op (RF wide + LN), no LF, plus Web @L-60
+          // (Web bolt on SAME side as cap). Verified vs HG260044 PK1 TT1-1 B1.
+          stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((L - STUB_BOLT) * 100) / 100 });
+          stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - STUB_LN_SPAN, endPos: L });
+          stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - STUB_RF_SPAN, endPos: L });
+        } else {
+          stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((L - STUB_BOLT) * 100) / 100 });
+          stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN, endPos: L });
+          stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_SPAN, endPos: L });
+          stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
+        }
       }
     }
 

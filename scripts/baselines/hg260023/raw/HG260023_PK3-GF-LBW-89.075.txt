@@ -4,14 +4,14 @@ Setup:    F325iT 89mm
 Frames:   our 1 | ref 1
 
 OPS:      our 190 | ref 192
-MATCHED:  179  (93.2% of ref)
-MISSING:  13  (ops Detailer has, we don't)
-EXTRAS:   11   (ops we have, Detailer doesn't)
+MATCHED:  180  (93.8% of ref)
+MISSING:  12  (ops Detailer has, we don't)
+EXTRAS:   10   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-LipNotch@span             26         5        8   (84% ref-coverage)
+LipNotch@span             27         4        7   (87% ref-coverage)
 InnerDimple@pt            76         5        0   (94% ref-coverage)
 InnerService@pt            6         1        2   (86% ref-coverage)
 Swage@span                35         2        0   (95% ref-coverage)
@@ -26,8 +26,8 @@ FRAMES WITH GAPS:
   L21 (7 sticks with gaps)
     T1       MISSING (1): InnerService @49.5
     B3       EXTRAS  (1): LipNotch 36.0..81.0
-    H1       MISSING (5): LipNotch 230.9..282.3 | LipNotch 660.3..711.8 | LipNotch 1089.8..1141.3 | LipNotch 1519.3..1570.8 | LipNotch 1793.0..1874.0
-    H1       EXTRAS  (5): LipNotch 232.4..282.4 | LipNotch 661.9..711.9 | LipNotch 1091.4..1141.4 | LipNotch 1520.9..1570.9 | LipNotch 1835.0..1874.0
+    H1       MISSING (4): LipNotch 230.9..282.3 | LipNotch 660.3..711.8 | LipNotch 1089.8..1141.3 | LipNotch 1519.3..1570.8
+    H1       EXTRAS  (4): LipNotch 232.4..282.4 | LipNotch 661.9..711.9 | LipNotch 1091.4..1141.4 | LipNotch 1520.9..1570.9
     N1       MISSING (1): Swage 0.0..39.0
     N1       EXTRAS  (2): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0
     S2       MISSING (5): InnerDimple @57.5 | InnerDimple @91.9 | InnerDimple @708.7 | InnerDimple @2399.9 | Swage 1303.0..1348.0

@@ -3,23 +3,23 @@ OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-NLBW-
 Setup:    F325iT 70mm
 Frames:   our 56 | ref 56
 
-OPS:      our 5389 | ref 5378
-MATCHED:  4930  (91.7% of ref)
-MISSING:  448  (ops Detailer has, we don't)
-EXTRAS:   459   (ops we have, Detailer doesn't)
+OPS:      our 5383 | ref 5378
+MATCHED:  4929  (91.7% of ref)
+MISSING:  449  (ops Detailer has, we don't)
+EXTRAS:   454   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 LipNotch@span            888       131       98   (87% ref-coverage)
-InnerDimple@pt          2001       128       93   (94% ref-coverage)
-Swage@span               937        37      164   (96% ref-coverage)
+InnerDimple@pt          2002       127       92   (94% ref-coverage)
+Swage@span               941        33      160   (97% ref-coverage)
 InnerNotch@span          189        97       66   (66% ref-coverage)
 InnerService@pt          701        51       20   (93% ref-coverage)
 Bolt@pt                  136         0       16   (100% ref-coverage)
 Web@pt                    54         4        2   (93% ref-coverage)
+Chamfer@end                6         6        0   (50% ref-coverage)
 Chamfer@start             12         0        0   (100% ref-coverage)
-Chamfer@end               12         0        0   (100% ref-coverage)
 
 FRAMES WITH GAPS:
 
@@ -110,16 +110,15 @@ FRAMES WITH GAPS:
     S3       EXTRAS  (2): Swage 1303.0..1348.0 | Swage 2349.0..2394.0
     S5       MISSING (5): InnerDimple @57.5 | InnerDimple @162.1 | InnerDimple @1241.6 | InnerDimple @2321.1 | LipNotch 35.0..80.0
     S5       EXTRAS  (1): Swage 0.0..39.0
-    Kb1      MISSING (2): InnerService @852.2 | Swage 1389.6..1431.8
-    Kb1      EXTRAS  (1): Swage 1310.6..1433.3
-    Kb2      MISSING (4): InnerService @321.2 | InnerService @483.6 | InnerService @555.0 | Swage 1251.7..1369.7
-    Kb2      EXTRAS  (3): InnerService @304.1 | InnerService @466.5 | Swage 1253.9..1371.2
+    Kb1      MISSING (3): InnerService @852.2 | Swage 1389.6..1431.8 | Chamfer @end
+    Kb1      EXTRAS  (1): Swage 1309.1..1431.8
+    Kb2      MISSING (3): InnerService @321.2 | InnerService @483.6 | InnerService @555.0
+    Kb2      EXTRAS  (2): InnerService @302.6 | InnerService @465.1
 
   N16 (2 sticks with gaps)
     Kb1      MISSING (2): InnerService @851.3 | Swage 1396.8..1439.5
-    Kb1      EXTRAS  (1): Swage 1322.2..1440.9
-    Kb2      MISSING (4): InnerService @323.3 | InnerService @486.7 | InnerService @563.5 | Swage 1263.5..1377.7
-    Kb2      EXTRAS  (1): Swage 1265.7..1379.2
+    Kb1      EXTRAS  (1): Swage 1320.8..1439.5
+    Kb2      MISSING (4): InnerService @323.3 | InnerService @486.7 | InnerService @563.5 | Chamfer @end
 
   N18 (1 sticks with gaps)
     B1       EXTRAS  (2): Bolt @62.0 | Bolt @2060.0
@@ -149,9 +148,8 @@ FRAMES WITH GAPS:
     L1       EXTRAS  (5): InnerDimple @350.0 | InnerDimple @683.5 | LipNotch 327.5..372.5 | InnerNotch 661.0..700.0 | LipNotch 661.0..700.0
     S2       MISSING (2): InnerService @1325.5 | InnerService @2600.5
     Kb1      MISSING (2): InnerService @853.7 | Swage 1382.6..1424.5
-    Kb1      EXTRAS  (1): Swage 1298.8..1425.9
-    Kb2      MISSING (4): InnerService @319.1 | InnerService @480.6 | InnerService @546.2 | Swage 1239.9..1362.0
-    Kb2      EXTRAS  (1): Swage 1242.0..1363.5
+    Kb1      EXTRAS  (1): Swage 1297.4..1424.5
+    Kb2      MISSING (4): InnerService @319.1 | InnerService @480.6 | InnerService @546.2 | Chamfer @end
 
   N21 (1 sticks with gaps)
     B1       EXTRAS  (2): Bolt @62.0 | Bolt @960.0
@@ -236,9 +234,8 @@ FRAMES WITH GAPS:
     S2       MISSING (1): LipNotch 2349.0..2394.0
     S2       EXTRAS  (1): Swage 2349.0..2394.0
     Kb1      MISSING (2): InnerService @851.3 | Swage 1396.8..1439.5
-    Kb1      EXTRAS  (1): Swage 1322.2..1440.9
-    Kb2      MISSING (4): InnerService @323.3 | InnerService @486.7 | InnerService @563.5 | Swage 1263.5..1377.7
-    Kb2      EXTRAS  (1): Swage 1265.7..1379.2
+    Kb1      EXTRAS  (1): Swage 1320.8..1439.5
+    Kb2      MISSING (4): InnerService @323.3 | InnerService @486.7 | InnerService @563.5 | Chamfer @end
 
   N35 (7 sticks with gaps)
     T1       EXTRAS  (1): LipNotch 52.0..97.0
@@ -292,8 +289,8 @@ FRAMES WITH GAPS:
 
   N44 (2 sticks with gaps)
     Kb1      MISSING (2): InnerService @873.6 | Swage 1349.9..1390.5
-    Kb1      EXTRAS  (1): Swage 1231.6..1390.8
-    Kb2      MISSING (3): InnerService @309.9 | InnerService @467.0 | InnerService @493.3
+    Kb1      EXTRAS  (1): Swage 1230.2..1389.4
+    Kb2      MISSING (4): InnerService @309.9 | InnerService @467.0 | InnerService @493.3 | Chamfer @end
 
   N45 (5 sticks with gaps)
     S1       EXTRAS  (3): LipNotch 797.0..842.0 | LipNotch 839.0..884.0 | LipNotch 881.0..926.0

@@ -46,6 +46,26 @@ export interface StickContext {
    *  — single-H frames (header without box) get no Webs. Verified 2026-05-04
    *  vs HG260001 LBW: L4/L8 single-H1 → 0 webs; L6/L41 paired-H → webs on H1. */
   framePairedHeader?: boolean;
+  /** Optional: raw XML `<flipped>` attribute before framecad-import
+   *  normalization. Required by Kb chamfer-end predicate which depends on
+   *  the raw flipped state (the diff harness overrides flipped→false for
+   *  diagonal braces). */
+  inputFlipped?: boolean;
+  /** Optional: for Kb sticks, true if the plate-attached end (end after
+   *  Kb normalization) is at the TOP of the frame (end.z > start.z). Used
+   *  by chamfer-end predicate combined with inputFlipped. */
+  kbTopAttached?: boolean;
+  /** Optional: world Z of the stick's start endpoint after trim. Lets
+   *  Service-hole rules anchor on absolute world Z (electrical schedule
+   *  e.g. 300/450 mm AFL) rather than stick-local offset. Required for
+   *  walls whose B-plate sits below z=0 (the +45mm InnerService shift). */
+  stickStartZ?: number;
+  /** Optional: frame elevation (Z origin of the frame). InnerService rules
+   *  anchor relative to frame elevation: stud_local_pos = (300 + elev) -
+   *  stickStartZ. This handles both ground-floor walls (elev=0, B-plate
+   *  at z<0 or z=0) and upper-story walls (elev=2355, stud at z=2357 etc.)
+   *  with the same formula. */
+  frameElevation?: number;
 }
 
 /**
@@ -57,8 +77,8 @@ export interface StickContext {
  *   (yields max k positions where k*spacing + firstOffset <= length - lastOffset)
  */
 export type Anchor =
-  | { kind: "startAnchored"; offset: number }
-  | { kind: "endAnchored"; offset: number }
+  | { kind: "startAnchored"; offset: number; offsetFn?: (ctx: StickContext) => number }
+  | { kind: "endAnchored"; offset: number; offsetFn?: (ctx: StickContext) => number }
   | { kind: "centred"; offset?: number }
   | { kind: "fraction"; fraction: number }   // pos = length * fraction
   | { kind: "spaced"; firstOffset: number; spacing: number; lastOffset: number }

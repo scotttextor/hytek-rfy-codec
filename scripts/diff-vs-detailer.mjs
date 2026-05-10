@@ -309,7 +309,12 @@ function buildOurProject(xmlText) {
             end = { x: end.x-ux*T, y: end.y-uy*T, z: end.z-uz*T };
           }
         }
-        // Kb stud-end normalization + 2mm trim
+        // Kb stud-end normalization + 2mm start trim + 1.46mm end trim.
+        // Verified 2026-05-09 vs HG260001 PK4 LBW Kb sticks: oursLength
+        // (with start trim only) was +1.46mm longer than refLength on every
+        // Kb. Adding a 1.46mm end trim pushes our codec's Kb length to
+        // match Detailer's. This corrects ~140 Swage end-position errors
+        // (we placed Swage at oursLength while ref placed at refLength).
         if (/^Kb\d/.test(stickName)) {
           const sb = Math.min(start.z - fzMin, fzMax - start.z);
           const eb = Math.min(end.z - fzMin, fzMax - end.z);
@@ -317,8 +322,9 @@ function buildOurProject(xmlText) {
           const dx = end.x-start.x, dy = end.y-start.y, dz = end.z-start.z;
           const len = Math.sqrt(dx*dx+dy*dy+dz*dz);
           if (len > 4) {
-            const ux=dx/len, uy=dy/len, uz=dz/len, T=2.0;
-            start = { x: start.x+ux*T, y: start.y+uy*T, z: start.z+uz*T };
+            const ux=dx/len, uy=dy/len, uz=dz/len, T_START=2.0, T_END=1.46;
+            start = { x: start.x+ux*T_START, y: start.y+uy*T_START, z: start.z+uz*T_START };
+            end = { x: end.x-ux*T_END, y: end.y-uy*T_END, z: end.z-uz*T_END };
           }
         }
         // W truss-web length adjustment: vertical extends, diagonal trims.
@@ -373,6 +379,12 @@ function buildOurProject(xmlText) {
         const _stkDz = stick.end.z - stick.start.z;
         const _stkHoriz = Math.hypot(_stkDx, _stkDy);
         const angleFromVertical = Math.atan2(_stkHoriz, Math.abs(_stkDz)) * 180 / Math.PI;
+        // For Kb sticks, kbTopAttached = end.z > start.z (after normalization
+        // start = mid-wall, end = plate-attached). Used by chamfer-end rule.
+        const kbTopAttached = /^Kb\d/.test(stickName) && stick.end.z > stick.start.z;
+        // Stick start Z (post-trim). Used by InnerService rule to anchor on
+        // world Z (electrical schedule) instead of stick-local offset.
+        const stickStartZ = Math.min(stick.start.z, stick.end.z);
         stick.tooling = generateTooling({
           role, length, profileFamily,
           gauge: profile.gauge, flipped,
@@ -381,6 +393,10 @@ function buildOurProject(xmlText) {
           stickName: stick.name,
           angleFromVertical,
           framePairedHeader,
+          inputFlipped,
+          kbTopAttached,
+          stickStartZ,
+          frameElevation,
         });
         // Kb InnerService at horizontal Service crossings.
         //

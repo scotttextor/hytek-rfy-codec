@@ -187,6 +187,54 @@ function buildOurProject(xmlText) {
         }
         return false;
       }
+      const studsWorld = [];
+      for (const s of f.stick ?? []) {
+        const u = String(s["@_usage"] ?? "").toLowerCase();
+        if (!u.includes("stud")) continue;
+        const ps = parseTriple(String(s.start ?? "0,0,0"));
+        // Studs are vertical: x,y are constant along stick. Use start xy.
+        studsWorld.push({ x: ps.x, y: ps.y });
+      }
+      // Per-end nog trim classifier (Agent ID, 2026-05-09).
+      //
+      // Detailer's actual behaviour, recovered by analysing 26 sample nogs
+      // across HG260044 LBW + NLBW + RP corpora:
+      //
+      //   For each nog endpoint, classify by which feature it abuts and apply
+      //   a different trim per case:
+      //     1. Flush to a plate corner (<1mm) → 4mm trim
+      //     2. Pre-trimmed near a plate corner (1-5mm) → 1mm trim
+      //     3. Stud's small-flange face (≤19mm from stud centerline) → 1mm
+      //     4. Stud's large-flange face (>19, ≤25mm from centerline) → 4mm
+      //     5. No nearby anchor → 1mm (historical default)
+      //
+      // The 17.5 vs 20.5 stud-distance split is the SOLE discriminator among
+      // integer-mm drifts on HG260044 + HG260001 wall corpora. The old
+      // nogSharesPlateExtent helper only handled both-flush (case 1) and fell
+      // through to 1mm/end for everything else, leaving 39 nogs drifted
+      // (+6mm in 17 cases, +3mm asymmetric in 22). This per-end classifier
+      // closes that gap. RP nogs have a separate sub-mm geometric drift
+      // (-1.91mm) that this rule does not touch — left as a separate
+      // follow-up class.
+      function nogEndTrim(nogPt) {
+        let minPlate = Infinity;
+        for (const pl of platesWorld) {
+          const da = Math.hypot(nogPt.x - pl.start.x, nogPt.y - pl.start.y);
+          const db = Math.hypot(nogPt.x - pl.end.x, nogPt.y - pl.end.y);
+          if (da < minPlate) minPlate = da;
+          if (db < minPlate) minPlate = db;
+        }
+        if (minPlate < 1.0) return 4.0;
+        if (minPlate <= 5.0) return 1.0;
+        let minStud = Infinity;
+        for (const st of studsWorld) {
+          const d = Math.hypot(nogPt.x - st.x, nogPt.y - st.y);
+          if (d < minStud) minStud = d;
+        }
+        if (minStud <= 19.0) return 1.0;
+        if (minStud <= 25.0) return 4.0;
+        return 1.0;
+      }
 
       // Pre-pass: detect paired-header frames. Detailer emits Web stiffeners
       // on H1 only when the frame has a paired/box header — H2 or H3 that
@@ -303,12 +351,17 @@ function buildOurProject(xmlText) {
         // Verified vs HG260001 PK6/TT6-1 H4: ref length 1761.6 = raw XML
         // length, our 1mm/end trim was producing 1759.6. Removed for TB2B.
         const isTB2BHeader = isTB2BPlanForTrim && isHeader;
-        // Nog trim: 4mm/end if nog spans the same world extent as a plate
-        // (continuous wall-spanning nog), else 1mm/end. See pre-pass above.
-        const nogTrim = isNog && nogSharesPlateExtent(start, end) ? 4.0 : 1.0;
+        // Nog trim: per-end classification (4mm at flush plate / large-flange
+        // stud face, 1mm at pre-trimmed plate / small-flange stud face).
+        // See nogEndTrim helper above.
+        let nogTStart = 0, nogTEnd = 0;
+        if (isNog) {
+          nogTStart = nogEndTrim(start);
+          nogTEnd = nogEndTrim(end);
+        }
         const T = (isLINHeader || isTB2BHeader) ? 0
           : ((isFullStud || isJoistWeb) ? 2.0
-            : isNog ? nogTrim
+            : isNog ? 0 // handled per-end below
             : isHeader ? 1.0
             : isSill ? 1.0
             : 0);
@@ -319,6 +372,15 @@ function buildOurProject(xmlText) {
             const ux=dx/len,uy=dy/len,uz=dz/len;
             start = { x: start.x+ux*T, y: start.y+uy*T, z: start.z+uz*T };
             end = { x: end.x-ux*T, y: end.y-uy*T, z: end.z-uz*T };
+          }
+        }
+        if (isNog && (nogTStart > 0 || nogTEnd > 0)) {
+          const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
+          const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
+          if (len > nogTStart + nogTEnd + 1) {
+            const ux=dx/len,uy=dy/len,uz=dz/len;
+            start = { x: start.x+ux*nogTStart, y: start.y+uy*nogTStart, z: start.z+uz*nogTStart };
+            end = { x: end.x-ux*nogTEnd, y: end.y-uy*nogTEnd, z: end.z-uz*nogTEnd };
           }
         }
         // Kb stud-end normalization + 2mm start trim + 1.46mm end trim.

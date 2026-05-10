@@ -21,6 +21,7 @@ export {
   type ParsedProject, type ParsedPlan, type ParsedFrame, type ParsedStick, type ParsedStickProfile,
   type FrameBasis, type Vec2, type Vec3,
   type ServiceAction,
+  type WebAction,
   type SynthesizePlansOptions, type SynthesizePlansResult,
 } from "./synthesize-plans.js";
 export {
@@ -29,6 +30,12 @@ export {
   isWallServicePlanName,
   applicableZLinePositions,
 } from "./simplify-wall-service.js";
+export {
+  simplifyWallWebFrame,
+  simplifyWallWebInProject,
+  isWallWebPlanName,
+  applicableWebPositionsForStud,
+} from "./simplify-wall-web.js";
 export {
   MACHINE_SETUPS,
   SETUP_BY_PROFILE_WEB,

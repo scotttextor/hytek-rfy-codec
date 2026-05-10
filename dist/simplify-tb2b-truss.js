@@ -1034,12 +1034,24 @@ export function simplifyTb2bTrussFrame(frame, setup) {
                     if (Math.abs(Math.min(dEndStart, dEndEnd) - T_LF_OFFSET) < T_TOL)
                         tAtXmlEnd = true;
                 }
-                const capAtXmlStart = tAtXmlEnd && !tAtXmlStart;
-                const capAtXmlEnd = tAtXmlStart && !tAtXmlEnd;
-                const capBothEnds = tAtXmlStart && tAtXmlEnd;
-                // XML→OUTPUT mapping (REFLECTED for top-chord H-headers): see comment.
-                t6CapAtOutputStart = capAtXmlEnd || capBothEnds;
-                t6CapAtOutputEnd = capAtXmlStart || capBothEnds;
+                // Map XML→OUTPUT via the codec's chordArcReversal convention:
+                //   flipped=false → output-start = XML-start (no reversal)
+                //   flipped=true  → output-start = XML-end   (reversal — see
+                //                                              chordArcReversal())
+                // Cap-stack covers the LF-span area where the T-chord meets the
+                // H-header (the cap is at the SAME END as the T-chord junction).
+                // Verified vs:
+                //   HG260044 PK1 TT1-1 H5 (flipped=false): T@XML-end, cap@output-end ✓
+                //   HG260044 PK1 TT3-1 H6 (flipped=false): T@XML-start, cap@output-start ✓
+                //   HG260001 PK12 TT2-1 H7 (flipped=true): T@XML-end, cap@output-start ✓
+                //   HG260001 PK12 TT3-1 H7 (flipped=true): T@XML-end, cap@output-start ✓
+                const flipped = !!stick.flipped;
+                const tAtOutputStart = flipped ? tAtXmlEnd : tAtXmlStart;
+                const tAtOutputEnd = flipped ? tAtXmlStart : tAtXmlEnd;
+                const capBothEnds = tAtOutputStart && tAtOutputEnd;
+                // Cap is at the SAME OUTPUT-END as the T-chord junction.
+                t6CapAtOutputStart = tAtOutputStart || capBothEnds;
+                t6CapAtOutputEnd = tAtOutputEnd || capBothEnds;
                 const L = meta3DLen;
                 // Cap variant: wall-plate-level H-header gets LARGE caps,
                 // interior H-header gets NARROW.
@@ -1049,7 +1061,12 @@ export function simplifyTb2bTrussFrame(frame, setup) {
                 const LN_SPAN = 54.90;
                 const LF_SPAN = isLargeVariant ? 181.06 : 179.28;
                 const BOLT_OFFSET = 84.3;
-                if (t6CapAtOutputStart) {
+                // For long H7 sticks (L>1500) with cap@output-start, the existing
+                // H7Header rule (below) emits the WIDE+DUAL+L-35 pattern. Defer to
+                // it instead of emitting our NARROW+SINGLE here. Verified: HG260001
+                // PK12 TT2-1 H7 (L=7316) wants WIDE/DUAL.
+                const deferToH7Header = isH7Header && t6CapAtOutputStart;
+                if (t6CapAtOutputStart && !deferToH7Header) {
                     stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
                     stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LN_SPAN });
                     stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
@@ -1064,11 +1081,14 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             }
         }
         // Existing H7Header rule (preserved for HG260001 PK6-12 / HG260044 PK4
-        // where the cap@start WIDE pattern is correct). Skip if T6 rule already
-        // emitted any cap (would otherwise double-emit / emit wrong-end).
+        // where the cap@start WIDE+DUAL+L-35 pattern is correct). Fires when:
+        //  (a) T6 didn't activate (non-TT/TTI frame, sloped, etc.), OR
+        //  (b) T6 deferred to it (cap@output-start on long H7).
+        // Skip only when T6 emitted cap@output-end ONLY (existing rule's
+        // cap@start would be wrong-end).
         if (isH7Header) {
-            const t6Took = isPk1HHeader && (t6CapAtOutputStart || t6CapAtOutputEnd);
-            if (!t6Took) {
+            const t6CapElsewhere = isPk1HHeader && t6CapAtOutputEnd && !t6CapAtOutputStart;
+            if (!t6CapElsewhere) {
                 const L = meta3DLen;
                 stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: 43.72 });
                 stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 65.72 });

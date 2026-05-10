@@ -1263,33 +1263,40 @@ export function simplifyTb2bTrussFrame(
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // Agent T5 (2026-05-09): TT-frame T-chord apex-extras + heel-bolt fix
+    // Agent T5 (2026-05-09): TT/TN-frame T-chord apex-extras + heel-bolt fix
     // ────────────────────────────────────────────────────────────────────
     //
-    // PK6/PK7/PK12 contain TT-frames (with apex header H#) where sloped
+    // PK6/PK7/PK12 contain TT-frames AND certain TN-frames where sloped
     // T-chords have a sub-pattern not handled by the existing simplifier:
     //
-    //   • The chord-chord apex pair-bolt rule (line 376-413, +153.4 spacing)
-    //     emits a "+153.4 pair partner" at the apex-side. For TT-frames
-    //     where the @91.21 APEX_BOLT rule (line 1247-1263) ALSO fires, this
-    //     produces an EXTRA at output ≈ APEX_BOLT + 75.06 (e.g. @166.27 or
-    //     @L-166.27 = @5725.84) that Detailer suppresses.
+    //   • TT-only: chord-chord apex pair-bolt rule (line 376-413, +153.4
+    //     spacing) emits a "+153.4 pair partner" at the apex-side. For
+    //     TT-frames where the @91.21 APEX_BOLT rule (line 1247-1263) ALSO
+    //     fires, this produces an EXTRA at output ≈ APEX_BOLT + 75.06 (e.g.
+    //     @166.27 or @L-166.27 = @5725.84) that Detailer suppresses.
     //
-    //   • Detailer emits a HEEL-SIDE FIXED BOLT at output 715.93 from heel
-    //     (i.e., at output-position 715.93 if heel is at output-start, or at
-    //     L-715.93 if heel is at output-end). The codec doesn't currently
-    //     emit this heel-bolt on TT-frame T-chords.
+    //   • TT and TN: Detailer emits a HEEL-SIDE FIXED BOLT at output 715.93
+    //     from heel (i.e., at output-position 715.93 if heel is at output-
+    //     start, or at L-715.93 if heel is at output-end). The codec doesn't
+    //     currently emit this heel-bolt on TT/TN-frame T-chords.
     //
     // Verified vs HG260001 PK6 ref:
     //   TT6-1 T2 first  ref: 715.92, 1023.53, …, 5662.51, 5800.89
     //   TT6-1 T2 second ref: 91.21, 229.60, …, 4861.53, 5176.18 (= L-715.92)
+    //   TN16-1 T2 ref:        715.93, 969.73, …, 5046.71
+    //   TN17-1 T3 first ref:  715.92, 969.72, …, 6526.30, 6679.70
     //
-    // Predicate: ONLY fires on TT-frames AND on T-chords with slope > 5° AND
-    // heel-end (LOW-Z) shares an endpoint with another T-chord (heel-tip
-    // diagonal partner). Length-gated to heel-tip 1900-2200mm (the @715.93
-    // case); longer heel-tip partners (TN6-1 T7=2268, TN20-1 T4=2431) use
-    // 815.31 instead and are NOT addressed by this fix.
-    if (isTChordCap && meta3D) {
+    // Predicate: T-chord with slope > 5° AND heel-end (LOW-Z) shares an
+    // endpoint with another T-chord (heel-tip diagonal partner) AND
+    // heel-tip partner length ∈ [1900, 2200] (the @715.93 case). Apex-extras
+    // suppression ONLY applies to TT-frames (where @91.21 fires).
+    //
+    // EXCLUSIONS:
+    //   - PK10/PK11 TN6-1 T4 / TN5/TN4 use heel-tip partners ≥ 2200mm and
+    //     a different bolt @815.18, NOT @715.93 — gate excludes them.
+    const isTHeelCap_T5 = /^T\d/.test(stick.name) && !!meta3D &&
+      Math.abs(meta3D.end3D.z - meta3D.start3D.z) > 5;
+    if (isTHeelCap_T5 && meta3D) {
       const APEX_BOLT_T5 = 91.21;
       const APEX_EXTRA_OFFSET_T5 = 75.06;
       const HEEL_BOLT_T5 = 715.93;
@@ -1318,28 +1325,29 @@ export function simplifyTb2bTrussFrame(
           hasHeelTipPartner_T5 = true;
         }
       }
-      if (hasHeelTipPartner_T5) {
-        // Suppress the apex-pair extras at apexPos ± APEX_EXTRA_OFFSET.
-        const apexExtraPos_T5 = apexAtOutputEnd_T5
-          ? meta3DLen - APEX_BOLT_T5 - APEX_EXTRA_OFFSET_T5
-          : APEX_BOLT_T5 + APEX_EXTRA_OFFSET_T5;
-        stick.tooling = stick.tooling.filter((op): boolean => {
-          if (op.kind !== "point" || op.type !== "Web") return true;
-          if (Math.abs(op.pos - apexExtraPos_T5) < SUPPRESS_TOL_T5) return false;
-          return true;
-        });
-        // Add heel-side fixed bolt @HEEL_BOLT from heel-end. Length-gated
-        // to heel-tip 1900-2200mm.
-        if (heelTipLen_T5 >= 1900 && heelTipLen_T5 <= 2200) {
-          const heelBoltPos_T5 = apexAtOutputEnd_T5 ? HEEL_BOLT_T5 : meta3DLen - HEEL_BOLT_T5;
-          if (heelBoltPos_T5 > 0 && heelBoltPos_T5 < meta3DLen) {
-            const APPROX_DEDUP_T5 = 3.0;
-            const exists2_T5 = stick.tooling.some(
-              (o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - heelBoltPos_T5) < APPROX_DEDUP_T5,
-            );
-            if (!exists2_T5) {
-              stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(heelBoltPos_T5 * 100) / 100 });
-            }
+      if (hasHeelTipPartner_T5 && heelTipLen_T5 >= 1900 && heelTipLen_T5 <= 2200) {
+        // Apex-extras suppression: ONLY on TT-frames where @91.21 APEX_BOLT
+        // rule fires. TN-frames use @22.85+@176.25 doublet (correct) so
+        // skip the suppression for them.
+        if (isTTFrame) {
+          const apexExtraPos_T5 = apexAtOutputEnd_T5
+            ? meta3DLen - APEX_BOLT_T5 - APEX_EXTRA_OFFSET_T5
+            : APEX_BOLT_T5 + APEX_EXTRA_OFFSET_T5;
+          stick.tooling = stick.tooling.filter((op): boolean => {
+            if (op.kind !== "point" || op.type !== "Web") return true;
+            if (Math.abs(op.pos - apexExtraPos_T5) < SUPPRESS_TOL_T5) return false;
+            return true;
+          });
+        }
+        // Add heel-side fixed bolt @HEEL_BOLT_T5 from heel-end. (Both TT and TN)
+        const heelBoltPos_T5 = apexAtOutputEnd_T5 ? HEEL_BOLT_T5 : meta3DLen - HEEL_BOLT_T5;
+        if (heelBoltPos_T5 > 0 && heelBoltPos_T5 < meta3DLen) {
+          const APPROX_DEDUP_T5 = 3.0;
+          const exists2_T5 = stick.tooling.some(
+            (o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - heelBoltPos_T5) < APPROX_DEDUP_T5,
+          );
+          if (!exists2_T5) {
+            stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(heelBoltPos_T5 * 100) / 100 });
           }
         }
       }

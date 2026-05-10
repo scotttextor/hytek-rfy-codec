@@ -475,6 +475,52 @@ function buildOurProject(xmlText) {
         }
       }
 
+      // BHSP (2026-05-11): per-end Swage cap detection on Bh raised B-plates
+      // and H headers in NLBW plans. When the stick's start or end endpoint
+      // sits within ~10mm of the frame envelope perimeter (along its run
+      // axis), Detailer caps that end with `Swage` instead of the default
+      // `InnerNotch + LipNotch` cap-stack.
+      //
+      // Verified vs HG260044 GF-NLBW-70.075: 12 affected B/H sticks across
+      // N1/N8/N15/N19/N28/N52. Verified vs HG260001 PK1+PK2 GF-NLBW-70.075.
+      // Polarity is shared across both corpora.
+      const _bhStartCapByName = new Map();
+      const _bhEndCapByName = new Map();
+      {
+        const isNLBW = /(NLBW|NON-LBW)/i.test(plan.name);
+        if (isNLBW) {
+          const fxMin = Math.min(...env.map(v => v.x));
+          const fxMax = Math.max(...env.map(v => v.x));
+          const fyMin = Math.min(...env.map(v => v.y));
+          const fyMax = Math.max(...env.map(v => v.y));
+          const PERIMETER_TOL = 10;
+          for (const s of f.stick ?? []) {
+            const u = String(s["@_usage"] ?? "").toLowerCase();
+            const n = String(s["@_name"] ?? "");
+            const ps = parseTriple(String(s.start ?? "0,0,0"));
+            const pe = parseTriple(String(s.end ?? "0,0,0"));
+            const z = (ps.z + pe.z) / 2;
+            const isRaisedB = u === "bottomplate" && Math.abs(z - frameElevation - 61.5) < 1 && /^B\d/.test(n);
+            const isH = (u === "headplate" || u === "head") && /^H\d/.test(n);
+            if (!isRaisedB && !isH) continue;
+            const dx = Math.abs(pe.x - ps.x);
+            const dy = Math.abs(pe.y - ps.y);
+            const axis = dx > dy ? "x" : "y";
+            const startV = axis === "x" ? ps.x : ps.y;
+            const endV = axis === "x" ? pe.x : pe.y;
+            const axMin = axis === "x" ? fxMin : fyMin;
+            const axMax = axis === "x" ? fxMax : fyMax;
+            const startAtPerim = Math.abs(startV - axMin) <= PERIMETER_TOL || Math.abs(startV - axMax) <= PERIMETER_TOL;
+            const endAtPerim = Math.abs(endV - axMin) <= PERIMETER_TOL || Math.abs(endV - axMax) <= PERIMETER_TOL;
+            // Only fire when OTHER end is interior — full-span sub-plates
+            // (start AND end both at perimeter) keep their existing
+            // Notch+LipNotch caps (they are the primary B/H plate).
+            if (startAtPerim && !endAtPerim) _bhStartCapByName.set(n, true);
+            if (endAtPerim && !startAtPerim) _bhEndCapByName.set(n, true);
+          }
+        }
+      }
+
       const sticks = [];
       for (const s of f.stick ?? []) {
         const profile = {
@@ -719,6 +765,8 @@ function buildOurProject(xmlText) {
           kbFrameUniformFlipped,
           nogStartCapIsNotch: _nogStartCapByName.get(stick.name) === true,
           nogEndCapIsNotch: _nogEndCapByName.get(stick.name) === true,
+          bhStartCapIsSwage: _bhStartCapByName.get(stick.name) === true,
+          bhEndCapIsSwage: _bhEndCapByName.get(stick.name) === true,
           projectConfig,
         });
         // Kb InnerService at horizontal Service crossings.

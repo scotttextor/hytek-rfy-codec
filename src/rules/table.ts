@@ -141,33 +141,6 @@ function nogEndTakesNotchCap(ctx: StickContext): boolean {
   return false;
 }
 
-/**
- * BHSP (2026-05-11): Whether this raised B-plate (Bh role) or H header's
- * START end takes a `Swage` cap instead of the default `InnerNotch +
- * LipNotch` cap-stack.
- *
- * Detailer's reference RFY caps the END FACING THE FRAME ENVELOPE perimeter
- * with Swage on sub-plates above rough openings — verified vs HG260044 GF-
- * NLBW-70.075 (12 sticks across N1/N8/N15/N19/N28/N52) and HG260001 PK1/PK2
- * GF-NLBW-70.075 (matching pattern). When NEITHER end faces the perimeter,
- * the existing Notch+LipNotch cap-stack stands (the stick is fully interior).
- *
- * Predicate gates on:
- *   - NLBW plan-name match (other plan types not yet validated)
- *   - The per-end flag `bhStartCapIsSwage` set by the diff harness /
- *     framecad-import based on stick-endpoint-vs-envelope proximity.
- */
-function bhStartTakesSwageCap(ctx: StickContext): boolean {
-  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
-  return ctx.bhStartCapIsSwage === true;
-}
-
-/** BHSP (2026-05-11): same as `bhStartTakesSwageCap` but for the END. */
-function bhEndTakesSwageCap(ctx: StickContext): boolean {
-  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
-  return ctx.bhEndCapIsSwage === true;
-}
-
 export const RULE_TABLE: RuleGroup[] = [
   // ----------- STUDS on 70S41 (any length) -----------
   {
@@ -492,8 +465,8 @@ export const RULE_TABLE: RuleGroup[] = [
       // 4 LBW/NLBW plans where Detailer's ref had none.
       { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm wall B plates: Web@8 only on ground-floor PRIMARY B plate (B1 or >=1500mm)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && emitsSlabAnchorBolt(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && emitsSlabAnchorBolt(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       // InnerNotch on B plates is SELECTIVE — same as T (some sticks have it,
@@ -536,8 +509,8 @@ export const RULE_TABLE: RuleGroup[] = [
       // B-plate (B1, or any B-plate >= 1500mm). See 70S41 rule above for context.
       { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm wall B plates: Web@8 only on ground-floor PRIMARY B plate (gauge<1.0)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && emitsSlabAnchorBolt(ctx), notes: "89mm anchor bolt — only on ground-floor PRIMARY B plate + gauge<1.0 (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && emitsSlabAnchorBolt(ctx), notes: "89mm anchor bolt at length-62mm — ground-floor PRIMARY B plate + gauge<1.0 only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm anchor bolt — only on ground-floor PRIMARY B plate + gauge<1.0" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm anchor bolt at length-62mm — ground-floor PRIMARY B plate + gauge<1.0 only" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
     ],
@@ -576,17 +549,37 @@ export const RULE_TABLE: RuleGroup[] = [
   // "human error" in the reference data. Removed the NLBW slab-anchor sub-rules.
   // Anchors only fire on B-plates sitting at z=0 on the slab — raised B-plates
   // (Bh role, OR z>30) NEVER attach to the slab.
+  //
+  // BHSP (2026-05-11): On NLBW plans, when the Bh's START or END faces the
+  // frame envelope perimeter (within ~10mm along the run axis), Detailer
+  // swaps that end's `InnerNotch + LipNotch` cap-stack for a `Swage` cap.
+  // Verified vs HG260044 GF-NLBW-70.075 (12 affected B/H sticks across
+  // N1/N8/N15/N19/N28/N52) and HG260001 PK1+PK2 GF-NLBW-70.075 (matching
+  // pattern). The diff harness sets `bhStartCapIsSwage` / `bhEndCapIsSwage`
+  // per-stick from envelope geometry. When NEITHER flag is set, the
+  // existing Notch+LipNotch cap-stack stands at both ends.
   {
     rolePattern: /^Bh$/,
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "Raised 70mm B: InnerNotch at start clearance" },
-      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+        predicate: bhStartTakesSwageCap,
+        notes: "BHSP: Raised 70mm B start faces perimeter — Swage replaces Notch+LipNotch" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !bhStartTakesSwageCap(ctx),
+        notes: "Raised 70mm B: InnerNotch at start clearance" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !bhStartTakesSwageCap(ctx) },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
-      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+        predicate: bhEndTakesSwageCap,
+        notes: "BHSP: Raised 70mm B end faces perimeter — Swage replaces Notch+LipNotch" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !bhEndTakesSwageCap(ctx) },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !bhEndTakesSwageCap(ctx) },
     ],
   },
 
@@ -715,8 +708,16 @@ export const RULE_TABLE: RuleGroup[] = [
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header start cap: InnerNotch" },
-      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header start cap: LipNotch" },
+      // BHSP (2026-05-11): Swage @start replaces Notch+LipNotch when start faces perimeter (NLBW only).
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+        predicate: bhStartTakesSwageCap,
+        notes: "BHSP: 70mm header start faces perimeter — Swage replaces Notch+LipNotch" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !bhStartTakesSwageCap(ctx),
+        notes: "70mm header start cap: InnerNotch" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !bhStartTakesSwageCap(ctx),
+        notes: "70mm header start cap: LipNotch" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high", notes: "Header dimple at 16.5" },
       // Paired dimple @58.5 — LBW headers only.
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high",
@@ -725,8 +726,16 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high",
         predicate: (ctx) => /(LBW)/i.test(ctx.planName ?? "") && !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header end cap: InnerNotch" },
-      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header end cap: LipNotch" },
+      // BHSP (2026-05-11): Swage @end replaces Notch+LipNotch when end faces perimeter (NLBW only).
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+        predicate: bhEndTakesSwageCap,
+        notes: "BHSP: 70mm header end faces perimeter — Swage replaces Notch+LipNotch" },
+      { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !bhEndTakesSwageCap(ctx),
+        notes: "70mm header end cap: InnerNotch" },
+      { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+        predicate: (ctx) => !bhEndTakesSwageCap(ctx),
+        notes: "70mm header end cap: LipNotch" },
       // Web stiffener holes — evenly distributed along the header. H1/H3
       // (the "main" header) starts at @89; H2 (Box1) starts at @50. Both have
       // the same world-X positions but different stick-local offsets due to
@@ -1036,33 +1045,6 @@ export function isPrimaryBPlate(ctx: { stickName?: string; length: number }): bo
   if (ctx.stickName === "B1" || ctx.stickName === "Bp1") return true;
   if (ctx.length >= 1500) return true;
   return false;
-}
-
-/**
- * Slab-anchor bolt eligibility (2026-05-11): combines `isPrimaryBPlate` with
- * a per-project upper-story carve-out.
- *
- * Some Detailer projects (HG260044) suppress the slab anchor `Bolt @62` /
- * `Bolt @length-62` ops on B-plates of UPPER-STORY frames inside a "GF-NLBW"
- * plan, even though they keep the Web@8 / InnerDimple / LipNotch ops on
- * those same B-plates. Other projects (HG260001) still emit the bolts on
- * upper-story B1s. Discriminated by `projectConfig.slabBoltOnUpperFloor`
- * — see `ProjectConfig` for the full reference-data trace.
- *
- * Web@8 still fires on upper-story B-plates in BOTH polarities (verified
- * vs HG260044 N18-B1: `BOLT HOLES @8` present, `ANCHOR @62` absent),
- * so this guard is only consulted from the Bolt rule predicates.
- *
- * Frame elevation > 100mm = upper story. Standard ground-floor walls have
- * elevation 0 or small negatives (-45 etc.).
- */
-export function emitsSlabAnchorBolt(ctx: StickContext): boolean {
-  if (!isPrimaryBPlate(ctx)) return false;
-  const isUpperStory = ctx.frameElevation !== undefined && ctx.frameElevation > 100;
-  if (!isUpperStory) return true;
-  // Upper-story: project config decides. Default = legacy "yes" so unknown
-  // projects keep the pre-2026-05-11 behaviour.
-  return ctx.projectConfig?.slabBoltOnUpperFloor !== false;
 }
 
 /** Look up profile-specific span/dimple offsets.

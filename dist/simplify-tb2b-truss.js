@@ -224,7 +224,12 @@ export function computeTb2bWebPositions(sticks, options) {
             //   longer-of-pair  (with caps):    -(WEB_VS_RAIL_OFFSET + lLip + rLip) × tan(slope)
             // At 15°/70S41 these are -4.02mm and -9.91mm respectively, vs the old
             // ±4.53mm. Verified ±0.1mm vs HG260001 PK10/PK11 ref.
-            const PERP_GATE_FOR_OVERRIDE = 0.5;
+            // Tighter gate (0.30) than the panel-pair PERP_GATE (0.5): the override
+            // is only correct for "true vertical" webs whose dot with a 15° chord
+            // is ±sin(15°) ≈ ±0.259. Sloped-PAR webs with |dot| in [0.30, 0.5]
+            // (e.g. TN6-1 W11 @0.307, TN11-1 W19 @0.453) need the standard formula
+            // and ARE PAR neighbors for their adjacent PERP web's pair-bolt.
+            const PERP_GATE_FOR_OVERRIDE = 0.30;
             const isWebPerpish = Math.abs(dot) < PERP_GATE_FOR_OVERRIDE;
             const aOverride = (aIsChord && sB.usage === "web" && isWebPerpish)
                 ? perpCorrOverride.get(keyA)
@@ -564,14 +569,9 @@ export function simplifyTb2bTrussFrame(frame, setup) {
         (firstStickWeb !== undefined
             ? (getMachineSetupForProfile(firstStickWeb) ?? getDefaultMachineSetup())
             : getDefaultMachineSetup());
-    // Pre-pass: detect sloped peer-pair B-chords and compute their per-chord
-    // PERP-web chord-side correction. Mirrors the trim block's peer detection
-    // logic (xmlStartCenterlineMeeting + xmlEndCenterlineMeeting) so both the
-    // correction override and trim wedges fire on the same set of chords.
-    // Agent T4 (2026-05-09) — closes the +14.5mm panel-Web pair drift on
-    // longer-of-pair B-chords (e.g. HG260001 PK10/PK11 TN6-1/TN4-1/TN5-x B2).
     const SHARED_TOL_FOR_PEER = 20.0;
     const slopedPeerPairChordCorr = new Map();
+    const slopedPeerPairInfo = new Map();
     {
         // Build per-instance keys identical to computeTb2bWebPositions's scheme.
         const occByName = new Map();
@@ -600,6 +600,8 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             const myLen = Math.hypot(meta.end3D.y - meta.start3D.y, meta.end3D.z - meta.start3D.z);
             // Look for peer (another sloped B-chord sharing an endpoint).
             let peerLen = -1;
+            let xmlStartCenterline = false;
+            let xmlEndCenterline = false;
             for (let k = 0; k < frame.sticks.length; k++) {
                 if (k === i)
                     continue;
@@ -617,10 +619,18 @@ export function simplifyTb2bTrussFrame(frame, setup) {
                 const dStartEnd = Math.hypot(om.end3D.y - meta.start3D.y, om.end3D.z - meta.start3D.z);
                 const dEndStart = Math.hypot(om.start3D.y - meta.end3D.y, om.start3D.z - meta.end3D.z);
                 const dEndEnd = Math.hypot(om.end3D.y - meta.end3D.y, om.end3D.z - meta.end3D.z);
-                const sharesEndpoint = dStartStart < SHARED_TOL_FOR_PEER || dStartEnd < SHARED_TOL_FOR_PEER ||
-                    dEndStart < SHARED_TOL_FOR_PEER || dEndEnd < SHARED_TOL_FOR_PEER;
-                if (sharesEndpoint && oLen > peerLen)
-                    peerLen = oLen;
+                const startSharesPeer = dStartStart < SHARED_TOL_FOR_PEER || dStartEnd < SHARED_TOL_FOR_PEER;
+                const endSharesPeer = dEndStart < SHARED_TOL_FOR_PEER || dEndEnd < SHARED_TOL_FOR_PEER;
+                if (startSharesPeer) {
+                    xmlStartCenterline = true;
+                    if (oLen > peerLen)
+                        peerLen = oLen;
+                }
+                if (endSharesPeer) {
+                    xmlEndCenterline = true;
+                    if (oLen > peerLen)
+                        peerLen = oLen;
+                }
             }
             if (peerLen <= 0)
                 continue; // no sloped peer
@@ -637,13 +647,101 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             const correction = isLongerOfPair
                 ? -(WEB_VS_RAIL_OFFSET_FOR_PEER_PAIR + lLip + rLip) * tanA
                 : -WEB_VS_RAIL_OFFSET_FOR_PEER_PAIR * tanA;
-            slopedPeerPairChordCorr.set(keys[i], correction);
+            const k = keys[i];
+            slopedPeerPairChordCorr.set(k, correction);
+            slopedPeerPairInfo.set(k, {
+                correction,
+                isLongerOfPair,
+                stickIdx: i,
+                centerlineAtXmlStart: xmlStartCenterline,
+            });
         }
     }
     const positionsByKey = computeTb2bWebPositions(metaSticks, {
         perpWebChordCorrectionOverride: slopedPeerPairChordCorr,
     });
     const { dimplesByKey } = computeBoxDimples(metaSticks, resolvedSetup);
+    // Post-pass on LONGER sloped peer-pair B-chords (Agent T4, 2026-05-09):
+    //   1. Suppress chord-Web positions within 150mm of the centerline-meeting
+    //      end (where the cap-stack DOESN'T go — heel/eaves end here).
+    //   2. Insert fixed @22.8 + @120.8 pair from the centerline-meeting end.
+    //
+    // The pair-bolt-pair offset from centerline-meeting end is fixed at 22.8mm
+    // and 22.8 + 98 = 120.8mm. Direction = "INTO chord" from the
+    // centerline-meeting tip, i.e. + arc if centerlineAtXmlStart, - arc otherwise.
+    //
+    // The 150mm suppression eliminates duplicates with whatever PERP/PAR webs
+    // happened to be near the centerline-meeting end (e.g. TN6-1 W17 PERP +
+    // W18 PAR pair-bolt that lands near @22.84/@120.87 — superseded by the
+    // fixed values).
+    //
+    // SHORTER B-chord: NO fixed pair, NO suppression. Its first chord-Web
+    // crossing near centerline (e.g. W18 in TN11-1 B2 at @22.8) is retained
+    // naturally with the -4mm correction.
+    //
+    // Verified vs HG260001 PK10/PK11/PK9 ref TN6-1/TN4-x/TN5-x/TN11-x B2.
+    const FIXED_PAIR_OFFSET_FROM_CENTERLINE_A = 22.8;
+    const FIXED_PAIR_OFFSET_FROM_CENTERLINE_B = 120.8;
+    const SUPPRESSION_RANGE_FROM_CENTERLINE_MM = 150;
+    for (const [chordKey, info] of slopedPeerPairInfo) {
+        if (!info.isLongerOfPair)
+            continue;
+        const positions = positionsByKey.get(chordKey);
+        if (!positions)
+            continue;
+        const meta = metaSticks[info.stickIdx];
+        const arcL = Math.hypot(meta.end3D.y - meta.start3D.y, meta.end3D.z - meta.start3D.z);
+        // Centerline arc-position (output coords as `computeTb2bWebPositions`
+        // returns them — needsArcReversal already applied internally).
+        // The function flips by L-arc when arc-reversal applies. We need to
+        // know the OUTPUT position of the centerline-meeting end. Inline the
+        // same `needsArcReversal` rule:
+        let centerlineOutputAt0 = info.centerlineAtXmlStart;
+        if (meta.usage === "bottomchord") {
+            const zSpanLocal = Math.abs(meta.end3D.z - meta.start3D.z);
+            if (!meta.flipped) {
+                if (meta.start3D.z > meta.end3D.z + 0.1) {
+                    // arc-reversal applies → output = L - arc; XML-start (arc=0) → output=L
+                    centerlineOutputAt0 = !info.centerlineAtXmlStart;
+                }
+                else if (zSpanLocal < 5 && meta.start3D.y > meta.end3D.y + 0.1) {
+                    centerlineOutputAt0 = !info.centerlineAtXmlStart;
+                }
+            }
+        }
+        // Compute the two fixed-pair positions in OUTPUT coords + the suppression
+        // range. The pair sits at offset 22.8 + 120.8 INTO the chord from the
+        // centerline-meeting OUTPUT end.
+        let pairA;
+        let pairB;
+        let suppressMin;
+        let suppressMax;
+        if (centerlineOutputAt0) {
+            pairA = FIXED_PAIR_OFFSET_FROM_CENTERLINE_A;
+            pairB = FIXED_PAIR_OFFSET_FROM_CENTERLINE_B;
+            suppressMin = 0;
+            suppressMax = SUPPRESSION_RANGE_FROM_CENTERLINE_MM;
+        }
+        else {
+            pairA = arcL - FIXED_PAIR_OFFSET_FROM_CENTERLINE_A;
+            pairB = arcL - FIXED_PAIR_OFFSET_FROM_CENTERLINE_B;
+            suppressMin = arcL - SUPPRESSION_RANGE_FROM_CENTERLINE_MM;
+            suppressMax = arcL;
+        }
+        // Filter out positions within the suppression range, then add the fixed
+        // pair, then re-sort + dedup ≥3mm.
+        const APEX_DEDUP_LOCAL = 3;
+        const kept = positions.filter((p) => p < suppressMin - 0.5 || p > suppressMax + 0.5);
+        kept.push(pairA, pairB);
+        kept.sort((a, b) => a - b);
+        const dedup = [];
+        for (const p of kept) {
+            const last = dedup[dedup.length - 1];
+            if (last === undefined || p - last >= APEX_DEDUP_LOCAL)
+                dedup.push(p);
+        }
+        positionsByKey.set(chordKey, dedup);
+    }
     const rewritten = [];
     // Rewrite each truss member stick. Box-piece sticks (e.g. "T4 (Box1)")
     // are NOT touched — their InnerDimple ops are pre-derived by the codec/

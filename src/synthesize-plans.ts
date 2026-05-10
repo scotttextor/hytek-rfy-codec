@@ -554,6 +554,14 @@ export function synthesizeRfyFromPlans(
           ? stripSlabAnchorOps(stick.tooling)
           : stick.tooling;
         const merged = mergeStickTooling(perStickOps, ctx, stick.usage);
+        // RP B-plate: add a paired InnerNotch at every body LipNotch
+        // (stud-crossing). Verified vs HG260044 GF-RP-70.075 corpus.
+        if (
+          /(?:^|-)RP(?:-|$|\d)/i.test(plan.name)
+          && String(stick.usage ?? "").toLowerCase() === "bottomplate"
+        ) {
+          addPairedInnerNotchAtBodyLipNotches(merged);
+        }
         const stickWithMerged = { ...stick, tooling: merged };
         sticks.push(buildStickXml(stickWithMerged, basis, frame.name, options.lenient ?? false));
       }
@@ -844,6 +852,43 @@ function positionOf(op: RfyToolingOp): number {
   if (op.kind === "point") return op.pos;
   if (op.kind === "start") return -1;
   return Number.POSITIVE_INFINITY;  // "end" → last
+}
+
+/** For RP B-plates: every body-LipNotch (stud-crossing) gets a paired
+ *  InnerNotch with identical span. Mutates `tooling` in place. Verified
+ *  2026-05-09 vs HG260044 GF-RP-70.075 corpus. */
+function addPairedInnerNotchAtBodyLipNotches(tooling: RfyToolingOp[]): void {
+  const SPAN_MATCH_TOL = 0.5;
+  const existing: Array<{ s: number; e: number }> = [];
+  for (const op of tooling) {
+    if (op.kind === "spanned" && op.type === "InnerNotch") {
+      existing.push({ s: op.startPos, e: op.endPos });
+    }
+  }
+  let stickLen = 0;
+  for (const op of tooling) {
+    if (op.kind === "spanned" && op.endPos > stickLen) stickLen = op.endPos;
+    if (op.kind === "point" && op.pos > stickLen) stickLen = op.pos;
+  }
+  if (stickLen < 50) return;
+  const toAdd: Array<{ s: number; e: number }> = [];
+  for (const op of tooling) {
+    if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
+    if (op.startPos < 5) continue;            // start-cap
+    if (op.endPos > stickLen - 5) continue;   // end-cap
+    const already = existing.some(
+      (x) =>
+        Math.abs(x.s - op.startPos) < SPAN_MATCH_TOL
+        && Math.abs(x.e - op.endPos) < SPAN_MATCH_TOL,
+    );
+    if (already) continue;
+    toAdd.push({ s: op.startPos, e: op.endPos });
+  }
+  for (const { s, e } of toAdd) {
+    tooling.push({
+      kind: "spanned", type: "InnerNotch", startPos: s, endPos: e,
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------

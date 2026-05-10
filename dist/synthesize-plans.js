@@ -32,6 +32,7 @@ import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
 import { simplifyRpFramesInProject } from "./simplify-rp.js";
 import { simplifyTb2bTrussFramesInProject, isTb2bPlanName } from "./simplify-tb2b-truss.js";
 import { simplifyWallServiceInProject } from "./simplify-wall-service.js";
+import { simplifyWallWebInProject } from "./simplify-wall-web.js";
 const COPLANARITY_TOLERANCE_MM = 1.0;
 const ORTHOGONALITY_TOLERANCE = 1e-6;
 const STICK_PLANAR_TOLERANCE_MM = 1.0;
@@ -264,6 +265,9 @@ export function synthesizeRfyFromPlans(project, options = {}) {
     if (typeof process === "undefined" || process.env?.CODEC_DISABLE_WALL_SERVICE !== "1") {
         simplifyWallServiceInProject(project.plans);
     }
+    if (typeof process === "undefined" || process.env?.CODEC_DISABLE_WALL_WEB !== "1") {
+        simplifyWallWebInProject(project.plans);
+    }
     for (const plan of project.plans) {
         planCount++;
         const frameNodes = [];
@@ -318,7 +322,7 @@ export function synthesizeRfyFromPlans(project, options = {}) {
             const frameStickWeb = frame.sticks?.[0]?.profile?.web;
             const frameSetup = (frameStickWeb !== undefined ? getMachineSetupForProfile(frameStickWeb) : undefined) ??
                 setup;
-            const contextOps = computeFrameContextOps(frame, basis, frameSetup);
+            const contextOps = computeFrameContextOps(frame, basis, frameSetup, plan.name);
             // TB2B truss frames: the simplifier above (`simplifyTb2bTrussFramesInProject`)
             // has already replaced each truss-member stick's tooling with the
             // centerline-intersection Web@pt vocabulary that Detailer emits. Adding
@@ -350,6 +354,12 @@ export function synthesizeRfyFromPlans(project, options = {}) {
                     ? stripSlabAnchorOps(stick.tooling)
                     : stick.tooling;
                 const merged = mergeStickTooling(perStickOps, ctx, stick.usage);
+                // RP B-plate: add a paired InnerNotch at every body LipNotch
+                // (stud-crossing). Verified vs HG260044 GF-RP-70.075 corpus.
+                if (/(?:^|-)RP(?:-|$|\d)/i.test(plan.name)
+                    && String(stick.usage ?? "").toLowerCase() === "bottomplate") {
+                    addPairedInnerNotchAtBodyLipNotches(merged);
+                }
                 const stickWithMerged = { ...stick, tooling: merged };
                 sticks.push(buildStickXml(stickWithMerged, basis, frame.name, options.lenient ?? false));
             }
@@ -426,7 +436,7 @@ export function synthesizeRfyFromPlans(project, options = {}) {
  *
  * Returns an empty Map if the frame has no sticks or the projection fails.
  */
-function computeFrameContextOps(frame, basis, setup) {
+function computeFrameContextOps(frame, basis, setup, planName) {
     const empty = new Map();
     if (!frame.sticks || frame.sticks.length === 0)
         return empty;
@@ -489,6 +499,10 @@ function computeFrameContextOps(frame, basis, setup) {
         height: basis.height,
         sticks: syntheticSticks,
     };
+    // Attach plan name as a non-schema property so frame-context.ts can
+    // apply plan-type-specific compensations (e.g. RP rake-plate trim).
+    if (planName)
+        syntheticFrame.planName = planName;
     try {
         return generateFrameContextOps(syntheticFrame, setup);
     }
@@ -618,6 +632,46 @@ function positionOf(op) {
     if (op.kind === "start")
         return -1;
     return Number.POSITIVE_INFINITY; // "end" → last
+}
+/** For RP B-plates: every body-LipNotch (stud-crossing) gets a paired
+ *  InnerNotch with identical span. Mutates `tooling` in place. Verified
+ *  2026-05-09 vs HG260044 GF-RP-70.075 corpus. */
+function addPairedInnerNotchAtBodyLipNotches(tooling) {
+    const SPAN_MATCH_TOL = 0.5;
+    const existing = [];
+    for (const op of tooling) {
+        if (op.kind === "spanned" && op.type === "InnerNotch") {
+            existing.push({ s: op.startPos, e: op.endPos });
+        }
+    }
+    let stickLen = 0;
+    for (const op of tooling) {
+        if (op.kind === "spanned" && op.endPos > stickLen)
+            stickLen = op.endPos;
+        if (op.kind === "point" && op.pos > stickLen)
+            stickLen = op.pos;
+    }
+    if (stickLen < 50)
+        return;
+    const toAdd = [];
+    for (const op of tooling) {
+        if (op.kind !== "spanned" || op.type !== "LipNotch")
+            continue;
+        if (op.startPos < 5)
+            continue; // start-cap
+        if (op.endPos > stickLen - 5)
+            continue; // end-cap
+        const already = existing.some((x) => Math.abs(x.s - op.startPos) < SPAN_MATCH_TOL
+            && Math.abs(x.e - op.endPos) < SPAN_MATCH_TOL);
+        if (already)
+            continue;
+        toAdd.push({ s: op.startPos, e: op.endPos });
+    }
+    for (const { s, e } of toAdd) {
+        tooling.push({
+            kind: "spanned", type: "InnerNotch", startPos: s, endPos: e,
+        });
+    }
 }
 // ---------------------------------------------------------------------------
 // Per-stick XML builders

@@ -748,6 +748,120 @@ export function simplifyTb2bTrussFrame(
   });
   const { dimplesByKey } = computeBoxDimples(metaSticks, resolvedSetup);
 
+  // ────────────────────────────────────────────────────────────────────
+  // Agent RF (2026-05-11): per-frame "winning T-chord" pre-computation
+  // ────────────────────────────────────────────────────────────────────
+  //
+  // Detailer emits ONE 35.42mm RightFlange cap at the truss apex per truss
+  // frame, attached to a single T-chord stick. When a frame contains
+  // multiple sloped T-chord candidates (paired same-name OR different
+  // names like T2/T4 forming the apex pair), Detailer picks ONE.
+  //
+  // Empirical cascade (verified across HG260044 PK1-4 + HG260001 PK6-12):
+  //   1. Shorter T-chord wins.
+  //   2. On length-tie: more Box pieces (sub-pieces named "T# (Box#)") wins.
+  //   3. On box-count tie: larger total Box-piece length wins.
+  //   4. On total-box tie: first occurrence in frame.sticks order wins.
+  //
+  // Verified cases:
+  //   HG260044 PK4 TN1-1: T2 (L=6011.8) vs T4 (L=6564.6).
+  //     Shorter T2 wins → ref RF 5976..6011 (apex@OUTPUT-END)
+  //   HG260044 PK4 TN3-1: T2#1 vs T2#2 (both L=6564.6, both 1 box=1600).
+  //     All ties → first occurrence T2#1 wins → ref RF 6529..6564
+  //   HG260044 PK4 TN5-1: T3#1 (2 boxes) vs T3#2 (1 box). T3#1 wins.
+  //   HG260001 PK7 TN20-1: T3#1 (1 box=2431.6) vs T3#2 (1 box=2547.8).
+  //     T3#2 larger box → wins → ref RF 0..35.42
+  //   HG260001 PK10 TN6-1: T3 (L=1303.8, no apex doublet) vs T4 (3 boxes).
+  //     Only T4 has apex doublet → wins → ref RF 0..35.42
+  //   HG260001 PK9 TN11-1: T3 (L=6702.6) vs T6 (L=1579.7). T6 shorter wins.
+  //
+  // Candidate filter: must be a sloped T-chord (zSpan>5, L>2000) AND have a
+  // positionsByKey-provided apex doublet (Web @22.85 + @176.25). The
+  // doublet gate excludes stub T-chords like PK10 TN6-1 T3 (L=1303.8) AND
+  // PK4 TN3-1 T3 (L=1600 ridge stub).
+  let rfWinningStickIdx = -1;
+  let rfWinningApexAtOutputEnd = false;
+  {
+    interface RFCandidate {
+      stickIdx: number;
+      length: number;
+      boxCount: number;
+      totalBoxLength: number;
+      apexAtOutputEnd: boolean;
+    }
+    const candidates: RFCandidate[] = [];
+    const occByName = new Map<string, number>();
+    for (let k = 0; k < frame.sticks.length; k++) {
+      const ss = frame.sticks[k]!;
+      if (/\(Box\d+\)/.test(ss.name)) continue;
+      if (!/^T\d/.test(ss.name)) continue;
+      const occ = occByName.get(ss.name) ?? 0;
+      occByName.set(ss.name, occ + 1);
+      const sm = metaSticks[k]!;
+      const zSpan = Math.abs(sm.end3D.z - sm.start3D.z);
+      if (zSpan <= 5) continue;
+      const L = Math.hypot(sm.end3D.y - sm.start3D.y, sm.end3D.z - sm.start3D.z);
+      if (L < 2000) continue;
+      const apexAtXmlEnd = sm.end3D.z > sm.start3D.z;
+      const reverse = chordArcReversal(sm);
+      const apexAtOutputEnd = apexAtXmlEnd !== reverse;
+      const stKeyLocal = `${ss.name}#${occ}`;
+      const positions = positionsByKey.get(stKeyLocal) ?? [];
+      const APEX_BOLT_LO = 22.85;
+      const APEX_BOLT_HI = 176.25;
+      const APEX_DOUBLET_TOL = 2.5;
+      const targetLo = apexAtOutputEnd ? L - APEX_BOLT_LO : APEX_BOLT_LO;
+      const targetHi = apexAtOutputEnd ? L - APEX_BOLT_HI : APEX_BOLT_HI;
+      const hasLo = positions.some((p) => Math.abs(p - targetLo) < APEX_DOUBLET_TOL);
+      const hasHi = positions.some((p) => Math.abs(p - targetHi) < APEX_DOUBLET_TOL);
+      if (!hasLo || !hasHi) continue;
+      // Count + sum Box pieces attached to THIS instance via perpendicular-
+      // distance-to-host-line test.
+      let boxCount = 0;
+      let totalBoxLength = 0;
+      for (let k2 = 0; k2 < frame.sticks.length; k2++) {
+        const bb = frame.sticks[k2]!;
+        const bm = metaSticks[k2]!;
+        const mm = bb.name.match(/^(T\d+) \(Box\d+\)$/);
+        if (!mm) continue;
+        if (mm[1] !== ss.name) continue;
+        const hdy = sm.end3D.y - sm.start3D.y;
+        const hdz = sm.end3D.z - sm.start3D.z;
+        const hostLen = Math.hypot(hdy, hdz);
+        if (hostLen < 1) continue;
+        const ux = hdy / hostLen, uz = hdz / hostLen;
+        const dx = bm.start3D.y - sm.start3D.y;
+        const dz = bm.start3D.z - sm.start3D.z;
+        const t = dx * ux + dz * uz;
+        const px = sm.start3D.y + t * ux;
+        const pz = sm.start3D.z + t * uz;
+        const perpDist = Math.hypot(bm.start3D.y - px, bm.start3D.z - pz);
+        if (perpDist < 50 && t > -100 && t < hostLen + 100) {
+          const bL = Math.hypot(bm.end3D.y - bm.start3D.y, bm.end3D.z - bm.start3D.z);
+          boxCount++;
+          totalBoxLength += bL;
+        }
+      }
+      candidates.push({
+        stickIdx: k,
+        length: L,
+        boxCount,
+        totalBoxLength,
+        apexAtOutputEnd,
+      });
+    }
+    candidates.sort((a, b) => {
+      if (Math.abs(a.length - b.length) > 0.5) return a.length - b.length;
+      if (a.boxCount !== b.boxCount) return b.boxCount - a.boxCount;
+      if (Math.abs(a.totalBoxLength - b.totalBoxLength) > 0.5) return b.totalBoxLength - a.totalBoxLength;
+      return a.stickIdx - b.stickIdx;
+    });
+    if (candidates.length > 0) {
+      rfWinningStickIdx = candidates[0]!.stickIdx;
+      rfWinningApexAtOutputEnd = candidates[0]!.apexAtOutputEnd;
+    }
+  }
+
   const rewritten: string[] = [];
 
   // Rewrite each truss member stick. Box-piece sticks (e.g. "T4 (Box1)")

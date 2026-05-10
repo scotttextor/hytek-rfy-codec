@@ -265,7 +265,7 @@ function applicableKbVLineTopProjections(
   const stickRunHi = stickRunAxis === "x" ? Math.max(sStart.x, sEnd.x) : Math.max(sStart.y, sEnd.y);
   const zPlate = sEnd.z;
 
-  const KB_TOP_V_OFFSET = 1448; // mm — empirical, derived from HG260044 GF-LBW
+  const KB_TOP_V_OFFSET = 1448; // mm — empirical median across HG260044 GF-LBW
   const positions: number[] = [];
   for (const svc of serviceActions) {
     const svcDz = Math.abs(svc.start.z - svc.end.z);

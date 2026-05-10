@@ -224,6 +224,16 @@ export interface StickContext {
    *  endpoint. */
   nogEndCapIsNotch?: boolean;
   /**
+   * LBW8 (2026-05-11): true if this Nog stick's START end terminates at a
+   * stud which has a same-axis cripple-companion (box-stud / IDS pair). On
+   * LBW plans Detailer caps such ends with InnerNotch+LipNotch instead of
+   * Swage. Computed by the diff harness / framecad-import. Independent of
+   * `nogStartCapIsNotch` (NLBW3) to avoid interaction with that rule.
+   */
+  nogStartCapIsCripComp?: boolean;
+  /** LBW8 (2026-05-11): same as `nogStartCapIsCripComp` but for the END. */
+  nogEndCapIsCripComp?: boolean;
+  /**
    * BHSP (2026-05-11): true if this raised B-plate (Bh role) or H header's
    * START end faces the frame envelope perimeter (within ~10mm along its
    * run axis). When true, Detailer caps the perimeter-facing end with

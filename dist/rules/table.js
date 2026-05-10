@@ -86,6 +86,11 @@ function wallWEndSwageSpan(angleFromVerticalDeg) {
  * Predicate also gates on NLBW plan-name match.
  */
 function nogStartTakesNotchCap(ctx) {
+    // LBW8 (2026-05-11): LBW cripple-companion overlay (separate flag from NLBW3).
+    if (ctx.nogStartCapIsCripComp === true &&
+        /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(ctx.planName ?? "") &&
+        !/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""))
+        return true;
     if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""))
         return false;
     if (ctx.nogStartCapIsNotch === true)
@@ -94,8 +99,13 @@ function nogStartTakesNotchCap(ctx) {
         return true;
     return false;
 }
-/** NLBW3 (2026-05-10): same as `nogStartTakesNotchCap` but for the END. */
+/** NLBW3 (2026-05-10): same as `nogStartTakesNotchCap` but for the END.
+ * LBW8 (2026-05-11): LBW cripple-companion overlay (see start). */
 function nogEndTakesNotchCap(ctx) {
+    if (ctx.nogEndCapIsCripComp === true &&
+        /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(ctx.planName ?? "") &&
+        !/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""))
+        return true;
     if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""))
         return false;
     if (ctx.nogEndCapIsNotch === true)

@@ -263,7 +263,7 @@ export function synthesizeRfyFromPlans(project, options = {}) {
         simplifyTb2bTrussFramesInProject(project.plans);
     }
     if (typeof process === "undefined" || process.env?.CODEC_DISABLE_WALL_SERVICE !== "1") {
-        simplifyWallServiceInProject(project.plans);
+        simplifyWallServiceInProject(project.plans, options.projectConfig);
     }
     if (typeof process === "undefined" || process.env?.CODEC_DISABLE_WALL_WEB !== "1") {
         simplifyWallWebInProject(project.plans);

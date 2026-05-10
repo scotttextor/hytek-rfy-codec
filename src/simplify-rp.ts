@@ -371,17 +371,137 @@ function isNog(stick: ParsedStick): boolean {
 }
 
 /** Add Chamfer @start and @end to a stick if not already present. Returns
- *  number of chamfers added. */
-function addBothEndChamfers(stick: ParsedStick): number {
+ *  number of chamfers added.
+ *
+ *  When `opts.skipStart === true`, the @start Chamfer is NOT added (RP7
+ *  predicate — see `isRpStackedRakeLongTPlate`). The @end Chamfer is still
+ *  added (R5/T1 in HG260001 has @end but not @start in ref). */
+function addBothEndChamfers(
+  stick: ParsedStick,
+  opts: { skipStart?: boolean } = {},
+): number {
   let added = 0;
   let hasStart = false, hasEnd = false;
   for (const op of stick.tooling) {
     if (op.kind === "start" && op.type === "Chamfer") hasStart = true;
     if (op.kind === "end" && op.type === "Chamfer") hasEnd = true;
   }
-  if (!hasStart) { stick.tooling.push({ kind: "start", type: "Chamfer" }); added++; }
+  if (!hasStart && !opts.skipStart) {
+    stick.tooling.push({ kind: "start", type: "Chamfer" }); added++;
+  }
   if (!hasEnd) { stick.tooling.push({ kind: "end", type: "Chamfer" }); added++; }
   return added;
+}
+
+/** RP7 (2026-05-11): predicate for "stacked-rake long T-plate" — a T-plate
+ *  in a 2-T RP frame whose START gets a wall-style cap in ref instead of the
+ *  chord-style cap our rules engine emits.
+ *
+ *  Three branches (any fires → wall-style cap):
+ *
+ *  Branch A — short sister + B-z-match: sloped rake T-plate whose start.z
+ *  matches a B-plate endpoint z within 50mm AND has a SHORT sister T-plate
+ *  (< 800mm). Captures R5/T1 + R6/T1 in HG260001.
+ *
+ *  Branch B — horizontal T-plate with sloped sister, where start is the
+ *  "free" eave end (no other T endpoint within 100mm of T.start). Captures
+ *  R4/T1 in HG260001 (T1 dz=0, T2 dz=-706).
+ *
+ *  Branch C — short peak-stub T-plate (< 800mm) whose START sits at the
+ *  frame's peak z. Captures R6/T2 in HG260001 (T2 len=701, start.z=peak).
+ *
+ *  HG260044 frames are untouched — every multi-T frame fails every branch.
+ *  Verified 2026-05-11 against HG260044 R1/R4/R7/R12. */
+const RP_STACKED_RAKE_LONG_MIN_MM = 1500;
+const RP_STACKED_RAKE_SHORT_MAX_MM = 800;
+const RP_STACKED_RAKE_T_NEAR_TOL_MM = 100;
+const RP_STACKED_RAKE_BZ_MATCH_TOL_MM = 50;
+
+function isRpStackedRakeLongTPlate(frame: ParsedFrame, stick: ParsedStick): boolean {
+  if (!isTplate(stick)) return false;
+  const tPlates = frame.sticks.filter(isTplate);
+  if (tPlates.length !== 2) return false;
+  const stickLen = computeStickLength(stick);
+  const sister = tPlates.find(t => t !== stick);
+  if (!sister) return false;
+  const sisterLen = computeStickLength(sister);
+
+  // Branch C — short peak-stub T-plate.
+  if (stickLen < RP_STACKED_RAKE_SHORT_MAX_MM) {
+    let peakZ = -Infinity;
+    for (const t of tPlates) {
+      peakZ = Math.max(peakZ, t.start.z, t.end.z);
+    }
+    if (Math.abs(stick.start.z - peakZ) < HORIZONTAL_BOTTOM_TOL_MM) return true;
+    return false;
+  }
+
+  if (stickLen < RP_STACKED_RAKE_LONG_MIN_MM) return false;
+
+  // "Start is free end" gate (long T-plates): no other T-plate endpoint
+  // within 100mm (xy) of this stick's start. When another T-plate connects
+  // at our START, it provides the chord-cap signature and we keep CHORD.
+  for (const t of tPlates) {
+    if (t === stick) continue;
+    const dStart = Math.sqrt(
+      (stick.start.x - t.start.x) ** 2 +
+      (stick.start.y - t.start.y) ** 2,
+    );
+    const dEnd = Math.sqrt(
+      (stick.start.x - t.end.x) ** 2 +
+      (stick.start.y - t.end.y) ** 2,
+    );
+    if (dStart < RP_STACKED_RAKE_T_NEAR_TOL_MM) return false;
+    if (dEnd < RP_STACKED_RAKE_T_NEAR_TOL_MM) return false;
+  }
+
+  // Branch A — short sister + B-z-match.
+  const bPlates = frame.sticks.filter(isBplate);
+  if (sisterLen < RP_STACKED_RAKE_SHORT_MAX_MM && bPlates.length > 0) {
+    for (const b of bPlates) {
+      if (Math.abs(stick.start.z - b.start.z) < RP_STACKED_RAKE_BZ_MATCH_TOL_MM) return true;
+      if (Math.abs(stick.start.z - b.end.z) < RP_STACKED_RAKE_BZ_MATCH_TOL_MM) return true;
+    }
+  }
+
+  // Branch B — horizontal T-plate with sloped sister.
+  const stickDz = Math.abs(stick.end.z - stick.start.z);
+  const sisterDz = Math.abs(sister.end.z - sister.start.z);
+  if (stickDz < HORIZONTAL_BOTTOM_TOL_MM && sisterDz >= HORIZONTAL_BOTTOM_TOL_MM) {
+    return true;
+  }
+
+  return false;
+}
+
+/** RP7: rewrite the rules-engine-emitted RP T-plate start cap from chord-style
+ *  (`LipNotch 0..39 + ID @10`) to wall-style (`Swage 0..39 + ID @16.5`).
+ *  Strips only start-anchored ops; body and end-anchored ops are left alone. */
+function rewriteRpTplateStartCapToWall(stick: ParsedStick): void {
+  for (let i = stick.tooling.length - 1; i >= 0; i--) {
+    const op = stick.tooling[i]!;
+    if (
+      op.kind === "spanned"
+      && op.type === "LipNotch"
+      && Math.abs(op.startPos - 0) < END_ANCHOR_TOL_MM
+      && op.endPos > 30 && op.endPos < 45
+    ) {
+      stick.tooling.splice(i, 1);
+      continue;
+    }
+    if (
+      op.kind === "point"
+      && op.type === "InnerDimple"
+      && Math.abs(op.pos - 10) < POINT_ANCHOR_TOL_MM
+    ) {
+      stick.tooling.splice(i, 1);
+      continue;
+    }
+  }
+  stick.tooling.push(
+    { kind: "spanned", type: "Swage", startPos: 0, endPos: STD_END_SPAN_MM },
+    { kind: "point", type: "InnerDimple", pos: STD_DIMPLE_OFFSET_MM },
+  );
 }
 
 /** Distance between two 3D points. */
@@ -453,10 +573,19 @@ export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
   // 50+ wins). A finer per-stick predicate (skip horizontal T-plates that
   // don't meet a sloped neighbour) is a follow-up — see B/N pattern below for
   // template (chamferBottomAtTConnection's connection-side classifier).
+  //
+  // RP7 (2026-05-11): T-plates in 2-T RP frames matching
+  // `isRpStackedRakeLongTPlate` get wall-style start cap (Swage 0..39 + ID
+  // @16.5) instead of chord-style. Predicate has 3 branches. Verified vs
+  // HG260001 R4/T1, R5/T1, R6/T1, R6/T2 (all gain). HG260044 frames untouched.
   for (const stick of frame.sticks) {
     if (!isTplate(stick)) continue;
-    const added = addBothEndChamfers(stick);
+    const useWallStart = isRpStackedRakeLongTPlate(frame, stick);
+    const added = addBothEndChamfers(stick, { skipStart: useWallStart });
     if (added > 0) platesChamfered.push(stick.name);
+    if (useWallStart) {
+      rewriteRpTplateStartCapToWall(stick);
+    }
   }
 
 

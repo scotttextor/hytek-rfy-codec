@@ -83,8 +83,15 @@ const PROJECT_CONFIG_TABLE: Array<{ matchJobNum: RegExp; config: ProjectConfig; 
       // context tight-pair-or-stack signal). Verified vs GF-NLBW-70.075
       // across all 16 sub-panel-nog frames.
       nogAsymmetricCapMode: "interior-notch",
+      // Bolt B-plate (2026-05-11): HG260044 suppresses slab anchor bolts on
+      // upper-story B-plates inside GF-NLBW. Verified vs GF-NLBW-70.075
+      // N18/N21/N31/N36/N39/N41/N49 (frameElevation=2355) — all show
+      // BOLT HOLES @8 + INNER DIMPLE + LIP NOTCH, but no ANCHOR ops in
+      // Detailer's reference RFY/CSV. Closes 16 Bolt extras with no
+      // missing-side regressions (NLBW had 0 Bolt missing pre-fix).
+      slabBoltOnUpperFloor: false,
     },
-    basis: "HG260044 LBW: 21/22 frames uniform-flipped Kbs (verified 2026-05-09); W chamfer ref includes 14.6°-26° angles; Kb InnerService offset +19mm vs default; NLBW3 nog cap mode = interior-notch",
+    basis: "HG260044 LBW: 21/22 frames uniform-flipped Kbs (verified 2026-05-09); W chamfer ref includes 14.6°-26° angles; Kb InnerService offset +19mm vs default; NLBW3 nog cap mode = interior-notch; upper-story slab Bolt suppressed on NLBW (verified 7 frames 2026-05-11)",
   },
   {
     // NLBW3 (2026-05-10): HG260001 caps sub-panel infill nogs only at

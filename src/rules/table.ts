@@ -1068,6 +1068,33 @@ export function isPrimaryBPlate(ctx: { stickName?: string; length: number }): bo
   return false;
 }
 
+/**
+ * Slab-anchor bolt eligibility (2026-05-11): combines `isPrimaryBPlate` with
+ * a per-project upper-story carve-out.
+ *
+ * Some Detailer projects (HG260044) suppress the slab anchor `Bolt @62` /
+ * `Bolt @length-62` ops on B-plates of UPPER-STORY frames inside a "GF-NLBW"
+ * plan, even though they keep the Web@8 / InnerDimple / LipNotch ops on
+ * those same B-plates. Other projects (HG260001) still emit the bolts on
+ * upper-story B1s. Discriminated by `projectConfig.slabBoltOnUpperFloor`
+ * — see `ProjectConfig` for the full reference-data trace.
+ *
+ * Web@8 still fires on upper-story B-plates in BOTH polarities (verified
+ * vs HG260044 N18-B1: `BOLT HOLES @8` present, `ANCHOR @62` absent),
+ * so this guard is only consulted from the Bolt rule predicates.
+ *
+ * Frame elevation > 100mm = upper story. Standard ground-floor walls have
+ * elevation 0 or small negatives (-45 etc.).
+ */
+export function emitsSlabAnchorBolt(ctx: StickContext): boolean {
+  if (!isPrimaryBPlate(ctx)) return false;
+  const isUpperStory = ctx.frameElevation !== undefined && ctx.frameElevation > 100;
+  if (!isUpperStory) return true;
+  // Upper-story: project config decides. Default = legacy "yes" so unknown
+  // projects keep the pre-2026-05-11 behaviour.
+  return ctx.projectConfig?.slabBoltOnUpperFloor !== false;
+}
+
 /** Look up profile-specific span/dimple offsets.
  *
  * TODO(rules-coverage): when the rules engine has access to a MachineSetup

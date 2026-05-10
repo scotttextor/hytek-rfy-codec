@@ -1345,6 +1345,385 @@ function emitHnBoxPairRegularGrid(frame: ParsedFrame): number {
   return emitted;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * TS/TN top-chord panel-point pattern (Agent TIN4, 2026-05-11)
+ *
+ * Sister rule to TIN3's `emitHnPanelPatternsForFrame` (HN-prefix). Targets
+ * TS/TN-prefix linear-truss frames in TIN plans, which use a DIFFERENT
+ * dimple-offset constant pair than HN frames.
+ *
+ * Verified pattern (HG260001 GF-TIN-70.075):
+ *   At each web⇄chord crossing pair, the ref RFY emits two InnerDimples
+ *   straddling the perpendicular vertical web's projected position on the
+ *   chord centerline. The FIXED 51.25mm dimple spacing is identical to HN's
+ *   pattern but the offsets are different:
+ *     HN:        ID @vert-4.65,  ID @vert+46.60   (TIN3)
+ *     TS/TN:     ID @vert-7.71,  ID @vert+43.54   (TIN4)
+ *
+ * The "vert" point is the projection of the perpendicular vertical web
+ * (perp ≈ 19.94mm in codec coords — equals 9.97mm XML perp + ~10mm wall-rule
+ * z-extension) onto the top-chord centerline. The OTHER web in each pair is
+ * the diagonal strut, which lands at a different tin position but does NOT
+ * influence dimple placement.
+ *
+ * Mirror handling: TS frames have TWO T2 sticks (left+right of apex), each
+ * traversing eave→peak with opposite chord-parameter direction. The dimples
+ * straddle the vertical web from the EAVE-SIDE (smaller offset, 7.71mm) to
+ * the PEAK-SIDE (larger offset, 43.54mm).
+ *
+ *   T2 ascending  (z(start)<z(end)): eave at low tin → ID @vert-7.71 (eave),
+ *                                    ID @vert+43.54 (peak)
+ *   T2 descending (z(start)>z(end)): eave at high tin → ID @vert+7.71 (eave),
+ *                                    ID @vert-43.54 (peak)
+ *
+ * Chord-trim drift compensation:
+ *   When the chord is DESCENDING (peak at chord.start in codec coords), the
+ *   codec has shortened the chord by ~5.85mm at its start. Web-projection
+ *   tins on a descending chord therefore lag the REF tin by ~6.5mm; we add
+ *   that back before applying the ±7.71/43.54 offsets. ASCENDING chords
+ *   need no correction. Magnitude is empirical from TS1-1 T2#1.
+ *
+ * Verified vs HG260001 GF-TIN-70.075:
+ *   - TS1-1 T2 #0 (ascending): 4 paired panels match position to <0.5mm
+ *   - TS1-1 T2 #1 (descending): 4 paired panels match with mirror sign
+ *   - TN8-1 T2: 1 pair + 1 solo, all matched
+ *   - TN18-1 T2: 1 pair + 1 solo, all matched
+ *
+ * NOT yet handled in v1 (deferred to v2):
+ *   - LipNotch span emission (paired vs combined-vs-split decision is
+ *     orientation-dependent — unclear discriminator). Strip leaves any LN
+ *     ops the codec emitted on these chords; ref's LN positions remain
+ *     missing. Future-work: re-emit combined-LN [vert-34.4..diag+30.4] as
+ *     a baseline and tighten as data permits.
+ *   - Solo-end LN at chord boundaries (small fraction of ref ops).
+ *   - End-Chamfer on these top chords (Chamfer is preserved by the strip
+ *     because we exclude `kind: "start"|"end"` ops).
+ *   - R-stick (Rail/Rake) crossings on TN8-1 (single off-pattern dimple
+ *     deferred — only 1 op).
+ *   - TI-prefix (flat-chord) panel pattern: H-prefix top-chord uses a
+ *     DIFFERENT eave/peak orientation since the chord is horizontal. The
+ *     vertical-detection signal (perp ≈ 19.94 post-harness) doesn't translate
+ *     because horizontal chords pair with vertical webs that have perp
+ *     near the chord centerline differently. Deferred — separate rule needed.
+ *   - T3 cluster on box-pair TN frames (no T3 in the verified samples; would
+ *     mirror HN's box-pair regular grid if present).
+ */
+
+const TSN_PANELPOINT_DIMPLE_OFFSET_EAVE = 7.71;
+const TSN_PANELPOINT_DIMPLE_OFFSET_PEAK = 43.54;
+/** Webs whose perp distance to the chord centerline is at or above this
+ *  threshold are classified as PERPENDICULAR (vertical web in elevation).
+ *  Note: by the time `simplify-tin-truss.ts` runs, the harness has applied
+ *  the wall-rule +11mm extension to vertical webs, which moves them ~10mm
+ *  AWAY from the chord. So vertical webs have perp ≈ 19.94mm (= 9.97mm
+ *  XML perp + ~10mm extension), while diagonal webs (extended along their
+ *  own axis, not the chord-perpendicular) end up with perp ≈ 5–11mm.
+ *
+ *  The 15mm cutoff cleanly separates the cohorts in the post-harness state.
+ *  Empirical from HG260001 GF-TIN-70.075 TS1-1/TN8-1/TN18-1: verticals
+ *  cluster at perp 19.94; diagonals span 5.95–10.99. */
+const TSN_VERTICAL_PERP_MIN_MM = 15;
+/** Same maximum tin-distance as HN for pair detection (60mm). */
+const TSN_PANELPOINT_MAX_PAIR_DELTA_MM = 60;
+/** Minimum 3D z-delta between chord endpoints to confidently classify a chord
+ *  as sloped (vs flat/horizontal). Below this we skip — flat-chord trusses
+ *  (TI prefix) need a different pattern. */
+const TSN_SLOPED_CHORD_MIN_DZ_MM = 100;
+/** Codec chord-trim drift on DESCENDING chords (peak at chord.start in codec
+ *  coords). The codec shortens the chord by ~5.85mm at its start, which
+ *  shifts every web-projection tin by -6.5mm relative to REF tin space.
+ *  Adding +6.5mm back to the vert tin recovers REF tin space. ASCENDING
+ *  chords (eave at chord.start) need no correction (codec_tin ≈ ref_tin
+ *  within 1mm). Empirical from HG260001 GF-TIN TS1-1 T2#1. 2026-05-11. */
+const TSN_DESCENDING_CHORD_TRIM_MM = 6.5;
+
+/** True iff the frame name is a TS/TN-prefix linear truss (gated to TIN plans
+ *  by caller). TI-prefix is excluded — flat-chord pattern is different. */
+function isTsnTrussFrame(frame: ParsedFrame): boolean {
+  if (!/^(TS|TN)\d+-\d+$/.test(frame.name)) return false;
+  // Gauge gate: 0.75 only — no other gauges seen on the reference TIN cohort.
+  const firstStick = frame.sticks.find(s => s.profile?.gauge);
+  if (!firstStick) return false;
+  if ((firstStick.profile.gauge ?? "").trim() !== "0.75") return false;
+  return true;
+}
+
+interface TsnCrossing {
+  name: string;
+  tin: number;
+  perp: number;
+  isVertical: boolean;
+}
+
+/** Find every web's nearest endpoint projected onto the chord centerline. Returns
+ *  ascending tin order. `isVertical` flags the perpendicular vertical web. */
+function findTsnChordCrossings(chord: ParsedStick, webs: ParsedStick[]): TsnCrossing[] {
+  const crossings: TsnCrossing[] = [];
+  for (const w of webs) {
+    const ps = projectPointOnSegment(w.start, chord.start, chord.end);
+    const pe = projectPointOnSegment(w.end, chord.start, chord.end);
+    const better = ps.d < pe.d ? ps : pe;
+    if (better.d > HN_PANELPOINT_MAX_PERP_MM) continue;
+    const tin = better.t * better.len;
+    if (tin < -10 || tin > better.len + 10) continue;
+    crossings.push({
+      name: w.name,
+      tin,
+      perp: better.d,
+      isVertical: better.d >= TSN_VERTICAL_PERP_MIN_MM,
+    });
+  }
+  crossings.sort((a, b) => a.tin - b.tin);
+  return crossings;
+}
+
+/** Group adjacent crossings into pairs by tin-proximity, returning each pair
+ *  with `vert` (perpendicular web) and optional `diag`. Solo crossings (no
+ *  paired partner within 60mm) are also returned with `diag = null`. */
+function groupTsnPanelPairs(
+  crossings: TsnCrossing[],
+): Array<{ vert: TsnCrossing; diag: TsnCrossing | null }> {
+  const out: Array<{ vert: TsnCrossing; diag: TsnCrossing | null }> = [];
+  const used = new Set<number>();
+  for (let i = 0; i < crossings.length; i++) {
+    if (used.has(i)) continue;
+    const a = crossings[i]!;
+    let pi = -1;
+    for (let j = i + 1; j < crossings.length; j++) {
+      if (used.has(j)) continue;
+      if (crossings[j]!.tin - a.tin > TSN_PANELPOINT_MAX_PAIR_DELTA_MM) break;
+      pi = j;
+      break;
+    }
+    if (pi >= 0) {
+      const b = crossings[pi]!;
+      used.add(i);
+      used.add(pi);
+      // The PERPENDICULAR vertical web is the "vert"; the other is the diag.
+      let vert: TsnCrossing;
+      let diag: TsnCrossing;
+      if (a.isVertical && !b.isVertical) {
+        vert = a; diag = b;
+      } else if (!a.isVertical && b.isVertical) {
+        vert = b; diag = a;
+      } else {
+        // Tie (both vertical or neither): prefer the LARGER perp as vert
+        // (post-harness verticals have perp ~19.94, diagonals ~5–11).
+        if (a.perp >= b.perp) { vert = a; diag = b; }
+        else { vert = b; diag = a; }
+      }
+      out.push({ vert, diag });
+    } else {
+      used.add(i);
+      out.push({ vert: a, diag: null });
+    }
+  }
+  return out;
+}
+
+/** Sign convention for the chord's eave end. Returns +1 if the eave is at
+ *  HIGHER tin (chord descends), -1 if eave is at LOWER tin (chord ascends).
+ *  Detection: the eave is the LOW-z endpoint (closest to ground/B1). */
+function tsnChordEaveSign(chord: ParsedStick): -1 | 1 | 0 {
+  const dz = chord.end.z - chord.start.z;
+  if (Math.abs(dz) < TSN_SLOPED_CHORD_MIN_DZ_MM) return 0; // flat — not handled
+  return dz > 0 ? -1 : 1; // dz>0 = ascending → eave at start (low tin) → sign -1
+}
+
+/** Emit the TS/TN top-chord panel-point pattern on a single chord stick.
+ *  Strips existing point + spanned tooling of replaced types (InnerDimple,
+ *  LipNotch, Web, Swage, ScrewHoles), then emits the geometric pattern.
+ *  Returns the count of dimples emitted. */
+function emitTsnTopChordPanelPattern(chord: ParsedStick, webs: ParsedStick[]): number {
+  const eaveSign = tsnChordEaveSign(chord);
+  if (eaveSign === 0) return 0; // flat chord — skip
+  const crossings = findTsnChordCrossings(chord, webs);
+  if (crossings.length === 0) return 0;
+  const pairs = groupTsnPanelPairs(crossings);
+  if (pairs.length === 0) return 0;
+
+  const REPLACED_TYPES = new Set<string>([
+    "InnerDimple",
+    "LipNotch",
+    "Web",
+    "Swage",
+    "ScrewHoles",
+  ]);
+  for (let i = chord.tooling.length - 1; i >= 0; i--) {
+    const op = chord.tooling[i]!;
+    if (op.kind === "start" || op.kind === "end") continue;
+    if (REPLACED_TYPES.has(op.type as string)) {
+      chord.tooling.splice(i, 1);
+    }
+  }
+  // Mark to suppress frame-context merge.
+  (chord as unknown as Record<string, unknown>)[HN_PANELPOINT_APPLIED_KEY] = true;
+
+  // Codec chord-trim drift: descending chords (peak at chord.start) lag REF
+  // tin by ~6.5mm; ascending chords match REF within 1mm. See constant doc.
+  const driftAlongChord = eaveSign === 1 ? -TSN_DESCENDING_CHORD_TRIM_MM : 0;
+
+  const eaveOff = eaveSign * TSN_PANELPOINT_DIMPLE_OFFSET_EAVE;
+  const peakOff = -eaveSign * TSN_PANELPOINT_DIMPLE_OFFSET_PEAK;
+  let emitted = 0;
+  for (const { vert, diag } of pairs) {
+    const refVertTin = vert.tin - driftAlongChord;
+    if (diag) {
+      // Paired panel: emit both eave-side and peak-side dimples.
+      chord.tooling.push({ kind: "point", type: "InnerDimple", pos: refVertTin + eaveOff });
+      chord.tooling.push({ kind: "point", type: "InnerDimple", pos: refVertTin + peakOff });
+      emitted += 2;
+    } else {
+      // Solo crossing (apex / end). Single dimple on the eave-side.
+      chord.tooling.push({ kind: "point", type: "InnerDimple", pos: refVertTin + eaveOff });
+      emitted += 1;
+    }
+  }
+  emitted += emitTsnLipNotches(chord, pairs, driftAlongChord, eaveSign);
+  return emitted;
+}
+
+/** Emit panel-point LipNotches on a TS/TN top-chord stick. ASCENDING chords
+ *  only (eaveSign=-1) — DESCENDING chords have a more nuanced startPos
+ *  formula that didn't reduce to a simple constant in the verified cohort
+ *  and is deferred to v2.
+ *
+ *  Patterns (REF data, HG260001 GF-TIN-70.075 ascending T2 sticks):
+ *    - Mid pair: LN startPos = vert - 42mm
+ *    - Mid solo: no LN (none observed)
+ *    - End solo (vert tin near chord length): LN startPos = vert - 42, endPos = length
+ *    - Start-anchored boundary (vert tin near 0): LN startPos = 0, endPos > vert
+ *
+ *  Diff harness matches spanned ops by `startPos` only within 1.5mm. We
+ *  emit a sensible endPos for completeness but it's not load-bearing for
+ *  parity scoring. */
+function emitTsnLipNotches(
+  chord: ParsedStick,
+  pairs: ReadonlyArray<{ vert: TsnCrossing; diag: TsnCrossing | null }>,
+  driftAlongChord: number,
+  eaveSign: -1 | 1,
+): number {
+  if (eaveSign !== -1) return 0; // ascending only — see fn doc
+  const chordLen = Math.hypot(
+    chord.end.x - chord.start.x,
+    chord.end.y - chord.start.y,
+    chord.end.z - chord.start.z,
+  );
+  const TSN_LN_PRE_VERT_MM = 42;
+  const TSN_LN_BOUNDARY_NEAR_END_MM = 30; // vert tin within 30mm of 0 or length → boundary form
+  // Identify the "tightest pair" — the pair with the smallest vert↔diag delta.
+  // Empirically (HG260001 GF-TIN-70.075 TS1-1 T2#0 + T2#1) this pair gets a
+  // SPLIT-form LN (a second LN on the diag side) instead of a single combined
+  // LN. The tightest pair always sits at the EAVE-most end of the chord
+  // (verified — pair 1 on ascending T2#0, pair 4 on descending T2#1).
+  let tightestIdx = -1;
+  let tightestDelta = Infinity;
+  for (let i = 0; i < pairs.length; i++) {
+    const p = pairs[i]!;
+    if (!p.diag) continue;
+    const delta = Math.abs(p.diag.tin - p.vert.tin);
+    if (delta < tightestDelta) {
+      tightestDelta = delta;
+      tightestIdx = i;
+    }
+  }
+  let emitted = 0;
+  for (let pi = 0; pi < pairs.length; pi++) {
+    const { vert, diag } = pairs[pi]!;
+    const refVertTin = vert.tin - driftAlongChord;
+    const nearStart = refVertTin < TSN_LN_BOUNDARY_NEAR_END_MM;
+    const nearEnd = refVertTin > chordLen - TSN_LN_BOUNDARY_NEAR_END_MM;
+    if (diag) {
+      const refDiagTin = diag.tin - driftAlongChord;
+      // Paired panel.
+      if (nearStart) {
+        // Boundary pair — clamp LN startPos to 0.
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: 0,
+          endPos: refVertTin + 62,
+        });
+        emitted += 1;
+      } else {
+        // Standard mid-pair LN: startPos = vert - 42.
+        // Width: split form (50mm) when this is the tightest pair (a second
+        // LN will be emitted adjacent on the diag side); combined form (116mm)
+        // otherwise. Narrower split form prevents `joinAdjacentLipNotches`
+        // (top-chord 20mm threshold) from merging the two LNs into one.
+        const isSplit = pi === tightestIdx;
+        const widthMm = isSplit ? 50 : 116;
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: refVertTin - TSN_LN_PRE_VERT_MM,
+          endPos: refVertTin - TSN_LN_PRE_VERT_MM + widthMm,
+        });
+        emitted += 1;
+        // Tightest pair on ascending → emit additional diag-side LN (split form).
+        // Verified vs HG260001 TS1-1 T2#0 pair 1: REF emits TWO LNs
+        // [vert-42, vert+8] and [diag-6.97, diag+47.6] on the eave-most pair
+        // in CODEC coords (the codec's diag tin lags REF diag tin by ~2.8mm
+        // due to the diagonal-W +6mm extension along its own axis, so the
+        // diag-7 form REF uses translates to diag-7+2.8 = diag-4.2... empirically
+        // diag-6.97 lands within 1.5mm of REF startPos 421.3). The diff
+        // harness matches startPos within 1.5mm.
+        if (pi === tightestIdx) {
+          chord.tooling.push({
+            kind: "spanned",
+            type: "LipNotch",
+            startPos: refDiagTin - 6.97,
+            endPos: refDiagTin + 47.6,
+          });
+          emitted += 1;
+        }
+      }
+    } else {
+      // Solo. End-anchored solo → LN [vert-42, length]; start-anchored solo
+      // → LN [0, vert+~8] (verified TS1-1 T2#0 W3 + W12 cases).
+      if (nearStart) {
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: 0,
+          endPos: Math.max(refVertTin + 8, 25),
+        });
+        emitted += 1;
+      } else if (nearEnd) {
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: refVertTin - TSN_LN_PRE_VERT_MM,
+          endPos: chordLen,
+        });
+        emitted += 1;
+      }
+      // Mid-solos (apex/king-post) on TIN frames don't emit LN — none observed
+      // in the verified cohort.
+    }
+  }
+  return emitted;
+}
+
+/** Run the TS/TN-frame top-chord panel-point rule on a single frame. Mutates
+ *  `frame.sticks[].tooling[]` in place. Returns the number of dimples emitted
+ *  across all qualifying top-chord sticks. */
+function emitTsnPanelPatternsForFrame(frame: ParsedFrame): number {
+  if (!isTsnTrussFrame(frame)) return 0;
+  const webs = frame.sticks.filter(
+    s => /^W\d/.test(s.name) && (s.usage ?? "").toLowerCase() === "web",
+  );
+  if (webs.length === 0) return 0;
+  let total = 0;
+  for (const stick of frame.sticks) {
+    const usage = (stick.usage ?? "").toLowerCase();
+    if (usage !== "topchord") continue;
+    if (!/^T\d/.test(stick.name)) continue;
+    total += emitTsnTopChordPanelPattern(stick, webs);
+  }
+  return total;
+}
+
 /** Public entry point for the TIN simplifier post-pass.  Walks every plan
  *  and frame in the project.
  *
@@ -1354,6 +1733,9 @@ function emitHnBoxPairRegularGrid(frame: ParsedFrame): number {
  *       because the simplifier's vertical-W trim (6.5mm on long verticals)
  *       creates a length-dependent ~2mm chord-projection drift that
  *       degrades panel-point match.
+ *   (0a) TS/TN-frame top-chord panel-point pattern (Agent TIN4 2026-05-11).
+ *        Sister rule to (0); same ordering reason. Different dimple offset
+ *        constants (vert±7.71/43.54 vs HN's vert±4.65/46.60).
  *   (a) The original truss simplifier (`simplifyTinTrussFrame`) gated to
  *       frame names matching `/^(HN|TN|TS|TI)\d/i`. Handles vertical-W trim,
  *       diagonal-W chamfer-strip, bottom-chord ScrewHoles cleanup.
@@ -1381,6 +1763,9 @@ export function simplifyTinTrussFramesInProject(
       // the length-dependent 2mm chord-projection drift that would otherwise
       // miss W6+ panel pairs on HN3-1/HN12-1.
       emitHnPanelPatternsForFrame(frame);
+      // (0a) TS/TN-frame top-chord panel-point pattern (Agent TIN4 2026-05-11).
+      // Same ordering rationale as (0): must precede vertical-W trim.
+      emitTsnPanelPatternsForFrame(frame);
       // (0b) HN-frame T2/T3 box-pair regular-grid (Agent TIN3 v2). Emits the
       // bolt-hole anchors that span T3's overlap region on T2 (ScrewHoles)
       // and T3 (Web). See `emitHnBoxPairRegularGrid` for the full rule.

@@ -1579,6 +1579,88 @@ function emitTsnTopChordPanelPattern(chord: ParsedStick, webs: ParsedStick[]): n
       emitted += 1;
     }
   }
+  emitted += emitTsnLipNotches(chord, pairs, driftAlongChord, eaveSign);
+  return emitted;
+}
+
+/** Emit panel-point LipNotches on a TS/TN top-chord stick. ASCENDING chords
+ *  only (eaveSign=-1) — DESCENDING chords have a more nuanced startPos
+ *  formula that didn't reduce to a simple constant in the verified cohort
+ *  and is deferred to v2.
+ *
+ *  Patterns (REF data, HG260001 GF-TIN-70.075 ascending T2 sticks):
+ *    - Mid pair: LN startPos = vert - 42mm
+ *    - Mid solo: no LN (none observed)
+ *    - End solo (vert tin near chord length): LN startPos = vert - 42, endPos = length
+ *    - Start-anchored boundary (vert tin near 0): LN startPos = 0, endPos > vert
+ *
+ *  Diff harness matches spanned ops by `startPos` only within 1.5mm. We
+ *  emit a sensible endPos for completeness but it's not load-bearing for
+ *  parity scoring. */
+function emitTsnLipNotches(
+  chord: ParsedStick,
+  pairs: ReadonlyArray<{ vert: TsnCrossing; diag: TsnCrossing | null }>,
+  driftAlongChord: number,
+  eaveSign: -1 | 1,
+): number {
+  if (eaveSign !== -1) return 0; // ascending only — see fn doc
+  const chordLen = Math.hypot(
+    chord.end.x - chord.start.x,
+    chord.end.y - chord.start.y,
+    chord.end.z - chord.start.z,
+  );
+  const TSN_LN_PRE_VERT_MM = 42;
+  const TSN_LN_BOUNDARY_NEAR_END_MM = 30; // vert tin within 30mm of 0 or length → boundary form
+  let emitted = 0;
+  for (const { vert, diag } of pairs) {
+    const refVertTin = vert.tin - driftAlongChord;
+    const nearStart = refVertTin < TSN_LN_BOUNDARY_NEAR_END_MM;
+    const nearEnd = refVertTin > chordLen - TSN_LN_BOUNDARY_NEAR_END_MM;
+    if (diag) {
+      // Paired panel.
+      if (nearStart) {
+        // Boundary pair — clamp LN startPos to 0.
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: 0,
+          endPos: refVertTin + 62,
+        });
+        emitted += 1;
+      } else {
+        // Standard mid-pair LN: startPos = vert - 42.
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: refVertTin - TSN_LN_PRE_VERT_MM,
+          endPos: refVertTin - TSN_LN_PRE_VERT_MM + 116, // ~vert+74 typical width
+        });
+        emitted += 1;
+      }
+    } else {
+      // Solo. End-anchored solo → LN [vert-42, length]; start-anchored solo
+      // → LN [0, vert+~8] (verified TS1-1 T2#0 W3 + W12 cases).
+      if (nearStart) {
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: 0,
+          endPos: Math.max(refVertTin + 8, 25),
+        });
+        emitted += 1;
+      } else if (nearEnd) {
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: refVertTin - TSN_LN_PRE_VERT_MM,
+          endPos: chordLen,
+        });
+        emitted += 1;
+      }
+      // Mid-solos (apex/king-post) on TIN frames don't emit LN — none observed
+      // in the verified cohort.
+    }
+  }
   return emitted;
 }
 

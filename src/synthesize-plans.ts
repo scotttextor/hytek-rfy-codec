@@ -33,7 +33,7 @@ import {
 } from "./machine-setups.js";
 import { generateFrameContextOps } from "./rules/index.js";
 import { joinAdjacentLipNotches } from "./rules/frame-context.js";
-import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
+import { simplifyTinTrussFramesInProject, HN_PANELPOINT_APPLIED_KEY } from "./simplify-tin-truss.js";
 import { simplifyRpFramesInProject, scaleRpDiagonalTplateBodyOps, isRpPlanName, rpRakeDirectionForFrame, applyRpSingleTplateRakeCap, rpSlopedTplateBodyShiftDirection, applyRpSlopedTplateBodyShift } from "./simplify-rp.js";
 import { simplifyTb2bTrussFramesInProject, isTb2bPlanName } from "./simplify-tb2b-truss.js";
 import { simplifyWallServiceInProject } from "./simplify-wall-service.js";
@@ -578,7 +578,16 @@ export function synthesizeRfyFromPlans(
           isTb2bTrussFrame &&
           /^[TBWRH]\d/.test(stick.name) &&
           !/\(Box\d+\)/.test(stick.name);
-        const ctx = isTb2bTrussMember ? [] : (contextOps.get(stick.name) ?? []);
+        // Agent TIN3 (2026-05-11): when the HN top-chord panel-point rule
+        // has rewritten this stick's tooling, skip the frame-context merge
+        // so the per-web-crossing context ops don't re-pollute our pattern.
+        // Marker is set by `emitHnTopChordPanelPattern` in simplify-tin-truss.
+        const tinHnPanelApplied =
+          (stick as unknown as Record<string, unknown>)[HN_PANELPOINT_APPLIED_KEY] === true;
+        const ctx =
+          isTb2bTrussMember || tinHnPanelApplied
+            ? []
+            : (contextOps.get(stick.name) ?? []);
         const perStickOps = nonPrimaryBPlateNames.has(stick.name)
           ? stripSlabAnchorOps(stick.tooling)
           : stick.tooling;

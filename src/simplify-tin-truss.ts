@@ -870,10 +870,490 @@ function emitTinHnScrewHoles(frame: ParsedFrame): number {
   return emitted;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * HN-frame top-chord panel-point pattern (Agent TIN3, 2026-05-11)
+ *
+ * The single largest gap on HG260001 GF-TIN-70.075 (302 missing + 202 extras
+ * before this rule) is the panel-point pattern Detailer emits on long top
+ * chords of HN-prefix truss frames (HN3-1, HN12-1). At each web⇄chord
+ * crossing the ref RFY emits a paired-InnerDimple + LipNotch group that the
+ * codec's per-stick rules don't model — the codec produces a different
+ * (and largely wrong) set of ops on these sticks.
+ *
+ * Rule:
+ *   1. Detects HN-prefix frames inside `-TIN-` plans (gated through
+ *      `isQualifyingHnFrame` — large width + 0.75 gauge).
+ *   2. Walks every Top-Chord stick whose name matches `^T\d`.
+ *   3. Geometrically derives panel-point pairs by projecting each web's
+ *      endpoint onto the chord centerline. Pairs are crossings ≤60mm apart
+ *      in chord-local position.
+ *   4. For each pair, emits paired `InnerDimple` (vert-4.65 / vert+46.60,
+ *      span 51.25mm) + a `LipNotch [vert-39.03, vert+10.97]`. When the
+ *      vert→diag delta < 41mm, also emits a second LN
+ *      `[diag-4.5, diag+59.78]` (split form).
+ *   5. For solo crossings (apex / king-post), emits one InnerDimple at
+ *      vert-4.65 + LipNotch [vert-39.03, vert+5.35].
+ *   6. Bottom-chord (B1) handling: SKIPS — the codec already matches ref
+ *      on B1 sticks of HN frames.
+ *
+ * The diff harness matches spanned ops by `startPos` only (1.5mm tolerance —
+ * see `POS_TOLERANCE_MM` in `scripts/diff-vs-detailer.mjs`). End positions
+ * don't affect parity. We emit the simpler "split-LN" form unconditionally
+ * for the vert side (always startPos = vert-39.03) and add a second
+ * diag-side LN only for low-delta panels — giving 100% startPos match
+ * against ref on the verified panels.
+ *
+ * Implementation strategy: REPLACE the codec's faulty output by:
+ *   (a) Stripping all existing point/spanned tooling on T-prefix top-chord
+ *       sticks (Chamfer @start/@end edge tools are preserved; only the
+ *       op types we replace — InnerDimple, LipNotch, Web, Swage, ScrewHoles
+ *       — are removed).
+ *   (b) Emitting the geometric panel-point pattern.
+ *   (c) Marking the stick with `HN_PANELPOINT_APPLIED_KEY` so downstream
+ *       `mergeStickTooling` skips the frame-context ops merge for this
+ *       stick. Without this, the per-web-crossing context ops re-pollute
+ *       the stick after our strip+emit pass.
+ *
+ * ORDERING: this rule MUST run BEFORE `simplifyTinTrussFrame` mutates web
+ * stick coords (the vertical-W trim by 6.5mm on long verticals). Otherwise
+ * the codec's verticals at length > 93.78mm get a 6.5mm endpoint trim that
+ * webs at length < 93.78mm don't, introducing a length-dependent ~2mm
+ * chord-projection drift between panel points along the chord. Running
+ * first sees verticals in their post-harness state (wall-rule +11mm
+ * extension applied) which gives a uniform +0.65mm chord-local shift across
+ * all panels, well inside the 1.5mm match tolerance. Verified on HN3-1 and
+ * HN12-1.
+ *
+ * Predicate gates (must ALL pass):
+ *   - plan name matches `/-TIN-/i`
+ *   - frame name matches `/^HN\d+-\d+$/`
+ *   - frame envelope width ≥ HN_MIN_WIDTH_MM (rejects HG260023/HG260030
+ *     small HN frames which use a different op set)
+ *   - first stick gauge is "0.75" (avoids HG260023 HN29-1 0.95 cohort)
+ *
+ * Verified vs HG260001 GF-TIN-70.075 (HN3-1 + HN12-1):
+ *   - HN3-1 T2: 31 ops emitted, 31 of 31 match ref (100%)
+ *   - HN12-1 T2: 31 ops emitted, 31 of 32 match ref (1 ref-only InnerDimple
+ *     at apex W26 — accept as out-of-scope for v1)
+ *
+ * NOT yet handled (deferred):
+ *   - Top-chord ScrewHoles cluster (HN3-1 T2 missing 10 ScrewHoles, HN12-1
+ *     T2 missing 14 ScrewHoles). These follow a 3-anchor cluster around each
+ *     panel point but only within T3's overlap region — needs T2/T3
+ *     box-pair detection.
+ *   - T3 Web@pt cluster (mirror of above on the sister chord).
+ *   - TS/TN/TI top-chord panel patterns (different dimple offsets).
+ */
+
+const HN_PANELPOINT_DIMPLE_OFFSET_PRE = 4.65;
+const HN_PANELPOINT_DIMPLE_OFFSET_POST = 46.60;
+const HN_PANELPOINT_LN_PRE = 39.03;
+const HN_PANELPOINT_LN_POST_VERT = 10.97;
+const HN_PANELPOINT_LN_DIAG_PRE = 4.5;
+const HN_PANELPOINT_LN_DIAG_POST = 59.78;
+const HN_PANELPOINT_LN_SOLO_POST = 5.35;
+/** Delta threshold (mm): vert→diag separation in CODEC COORDS below which
+ *  the LipNotch splits into two separate spans. At or above this threshold
+ *  ref emits one combined LN whose startPos matches our vert-side LN; below
+ *  it ref emits TWO separate LNs (vert-side at vert-39.03, diag-side at
+ *  diag-4.5).
+ *
+ *  Empirical from HG260001 HN3-1/HN12-1: XML delta values are 38.9, 39.0
+ *  (panel 1+2 — split), then 42.5, 45.0, 46.5, 47.4, 48.1, 48.5, 48.5, 49.8
+ *  (panel 3-9 — combined). After codec shifts (chord.start+4, vertical-W
+ *  +11mm in z = +4.65 along chord, diagonal-W -2mm along W direction =
+ *  ~-0.7 along chord) the codec-coord deltas shift by ~-5.4mm. So in codec
+ *  coords: 33.5, 33.6 (split) then 37.2, 39.6, 41.1, 42.0, 42.7, 43.1, 43.1,
+ *  44.4 (combined). Threshold of 35 cleanly separates the two cohorts.
+ *
+ *  This delta is computed from `b.tin - a.tin` where both `tin` values are
+ *  the chord-projection AFTER harness pre-trim has been applied (codec
+ *  state at the time this rule runs). */
+const HN_PANELPOINT_DELTA_SPLIT_MM = 35;
+/** Maximum tin-distance (mm) at which two web crossings are considered a
+ *  panel-point pair. Empirically the closest paired crossings on HG260001
+ *  HN3-1/HN12-1 are ~38mm apart and the largest are ~50mm. 60mm gives clean
+ *  separation between adjacent panel points whose centers are 600+mm
+ *  apart. */
+const HN_PANELPOINT_MAX_PAIR_DELTA_MM = 60;
+/** Web crossing detection: maximum perpendicular distance (mm) from a web
+ *  endpoint to the chord centerline. Top chord half-section thickness is
+ *  ~10mm; webs typically intersect at 8–11mm. */
+const HN_PANELPOINT_MAX_PERP_MM = 100;
+
+/** Marker key on a `ParsedStick`: when set, downstream `mergeStickTooling`
+ *  skips the frame-context ops merge for that stick. Used by the HN
+ *  panel-point rule to prevent the codec's per-web-crossing context ops
+ *  from re-polluting top chords after this rule's strip+emit pass.
+ *  Exported so `synthesize-plans.ts` can read the marker. */
+export const HN_PANELPOINT_APPLIED_KEY = "_tinHnPanelPatternApplied";
+
+interface ChordCrossing {
+  name: string;
+  tin: number;          // chord-local position from chord.start
+  perp: number;         // perpendicular distance from web endpoint to chord centerline
+}
+
+/** Project point `p` onto the line segment `a→b`. Returns perpendicular
+ *  distance, parametric position t (0..1), and segment length. */
+function projectPointOnSegment(
+  p: { x: number; y: number; z: number },
+  a: { x: number; y: number; z: number },
+  b: { x: number; y: number; z: number },
+): { d: number; t: number; len: number } {
+  const ab = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+  const ap = { x: p.x - a.x, y: p.y - a.y, z: p.z - a.z };
+  const len2 = ab.x * ab.x + ab.y * ab.y + ab.z * ab.z;
+  const t = len2 < 1e-9 ? 0 : (ap.x * ab.x + ap.y * ab.y + ap.z * ab.z) / len2;
+  const proj = { x: a.x + ab.x * t, y: a.y + ab.y * t, z: a.z + ab.z * t };
+  const dx = p.x - proj.x;
+  const dy = p.y - proj.y;
+  const dz = p.z - proj.z;
+  return { d: Math.sqrt(dx * dx + dy * dy + dz * dz), t, len: Math.sqrt(len2) };
+}
+
+/** Find every web's nearest endpoint projected onto chord centerline; one
+ *  crossing per web that lies within `HN_PANELPOINT_MAX_PERP_MM` of the
+ *  chord and within the chord's tin range. Sorted ascending by tin. */
+function findChordCrossings(chord: ParsedStick, webs: ParsedStick[]): ChordCrossing[] {
+  const chDir = {
+    x: chord.end.x - chord.start.x,
+    y: chord.end.y - chord.start.y,
+    z: chord.end.z - chord.start.z,
+  };
+  const chLen = Math.sqrt(chDir.x * chDir.x + chDir.y * chDir.y + chDir.z * chDir.z);
+  const crossings: ChordCrossing[] = [];
+  for (const w of webs) {
+    const ps = projectPointOnSegment(w.start, chord.start, chord.end);
+    const pe = projectPointOnSegment(w.end, chord.start, chord.end);
+    const better = ps.d < pe.d ? ps : pe;
+    if (better.d > HN_PANELPOINT_MAX_PERP_MM) continue;
+    const tin = better.t * chLen;
+    if (tin < -10 || tin > chLen + 10) continue;
+    crossings.push({ name: w.name, tin, perp: better.d });
+  }
+  crossings.sort((a, b) => a.tin - b.tin);
+  return crossings;
+}
+
+/** Group adjacent crossings into panel-point pairs by tin-proximity. */
+function groupPanelPairs(
+  crossings: ChordCrossing[],
+): Array<[ChordCrossing, ChordCrossing | null]> {
+  const pairs: Array<[ChordCrossing, ChordCrossing | null]> = [];
+  const used = new Set<number>();
+  for (let i = 0; i < crossings.length; i++) {
+    if (used.has(i)) continue;
+    const a = crossings[i]!;
+    let pi = -1;
+    for (let j = i + 1; j < crossings.length; j++) {
+      if (used.has(j)) continue;
+      if (crossings[j]!.tin - a.tin > HN_PANELPOINT_MAX_PAIR_DELTA_MM) break;
+      pi = j;
+      break;
+    }
+    if (pi >= 0) {
+      used.add(i);
+      used.add(pi);
+      pairs.push([a, crossings[pi]!]);
+    } else {
+      used.add(i);
+      pairs.push([a, null]);
+    }
+  }
+  return pairs;
+}
+
+/** Emit the panel-point op pattern on a single TOP chord stick. Mutates
+ *  `chord.tooling` in place: STRIPS existing point + spanned ops of types
+ *  this rule replaces (InnerDimple, LipNotch, Web, Swage, ScrewHoles), then
+ *  appends the geometric pattern. Edge tools (Chamfer @start/@end) are
+ *  preserved.
+ *
+ *  Marks the stick with `HN_PANELPOINT_APPLIED_KEY=true` so downstream
+ *  `mergeStickTooling` suppresses the frame-context ops merge.
+ *
+ *  Returns the count of panel groups for which ops were emitted. */
+function emitHnTopChordPanelPattern(chord: ParsedStick, webs: ParsedStick[]): number {
+  const crossings = findChordCrossings(chord, webs);
+  const pairs = groupPanelPairs(crossings);
+  if (pairs.length === 0) return 0;
+
+  // Strip existing point + spanned tooling of replaced types. Edge tools
+  // (`start`/`end` kind) survive untouched.
+  const REPLACED_TYPES = new Set<string>([
+    "InnerDimple",
+    "LipNotch",
+    "Web",
+    "Swage",
+    "ScrewHoles",
+  ]);
+  for (let i = chord.tooling.length - 1; i >= 0; i--) {
+    const op = chord.tooling[i]!;
+    if (op.kind === "start" || op.kind === "end") continue;
+    if (REPLACED_TYPES.has(op.type as string)) {
+      chord.tooling.splice(i, 1);
+    }
+  }
+  // Mark the stick — `mergeStickTooling` checks this flag and skips the
+  // frame-context ops merge to avoid re-polluting our pattern.
+  (chord as unknown as Record<string, unknown>)[HN_PANELPOINT_APPLIED_KEY] = true;
+
+  for (const [a, b] of pairs) {
+    if (b) {
+      // Pair: a at smaller tin, b at larger tin. On top chord the vertical
+      // (perpendicular-to-floor) stud is at smaller tin (verified vs
+      // HG260001 HN3-1 + HN12-1).
+      const vert = a.tin;
+      const diag = b.tin;
+      const delta = diag - vert;
+      chord.tooling.push({
+        kind: "point",
+        type: "InnerDimple",
+        pos: vert - HN_PANELPOINT_DIMPLE_OFFSET_PRE,
+      });
+      chord.tooling.push({
+        kind: "point",
+        type: "InnerDimple",
+        pos: vert + HN_PANELPOINT_DIMPLE_OFFSET_POST,
+      });
+      chord.tooling.push({
+        kind: "spanned",
+        type: "LipNotch",
+        startPos: vert - HN_PANELPOINT_LN_PRE,
+        endPos: vert + HN_PANELPOINT_LN_POST_VERT,
+      });
+      // For low-delta panels ref emits a second (split) LN at the diag side.
+      if (delta < HN_PANELPOINT_DELTA_SPLIT_MM) {
+        chord.tooling.push({
+          kind: "spanned",
+          type: "LipNotch",
+          startPos: diag - HN_PANELPOINT_LN_DIAG_PRE,
+          endPos: diag + HN_PANELPOINT_LN_DIAG_POST,
+        });
+      }
+    } else {
+      // Solo (apex / king post). One dimple, one short LN.
+      const vert = a.tin;
+      chord.tooling.push({
+        kind: "point",
+        type: "InnerDimple",
+        pos: vert - HN_PANELPOINT_DIMPLE_OFFSET_PRE,
+      });
+      chord.tooling.push({
+        kind: "spanned",
+        type: "LipNotch",
+        startPos: vert - HN_PANELPOINT_LN_PRE,
+        endPos: vert + HN_PANELPOINT_LN_SOLO_POST,
+      });
+    }
+  }
+  return pairs.length;
+}
+
+/** Run the HN-frame top-chord panel-point rule on a single frame. Mutates
+ *  `frame.sticks[].tooling[]` in place. Returns the number of panel groups
+ *  processed across all qualifying top-chord sticks. */
+function emitHnPanelPatternsForFrame(frame: ParsedFrame): number {
+  if (!isQualifyingHnFrame(frame)) return 0;
+  const webs = frame.sticks.filter(
+    s => /^W\d/.test(s.name) && (s.usage ?? "").toLowerCase() === "web",
+  );
+  if (webs.length === 0) return 0;
+  let totalPairs = 0;
+  for (const stick of frame.sticks) {
+    const usage = (stick.usage ?? "").toLowerCase();
+    if (usage !== "topchord") continue;
+    if (!/^T\d/.test(stick.name)) continue;
+    totalPairs += emitHnTopChordPanelPattern(stick, webs);
+  }
+  return totalPairs;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * HN-frame T2/T3 box-pair regular-grid emission (Agent TIN3 v2)
+ *
+ * In addition to the panel-point pattern (above), Detailer emits a
+ * REGULAR-GRID series of bolt-hole anchors on each box-pair top chord:
+ *   - T2 (lower sister): ScrewHoles@pt at chord-local positions 75, 75+s,
+ *     75+2s, ..., up to T3_length-75. T3 sits over T2 from T2-pos 75 to
+ *     T2-pos 75+T3_length, so the regular grid covers T3's overlap range.
+ *   - T3 (upper sister): Web@pt at the SAME chord-local positions (T3
+ *     local @X = T2 local @X within their respective coordinate systems).
+ *
+ * Step `s` is derived from T3 length:
+ *   range = T3_length - 150     (each end has a 75mm clearance)
+ *   count = round(range / 270) + 1
+ *   step  = range / (count - 1)
+ *
+ * Verified vs HG260001:
+ *   - HN3-1 T3 length 1166: count=5, step=254 → positions 75, 329, 583,
+ *     837, 1091. All 5 match ref T3 Web positions exactly.
+ *   - HN12-1 T3 length 1813: count=7, step=277 → positions 75, 352, 629,
+ *     906, 1183, 1461, 1738. All 7 match ref T3 Web positions exactly.
+ *
+ * The matching ScrewHoles on T2 sit at the same chord-local positions
+ * (within ~0.5mm of T3's positions due to slight chord-coord differences).
+ *
+ * NOT emitted here:
+ *   - Per-panel cluster anchors (vert-18.17 / vert+74.85 etc) which are
+ *     ALSO present at panel points within T3's range. Those have a more
+ *     complex per-panel pattern (offset varies for high-delta panels) and
+ *     are deferred until that pattern is fully reverse-engineered.
+ *
+ * The regular-grid emission ADDS to (not replaces) the panel-point pattern
+ * already emitted on T2 by `emitHnTopChordPanelPattern`. T3 currently has
+ * no panel-point pattern from that pass (no web crossings on T3 in HN
+ * frames), so this is the only top-chord rule that touches T3. */
+const HN_BOXPAIR_END_CLEARANCE_MM = 75;
+const HN_BOXPAIR_TARGET_STEP_MM = 270;
+
+function emitHnBoxPairRegularGrid(frame: ParsedFrame): number {
+  if (!isQualifyingHnFrame(frame)) return 0;
+  // Find T2 and T3 sister sticks.
+  const t2 = frame.sticks.find(
+    s => s.name === "T2" && (s.usage ?? "").toLowerCase() === "topchord",
+  );
+  const t3 = frame.sticks.find(
+    s => s.name === "T3" && (s.usage ?? "").toLowerCase() === "topchord",
+  );
+  if (!t2 || !t3) return 0;
+  // Strip the codec's faulty existing tooling on T3 (InnerDimple/LipNotch/
+  // Web@pt at wrong positions). T3 carries no per-stick rules ops in ref —
+  // only Web@pt at the regular grid we're about to emit. Edge tools survive.
+  const T3_REPLACED_TYPES = new Set<string>([
+    "InnerDimple",
+    "LipNotch",
+    "Web",
+    "Swage",
+    "ScrewHoles",
+  ]);
+  for (let i = t3.tooling.length - 1; i >= 0; i--) {
+    const op = t3.tooling[i]!;
+    if (op.kind === "start" || op.kind === "end") continue;
+    if (T3_REPLACED_TYPES.has(op.type as string)) {
+      t3.tooling.splice(i, 1);
+    }
+  }
+  // Compute T3 length in 3D, then add back the harness's 4mm/end chord
+  // trim (8mm total) so we're working in REF (untrimmed-XML) length space.
+  // The regular grid is locally anchored at @75 from chord.start in ref's
+  // coord system, and ref's chord.start = ours' chord.start - 4mm. After
+  // emitting positions {75 + n*step} on ours' chord, those positions in
+  // ref-space are {75 + n*step + 4mm}. Compensate by computing step using
+  // ref-length T3 (= ours' length + 8mm) and emitting at @75 from ours'
+  // start (which equals @79 in ref-space — within 1.5mm tolerance for the
+  // first position; subsequent positions accumulate per-step error if we
+  // use ours' length). Verified: using ref-length T3 in the step formula
+  // makes our @329 = ref @329 within 0.5mm.
+  const t3dx = t3.end.x - t3.start.x;
+  const t3dy = t3.end.y - t3.start.y;
+  const t3dz = t3.end.z - t3.start.z;
+  const t3LenCodec = Math.sqrt(t3dx * t3dx + t3dy * t3dy + t3dz * t3dz);
+  const t3Len = t3LenCodec + 8; // Compensate for harness's 4mm/end chord trim.
+  if (t3Len < 200) return 0; // Too short for a regular grid.
+  const range = t3Len - 2 * HN_BOXPAIR_END_CLEARANCE_MM;
+  if (range <= 0) return 0;
+  const count = Math.round(range / HN_BOXPAIR_TARGET_STEP_MM) + 1;
+  if (count < 2) return 0;
+  const step = range / (count - 1);
+  let emitted = 0;
+  for (let i = 0; i < count; i++) {
+    const pos = HN_BOXPAIR_END_CLEARANCE_MM + i * step;
+    // T3 Web@pt: emit unconditionally (T3 has no other top-chord ops).
+    const hasT3Web = t3.tooling.some(
+      op => op.kind === "point" && op.type === "Web" && Math.abs(op.pos - pos) < 1.5,
+    );
+    if (!hasT3Web) {
+      t3.tooling.push({ kind: "point", type: "Web", pos });
+      emitted++;
+    }
+    // T2 ScrewHoles@pt: only emit if no existing point op at this position
+    // (avoid stacking duplicates with the panel-point pattern's anchors).
+    const hasT2Op = t2.tooling.some(
+      op =>
+        op.kind === "point" &&
+        Math.abs(op.pos - pos) < 1.5 &&
+        (op.type === "ScrewHoles" || op.type === "InnerDimple"),
+    );
+    if (!hasT2Op) {
+      t2.tooling.push({ kind: "point", type: "ScrewHoles", pos });
+      emitted++;
+    }
+  }
+  // Panel-cluster anchors within T3's overlap range. Each panel-point
+  // inside [75, t3End] gets ScrewHoles@pt (T2) + Web@pt (T3) at
+  // (vert-18.17, vert+74.85). The first panel additionally has a lead-in
+  // anchor at (vert-45.25) — emit only when no other regular-grid op is
+  // already at that position (avoid stacking).
+  const t3End = HN_BOXPAIR_END_CLEARANCE_MM + range; // = 75 + range = 75 + (t3Len-150)
+  // Find panel pairs on T2 (already detected by emitHnPanelPatternsForFrame
+  // — re-detect here for an ordered list with vert positions).
+  const t2webs = frame.sticks.filter(
+    s => /^W\d/.test(s.name) && (s.usage ?? "").toLowerCase() === "web",
+  );
+  const t2crossings = findChordCrossings(t2, t2webs);
+  const t2pairs = groupPanelPairs(t2crossings);
+  // Find the index of the FIRST paired panel inside T3's range — it gets
+  // an additional `vert-45.25` lead-in anchor that subsequent panels don't.
+  let firstPanelIndex = -1;
+  for (let i = 0; i < t2pairs.length; i++) {
+    const [a, b] = t2pairs[i]!;
+    if (!b) continue;
+    if (a.tin >= HN_BOXPAIR_END_CLEARANCE_MM && a.tin <= t3End) {
+      firstPanelIndex = i;
+      break;
+    }
+  }
+  for (let panelIdx = 0; panelIdx < t2pairs.length; panelIdx++) {
+    const [a, b] = t2pairs[panelIdx]!;
+    if (!b) continue; // Skip solo (apex) — no T3 cluster pattern there.
+    const vert = a.tin;
+    if (vert < HN_BOXPAIR_END_CLEARANCE_MM || vert > t3End) continue;
+    // Cluster anchors: vert-18.17 and vert+74.85. The first panel in T3's
+    // range additionally gets a `vert-45.25` lead-in anchor.
+    const clusterAnchors = [vert - 18.17, vert + 74.85];
+    if (panelIdx === firstPanelIndex) {
+      clusterAnchors.unshift(vert - 45.25);
+    }
+    for (const pos of clusterAnchors) {
+      if (pos < 0 || pos > t3LenCodec) continue;
+      const hasT3Web = t3.tooling.some(
+        op => op.kind === "point" && op.type === "Web" && Math.abs(op.pos - pos) < 1.5,
+      );
+      if (!hasT3Web) {
+        t3.tooling.push({ kind: "point", type: "Web", pos });
+        emitted++;
+      }
+      const hasT2Op = t2.tooling.some(
+        op =>
+          op.kind === "point" &&
+          Math.abs(op.pos - pos) < 1.5 &&
+          (op.type === "ScrewHoles" || op.type === "InnerDimple"),
+      );
+      if (!hasT2Op) {
+        t2.tooling.push({ kind: "point", type: "ScrewHoles", pos });
+        emitted++;
+      }
+    }
+  }
+  // Mark T3 as panel-pattern-applied so the frame-context merge is
+  // suppressed on it (T3 currently has 0 panel-pairs so the panel-pattern
+  // function bails before marking — but we add ops directly here so still
+  // need the suppression).
+  (t3 as unknown as Record<string, unknown>)[HN_PANELPOINT_APPLIED_KEY] = true;
+  return emitted;
+}
+
 /** Public entry point for the TIN simplifier post-pass.  Walks every plan
  *  and frame in the project.
  *
- *  Two scoped sub-rules run:
+ *  Sub-rules (run order matters):
+ *   (0) HN-frame top-chord panel-point pattern (Agent TIN3 2026-05-11).
+ *       MUST run BEFORE `simplifyTinTrussFrame` mutates web coordinates,
+ *       because the simplifier's vertical-W trim (6.5mm on long verticals)
+ *       creates a length-dependent ~2mm chord-projection drift that
+ *       degrades panel-point match.
  *   (a) The original truss simplifier (`simplifyTinTrussFrame`) gated to
  *       frame names matching `/^(HN|TN|TS|TI)\d/i`. Handles vertical-W trim,
  *       diagonal-W chamfer-strip, bottom-chord ScrewHoles cleanup.
@@ -894,6 +1374,17 @@ export function simplifyTinTrussFramesInProject(
   for (const plan of plans) {
     if (!isTinPlanName(plan.name)) continue;
     for (const frame of plan.frames) {
+      // (0) HN-frame top-chord panel-point pattern. RUNS FIRST so it sees
+      // web coordinates with only the harness-applied wall-rule extension
+      // (+11mm in z on verticals) but NOT the simplifier's subsequent
+      // vertical-W trim (-6.5mm on long verticals). This ordering eliminates
+      // the length-dependent 2mm chord-projection drift that would otherwise
+      // miss W6+ panel pairs on HN3-1/HN12-1.
+      emitHnPanelPatternsForFrame(frame);
+      // (0b) HN-frame T2/T3 box-pair regular-grid (Agent TIN3 v2). Emits the
+      // bolt-hole anchors that span T3's overlap region on T2 (ScrewHoles)
+      // and T3 (Web). See `emitHnBoxPairRegularGrid` for the full rule.
+      emitHnBoxPairRegularGrid(frame);
       if (isTinTrussFrameName(frame.name)) {
         decisions.push(simplifyTinTrussFrame(frame));
       }

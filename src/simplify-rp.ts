@@ -559,6 +559,205 @@ function chamferBottomAtTConnection(
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// RP8 (2026-05-11): subordinate B-plate eave-side extension + chord cap.
+// ---------------------------------------------------------------------------
+//
+// PATTERN (verified vs HG260044 + HG260001 GF-RP-70.075):
+//   Horizontal RP B-plates whose roof-rafter T-plate(s) overhang the B at one
+//   end (eave overhang), OR whose frame has exactly ONE sloped T-plate, get
+//   a different geometry treatment than the codec's standard 4mm/end
+//   EndClearance trim:
+//     * Length: rawXmlLen − ~3mm (vs our codec's rawXmlLen − 8mm).
+//     * Eave-side cap: chord-style (Swage 0..59 + ID @10) instead of
+//       wall-style (LipNotch 0..39 + ID @16.5).
+//     * Body-crossing ops on the B-plate shift +~5mm in stick-local position
+//       because Detailer effectively uses the UN-TRIMMED start (raw centerline)
+//       for body op emission. We mutate stick.start (or stick.end) here so
+//       the downstream `computeFrameContextOps` automatically emits body ops
+//       at the correct new positions.
+//
+// EVIDENCE: 11 of 14 horizontal B-plates in HG260044 GF-RP-70.075 match this
+// pattern (dlen=+4.91, body ops drift +4.90). 6 of 6 horizontal B-plates in
+// HG260001 GF-RP also match. The B-plates that DON'T match (R1/B1, R3/B1,
+// R7/B1, R15/B1, R17/B1, R18/B1) all have multiple T-plates AND no T
+// overhang — these align with our codec's standard 4mm/end trim. Sloped
+// RP B-plates (R4/B1, R12/B1) are handled by other passes — this transform
+// skips them via the horizontal gate.
+//
+// DETECTION (two-branch):
+//   Branch A — T-plate overhang ≥ 10mm at one end of B. Used for B-plates in
+//     multi-T frames where most T-plates run past the B-plate but one
+//     specific T overhangs at the eave end (e.g. HG260044 R4/B2, R5/B1).
+//   Branch B — single sloped T-plate in frame (tCount===1, |T.dz|≥5). The
+//     B-plate's eave end is whichever B endpoint is geometrically closer to
+//     the T-plate's LOW-Z (eave) endpoint. Captures simple shed-style RP
+//     panels (e.g. HG260044 R2/B1, R8/B1) where T endpoints align with B
+//     endpoints (no overhang).
+
+/** Total stick extension at the eave end (mm).
+ *  4mm un-trimmed (recover EndClearance) + 1mm peak-mitre extension = 5mm.
+ *  Empirically verified across 11 HG260044 horizontal-mode RP B-plates:
+ *    ref - our = +4.91mm (length) and +4.90mm (body-op drift). */
+const RP_BPLATE_EAVE_EXTENSION_MM = 5.0;
+
+/** Min projection-overhang (mm) for a T-plate to count as "overhanging" past
+ *  this B-plate's end. */
+const RP_BPLATE_OVERHANG_MIN_MM = 10;
+
+/** Chord-style cap dimensions on RP B-plates:
+ *    Swage 0..59 + ID @10   (eave-at-start)
+ *    Swage L-59..L + ID @L-10  (eave-at-end) */
+const RP_BPLATE_CHORD_CAP_DIMPLE_OFFSET_MM = 10;
+const RP_BPLATE_CHORD_CAP_SWAGE_SPAN_MM = 59;
+
+/** Sloped T-plate dz threshold (mm). */
+const RP_BPLATE_TPLATE_SLOPED_DZ_MM = 5;
+
+/** Detect which end of a horizontal RP B-plate is the eave end.
+ *  Returns "start" or "end" if subordinate, null otherwise. */
+function detectRpBplateEaveOverhang(
+  stick: ParsedStick,
+  frame: ParsedFrame,
+): "start" | "end" | null {
+  const dx = stick.end.x - stick.start.x;
+  const dy = stick.end.y - stick.start.y;
+  const dz = stick.end.z - stick.start.z;
+  const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  if (len < 1) return null;
+  const ux = dx / len, uy = dy / len, uz = dz / len;
+
+  // Branch A: T-plate overhang detection.
+  let maxOverhangStart = 0;
+  let maxOverhangEnd = 0;
+  for (const t of frame.sticks) {
+    if (!isTplate(t)) continue;
+    const tEndpoints = [t.start, t.end];
+    for (const pt of tEndpoints) {
+      const proj = (pt.x - stick.start.x) * ux + (pt.y - stick.start.y) * uy + (pt.z - stick.start.z) * uz;
+      if (proj < -maxOverhangStart) maxOverhangStart = -proj;
+      if (proj - len > maxOverhangEnd) maxOverhangEnd = proj - len;
+    }
+  }
+  if (maxOverhangStart >= RP_BPLATE_OVERHANG_MIN_MM
+      && maxOverhangStart >= maxOverhangEnd) {
+    return "start";
+  }
+  if (maxOverhangEnd >= RP_BPLATE_OVERHANG_MIN_MM) {
+    return "end";
+  }
+
+  // Branch B: single-sloped-T-plate frame (shed-style RP).
+  const tPlates = frame.sticks.filter(isTplate);
+  if (tPlates.length === 1) {
+    const t = tPlates[0]!;
+    const tDz = Math.abs(t.end.z - t.start.z);
+    if (tDz >= RP_BPLATE_TPLATE_SLOPED_DZ_MM) {
+      const tLow = t.start.z < t.end.z ? t.start : t.end;
+      const dStartSq = (tLow.x - stick.start.x) ** 2 + (tLow.y - stick.start.y) ** 2;
+      const dEndSq = (tLow.x - stick.end.x) ** 2 + (tLow.y - stick.end.y) ** 2;
+      return dStartSq < dEndSq ? "start" : "end";
+    }
+  }
+
+  return null;
+}
+
+/** Strip rules-engine's wall-style start cap on a B-plate. */
+function stripRpBplateWallCapStart(tooling: RfyToolingOp[]): number {
+  let removed = 0;
+  for (let i = tooling.length - 1; i >= 0; i--) {
+    const op = tooling[i]!;
+    if (
+      op.kind === "spanned"
+      && (op.type === "LipNotch" || op.type === "Swage")
+      && Math.abs(op.startPos - 0) < END_ANCHOR_TOL_MM
+      && Math.abs(op.endPos - STD_END_SPAN_MM) < END_ANCHOR_TOL_MM
+    ) {
+      tooling.splice(i, 1); removed++; continue;
+    }
+    if (
+      op.kind === "point"
+      && op.type === "InnerDimple"
+      && Math.abs(op.pos - STD_DIMPLE_OFFSET_MM) < POINT_ANCHOR_TOL_MM
+    ) {
+      tooling.splice(i, 1); removed++; continue;
+    }
+  }
+  return removed;
+}
+
+/** Strip rules-engine's wall-style end cap on a B-plate. */
+function stripRpBplateWallCapEnd(tooling: RfyToolingOp[], stickLen: number): number {
+  let removed = 0;
+  for (let i = tooling.length - 1; i >= 0; i--) {
+    const op = tooling[i]!;
+    if (
+      op.kind === "spanned"
+      && (op.type === "LipNotch" || op.type === "Swage")
+      && Math.abs(op.endPos - stickLen) < END_ANCHOR_TOL_MM
+      && Math.abs((op.endPos - op.startPos) - STD_END_SPAN_MM) < END_ANCHOR_TOL_MM
+    ) {
+      tooling.splice(i, 1); removed++; continue;
+    }
+    if (
+      op.kind === "point"
+      && op.type === "InnerDimple"
+      && Math.abs(op.pos - (stickLen - STD_DIMPLE_OFFSET_MM)) < POINT_ANCHOR_TOL_MM
+    ) {
+      tooling.splice(i, 1); removed++; continue;
+    }
+  }
+  return removed;
+}
+
+/** Apply RP8 eave extension + chord cap. */
+function applyRpBplateEaveExtension(
+  stick: ParsedStick,
+  eaveEnd: "start" | "end",
+): void {
+  const dx = stick.end.x - stick.start.x;
+  const dy = stick.end.y - stick.start.y;
+  const dz = stick.end.z - stick.start.z;
+  const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  if (len < 1) return;
+  const ux = dx / len, uy = dy / len, uz = dz / len;
+  const ext = RP_BPLATE_EAVE_EXTENSION_MM;
+
+  if (eaveEnd === "start") {
+    stripRpBplateWallCapStart(stick.tooling);
+    stick.start = {
+      x: stick.start.x - ux * ext,
+      y: stick.start.y - uy * ext,
+      z: stick.start.z - uz * ext,
+    };
+    for (const op of stick.tooling) {
+      if (op.kind === "point") op.pos += ext;
+      else if (op.kind === "spanned") { op.startPos += ext; op.endPos += ext; }
+    }
+    stick.tooling.push(
+      { kind: "spanned", type: "Swage", startPos: 0, endPos: RP_BPLATE_CHORD_CAP_SWAGE_SPAN_MM },
+      { kind: "point", type: "InnerDimple", pos: RP_BPLATE_CHORD_CAP_DIMPLE_OFFSET_MM },
+    );
+  } else {
+    stripRpBplateWallCapEnd(stick.tooling, len);
+    stick.end = {
+      x: stick.end.x + ux * ext,
+      y: stick.end.y + uy * ext,
+      z: stick.end.z + uz * ext,
+    };
+    const newLen = len + ext;
+    stick.tooling.push(
+      {
+        kind: "spanned", type: "Swage",
+        startPos: newLen - RP_BPLATE_CHORD_CAP_SWAGE_SPAN_MM,
+        endPos: newLen,
+      },
+      { kind: "point", type: "InnerDimple", pos: newLen - RP_BPLATE_CHORD_CAP_DIMPLE_OFFSET_MM },
+    );
+  }
+}
+
 /** Apply the RP stud-only rewrite to a single frame. */
 export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
   const studStartsRewritten: string[] = [];
@@ -603,6 +802,25 @@ export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
     if (!isHorizontal) continue;
     const side = chamferBottomAtTConnection(stick, frame);
     if (side) platesChamfered.push(stick.name + "@" + side);
+  }
+
+  // RP8 (2026-05-11): subordinate-B-plate eave extension + chord cap.
+  // For each horizontal RP B-plate flagged as subordinate (single sloped
+  // T-plate, or T-overhang at one end), extend that end by 5mm to recover
+  // the un-trimmed length + add peak-mitre extension, and rewrite the
+  // wall-cap on that end to chord-cap morphology. Body crossings emitted
+  // later by `computeFrameContextOps` will naturally pick up the new
+  // un-trimmed start position. Sloped B-plates (R4/B1, R12/B1) and
+  // B-plates with no T-overhang in multi-T frames (R1/B1, R3/B1, R17/B1)
+  // are skipped — they match our codec's existing 4mm/end trim.
+  for (const stick of frame.sticks) {
+    if (!isBplate(stick)) continue;
+    const isHorizontalB = Math.abs(stick.end.z - stick.start.z) < HORIZONTAL_BOTTOM_TOL_MM;
+    if (!isHorizontalB) continue;
+    const eaveEnd = detectRpBplateEaveOverhang(stick, frame);
+    if (eaveEnd === null) continue;
+    applyRpBplateEaveExtension(stick, eaveEnd);
+    platesChamfered.push(`${stick.name}@RP8-${eaveEnd}`);
   }
 
   for (const stick of frame.sticks) {

@@ -4,17 +4,17 @@ Setup:    F325iT 70mm
 Frames:   our 39 | ref 39
 
 OPS:      our 6812 | ref 7052
-MATCHED:  6336  (89.8% of ref)
-MISSING:  716  (ops Detailer has, we don't)
-EXTRAS:   476   (ops we have, Detailer doesn't)
+MATCHED:  6345  (90.0% of ref)
+MISSING:  707  (ops Detailer has, we don't)
+EXTRAS:   467   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt          2566       186      114   (93% ref-coverage)
+InnerDimple@pt          2571       181      109   (93% ref-coverage)
 LipNotch@span            968        92      167   (91% ref-coverage)
-Swage@span              1204       107      119   (92% ref-coverage)
-InnerService@pt          757       115       31   (87% ref-coverage)
+Swage@span              1207       104      116   (92% ref-coverage)
+InnerService@pt          758       114       30   (87% ref-coverage)
 Chamfer@end               58        87        0   (40% ref-coverage)
 Web@pt                   316        52       13   (86% ref-coverage)
 Chamfer@start             83        58        0   (59% ref-coverage)
@@ -307,8 +307,8 @@ FRAMES WITH GAPS:
     H2       EXTRAS  (4): InnerDimple @58.5 | InnerDimple @1821.2 | InnerDimple @1845.5 | LipNotch 1798.7..1843.7
     L1       MISSING (3): InnerDimple @103.8 | InnerDimple @949.3 | InnerDimple @1794.9
     L2       MISSING (7): Web @89.0 | Web @376.7 | Web @664.3 | Web @952.0 | Web @1239.7 ... +2
-    N2       MISSING (4): InnerDimple @166.5 | InnerNotch 0.0..39.0 | LipNotch 0.0..39.0 | Swage 144.0..183.0
-    N2       EXTRAS  (3): InnerDimple @172.5 | Swage 0.0..39.0 | Swage 150.0..189.0
+    N2       MISSING (2): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0
+    N2       EXTRAS  (1): Swage 0.0..39.0
     W1       MISSING (1): Swage 316.9..376.0
     W1       EXTRAS  (1): Swage 315.2..374.7
     W2       MISSING (1): Swage 317.4..376.7

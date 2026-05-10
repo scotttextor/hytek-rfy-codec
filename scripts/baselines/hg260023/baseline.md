@@ -1,45 +1,45 @@
 # HG260023 Baseline — Per-Plan Op-Level Diff vs Detailer
 
-**Overall: 80.33% matched** (15513/19312 ops)
-Missing: 3799 (Detailer has, we lack) | Extras: 3329 (we emit, Detailer doesn't)
+**Overall: 83.82% matched** (16188/19312 ops)
+Missing: 3124 (Detailer has, we lack) | Extras: 2965 (we emit, Detailer doesn't)
 
 ## Per-frame-type parity (14 plans grouped)
 | Frame type | Plans | Parity | Matched | Ref | Missing | Extras |
 |---|---:|---:|---:|---:|---:|---:|
-| NLBW | 2 | 88.2% | 5145 | 5831 | 686 | 657 |
-| LBW | 4 | 86.7% | 7165 | 8263 | 1098 | 998 |
-| TIN | 2 | 84.5% | 815 | 964 | 149 | 143 |
-| TB2B | 5 | 78.6% | 1994 | 2536 | 542 | 584 |
-| RP | 1 | 22.9% | 394 | 1718 | 1324 | 947 |
+| NLBW | 2 | 90.6% | 5283 | 5831 | 548 | 497 |
+| LBW | 4 | 90.0% | 7437 | 8263 | 826 | 913 |
+| TIN | 2 | 84.1% | 811 | 964 | 153 | 147 |
+| TB2B | 5 | 78.4% | 1989 | 2536 | 547 | 433 |
+| RP | 1 | 38.9% | 668 | 1718 | 1050 | 975 |
 
 ## Per-plan parity
 | RFY | Parity | Matched | Ref | Missing | Extras |
 |---|---:|---:|---:|---:|---:|
-| HG260023_GF-RP-70.075.rfy | 22.9% | 394 | 1718 | 1324 | 947 |
-| HG260023_GF-TIN-70.095.rfy | 82.5% | 660 | 800 | 140 | 134 |
+| HG260023_GF-RP-70.075.rfy | 38.9% | 668 | 1718 | 1050 | 975 |
+| HG260023_GF-TIN-70.095.rfy | 82.0% | 656 | 800 | 144 | 138 |
 | HG260023_GF-TIN-70.115.rfy | 94.5% | 155 | 164 | 9 | 9 |
-| HG260023_PK1-GF-NLBW-89.075.rfy | 91.6% | 361 | 394 | 33 | 33 |
-| HG260023_PK10-GF-TB2B-70.075.rfy | 74.0% | 348 | 470 | 122 | 132 |
-| HG260023_PK11-GF-TB2B-70.075.rfy | 76.1% | 239 | 314 | 75 | 99 |
-| HG260023_PK2-GF-NLBW-70.075.rfy | 88.0% | 4784 | 5437 | 653 | 624 |
-| HG260023_PK3-GF-LBW-89.075.rfy | 89.1% | 171 | 192 | 21 | 11 |
-| HG260023_PK4-GF-LBW-70.095.rfy | 84.0% | 5095 | 6063 | 968 | 888 |
-| HG260023_PK5-GF-LBW-70.095.rfy | 69.8% | 67 | 96 | 29 | 29 |
-| HG260023_PK6-GF-LBW-70.075.rfy | 95.8% | 1832 | 1912 | 80 | 70 |
-| HG260023_PK7-GF-TB2B-70.075.rfy | 80.2% | 315 | 393 | 78 | 80 |
-| HG260023_PK8-GF-TB2B-70.075.rfy | 78.6% | 544 | 692 | 148 | 156 |
-| HG260023_PK9-GF-TB2B-70.075.rfy | 82.2% | 548 | 667 | 119 | 117 |
+| HG260023_PK1-GF-NLBW-89.075.rfy | 93.1% | 367 | 394 | 27 | 27 |
+| HG260023_PK10-GF-TB2B-70.075.rfy | 73.2% | 344 | 470 | 126 | 97 |
+| HG260023_PK11-GF-TB2B-70.075.rfy | 74.2% | 233 | 314 | 81 | 74 |
+| HG260023_PK2-GF-NLBW-70.075.rfy | 90.4% | 4916 | 5437 | 521 | 470 |
+| HG260023_PK3-GF-LBW-89.075.rfy | 93.2% | 179 | 192 | 13 | 11 |
+| HG260023_PK4-GF-LBW-70.095.rfy | 87.6% | 5312 | 6063 | 751 | 816 |
+| HG260023_PK5-GF-LBW-70.095.rfy | 74.0% | 71 | 96 | 25 | 25 |
+| HG260023_PK6-GF-LBW-70.075.rfy | 98.1% | 1875 | 1912 | 37 | 61 |
+| HG260023_PK7-GF-TB2B-70.075.rfy | 81.2% | 319 | 393 | 74 | 60 |
+| HG260023_PK8-GF-TB2B-70.075.rfy | 78.0% | 540 | 692 | 152 | 132 |
+| HG260023_PK9-GF-TB2B-70.075.rfy | 82.9% | 553 | 667 | 114 | 70 |
 
 ## Aggregate divergence by tool
 | Tool | Missing (Detailer has) | Extras (we emit) | Net we lack |
 |---|---:|---:|---:|
-| InnerDimple | 1172 | 933 | 239 |
-| LipNotch | 733 | 655 | 78 |
-| Web | 678 | 544 | 134 |
-| Swage | 625 | 617 | 8 |
-| InnerService | 195 | 233 | -38 |
-| InnerNotch | 183 | 129 | 54 |
-| Chamfer | 113 | 147 | -34 |
-| RightFlange | 49 | 17 | 32 |
-| LeftFlange | 40 | 25 | 15 |
-| Bolt | 11 | 29 | -18 |
+| InnerDimple | 1004 | 826 | 178 |
+| LipNotch | 583 | 706 | -123 |
+| Web | 529 | 422 | 107 |
+| Swage | 492 | 492 | 0 |
+| InnerService | 183 | 221 | -38 |
+| InnerNotch | 121 | 144 | -23 |
+| Chamfer | 109 | 122 | -13 |
+| RightFlange | 47 | 5 | 42 |
+| LeftFlange | 40 | 11 | 29 |
+| Bolt | 16 | 16 | 0 |

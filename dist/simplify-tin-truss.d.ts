@@ -42,6 +42,9 @@ export declare const HN_PANELPOINT_APPLIED_KEY = "_tinHnPanelPatternApplied";
  *       because the simplifier's vertical-W trim (6.5mm on long verticals)
  *       creates a length-dependent ~2mm chord-projection drift that
  *       degrades panel-point match.
+ *   (0a) TS/TN-frame top-chord panel-point pattern (Agent TIN4 2026-05-11).
+ *        Sister rule to (0); same ordering reason. Different dimple offset
+ *        constants (vert±7.71/43.54 vs HN's vert±4.65/46.60).
  *   (a) The original truss simplifier (`simplifyTinTrussFrame`) gated to
  *       frame names matching `/^(HN|TN|TS|TI)\d/i`. Handles vertical-W trim,
  *       diagonal-W chamfer-strip, bottom-chord ScrewHoles cleanup.

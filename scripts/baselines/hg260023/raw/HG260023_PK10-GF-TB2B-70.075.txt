@@ -3,31 +3,31 @@ OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-TB2B-70.075
 Setup:    F325iT 70mm
 Frames:   our 24 | ref 5
 
-OPS:      our 480 | ref 470
-MATCHED:  348  (74.0% of ref)
-MISSING:  122  (ops Detailer has, we don't)
-EXTRAS:   132   (ops we have, Detailer doesn't)
+OPS:      our 441 | ref 470
+MATCHED:  344  (73.2% of ref)
+MISSING:  126  (ops Detailer has, we don't)
+EXTRAS:   97   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Web@pt                   278        94      113   (75% ref-coverage)
-LipNotch@span              7         8        7   (47% ref-coverage)
-LeftFlange@span            7         8        7   (47% ref-coverage)
-RightFlange@span           5         8        5   (38% ref-coverage)
+Web@pt                   274        98       93   (74% ref-coverage)
+LipNotch@span              7         8        2   (47% ref-coverage)
+LeftFlange@span            7         8        2   (47% ref-coverage)
+RightFlange@span           5         8        0   (38% ref-coverage)
 InnerDimple@pt            51         4        0   (93% ref-coverage)
 
 FRAMES WITH GAPS:
 
   TT5-1 (19 sticks with gaps)
     T3       MISSING (1): Web @716.4
-    T3       EXTRAS  (3): Web @53.9 | Web @153.4 | Web @3284.7
+    T3       EXTRAS  (1): Web @3284.7
     B1       MISSING (2): Web @1423.7 | Web @2548.0
-    B1       EXTRAS  (6): Web @2538.4 | Web @5430.1 | Web @6465.0 | LeftFlange 6368.3..6525.0 | LipNotch 6492.7..6525.0 ... +1
+    B1       EXTRAS  (2): Web @2538.4 | Web @5430.1
     R13      MISSING (2): LeftFlange 233.5..382.4 | LipNotch 357.9..0.0
     R13      EXTRAS  (2): LeftFlange 235.3..382.4 | LipNotch 359.7..382.4
     T5       MISSING (2): Web @600.7 | RightFlange 0.0..35.4
-    T5       EXTRAS  (4): Web @91.2 | Web @479.1 | Web @578.6 | Web @617.6
+    T5       EXTRAS  (2): Web @91.2 | Web @617.6
     W19      MISSING (1): Web @771.0
     W19      EXTRAS  (1): Web @786.0
     W20      MISSING (1): Web @803.6
@@ -42,14 +42,14 @@ FRAMES WITH GAPS:
     W23      EXTRAS  (1): Web @753.6
 
   TT6-1 (10 sticks with gaps)
-    T3       MISSING (7): Web @716.4 | Web @1025.7 | Web @1843.1 | Web @1941.1 | Web @3036.5 ... +2
-    T3       EXTRAS  (9): Web @53.9 | Web @166.3 | Web @221.9 | Web @319.7 | Web @810.8 ... +4
+    T3       MISSING (8): Web @716.4 | Web @1025.7 | Web @1843.1 | Web @1941.1 | Web @3036.5 ... +3
+    T3       EXTRAS  (8): Web @91.2 | Web @166.3 | Web @221.9 | Web @810.8 | Web @909.1 ... +3
     B1       MISSING (3): Web @2687.9 | Web @2883.9 | Web @4012.2
-    B1       EXTRAS  (7): Web @2701.2 | Web @2873.7 | Web @4009.4 | Web @6465.0 | LeftFlange 6368.3..6525.0 ... +2
+    B1       EXTRAS  (3): Web @2701.2 | Web @2873.7 | Web @4009.4
     H7       MISSING (9): Web @75.4 | Web @570.4 | Web @967.5 | RightFlange 0.0..23.6 | LipNotch 0.0..46.0 ... +4
     H7       EXTRAS  (3): Web @7.8 | Web @560.3 | Web @1035.1
-    T5       MISSING (3): Web @221.5 | Web @442.6 | Web @524.0
-    T5       EXTRAS  (6): Web @14.9 | Web @112.8 | Web @236.2 | Web @333.9 | Web @389.6 ... +1
+    T5       MISSING (4): Web @91.2 | Web @221.5 | Web @442.6 | Web @524.0
+    T5       EXTRAS  (5): Web @14.9 | Web @112.8 | Web @333.9 | Web @389.6 | Web @464.7
     W16      MISSING (1): Web @1044.0
     W16      EXTRAS  (1): Web @1059.0
     W18      MISSING (1): Web @1047.8
@@ -65,13 +65,12 @@ FRAMES WITH GAPS:
 
   TT9-1 (10 sticks with gaps)
     T2       MISSING (1): Web @716.4
-    T2       EXTRAS  (3): Web @53.9 | Web @153.4 | Web @3284.7
+    T2       EXTRAS  (1): Web @3284.7
     B1       MISSING (4): Web @1423.7 | Web @2548.0 | Web @4767.0 | Web @6008.7
-    B1       EXTRAS  (4): Web @6500.0 | LeftFlange 6403.3..6560.0 | LipNotch 6527.7..6560.0 | RightFlange 6551.8..6560.0
     R9       MISSING (2): LeftFlange 233.5..382.4 | LipNotch 357.9..0.0
     R9       EXTRAS  (2): LeftFlange 235.3..382.4 | LipNotch 359.7..382.4
     T4       MISSING (2): Web @1686.8 | RightFlange 0.0..35.4
-    T4       EXTRAS  (4): Web @91.2 | Web @1565.2 | Web @1664.7 | Web @1703.7
+    T4       EXTRAS  (2): Web @91.2 | Web @1703.7
     W18      MISSING (1): Web @536.1
     W18      EXTRAS  (1): Web @511.6
     H8       MISSING (6): Web @31.3 | Web @396.8 | Web @2307.1 | LeftFlange 2210.4..2391.5 | LipNotch 2336.6..2391.5 ... +1
@@ -79,25 +78,25 @@ FRAMES WITH GAPS:
     W19      MISSING (2): Web @312.0 | Web @446.1
     W19      EXTRAS  (2): Web @327.0 | Web @439.1
     W20      MISSING (2): Web @35.0 | Web @784.1
-    T6       MISSING (3): Web @229.6 | Web @593.1 | Web @674.5
-    T6       EXTRAS  (6): Web @14.9 | Web @112.9 | Web @386.7 | Web @476.4 | Web @540.1 ... +1
+    T6       MISSING (4): Web @91.2 | Web @229.6 | Web @593.1 | Web @674.5
+    T6       EXTRAS  (5): Web @14.9 | Web @112.9 | Web @476.4 | Web @540.1 | Web @615.2
     W24      MISSING (1): Web @95.5
     W24      EXTRAS  (1): Web @88.5
 
   TT11-1 (4 sticks with gaps)
-    T4       MISSING (7): Web @716.4 | Web @1027.6 | Web @1839.6 | Web @1937.6 | Web @3029.4 ... +2
-    T4       EXTRAS  (9): Web @53.9 | Web @166.3 | Web @237.5 | Web @319.7 | Web @1328.4 ... +4
+    T4       MISSING (8): Web @716.4 | Web @1027.6 | Web @1839.6 | Web @1937.6 | Web @3029.4 ... +3
+    T4       EXTRAS  (8): Web @91.2 | Web @166.3 | Web @237.5 | Web @1328.4 | Web @1427.3 ... +3
     B1       MISSING (3): Web @3333.0 | Web @5325.9 | Web @6392.0
-    B1       EXTRAS  (6): Web @5343.3 | Web @6409.4 | Web @6465.0 | LeftFlange 6368.3..6525.0 | LipNotch 6492.7..6525.0 ... +1
+    B1       EXTRAS  (2): Web @5343.3 | Web @6409.4
     H5       MISSING (4): Web @84.3 | RightFlange 0.0..32.5 | LipNotch 0.0..54.9 | LeftFlange 0.0..181.1
     H5       EXTRAS  (1): Web @16.7
     W13      MISSING (2): InnerDimple @1000.0 | InnerDimple @1100.0
 
   TT12-1 (4 sticks with gaps)
-    T3       MISSING (9): Web @716.4 | Web @1030.4 | Web @1839.6 | Web @1937.6 | Web @3029.4 ... +4
-    T3       EXTRAS  (11): Web @53.9 | Web @166.3 | Web @230.0 | Web @319.7 | Web @1463.8 ... +6
+    T3       MISSING (10): Web @716.4 | Web @1030.4 | Web @1839.6 | Web @1937.6 | Web @3029.4 ... +5
+    T3       EXTRAS  (10): Web @91.2 | Web @166.3 | Web @230.0 | Web @1463.8 | Web @1562.6 ... +5
     B1       MISSING (2): Web @4540.7 | Web @6392.0
-    B1       EXTRAS  (6): Web @4528.3 | Web @6404.5 | Web @6465.0 | LeftFlange 6368.3..6525.0 | LipNotch 6492.7..6525.0 ... +1
+    B1       EXTRAS  (2): Web @4528.3 | Web @6404.5
     H5       MISSING (4): Web @84.3 | RightFlange 0.0..32.5 | LipNotch 0.0..54.9 | LeftFlange 0.0..181.1
     H5       EXTRAS  (1): Web @16.7
     W15      MISSING (2): InnerDimple @1040.0 | InnerDimple @1140.0

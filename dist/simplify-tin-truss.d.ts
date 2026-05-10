@@ -5,6 +5,13 @@ export declare function isTinPlanName(planName: string): boolean;
  *  plan (HN / TN / TS / TI prefixes). PC-prefix frames in TIN plans are
  *  handled by the codec's default rules and should NOT be rewritten here. */
 export declare function isTinTrussFrameName(frameName: string): boolean;
+/** True iff the frame name belongs to the panel-chord / TGI sub-set within
+ *  a TIN plan (PC / TGI prefixes). These frames get a separate rule set
+ *  focused on diagonal-W end-Swage span correction (the harness's default
+ *  `45/cos(angle)` formula systematically misses ref's `39/cos + ~4·tan²`
+ *  formula by 4-6mm at medium angles, causing every diagonal-W end-Swage to
+ *  count as a missing/extra pair). 2026-05-09 (Agent TIN). */
+export declare function isTinPcFrameName(frameName: string): boolean;
 export interface SimplifyTinDecision {
     frame: string;
     decision: "APPLY" | "SKIP";

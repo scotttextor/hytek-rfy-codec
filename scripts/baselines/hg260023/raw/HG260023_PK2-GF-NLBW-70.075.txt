@@ -3,10 +3,10 @@ OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-NLBW-70.075
 Setup:    F325iT 70mm
 Frames:   our 67 | ref 76
 
-OPS:      our 5386 | ref 5437
-MATCHED:  4916  (90.4% of ref)
-MISSING:  521  (ops Detailer has, we don't)
-EXTRAS:   470   (ops we have, Detailer doesn't)
+OPS:      our 5391 | ref 5437
+MATCHED:  4919  (90.5% of ref)
+MISSING:  518  (ops Detailer has, we don't)
+EXTRAS:   472   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
@@ -18,7 +18,7 @@ InnerService@pt          780        67       57   (92% ref-coverage)
 InnerNotch@span          173        42       32   (80% ref-coverage)
 Bolt@pt                  131        12       16   (92% ref-coverage)
 Chamfer@start              4        20        6   (17% ref-coverage)
-Chamfer@end                3        15        2   (17% ref-coverage)
+Chamfer@end                6        12        4   (33% ref-coverage)
 Web@pt                    69         8        1   (90% ref-coverage)
 
 FRAMES WITH GAPS:
@@ -60,7 +60,7 @@ FRAMES WITH GAPS:
 
   N11 (2 sticks with gaps)
     Kb1      MISSING (2): InnerService @851.3 | Swage 1396.8..1439.5
-    Kb1      EXTRAS  (1): Swage 1320.8..1439.5
+    Kb1      EXTRAS  (2): Swage 1320.8..1439.5 | Chamfer @end
     Kb2      MISSING (4): InnerService @814.3 | InnerService @891.1 | InnerService @1054.4 | Swage 1334.4..1377.7
     Kb2      EXTRAS  (4): InnerService @304.4 | InnerService @467.8 | Swage 1264.2..1377.7 | Chamfer @end
 
@@ -193,7 +193,7 @@ FRAMES WITH GAPS:
 
   N36 (2 sticks with gaps)
     Kb1      MISSING (2): InnerService @851.3 | Swage 1396.8..1439.5
-    Kb1      EXTRAS  (1): Swage 1320.8..1439.5
+    Kb1      EXTRAS  (2): Swage 1320.8..1439.5 | Chamfer @end
     Kb2      MISSING (4): InnerService @814.3 | InnerService @891.1 | InnerService @1054.4 | Swage 1334.4..1377.7
     Kb2      EXTRAS  (4): InnerService @304.4 | InnerService @467.8 | Swage 1264.2..1377.7 | Chamfer @end
 

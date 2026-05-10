@@ -1,17 +1,17 @@
 {
   "inputXml": "Y:/(17) 2026 HYTEK PROJECTS/CORAL HOMES/HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA/03 DETAILING/03 FRAMECAD DETAILER/01 XML OUTPUT/HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-LBW-70.075.xml",
   "reference": "Y:/(17) 2026 HYTEK PROJECTS/CORAL HOMES/HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA/06 MANUFACTURING/04 ROLLFORMER FILES/Split_HG260023/HG260023_PK6-GF-LBW-70.075.rfy",
-  "generated": "2026-05-10T02:27:51.123Z",
+  "generated": "2026-05-10T04:42:19.620Z",
   "setup": {
     "id": "2",
     "name": "F325iT 70mm"
   },
   "totals": {
-    "ours": 1936,
+    "ours": 1938,
     "ref": 1912,
-    "matched": 1875,
-    "missing": 37,
-    "extras": 61
+    "matched": 1884,
+    "missing": 28,
+    "extras": 54
   },
   "byFrame": [
     {
@@ -53,7 +53,8 @@
           "refLength": 1476.56854170917,
           "matchedCount": 4,
           "extras": [
-            "Swage 1354.8..1476.6"
+            "Swage 1354.8..1476.6",
+            "Chamfer @end"
           ],
           "missing": [
             "InnerService @873.5",
@@ -113,18 +114,6 @@
             "LipNotch 36.0..81.0"
           ],
           "missing": []
-        },
-        {
-          "name": "H1",
-          "oursLength": 1004,
-          "refLength": 1004,
-          "matchedCount": 15,
-          "extras": [
-            "LipNotch 965.0..1004.0"
-          ],
-          "missing": [
-            "LipNotch 923.0..1004.0"
-          ]
         },
         {
           "name": "N1",
@@ -236,82 +225,30 @@
           "name": "H1",
           "oursLength": 854,
           "refLength": 853.999977111816,
-          "matchedCount": 11,
+          "matchedCount": 12,
           "extras": [
             "LipNotch 192.1..242.1",
             "LipNotch 262.9..312.9",
             "LipNotch 541.1..591.1",
-            "LipNotch 611.9..661.9",
-            "LipNotch 815.0..854.0"
+            "LipNotch 611.9..661.9"
           ],
           "missing": [
             "LipNotch 195.2..309.8",
-            "LipNotch 544.2..658.8",
-            "LipNotch 773.0..854.0"
+            "LipNotch 544.2..658.8"
           ]
         },
         {
           "name": "H2",
           "oursLength": 1174,
           "refLength": 1174,
-          "matchedCount": 13,
+          "matchedCount": 14,
           "extras": [
             "LipNotch 272.2..322.2",
-            "LipNotch 781.2..831.2",
-            "LipNotch 1135.0..1174.0"
+            "LipNotch 781.2..831.2"
           ],
           "missing": [
             "LipNotch 270.2..322.0",
-            "LipNotch 779.1..831.0",
-            "LipNotch 1093.0..1174.0"
-          ]
-        },
-        {
-          "name": "W1",
-          "oursLength": 365.3609,
-          "refLength": 366.431547681949,
-          "matchedCount": 3,
-          "extras": [
-            "Swage 322.6..365.4"
-          ],
-          "missing": [
-            "Swage 324.6..366.4"
-          ]
-        },
-        {
-          "name": "W2",
-          "oursLength": 365.7169,
-          "refLength": 366.78574949766,
-          "matchedCount": 3,
-          "extras": [
-            "Swage 322.8..365.7"
-          ],
-          "missing": [
-            "Swage 324.9..366.8"
-          ]
-        },
-        {
-          "name": "W3",
-          "oursLength": 365.7169,
-          "refLength": 366.78574949766,
-          "matchedCount": 3,
-          "extras": [
-            "Swage 322.8..365.7"
-          ],
-          "missing": [
-            "Swage 324.9..366.8"
-          ]
-        },
-        {
-          "name": "W4",
-          "oursLength": 365.3609,
-          "refLength": 366.43154261584,
-          "matchedCount": 3,
-          "extras": [
-            "Swage 322.6..365.4"
-          ],
-          "missing": [
-            "Swage 324.6..366.4"
+            "LipNotch 779.1..831.0"
           ]
         },
         {
@@ -404,18 +341,6 @@
           "missing": []
         },
         {
-          "name": "H1",
-          "oursLength": 1004,
-          "refLength": 1004,
-          "matchedCount": 15,
-          "extras": [
-            "LipNotch 965.0..1004.0"
-          ],
-          "missing": [
-            "LipNotch 923.0..1004.0"
-          ]
-        },
-        {
           "name": "S7",
           "oursLength": 2757,
           "refLength": 2757,
@@ -504,15 +429,14 @@
           "name": "Kb2",
           "oursLength": 1377.7285,
           "refLength": 1377.73137412206,
-          "matchedCount": 4,
+          "matchedCount": 5,
           "extras": [
             "Chamfer @start"
           ],
           "missing": [
             "InnerService @323.3",
             "InnerService @486.7",
-            "InnerService @563.5",
-            "Chamfer @end"
+            "InnerService @563.5"
           ]
         }
       ]

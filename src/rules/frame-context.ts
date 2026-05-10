@@ -1163,6 +1163,10 @@ export function generateFrameContextOps(
     // All W role sticks (truss webs + wall braces) — both terminate at H.
     const allWebStyleSticks = layout.filter(sb => sb.role === "W");
     let hasWebBraceCrossing = false;
+    // 2026-05-11 (Agent LBW5): track per-crossing W brace angle so we can
+    // apply angle-aware LipNotch widths on H stick body panel-pairs (see
+    // pair-aware emission block below).
+    const crossingAngles = new Map<number, number>();  // localPos → angleDeg from horizontal
     for (const web of allWebStyleSticks) {
       const ws = web.stick.outlineCorners ?? [];
       if (ws.length < 2) continue;
@@ -1183,6 +1187,17 @@ export function generateFrameContextOps(
       seenPositions.add(q);
       crossings.push(localPos);
       hasWebBraceCrossing = true;
+      // Compute the brace's angle from horizontal in the frame plane. Used
+      // by Agent LBW5's angle-aware pair-LipNotch emission below.
+      const cl = getCenterlineEndpoints(web.stick);
+      if (cl) {
+        const dx = cl.endL.x - cl.startL.x;
+        const dy = cl.endL.y - cl.startL.y;
+        if (Math.abs(dx) > 1e-6 && Math.abs(dy) > 1e-6) {
+          const angleDeg = Math.atan2(Math.abs(dy), Math.abs(dx)) * 180 / Math.PI;
+          crossingAngles.set(q, angleDeg);
+        }
+      }
     }
 
     // 2026-05-04 — pair-aware LipNotch emission. For pairs of crossings
@@ -1191,10 +1206,37 @@ export function generateFrameContextOps(
     //   LipNotch A: [posA - 35.6 .. posA + 15.2]  (extends outward, 50.8 wide)
     //   LipNotch B: [posB - 15.2 .. posB + 35.6]
     // With ~20mm inner gap between them.
+    //
+    // 2026-05-11 (Agent LBW5): the SPLIT-vs-MERGE behaviour and per-side
+    // offsets vary with the W brace angle on H sticks in LBW frames:
+    //   angle ≥ 64° → MERGE: ONE LipNotch [leftDimple-outer .. rightDimple+outer]
+    //   angle < 64° → SPLIT: per-dimple LipNotches with angle-aware offsets
+    // Where (verified vs HG260044 GF-LBW + HG260001 PK4 GF-LBW corpora,
+    // 28 H-stick paired-dimple cases):
+    //   outer = 22.7/sin(α) + 20/tan(α)
+    //   inner = 22.7/sin(α) - 20/tan(α)
+    // (split width = outer + inner = 45.4/sin(α); fit error < 0.2mm)
+    //
+    // The discriminator threshold of 64° is sharp:
+    //   L8/L36 H1 (α=64.31°) MERGE → 120.3mm span
+    //   L36 H2  (α=62.98°)  SPLIT → 50.9mm each
+    //   L19/L20 (α=63.54°)  SPLIT → 50.6mm each
+    //   L33     (α=67.79°)  MERGE → 117.4mm span
+    //
+    // PREDICATE: only fires on H-role sticks in LBW plans where W braces
+    // (not S studs) are the source of the pair crossings. Falls back to the
+    // legacy outer=35/inner=15 constants outside that scope.
+    const planNameForBodyPair = (frame as { planName?: string }).planName ?? "";
+    const isLbwForBodyPair = /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(planNameForBodyPair)
+      && !/(?:^|[-_/])(?:NLBW|NON-LBW)(?:[-_/]|$)/i.test(planNameForBodyPair);
+    const useAngleAwarePair = isLbwForBodyPair && header.role === "H" && hasWebBraceCrossing;
+    const ANGLE_AWARE_K_SIN = 22.7;  // outer+inner = 2*K_SIN/sin(α)
+    const ANGLE_AWARE_K_TAN = 20.0;  // outer-inner = 2*K_TAN/tan(α)
+    const ANGLE_MERGE_THRESHOLD_DEG = 64;
     crossings.sort((a, b) => a - b);
     const PAIR_THRESHOLD = 70;  // pairs are ~50mm apart (jamb+king)
-    const PAIR_NOTCH_OUTER_OFFSET = 35;  // outer extent
-    const PAIR_NOTCH_INNER_OFFSET = 15;  // inner extent (toward pair midpoint)
+    const PAIR_NOTCH_OUTER_OFFSET = 35;  // legacy outer extent (non-LBW / non-W-brace)
+    const PAIR_NOTCH_INNER_OFFSET = 15;  // legacy inner extent (toward pair midpoint)
     const SINGLE_NOTCH_SPAN_HALF = 22.5;
     const used = new Set<number>();
     for (let i = 0; i < crossings.length; i++) {
@@ -1213,18 +1255,54 @@ export function generateFrameContextOps(
         // A is the LEFT one, B is the RIGHT one
         const left = Math.min(posA, posB);
         const right = Math.max(posA, posB);
-        // LipNotch A: extends OUT to the left (outer offset)
-        stickOps.push({
-          kind: "spanned", type: "LipNotch",
-          startPos: round(left - PAIR_NOTCH_OUTER_OFFSET),
-          endPos: round(left + PAIR_NOTCH_INNER_OFFSET),
-        });
-        // LipNotch B: extends OUT to the right
-        stickOps.push({
-          kind: "spanned", type: "LipNotch",
-          startPos: round(right - PAIR_NOTCH_INNER_OFFSET),
-          endPos: round(right + PAIR_NOTCH_OUTER_OFFSET),
-        });
+        // 2026-05-11 (Agent LBW5): angle-aware emission on LBW H sticks
+        // when this pair came from W braces (not S studs).
+        const qLeft = Math.round(left * 10) / 10;
+        const qRight = Math.round(right * 10) / 10;
+        const angL = crossingAngles.get(qLeft);
+        const angR = crossingAngles.get(qRight);
+        const bothFromWBrace = angL !== undefined && angR !== undefined;
+        if (useAngleAwarePair && bothFromWBrace) {
+          const avgAngle = (angL + angR) / 2;
+          const sin = Math.sin(avgAngle * Math.PI / 180);
+          const tan = Math.tan(avgAngle * Math.PI / 180);
+          const outer = ANGLE_AWARE_K_SIN / sin + ANGLE_AWARE_K_TAN / tan;
+          const inner = ANGLE_AWARE_K_SIN / sin - ANGLE_AWARE_K_TAN / tan;
+          if (avgAngle >= ANGLE_MERGE_THRESHOLD_DEG) {
+            // MERGE: single LipNotch spanning the full pair plus outer overhangs
+            stickOps.push({
+              kind: "spanned", type: "LipNotch",
+              startPos: round(left - outer),
+              endPos: round(right + outer),
+            });
+          } else {
+            // SPLIT: per-dimple LipNotches with angle-aware outer/inner
+            stickOps.push({
+              kind: "spanned", type: "LipNotch",
+              startPos: round(left - outer),
+              endPos: round(left + inner),
+            });
+            stickOps.push({
+              kind: "spanned", type: "LipNotch",
+              startPos: round(right - inner),
+              endPos: round(right + outer),
+            });
+          }
+        } else {
+          // Legacy emission (non-LBW H sticks, S-stud pairs, or unknown angle):
+          // LipNotch A: extends OUT to the left (outer offset)
+          stickOps.push({
+            kind: "spanned", type: "LipNotch",
+            startPos: round(left - PAIR_NOTCH_OUTER_OFFSET),
+            endPos: round(left + PAIR_NOTCH_INNER_OFFSET),
+          });
+          // LipNotch B: extends OUT to the right
+          stickOps.push({
+            kind: "spanned", type: "LipNotch",
+            startPos: round(right - PAIR_NOTCH_INNER_OFFSET),
+            endPos: round(right + PAIR_NOTCH_OUTER_OFFSET),
+          });
+        }
         stickOps.push({ kind: "point", type: "InnerDimple", pos: round(left) });
         stickOps.push({ kind: "point", type: "InnerDimple", pos: round(right) });
       } else {

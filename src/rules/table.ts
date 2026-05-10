@@ -684,8 +684,15 @@ export const RULE_TABLE: RuleGroup[] = [
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high", notes: "89mm header start cap: InnerNotch (full-web cut)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high", notes: "89mm header start cap: LipNotch (paired with InnerNotch)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high", notes: "89mm header dimple #1 at 16.5" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high", notes: "89mm header dimple #2 at 58.5" },
-      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high" },
+      // Paired dimple @58.5 — LBW headers only (mirrors the 70S41 H rule's
+      // predicate). Verified 2026-05-10 vs HG260044 GF-NLBW-89.075 N28 H1:
+      // ref has NO @58.5 dimples (codec was over-emitting before predicate
+      // gate added).
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high",
+        predicate: (ctx) => /(LBW)/i.test(ctx.planName ?? "") && !/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""),
+        notes: "89mm header dimple #2 at 58.5 — LBW only" },
+      { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high",
+        predicate: (ctx) => /(LBW)/i.test(ctx.planName ?? "") && !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "high" },
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high", notes: "89mm header end cap: InnerNotch" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "high", notes: "89mm header end cap: LipNotch" },

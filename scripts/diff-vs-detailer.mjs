@@ -1875,12 +1875,24 @@ for (const plan of ourDoc.project.plans) {
         // For B chords: swap LipNotch caps to Swage caps (RP convention).
         // Verified vs HG260012/HG260044: most B-plate caps want Swage; some
         // (R2 B1) keep LipNotch and create 1-2 extras, but net positive.
+        //
+        // RP8 (2026-05-11): SKIP the band-aid on B-plates where the RP8
+        // simplifier emitted a **LipNotch** 59mm chord cap (Branch B —
+        // single-sloped-T frames where ref wants LipNotch at both ends).
         if (/^B\d/.test(stick.name) && len > 100) {
-          for (const op of stick.tooling) {
-            if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
-            const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
-            const isEndCap = Math.abs(op.endPos - len) < 1 && Math.abs(op.startPos - (len - 39)) < 1;
-            if (isStartCap || isEndCap) op.type = "Swage";
+          const hasRp8LipNotchChordCap = stick.tooling.some(o =>
+            o.kind === "spanned"
+            && o.type === "LipNotch"
+            && Math.abs((o.endPos - o.startPos) - 59) < 1
+            && (o.startPos < 0.5 || Math.abs(o.endPos - len) < 1)
+          );
+          if (!hasRp8LipNotchChordCap) {
+            for (const op of stick.tooling) {
+              if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
+              const isStartCap = op.startPos < 0.5 && Math.abs(op.endPos - 39) < 1;
+              const isEndCap = Math.abs(op.endPos - len) < 1 && Math.abs(op.startPos - (len - 39)) < 1;
+              if (isStartCap || isEndCap) op.type = "Swage";
+            }
           }
         }
         // For T/B chords: emit InnerDimple + LipNotch at every stud crossing.

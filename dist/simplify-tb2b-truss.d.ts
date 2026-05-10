@@ -18,6 +18,11 @@ interface MetaStick {
     };
     usage: string;
     flipped: boolean;
+    /** Raw XML `<flipped>` value, BEFORE the harness/importer's
+     *  `isDiagonalBrace` override. Used by the W-stick arc-direction reversal
+     *  rule (Agent T9, 2026-05-11). Optional — falls back to `flipped` when
+     *  absent. */
+    xmlFlipped?: boolean;
 }
 /** Optional per-call config for `computeTb2bWebPositions` covering edge-case
  *  rules that depend on cross-stick state determined outside the function.
@@ -57,6 +62,16 @@ export interface Tb2bWebPositionsOptions {
      *  the gap WITHOUT changing the rule's defaults (avoids regressing other
      *  bottomchord shapes). Verified on PK6 TT7-1/TT8-1/TT9-1 B1 sticks. */
     forceReverseStickKeys?: ReadonlySet<string>;
+    /** Per-W-stick-instance arc-direction reversal flag (Agent T9, 2026-05-11).
+     *  Keys (`name#occurrence`) in this set identify sloped W-sticks whose
+     *  final Web@pt arc-positions should be reflected to L - p, because
+     *  Detailer measures positions from the OPPOSITE end of the web vs the
+     *  codec's natural XML start→end direction. Only fires on TT/TN/HN frames
+     *  where the XML `<flipped>` was `true` (preserved on
+     *  `ParsedStick.xmlFlipped`). Predicate is set by
+     *  `simplifyTb2bTrussFrame` and consumed inside the function's W-stick
+     *  output block. */
+    reverseWebStickKeys?: ReadonlySet<string>;
 }
 export declare function computeTb2bWebPositions(sticks: ReadonlyArray<MetaStick>, options?: Tb2bWebPositionsOptions): Map<string, number[]>;
 export interface SimplifyTb2bDecision {

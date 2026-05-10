@@ -65,6 +65,7 @@ const WEB_VS_RAIL_OFFSET_FOR_PEER_PAIR = 15;
 export function computeTb2bWebPositions(sticks, options) {
     const perpCorrOverride = options?.perpWebChordCorrectionOverride ?? new Map();
     const forceReverseStickKeys = options?.forceReverseStickKeys ?? new Set();
+    const reverseWebStickKeys = options?.reverseWebStickKeys ?? new Set();
     // Detect the constant-axis: compute per-axis range across ALL endpoints.
     // The axis with min range (within 1mm) is the "out-of-plane" axis.
     const axes = ["x", "y", "z"];
@@ -447,8 +448,20 @@ export function computeTb2bWebPositions(sticks, options) {
                 dedup.push(p);
         }
         if (isWeb) {
+            // Agent T9 (2026-05-11): sloped-web arc-direction reversal. When the
+            // caller-supplied `reverseWebStickKeys` set contains this stick's key,
+            // mirror every mid-stick Web@pt position to L - p. Detailer measures
+            // these positions from the OPPOSITE end of the web vs the codec's
+            // natural XML-start direction on certain truss configurations
+            // (sloped W with XML `<flipped>=true` on TT/TN/HN frames). The
+            // W_END_ANCHOR pair at [35, L-35] is symmetric so it is unaffected.
+            // The tooNearStart/tooNearEnd gates also use the symmetric reference
+            // points so they remain valid after reversal. Predicate is computed
+            // by `simplifyTb2bTrussFrame` from `ParsedStick.xmlFlipped`.
+            const reverseWeb = reverseWebStickKeys.has(key);
+            const mapped = reverseWeb ? dedup.map((p) => L - p) : dedup;
             const result = [W_END_ANCHOR, L - W_END_ANCHOR];
-            for (const p of dedup) {
+            for (const p of mapped) {
                 const tooNearStart = Math.abs(p - W_END_ANCHOR) < W_END_ANCHOR + W_MID_BUFFER;
                 const tooNearEnd = Math.abs(p - (L - W_END_ANCHOR)) < W_END_ANCHOR + W_MID_BUFFER;
                 if (!tooNearStart && !tooNearEnd)
@@ -586,6 +599,7 @@ export function simplifyTb2bTrussFrame(frame, setup) {
         end3D: { x: s.end.x, y: s.end.y, z: s.end.z },
         usage: (s.usage ?? "").toLowerCase(),
         flipped: !!s.flipped,
+        xmlFlipped: s.xmlFlipped,
     }));
     // Resolve the active machine setup for this frame: caller-supplied first,
     // else from the first stick's profile web (Agent Z #5, 2026-05-05).
@@ -744,9 +758,76 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             t7ForceReverseStickKeys.add(`${stick.name}#${occ}`);
         }
     }
+    // ────────────────────────────────────────────────────────────────────
+    // Agent T9 (2026-05-11): sloped-W arc-direction reversal for TT/TN/HN
+    // ────────────────────────────────────────────────────────────────────
+    //
+    // On certain TB2B truss configurations, Detailer measures mid-stick
+    // Web@pt positions on sloped W members from the OPPOSITE end of the web
+    // vs the codec's natural XML start→end direction. This produces an L-X
+    // mirror pattern (codec @X, ref @L-X) on every mid-stick op.
+    //
+    // Confirmed cases (HG260001 + HG260044 GF-TB2B corpora):
+    //   HG260001 PK12 TT5-1 W14 (L=2500.7):  @1866.9→@633.8 ; @2419.1→@81.6
+    //   HG260001 PK12 TT2-1 W16 (L=1387.8):  @957.7→@430.1
+    //   HG260001 PK12 TN1-1/TN2-1 W12 (L=1644.2):  @951.9→@692.3
+    //   HG260001 PK12 TN19-1 W9 (L=981.1):   @714.1→@267.0
+    //   HG260001 PK12 TN19-1 W11 (L=1134.0): @472.0→@662.0
+    //   HG260001 PK10 TN6-1..6 W15 (L=1271.5):  @235.3→@1036.2
+    //   HG260001 PK9  TN11-1/2 W16 (L=861.6):   @269.8→@591.8
+    //   HG260001 PK9  TN11-1/2 W19 (L=1800.1):  @705.6→@1094.5
+    //   HG260001 PK9  HN18-1 W15 (L=2326.5):    @1766.7→@559.8
+    //   HG260044 PK1  TT4-1 W17/W21
+    //   HG260044 PK2  TT14-1 W10
+    //   HG260044 PK3  TTI2-1 W14/W16 (TTI matches /^TT/)
+    //   HG260044 PK4  TN5-1 W12
+    //
+    // Discriminator (verified across all cases above):
+    //   - frame name starts with `TT`, `TN`, or `HN` — covers TT/TTI/TN/HN.
+    //     Rules out RF-only TR cases.
+    //   - stick name `W\d+` and usage === "web".
+    //   - stick is SLOPED (not vertical). Vertical W-sticks (start.y==end.y)
+    //     follow a different lip-extension code path; reversing their
+    //     arc-direction would corrupt them. Threshold: 2D horizontal
+    //     projection > 5mm.
+    //   - XML `<flipped>=true` (preserved on `s.xmlFlipped`). The
+    //     harness/importer's `isDiagonalBrace` override forces
+    //     `s.flipped=false` on every W-stick, so we MUST read `xmlFlipped` —
+    //     falling back to `flipped` would no-op.
+    //
+    // The set populated here is consumed inside `computeTb2bWebPositions`'s
+    // W-stick output block — every mid-stick position is reflected to L - p.
+    // The W_END_ANCHOR end-anchor pair at [35, L-35] is symmetric and
+    // unaffected; the tooNearStart/tooNearEnd gate references are symmetric
+    // around L/2 as well, so they remain valid after reversal.
+    const t9ReverseWebStickKeys = new Set();
+    if (/^(TT|TN|HN)/.test(frame.name)) {
+        const occByName = new Map();
+        for (let i = 0; i < frame.sticks.length; i++) {
+            const stick = frame.sticks[i];
+            const occ = occByName.get(stick.name) ?? 0;
+            occByName.set(stick.name, occ + 1);
+            if (/\(Box\d+\)/.test(stick.name))
+                continue;
+            if (!/^W\d/.test(stick.name))
+                continue;
+            const meta = metaSticks[i];
+            if (meta.usage !== "web")
+                continue;
+            if (meta.xmlFlipped !== true)
+                continue;
+            const du = meta.end3D.y - meta.start3D.y;
+            const dx = meta.end3D.x - meta.start3D.x;
+            const horizDelta = Math.hypot(du, dx);
+            if (horizDelta < 5)
+                continue;
+            t9ReverseWebStickKeys.add(`${stick.name}#${occ}`);
+        }
+    }
     const positionsByKey = computeTb2bWebPositions(metaSticks, {
         perpWebChordCorrectionOverride: slopedPeerPairChordCorr,
         forceReverseStickKeys: t7ForceReverseStickKeys,
+        reverseWebStickKeys: t9ReverseWebStickKeys,
     });
     const { dimplesByKey } = computeBoxDimples(metaSticks, resolvedSetup);
     // ────────────────────────────────────────────────────────────────────

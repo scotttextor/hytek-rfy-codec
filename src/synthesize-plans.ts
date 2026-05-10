@@ -68,6 +68,13 @@ export interface ParsedStick {
   type?: string;
   /** Sheet gauge as XML string, e.g. "0.75" / "0.95". Optional — used by simplify-linear-truss profile gate. */
   gauge?: string;
+  /** Raw XML `<flipped>` value, BEFORE any caller-side override (e.g. the
+   *  harness/importer forces `flipped=false` for diagonal-brace W/Kb sticks
+   *  to preserve Detailer-side parity for legacy wall rules). The TB2B
+   *  simplifier needs the unmodified XML value to detect Detailer's
+   *  opposite-end position measurement on sloped truss webs
+   *  (Agent T9, 2026-05-11). Optional — undefined ≡ "treat as false". */
+  xmlFlipped?: boolean;
 }
 
 /**

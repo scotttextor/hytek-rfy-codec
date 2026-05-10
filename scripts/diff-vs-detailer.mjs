@@ -743,7 +743,12 @@ function buildOurProject(xmlText) {
         // Use the modified `usage` (raisedbottomplate detection happens above)
         // not the raw XML attribute. This ensures roleForUsage() returns "Bh"
         // for raised plates and triggers the right rule group.
-        const stick = { name: stickName, start, end, flipped, profile, usage, tooling: [] };
+        // `xmlFlipped` preserves the raw XML <flipped> value — needed by the
+        // TB2B simplifier's W-stick arc-direction reversal logic (Agent T9,
+        // 2026-05-11). `flipped` carries the historic isDiagonalBrace
+        // override (W/Kb sticks forced to false) that legacy wall/Kb rules
+        // depend on.
+        const stick = { name: stickName, start, end, flipped, xmlFlipped: inputFlipped, profile, usage, tooling: [] };
         const length = Math.round(distance3D(stick.start, stick.end) * 10) / 10;
         const role = roleForUsage(stick.usage, String(s["@_type"] ?? ""), stick.name);
         const profileFamily = profileCode(profile.web, profile.lFlange, profile.rFlange, parseFloat(profile.gauge) || 0.75).split("_")[0];

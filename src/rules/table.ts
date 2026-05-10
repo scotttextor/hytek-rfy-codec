@@ -191,6 +191,13 @@ function kbLongSpan(ctx: StickContext): number {
 function kbHasLongAtStart(ctx: StickContext): boolean {
   if (ctx.role !== "Kb") return false;
   if (ctx.kbTopAttached === undefined) return false;
+  // LBW/NLBW only — TB2B truss "Kb"-named sticks are king-blocks in
+  // back-to-back trusses with totally different geometry (perpendicular
+  // chord-end engagements, not angled wall-plate cuts). Verified 2026-05-11
+  // vs HG260044 PK4-TB2B: applying the orientation flip there regresses
+  // 47 ops. Plan-name gating keeps the rule scoped to the corpus where
+  // the discriminator was derived.
+  if (!/(LBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
   const mode = ctx.projectConfig?.kbChamferMode
     ?? (ctx.kbFrameUniformFlipped === true ? "uniform-both-ends"
       : ctx.kbFrameUniformFlipped === false ? "xnor-paired"

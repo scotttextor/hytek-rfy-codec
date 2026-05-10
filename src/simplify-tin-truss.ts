@@ -70,24 +70,62 @@ export function isTinPcFrameName(frameName: string): boolean {
 }
 
 /** Compute end-Swage span for a TIN diagonal W-stick at the given angle from
- *  vertical (degrees). Mirrors the production wall-W formula
- *  (`wallWEndSwageSpan` in src/rules/table.ts) — `39/cos + 8·tan²` capped at
- *  92mm. Verified vs HG260044 GF-TIN-70.075 PC/TGI corpus (29 paired Swage
- *  drift records): predicts ref span within 1-2mm at angles ≤20° and within
- *  2-4mm at angles 25-60°, vs the harness's `45/cos` which over-emits by
- *  5-7mm at low angles (the dominant TIN failure mode).
+ *  vertical (degrees).
  *
- *  A closer fit (`39/cos^1.2`) was tried but rejected in favour of mirroring
- *  the existing tested production formula — sharing the same span function
- *  across wall-W and TIN-W keeps maintenance simple and prevents two
- *  formulae drifting independently. */
+ *  Piecewise formula derived from a combined HG260044 + HG260001 PC/TGI
+ *  reference corpus (21 paired drift records spanning angles 2.7°–60°):
+ *
+ *    angle ≤ 25°  →  39/cos(angle) + 8·tan²(angle)         (low-angle fit)
+ *    angle ≥ 45°  →  45/cos(angle)                          (high-angle fit)
+ *    25° < a < 45° →  linear blend between the two            (transition)
+ *
+ *  The two regimes match different physical realities:
+ *    – Low angle (~vertical web): ref-Swage span is ~constant ≈40mm regardless
+ *      of small angle changes. `39/cos + 8·tan²` reproduces this within
+ *      ±1mm across the entire 0–20° band.
+ *    – High angle (≥50° — heel diagonals on PC/TGI panel-chord frames): ref
+ *      span scales as `45/cos`, i.e. proportional to the projected stud-width
+ *      sleeve that needs to clear the heel cut. Verified across 6 distinct
+ *      angle/length combinations: residual ≤ 0.5mm RMS.
+ *
+ *  Empirical residuals (combined 21-point corpus, RMS = 0.50mm; well inside
+ *  the 1.5mm match tolerance):
+ *
+ *    a=2.71°  ref=39.0  fit=39.07  Δ=-0.07
+ *    a=12.95° ref=40.0  fit=40.44  Δ=-0.44
+ *    a=19.44° ref=41.4  fit=42.35  Δ=-0.95
+ *    a=50.34° ref=70.0  fit=70.51  Δ=-0.51
+ *    a=53.60° ref=75.7  fit=75.83  Δ=-0.13
+ *    a=57.44° ref=84.0  fit=83.61  Δ=+0.39
+ *    a=59.85° ref=90.0  fit=89.59  Δ=+0.41
+ *
+ *  Why piecewise (not a single closed-form fit): the calibration data has a
+ *  hard gap between 19° and 50° (no observed PC/TGI Ws in that band across
+ *  either corpus); any single formula extrapolating across that gap would
+ *  be unverifiable. The linear blend keeps both endpoints exactly on-fit.
+ *
+ *  History: original Agent TIN (2026-05-09) used a single `39/cos + 8·tan²`
+ *  cap=92 formula — fit HG260044's low-angle TGI cohort but over-emitted by
+ *  3–8mm on HG260001 PC1/PC3 (50–57°), regressing HG260001 GF-TIN by ~1pp.
+ *  The piecewise form below preserves the HG260044 wins and corrects the
+ *  HG260001 regression. 2026-05-10 (Agent TIN2). */
 function tinDiagonalEndSwageSpan(angleFromVerticalDeg: number): number {
   const a = Math.max(0, angleFromVerticalDeg);
   const rad = (a * Math.PI) / 180;
   const cos = Math.cos(rad);
-  if (cos < 0.05) return 92;
+  if (cos < 0.05) return 100;
   const tan = Math.sin(rad) / cos;
-  return Math.min(39 / cos + 8 * tan * tan, 92);
+  const lowFit = 39 / cos + 8 * tan * tan;
+  const highFit = 45 / cos;
+  let span: number;
+  if (a <= 25) span = lowFit;
+  else if (a >= 45) span = highFit;
+  else {
+    const w = (a - 25) / 20; // 0 at 25°, 1 at 45°
+    span = (1 - w) * lowFit + w * highFit;
+  }
+  // Cap above the empirical max (90mm at 60°) to avoid pathological extrapolation.
+  return Math.min(span, 100);
 }
 
 /** Compute the per-end InnerDimple offset (mm from each end) for a TIN

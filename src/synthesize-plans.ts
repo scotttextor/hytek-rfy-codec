@@ -541,6 +541,14 @@ export function synthesizeRfyFromPlans(
         setup;
       const contextOps = computeFrameContextOps(frame, basis, frameSetup, plan.name);
 
+      // CeilingPanel "MH" classifications staged by frame-context.ts
+      // (Agent MH 2026-05-09). Map<bPlateName, "header"|"brace"|"perimeter">.
+      // Empty for non-CeilingPanel and simple-CP frames. See the
+      // applyMhBPlateOpsTransform call below for the swap logic.
+      const mhBClassifications = (contextOps as unknown as {
+        __mhClassifications?: Map<string, "header" | "brace" | "perimeter">;
+      }).__mhClassifications;
+
       // TB2B truss frames: the simplifier above (`simplifyTb2bTrussFramesInProject`)
       // has already replaced each truss-member stick's tooling with the
       // centerline-intersection Web@pt vocabulary that Detailer emits. Adding
@@ -582,6 +590,20 @@ export function synthesizeRfyFromPlans(
           && String(stick.usage ?? "").toLowerCase() === "bottomplate"
         ) {
           addPairedInnerNotchAtBodyLipNotches(merged);
+        }
+
+        // CeilingPanel MH B-plate transforms (Agent MH 2026-05-09).
+        // For interior B-plates inside a CeilingPanel/MH frame:
+        //   - "header" (both endpoints at interior studs) → ADD InnerNotch
+        //     start + end (45mm wide, matching the existing LipNotch span),
+        //     keeping all existing LipNotch + InnerDimple ops.
+        //   - "brace"  (at least one endpoint at frame edge) → SWAP start/end
+        //     LipNotch → start/end Swage. Keep all InnerDimple ops.
+        // Perimeter B-plates and non-MH frames: no-op. Verified 2026-05-09 vs
+        // HG260044 GF-MH-70.075 ref RFY (B1/B4 = header, B2/B5 = brace).
+        const mhClass = mhBClassifications?.get(stick.name);
+        if (mhClass === "header" || mhClass === "brace") {
+          applyMhBPlateOpsTransform(merged, mhClass);
         }
 
         // RP DIAGONAL T-plate body-crossing scale (Agent RP2, 2026-05-09).
@@ -790,6 +812,11 @@ function computeFrameContextOps(
   // Attach plan name as a non-schema property so frame-context.ts can
   // apply plan-type-specific compensations (e.g. RP rake-plate trim).
   if (planName) (syntheticFrame as { planName?: string }).planName = planName;
+  // Attach the source XML <frame type="..."> attribute so frame-context.ts
+  // can dispatch on frame type (e.g. CeilingPanel "MH" manhole frames need
+  // header-style InnerNotch on interior B-plates and Swage/LipNotch
+  // crossings on studs that the wall-frame ruleset doesn't emit).
+  if (frame.type) (syntheticFrame as { frameType?: string }).frameType = frame.type;
 
   try {
     return generateFrameContextOps(syntheticFrame, setup);
@@ -965,6 +992,84 @@ function addPairedInnerNotchAtBodyLipNotches(tooling: RfyToolingOp[]): void {
     tooling.push({
       kind: "spanned", type: "InnerNotch", startPos: s, endPos: e,
     });
+  }
+}
+
+/**
+ * Apply CeilingPanel/MH-frame B-plate ops transform (Agent MH 2026-05-09).
+ *
+ * Mutates `tooling` in place. Called only for B-plates classified by
+ * frame-context.ts as "header" or "brace" inside a CeilingPanel/MH frame.
+ *
+ * Behaviour:
+ *   - "header"  → ADD spanned InnerNotch ops mirroring the start-cap and
+ *                 end-cap LipNotch spans (matches Detailer's reference for
+ *                 long mid-row B-plates terminating at interior studs at
+ *                 both ends — verified vs HG260044 GF-MH-70.075 B1/B4).
+ *   - "brace"   → REPLACE the start-cap and end-cap LipNotch ops with Swage
+ *                 ops of identical span (matches Detailer's reference for
+ *                 short B-plates connecting an interior stud to the frame
+ *                 x-edge — verified vs HG260044 GF-MH-70.075 B2/B5).
+ *
+ * Body LipNotches (those neither at the very start nor at the very end —
+ * stud-crossing notches) are left untouched in both cases. InnerDimples are
+ * never modified.
+ *
+ * The start-cap is detected as `startPos < 5`; end-cap by `endPos >
+ * stickLen - 5` (mirrors the discrimination already used by
+ * `addPairedInnerNotchAtBodyLipNotches`). 5mm tolerance covers Detailer's
+ * sub-mm rounding without misclassifying body crossings (which are always
+ * 50mm+ from the ends).
+ */
+function applyMhBPlateOpsTransform(
+  tooling: RfyToolingOp[],
+  klass: "header" | "brace",
+): void {
+  let stickLen = 0;
+  for (const op of tooling) {
+    if (op.kind === "spanned" && op.endPos > stickLen) stickLen = op.endPos;
+    if (op.kind === "point" && op.pos > stickLen) stickLen = op.pos;
+  }
+  if (stickLen < 50) return;
+
+  if (klass === "header") {
+    // Pair an InnerNotch span with each end-cap LipNotch span. Avoid
+    // duplicates if frame-context already emitted matching InnerNotches.
+    const SPAN_MATCH_TOL = 0.5;
+    const existingInner: Array<{ s: number; e: number }> = [];
+    for (const op of tooling) {
+      if (op.kind === "spanned" && op.type === "InnerNotch") {
+        existingInner.push({ s: op.startPos, e: op.endPos });
+      }
+    }
+    const toAdd: Array<{ s: number; e: number }> = [];
+    for (const op of tooling) {
+      if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
+      const isStartCap = op.startPos < 5;
+      const isEndCap = op.endPos > stickLen - 5;
+      if (!isStartCap && !isEndCap) continue;
+      const already = existingInner.some(x =>
+        Math.abs(x.s - op.startPos) < SPAN_MATCH_TOL
+        && Math.abs(x.e - op.endPos) < SPAN_MATCH_TOL,
+      );
+      if (already) continue;
+      toAdd.push({ s: op.startPos, e: op.endPos });
+    }
+    for (const { s, e } of toAdd) {
+      tooling.push({ kind: "spanned", type: "InnerNotch", startPos: s, endPos: e });
+    }
+    return;
+  }
+
+  // klass === "brace": rewrite start/end LipNotch caps to Swage in place.
+  for (let i = 0; i < tooling.length; i++) {
+    const op = tooling[i]!;
+    if (op.kind !== "spanned") continue;
+    if (op.type !== "LipNotch") continue;
+    const isStartCap = op.startPos < 5;
+    const isEndCap = op.endPos > stickLen - 5;
+    if (!isStartCap && !isEndCap) continue;
+    tooling[i] = { kind: "spanned", type: "Swage", startPos: op.startPos, endPos: op.endPos };
   }
 }
 

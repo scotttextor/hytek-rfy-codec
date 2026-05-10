@@ -1285,6 +1285,148 @@ export function generateFrameContextOps(
     }
   }
 
+  // ---------------------------------------------------------------------
+  // CeilingPanel "MH" (manhole/access-cutout) framing — Agent MH 2026-05-09
+  //
+  // CeilingPanel frames in HYTEK XML come in two structural shapes:
+  //   1. Simple panels (CP plan): one TopPlate + one BottomPlate + studs.
+  //      Already 100% on HG260044 GF-CP — no change needed.
+  //   2. Manhole panels (MH plan): one perimeter T1 + one perimeter B-plate
+  //      (the longest B, spanning the full frame X-extent) PLUS multiple
+  //      INTERIOR B-plates that frame an access cutout. Detailer's reference
+  //      RFY emits a distinct ops pattern on these:
+  //
+  //      a) Interior B-plates whose BOTH endpoints terminate at interior
+  //         studs ("header-style" — these are the long B-plates flanking the
+  //         cutout's top/bottom edges) get an EXTRA InnerNotch start+end
+  //         layered on top of the rule-engine's start/end LipNotch + Dimple.
+  //
+  //      b) Interior B-plates with at least one endpoint at the frame's
+  //         x-edge ("brace-style" — short B-plates connecting an interior
+  //         stud to the frame's outer edge) replace the rule-engine's
+  //         start/end LipNotch with start/end Swage, keeping the InnerDimples.
+  //
+  //      c) Studs receive ops at every interior-B-plate crossing:
+  //         - header-style B-plate crossing → Swage span + InnerDimple
+  //         - brace-style B-plate crossing → LipNotch span + InnerDimple
+  //
+  // (a) and (b) are applied as a post-pass in synthesize-plans.ts (after the
+  // rule-engine + frame-context merge) — the frame-context layer here only
+  // STAGES the per-frame classification in `result` via the stud-side ops
+  // and exposes the classification metadata via a Map attached to the result
+  // for the post-pass to consume. (c) is emitted directly here.
+  //
+  // Verified 2026-05-09 vs HG260044 GF-MH-70.075 ref RFY (84 ops total):
+  //   - 8 missing InnerDimples (4 studs × 1 mid-row crossing + 2 inner studs
+  //     × 2 extra crossings) — FIXED via stud-crossing emission below
+  //   - 4 missing InnerNotches on header-style B-plates B1/B4 — FIXED via
+  //     the synthesize-plans.ts post-pass
+  //   - 8 missing Swages on brace-style B-plates B2/B5 + 4 LipNotch extras —
+  //     FIXED via the synthesize-plans.ts post-pass swap
+  //   - 8 missing Swages + LipNotches on studs at mid-row crossings — FIXED
+  //     by the stud-side emission below
+  //
+  // Non-MH CeilingPanel frames (CP, simple) are skipped via the multi-B-plate
+  // gate. Other frame types (Truss, ExternalWall, InternalWall, RoofPanel)
+  // are skipped via the frame.type predicate.
+  // ---------------------------------------------------------------------
+  const frameTypeForMh = String((frame as { frameType?: string }).frameType ?? "").toLowerCase();
+  if (frameTypeForMh === "ceilingpanel") {
+    // Identify B-plates in the frame (NOT counting top plate). Use the same
+    // BOT_PLATE_ROLES filter as the plate loop above, so we re-enter with the
+    // same set the rule engine processed.
+    const bPlatesInFrame = layout.filter(sb =>
+      BOT_PLATE_ROLES.has(sb.role)
+    );
+    // Need >=2 B-plates to have any "interior" classification (a single B
+    // is the perimeter — handled by the existing CP rule path).
+    if (bPlatesInFrame.length >= 2) {
+      // Frame x-extent = the union of all B-plate x ranges. Used to detect
+      // which B-plate is the perimeter (longest, touches both edges) vs
+      // interior.
+      let frameXMin = Infinity, frameXMax = -Infinity;
+      for (const p of bPlatesInFrame) {
+        if (p.box.xMin < frameXMin) frameXMin = p.box.xMin;
+        if (p.box.xMax > frameXMax) frameXMax = p.box.xMax;
+      }
+      const frameXSpan = frameXMax - frameXMin;
+
+      // Real-stud x-positions for endpoint classification.
+      const studXs: number[] = studs.map(s => s.box.cx).sort((a, b) => a - b);
+
+      // Classify each B-plate.
+      type BClass = { name: string; klass: "perimeter" | "header" | "brace"; box: BoundingBox };
+      const bClassifications: BClass[] = [];
+      for (const p of bPlatesInFrame) {
+        const pSpan = p.box.xMax - p.box.xMin;
+        // Perimeter B-plate: spans ≥95% of the frame's x-extent. Anything
+        // shorter than that is interior.
+        if (pSpan >= 0.95 * frameXSpan) {
+          bClassifications.push({ name: p.stick.name, klass: "perimeter", box: p.box });
+          continue;
+        }
+        // Interior B-plate. Test endpoint proximity to studs.
+        const TOL_STUD = 30;  // mm — endpoint within 30mm of a stud center counts as "at stud"
+        const TOL_EDGE = 30;  // mm — endpoint within 30mm of frame edge counts as "at edge"
+        const startAtStud = studXs.some(sx => Math.abs(p.box.xMin - sx) < TOL_STUD);
+        const endAtStud   = studXs.some(sx => Math.abs(p.box.xMax - sx) < TOL_STUD);
+        const startAtEdge = Math.abs(p.box.xMin - frameXMin) < TOL_EDGE;
+        const endAtEdge   = Math.abs(p.box.xMax - frameXMax) < TOL_EDGE;
+        const isHeader = startAtStud && endAtStud && !startAtEdge && !endAtEdge;
+        bClassifications.push({
+          name: p.stick.name,
+          klass: isHeader ? "header" : "brace",
+          box: p.box,
+        });
+      }
+
+      // Stage classification metadata on `result` so the synthesize-plans.ts
+      // post-pass can find it. We attach via a Symbol-keyed property on the
+      // Map object — invisible to normal Map iteration but accessible by
+      // direct lookup. Falls back gracefully if the post-pass isn't present.
+      (result as unknown as { __mhClassifications?: Map<string, "header" | "brace" | "perimeter"> }).__mhClassifications =
+        new Map(bClassifications.map(c => [c.name, c.klass] as const));
+
+      // Emit stud-side ops for each interior B-plate crossing each stud.
+      // - header crossing → Swage + InnerDimple
+      // - brace  crossing → LipNotch + InnerDimple
+      const internalSpanMh = internalSpanFromSetup;          // 45 for 70mm
+      const internalDimpleOffsetMh = internalDimpleOffsetFromSetup;  // 22.5 for 70mm
+      for (const interiorB of bClassifications) {
+        if (interiorB.klass === "perimeter") continue;
+        const bBox = interiorB.box;
+        for (const stud of studs) {
+          // Only crossings where the B-plate's x-range covers the stud's cx.
+          if (stud.box.cx < bBox.xMin - 1) continue;
+          if (stud.box.cx > bBox.xMax + 1) continue;
+          // Only crossings within the stud's y-range.
+          const crossingY = bBox.cy;
+          if (crossingY < stud.box.yMin - 1) continue;
+          if (crossingY > stud.box.yMax + 1) continue;
+          // Stud-local position. Reuse studLocalPosition + studShift (=0 for MH,
+          // since MH frames are not RP).
+          const localPos = studLocalPosition(stud, crossingY) + studShift;
+          // Skip ops too close to either end of the stud (50mm clearance —
+          // matches the existing nog/horizontal-member rule's threshold).
+          if (localPos < 50) continue;
+          if (localPos > stud.stick.length - 50) continue;
+
+          const startPos = localPos - internalSpanMh / 2;
+          const endPos = startPos + internalSpanMh;
+          const stickOps = result.get(stud.stick.name);
+          if (!stickOps) continue;
+
+          if (interiorB.klass === "header") {
+            stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
+          } else {
+            stickOps.push({ kind: "spanned", type: "LipNotch", startPos: round(startPos), endPos: round(endPos) });
+          }
+          stickOps.push({ kind: "point", type: "InnerDimple", pos: round(startPos + internalDimpleOffsetMh) });
+        }
+      }
+    }
+  }
+
   // Final merge pass — for each stick the action-defs pass produced ops for,
   // append only the action-defs ops that DON'T have a near-duplicate already
   // in the legacy result. This avoids double-emitting at intersection points

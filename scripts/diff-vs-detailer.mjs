@@ -494,6 +494,13 @@ function buildOurProject(xmlText) {
           const fyMin = Math.min(...env.map(v => v.y));
           const fyMax = Math.max(...env.map(v => v.y));
           const PERIMETER_TOL = 10;
+          // Length cap: BHSP only fires on sub-plates < ~1900mm. Beyond
+          // that length the raised B/H acts as a primary span and Detailer
+          // keeps Notch+LipNotch caps. Verified vs HG260001 N1 B2 (length
+          // 1952, ref keeps Notch) vs HG260044 N35 B2 (length 1876, ref
+          // swaps to Swage). Threshold 1900 captures all 12 HG260044 cases
+          // (max 1876) and the 4 HG260001 cases (max 1033) cleanly.
+          const BHSP_MAX_LENGTH = 1900;
           for (const s of f.stick ?? []) {
             const u = String(s["@_usage"] ?? "").toLowerCase();
             const n = String(s["@_name"] ?? "");
@@ -503,6 +510,8 @@ function buildOurProject(xmlText) {
             const isRaisedB = u === "bottomplate" && Math.abs(z - frameElevation - 61.5) < 1 && /^B\d/.test(n);
             const isH = (u === "headplate" || u === "head") && /^H\d/.test(n);
             if (!isRaisedB && !isH) continue;
+            const stickLen = Math.hypot(pe.x - ps.x, pe.y - ps.y, pe.z - ps.z);
+            if (stickLen > BHSP_MAX_LENGTH) continue;
             const dx = Math.abs(pe.x - ps.x);
             const dy = Math.abs(pe.y - ps.y);
             const axis = dx > dy ? "x" : "y";

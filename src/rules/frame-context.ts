@@ -757,10 +757,29 @@ export function generateFrameContextOps(
     if (p.box.yMin < plateYMin) plateYMin = p.box.yMin;
     if (p.box.yMax > plateYMax) plateYMax = p.box.yMax;
   }
+  // Determine the longest stud's height — used as a fallback reference for
+  // raked-wall full-height detection. In raked walls (T1.start.z != T1.end.z),
+  // wall-end studs have DIFFERENT lengths (the low-end stud is shorter than
+  // the high-end stud), so a strict `yMax >= plateYMax - 60` check rejects
+  // the low-end stud. Instead, compare every stud's yMax to the LONGEST
+  // stud's yMax — both wall-end studs in a raked wall should still be
+  // within ~ wall-height-of-rake of the longest.
+  // 2026-05-09 (Agent S) — verified vs HG260044 LBW L11/L13: T1 z=2536-2738
+  // (rake span 202mm), S1.yMax=2552, S3.yMax=2743. Old rule rejected S1
+  // (2552 < 2738-60 = 2678). New rule allows both as full-height.
+  let longestStudYMax = -Infinity;
+  for (const s of studs) {
+    if (s.box.yMin <= plateYMin + 60 && s.box.yMax > longestStudYMax) {
+      longestStudYMax = s.box.yMax;
+    }
+  }
+  // Non-raked walls: this collapses to the original check (plateYMax ≈
+  // longestStudYMax). Raked walls: longestStudYMax ≈ high-end stud's yMax,
+  // which is the natural ceiling for "full height" in this frame.
   const fullHeightStuds = studs.filter(s =>
     plates.length >= 2 &&
     s.box.yMin <= plateYMin + 60 &&
-    s.box.yMax >= plateYMax - 60,
+    s.box.yMax >= longestStudYMax - 250,  // 250mm tolerance covers typical rake spans
   );
   let leftmostStudName: string | null = null;
   let rightmostStudName: string | null = null;
@@ -773,11 +792,37 @@ export function generateFrameContextOps(
     }
   }
 
+  // RP stud-trim compensation. Identical pattern to plate-side rake-trim
+  // compensation above. The 2mm/end stud trim applied upstream shifts every
+  // body-crossing op (LipNotch/Swage at horizontal-member crossings + their
+  // paired InnerDimples) -2mm relative to ref. Compensate by ADDING 2mm to
+  // every stud-local crossing position.
+  //
+  // SCOPE GATE: applied on every S stud in RP plans. Verified vs HG260044
+  // R1/R3/R5/R7/R9/R11/R14/R15/R17/R18/R19 GF-RP: every S-stud with
+  // lenDelta≈0 shows -2mm drift on body-crossing LipNotch+Swage span
+  // starts AND on body InnerDimple pos. (Both rake and non-rake studs
+  // exhibit the drift — the trim is independent of slope.)
+  const planNameForStuds = (frame as { planName?: string }).planName ?? "";
+  const isRpFrame = /(?:^|-)RP(?:-|$|\d)/i.test(planNameForStuds);
+  const STUD_BODY_SHIFT_MM = 2.0;
+  const studShift = isRpFrame ? STUD_BODY_SHIFT_MM : 0;
+
   for (const stud of studs) {
     const stickOps = result.get(stud.stick.name)!;
     const lipNeighbor = studHasLipNeighbor(stud);
     const isWallEndStud =
       stud.stick.name === leftmostStudName || stud.stick.name === rightmostStudName;
+    // TrimStuds (king/jamb partners around openings) get LipNotch at every
+    // horizontal crossing, NOT Swage — verified 2026-05-09 (Agent S) vs
+    // HG260044 GF-LBW L7/L14/L15/L19/L20/L23/L25/L29/L30/L31: every TrimStud
+    // S* with a nog crossing at z=1325.5 has ref LipNotch 1303..1348, while
+    // the codec was emitting Swage 1303..1348 (forced by lipNeighbor=true
+    // since TrimStuds are paired ~42mm from a Stud). The TrimStud usage
+    // marker overrides the lipNeighbor heuristic. Adjacent regular Studs
+    // (the king/jamb member of the pair) keep their normal Swage emission.
+    const isTrimStud =
+      String(stud.stick.usage ?? "").toLowerCase() === "trimstud";
 
     // B2B stud-pair Web emission DISABLED 2026-05-02 / re-attempt 2026-05-08:
     //   The geometric detection (xDelta<45, identical Y range, identical length)
@@ -832,7 +877,7 @@ export function generateFrameContextOps(
       if (!xOverlap) continue;
       const crossingY = nog.box.cy;
       if (crossingY < stud.box.yMin - 1 || crossingY > stud.box.yMax + 1) continue;
-      const localPos = studLocalPosition(stud, crossingY);
+      const localPos = studLocalPosition(stud, crossingY) + studShift;
       if (localPos < 50) continue;
       if (localPos > stud.stick.length - 50) continue;
 
@@ -863,9 +908,11 @@ export function generateFrameContextOps(
       // specific structural-role of the nog at that height vs. other nog
       // rows). Reverted. See docs/lbw-gap-research.md for details.
       const useSwage =
-        lipNeighbor ||
-        (!isWallEndStud) ||
-        (isContinuousNog && !isWallEndStud);
+        !isTrimStud && (
+          lipNeighbor ||
+          (!isWallEndStud) ||
+          (isContinuousNog && !isWallEndStud)
+        );
       if (useSwage) {
         stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });
         // Swage at a nog crossing also emits InnerDimple at its center
@@ -898,7 +945,7 @@ export function generateFrameContextOps(
       if (!xOverlap) continue;
       const crossingY = h.box.cy;
       if (crossingY < stud.box.yMin - 1 || crossingY > stud.box.yMax + 1) continue;
-      const localPos = studLocalPosition(stud, crossingY);
+      const localPos = studLocalPosition(stud, crossingY) + studShift;
       if (localPos < 50) continue;
       if (localPos > stud.stick.length - 50) continue;
 
@@ -906,6 +953,12 @@ export function generateFrameContextOps(
       const lipSpan = Math.max(internalSpanFromSetup, memberWidth + 4);
       const startPos = localPos - lipSpan / 2;
       const endPos = startPos + lipSpan;
+      // 2026-05-09 (Agent S) — TrimStud-as-LipNotch override applies ONLY to
+      // nog crossings (above), NOT to header/sill/lintel crossings here.
+      // Verified vs HG260044 LBW L20/L29/L30: TrimStuds at HeadPlate
+      // (z=2420/2440) and Sill (L1 at z=569/826) crossings still emit Swage
+      // in Detailer's reference, while TrimStuds at Nog (z=1329) emit
+      // LipNotch. So this branch ignores isTrimStud entirely.
       const useSwage = lipNeighbor || !isWallEndStud;
       if (useSwage) {
         stickOps.push({ kind: "spanned", type: "Swage", startPos: round(startPos), endPos: round(endPos) });

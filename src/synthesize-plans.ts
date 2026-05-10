@@ -518,7 +518,7 @@ export function synthesizeRfyFromPlans(
       const frameSetup =
         (frameStickWeb !== undefined ? getMachineSetupForProfile(frameStickWeb) : undefined) ??
         setup;
-      const contextOps = computeFrameContextOps(frame, basis, frameSetup);
+      const contextOps = computeFrameContextOps(frame, basis, frameSetup, plan.name);
 
       // TB2B truss frames: the simplifier above (`simplifyTb2bTrussFramesInProject`)
       // has already replaced each truss-member stick's tooling with the
@@ -641,6 +641,7 @@ function computeFrameContextOps(
   frame: ParsedFrame,
   basis: FrameBasis,
   setup?: MachineSetup,
+  planName?: string,
 ): Map<string, RfyToolingOp[]> {
   const empty = new Map<string, RfyToolingOp[]>();
   if (!frame.sticks || frame.sticks.length === 0) return empty;
@@ -711,6 +712,9 @@ function computeFrameContextOps(
     height: basis.height,
     sticks: syntheticSticks,
   };
+  // Attach plan name as a non-schema property so frame-context.ts can
+  // apply plan-type-specific compensations (e.g. RP rake-plate trim).
+  if (planName) (syntheticFrame as { planName?: string }).planName = planName;
 
   try {
     return generateFrameContextOps(syntheticFrame, setup);

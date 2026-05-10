@@ -1898,6 +1898,22 @@ const TIN_PC_WEB_CROSSING_MIN_EDGE_MM = 50;
  *  half-shift to align with Detailer's reference dimple positions. */
 const TIN_PC_VERTICAL_W_HALF_EXTENSION_MM = 5.5;
 
+/** Diagonal-W crossing-distance drift compensation. Detailer's reference
+ *  emits the dimple ~2-5mm beyond the geometric crossing point at low
+ *  angles (3-9° from vertical), tapering smoothly to zero at ~17°. Fit
+ *  derived from TGI1-1 W7 (8.9°→drift 2.45) + W8 (3.6°→drift 4.10), with
+ *  W5 (17.8°→0.0) + W6 (15.1°→matched) as zero-crossing pinning. Floored
+ *  at 0 so it doesn't subtract at higher angles where the geometric
+ *  crossing already matches. Same fit basis as the angle-derived
+ *  length-extension formula tinPcDiagonalLengthExtension — both rules
+ *  describe codec-vs-Detailer behaviour on low-angle diagonal Ws of TGI/PC
+ *  trusses. */
+function tinPcDiagonalCrossingShift(angleFromVerticalRad: number): number {
+  const tan = Math.tan(angleFromVerticalRad);
+  const fit = 5.22 - 17.75 * tan;
+  return Math.max(0, fit);
+}
+
 /** Tolerance for "near-existing-op" suppression: we skip emission when
  *  there's already an InnerDimple within 5mm of the intended position. */
 const TIN_PC_NEARBY_OP_TOL_MM = 5.0;
@@ -1996,9 +2012,12 @@ function emitTinPcWebChordCrossings(frame: ParsedFrame): number {
       if (rawDist == null) continue;
       // For verticals (codec's wall-rule extends each end by 5.5mm),
       // shift the crossing by +5.5mm so it lands at the same offset
-      // from the extended-start that Detailer uses. For diagonals
-      // (no wall-rule extension prior to TIN5b), use rawDist directly.
-      const pos = isVertical ? rawDist + TIN_PC_VERTICAL_W_HALF_EXTENSION_MM : rawDist;
+      // from the extended-start that Detailer uses. For diagonals,
+      // apply the angle-derived crossing-distance shift (vanishes
+      // above ~17°, grows to ~5mm at very low angles).
+      const pos = isVertical
+        ? rawDist + TIN_PC_VERTICAL_W_HALF_EXTENSION_MM
+        : rawDist + tinPcDiagonalCrossingShift(angleFromVertRad);
       if (pos < TIN_PC_WEB_CROSSING_MIN_EDGE_MM) continue;
       if (pos > stickLen - TIN_PC_WEB_CROSSING_MIN_EDGE_MM) continue;
       if (tinPcHasNearbyDimple(stick, pos)) continue;

@@ -75,6 +75,31 @@ export interface ProjectConfig {
    * Default: 0 (no extra shift; preserves the existing -10 baseline).
    */
   kbInnerServiceOffsetExtra?: number;
+
+  /**
+   * NLBW3 (2026-05-10): How to decide which end of a sub-panel infill Nog
+   * gets InnerNotch+LipNotch caps (instead of the default Swage caps).
+   *
+   *   "interior-notch"     — HG260044 polarity. Detailer caps every endpoint
+   *                          that touches an INTERIOR regular Stud (not
+   *                          TrimStud, not perimeter, not corner-cluster
+   *                          within 100mm of perimeter), gated on a
+   *                          frame-context signal (frame has any tight
+   *                          stud-pair within 200mm OR this nog is part
+   *                          of a >=2-stack of sub-panel nogs sharing the
+   *                          same span studs). Length < 200mm short-
+   *                          circuits to no-Notch (filler nog).
+   *   "tight-cluster-notch" — HG260001 polarity. Detailer caps endpoints
+   *                          that touch a stud with a TIGHT NEIGHBOUR
+   *                          (<200mm centreline distance) sitting OUTSIDE
+   *                          the nog span — i.e. the touched stud is the
+   *                          boundary of a tight stud cluster (jamb /
+   *                          opening edge / corner). Perimeter studs
+   *                          always get Swage.
+   *
+   * Default: "interior-notch" (preserves NLBW2 behaviour).
+   */
+  nogAsymmetricCapMode?: "interior-notch" | "tight-cluster-notch";
 }
 
 /** What we know about the stick when applying rules. */
@@ -159,6 +184,17 @@ export interface StickContext {
    * GF-NLBW-70.075 N7/N24/N38 (12 nogs, 24 ops gained, 0 false positives).
    */
   nogIsSubPanelBothInterior?: boolean;
+  /**
+   * NLBW3 (2026-05-10): true if this Nog stick's START end should get
+   * InnerNotch+LipNotch caps (instead of the default Swage caps). Extends
+   * NLBW2's symmetric flag to support asymmetric sub-panel nogs where ONLY
+   * ONE end takes Notch caps. Computed by the diff harness / framecad-
+   * import based on `projectConfig.nogAsymmetricCapMode`. NLBW plans only.
+   */
+  nogStartCapIsNotch?: boolean;
+  /** NLBW3 (2026-05-10): same as `nogStartCapIsNotch` but for the END
+   *  endpoint. */
+  nogEndCapIsNotch?: boolean;
   /**
    * Optional: per-project Detailer configuration. Resolved by the caller
    * (typically the diff harness or `hytek-rfy-tools`' framecad-import) and

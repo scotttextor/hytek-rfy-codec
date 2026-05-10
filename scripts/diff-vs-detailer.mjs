@@ -322,13 +322,33 @@ function buildOurProject(xmlText) {
         return false;
       }
 
-      // NLBW2 (2026-05-10): Sub-panel infill Nog detection.
-      // A Nog whose z != canonical (= z of longest nog) AND both endpoints
-      // sit at INTERIOR regular Studs (NOT TrimStud, NOT perimeter, NOT
-      // corner cluster within 100mm of perimeter) is a sub-panel infill —
-      // Detailer caps it with InnerNotch+LipNotch instead of Swage.
-      const _nogSubPanelByName = new Map();
+      // NLBW2 + NLBW3 (2026-05-10): Per-end sub-panel infill Nog detection.
+      // A sub-panel infill Nog is a Nog whose z != canonical (= z of longest
+      // nog in the frame). Per-end polarity comes from
+      // `projectConfig.nogAsymmetricCapMode`:
+      //
+      //   "interior-notch" (HG260044, default):
+      //     1. Length < 200mm → both ends Swage (filler nog).
+      //     2. Touched stud is perimeter / trimstud / corner-cluster (within
+      //        100mm of perim) → Swage on that end.
+      //     3. Touched stud is interior AND (frame has any tight stud-pair
+      //        within 200mm OR this nog has a stack of >= 2 sub-panel nogs
+      //        sharing the same start/end studs) → Notch on that end.
+      //   Verified vs HG260044 GF-NLBW-70.075 across 16 sub-panel-nog frames
+      //   (N7/N12/N15/N19/N22/N23/N24/N27/N32/N38/N43/N45/N47/N48/N53). N27
+      //   (no tight-pair, single nog → all Swage) and N38 N2 (length 191
+      //   filler → all Swage) are the previously-uncrackable cases that
+      //   the frame-context check + length filter resolve.
+      //
+      //   "tight-cluster-notch" (HG260001):
+      //     Cap an endpoint when the touched stud has a TIGHT NEIGHBOUR
+      //     (<200mm centreline distance) sitting OUTSIDE the nog span.
+      //     Perimeter studs always get Swage. Verified vs HG260001 PK1+PK2
+      //     NLBW (N10/N18/N21/N22/N23).
+      const _nogStartCapByName = new Map();
+      const _nogEndCapByName = new Map();
       {
+        const _capMode = projectConfig?.nogAsymmetricCapMode ?? "interior-notch";
         const nogStickList = [];
         const studStickList = [];
         for (const s of f.stick ?? []) {
@@ -355,7 +375,7 @@ function buildOurProject(xmlText) {
           const leftPos = axis === "x" ? leftStud.start.x : leftStud.start.y;
           const rightPos = axis === "x" ? rightStud.start.x : rightStud.start.y;
 
-          function studAtPoint(point) {
+          function studAt(point) {
             let best = null, bestDist = Infinity;
             for (const ss of studStickList) {
               const sp = axis === "x" ? ss.start.x : ss.start.y;
@@ -363,20 +383,94 @@ function buildOurProject(xmlText) {
               const d = Math.abs(np - sp);
               if (d < bestDist) { bestDist = d; best = ss; }
             }
-            if (!best || bestDist > 30) return false;
-            if (best.usage === "trimstud") return false;
-            if (best.name === leftStud.name || best.name === rightStud.name) return false;
-            const sp = axis === "x" ? best.start.x : best.start.y;
+            if (!best || bestDist > 30) return null;
+            return best;
+          }
+
+          // "Interior" classification (HG260044 base): not perimeter,
+          // not trimstud, not within 100mm of perimeter.
+          function isInteriorStud(stud) {
+            if (!stud) return false;
+            if (stud.usage === "trimstud") return false;
+            if (stud.name === leftStud.name || stud.name === rightStud.name) return false;
+            const sp = axis === "x" ? stud.start.x : stud.start.y;
             if (Math.abs(sp - leftPos) <= 100 || Math.abs(sp - rightPos) <= 100) return false;
             return true;
+          }
+
+          // Frame-context flag (HG260044): does the frame have any
+          // pair of studs within 200mm? Indicates a jamb / opening / cluster.
+          const TIGHT_PAIR_MM = 200;
+          let frameHasTightPair = false;
+          for (let i = 0; i < studStickList.length && !frameHasTightPair; i++) {
+            const sa = axis === "x" ? studStickList[i].start.x : studStickList[i].start.y;
+            for (let j = i + 1; j < studStickList.length; j++) {
+              const sb = axis === "x" ? studStickList[j].start.x : studStickList[j].start.y;
+              if (Math.abs(sa - sb) <= TIGHT_PAIR_MM) { frameHasTightPair = true; break; }
+            }
+          }
+
+          // Stack count: number of sub-panel nogs sharing this nog's
+          // (start-stud, end-stud) studs. >= 2 indicates a multi-row
+          // sub-panel — fallback discriminator when frame has no tight
+          // pair (e.g. HG260044 N23 — 7 evenly-spaced studs, no pair, 6
+          // stacked sub-panel nogs spanning S1..S4 → Notch on interior).
+          function stackCountFor(nog) {
+            const myStartStud = studAt(nog.start);
+            const myEndStud = studAt(nog.end);
+            if (!myStartStud || !myEndStud) return 1;
+            let n = 0;
+            for (const other of nogStickList) {
+              const otherZ = (other.start.z + other.end.z) / 2;
+              if (Math.abs(otherZ - canonicalZ) <= 5) continue;
+              const oStartStud = studAt(other.start);
+              const oEndStud = studAt(other.end);
+              if (!oStartStud || !oEndStud) continue;
+              const sameSpan =
+                (oStartStud.name === myStartStud.name && oEndStud.name === myEndStud.name) ||
+                (oStartStud.name === myEndStud.name && oEndStud.name === myStartStud.name);
+              if (sameSpan) n++;
+            }
+            return n;
+          }
+
+          // "Tight-cluster-notch" rule (HG260001).
+          const TIGHT_NEIGHBOUR_MM = 200;
+          function hasTightNeighbourOutsideSpan(stud, spanMin, spanMax) {
+            if (!stud) return false;
+            if (stud.name === leftStud.name || stud.name === rightStud.name) return false;
+            const sp = axis === "x" ? stud.start.x : stud.start.y;
+            for (const ss of studStickList) {
+              if (ss.name === stud.name) continue;
+              const np = axis === "x" ? ss.start.x : ss.start.y;
+              const d = Math.abs(np - sp);
+              if (d > TIGHT_NEIGHBOUR_MM) continue;
+              if (np < spanMin - 5 || np > spanMax + 5) return true;
+            }
+            return false;
           }
 
           for (const nog of nogStickList) {
             const myZ = (nog.start.z + nog.end.z) / 2;
             if (Math.abs(myZ - canonicalZ) <= 5) continue;
-            if (studAtPoint(nog.start) && studAtPoint(nog.end)) {
-              _nogSubPanelByName.set(nog.name, true);
+            if (_capMode === "interior-notch" && nog.length < 200) continue;
+            const studStart = studAt(nog.start);
+            const studEnd = studAt(nog.end);
+            const startPos = axis === "x" ? nog.start.x : nog.start.y;
+            const endPos = axis === "x" ? nog.end.x : nog.end.y;
+            const spanMin = Math.min(startPos, endPos);
+            const spanMax = Math.max(startPos, endPos);
+            let startNotch = false, endNotch = false;
+            if (_capMode === "tight-cluster-notch") {
+              startNotch = hasTightNeighbourOutsideSpan(studStart, spanMin, spanMax);
+              endNotch = hasTightNeighbourOutsideSpan(studEnd, spanMin, spanMax);
+            } else {
+              const frameSignal = frameHasTightPair || stackCountFor(nog) >= 2;
+              startNotch = frameSignal && isInteriorStud(studStart);
+              endNotch = frameSignal && isInteriorStud(studEnd);
             }
+            if (startNotch) _nogStartCapByName.set(nog.name, true);
+            if (endNotch) _nogEndCapByName.set(nog.name, true);
           }
         }
       }
@@ -623,7 +717,8 @@ function buildOurProject(xmlText) {
           stickStartZ,
           frameElevation,
           kbFrameUniformFlipped,
-          nogIsSubPanelBothInterior: _nogSubPanelByName.get(stick.name) === true,
+          nogStartCapIsNotch: _nogStartCapByName.get(stick.name) === true,
+          nogEndCapIsNotch: _nogEndCapByName.get(stick.name) === true,
           projectConfig,
         });
         // Kb InnerService at horizontal Service crossings.

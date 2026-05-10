@@ -1325,7 +1325,32 @@ export function simplifyTb2bTrussFrame(
           hasHeelTipPartner_T5 = true;
         }
       }
-      if (hasHeelTipPartner_T5 && heelTipLen_T5 >= 1900 && heelTipLen_T5 <= 2200) {
+      // Discriminator: check if there's a HORIZONTAL B-chord near the heel
+      // (within HEEL_REGION_TOL_T5 mm horizontally). Verified vs HG260001:
+      //   • Horizontal B-chord at heel → @715.93 fires
+      //     (TT6-1 / TN16-1 / TN17-1 occ0)
+      //   • Sloped B-chord at heel → @815.18 fires (NOT @715.93)
+      //     (TN5-1 / TN6-1 / TN20-1 / TN17-1 occ1)
+      // Without this gate, the @715.93 bolt would incorrectly fire on
+      // sloped-B frames and produce an EXTRA at @L-715.93 = @5986.67 (the
+      // PK11 regression case).
+      let hasHorizontalBChordAtHeel_T5 = false;
+      const HEEL_REGION_TOL_T5 = 1500;
+      for (let k = 0; k < frame.sticks.length; k++) {
+        const o = frame.sticks[k]!;
+        if (!/^B\d/.test(o.name)) continue;
+        if (/\(Box\d+\)/.test(o.name)) continue;
+        const om = metaSticks[k]!;
+        const oZSpan = Math.abs(om.end3D.z - om.start3D.z);
+        if (oZSpan > 5) continue;  // skip sloped B-chord
+        const dStart = Math.abs(om.start3D.y - heelXY_T5.y);
+        const dEnd = Math.abs(om.end3D.y - heelXY_T5.y);
+        if (dStart < HEEL_REGION_TOL_T5 || dEnd < HEEL_REGION_TOL_T5) {
+          hasHorizontalBChordAtHeel_T5 = true;
+          break;
+        }
+      }
+      if (hasHeelTipPartner_T5 && heelTipLen_T5 >= 1900 && heelTipLen_T5 <= 2200 && hasHorizontalBChordAtHeel_T5) {
         // Apex-extras suppression: ONLY on TT-frames where @91.21 APEX_BOLT
         // rule fires. TN-frames use @22.85+@176.25 doublet (correct) so
         // skip the suppression for them.

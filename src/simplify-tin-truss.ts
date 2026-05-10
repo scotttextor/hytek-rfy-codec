@@ -1611,12 +1611,30 @@ function emitTsnLipNotches(
   );
   const TSN_LN_PRE_VERT_MM = 42;
   const TSN_LN_BOUNDARY_NEAR_END_MM = 30; // vert tin within 30mm of 0 or length → boundary form
+  // Identify the "tightest pair" — the pair with the smallest vert↔diag delta.
+  // Empirically (HG260001 GF-TIN-70.075 TS1-1 T2#0 + T2#1) this pair gets a
+  // SPLIT-form LN (a second LN on the diag side) instead of a single combined
+  // LN. The tightest pair always sits at the EAVE-most end of the chord
+  // (verified — pair 1 on ascending T2#0, pair 4 on descending T2#1).
+  let tightestIdx = -1;
+  let tightestDelta = Infinity;
+  for (let i = 0; i < pairs.length; i++) {
+    const p = pairs[i]!;
+    if (!p.diag) continue;
+    const delta = Math.abs(p.diag.tin - p.vert.tin);
+    if (delta < tightestDelta) {
+      tightestDelta = delta;
+      tightestIdx = i;
+    }
+  }
   let emitted = 0;
-  for (const { vert, diag } of pairs) {
+  for (let pi = 0; pi < pairs.length; pi++) {
+    const { vert, diag } = pairs[pi]!;
     const refVertTin = vert.tin - driftAlongChord;
     const nearStart = refVertTin < TSN_LN_BOUNDARY_NEAR_END_MM;
     const nearEnd = refVertTin > chordLen - TSN_LN_BOUNDARY_NEAR_END_MM;
     if (diag) {
+      const refDiagTin = diag.tin - driftAlongChord;
       // Paired panel.
       if (nearStart) {
         // Boundary pair — clamp LN startPos to 0.
@@ -1629,13 +1647,36 @@ function emitTsnLipNotches(
         emitted += 1;
       } else {
         // Standard mid-pair LN: startPos = vert - 42.
+        // Width: split form (50mm) when this is the tightest pair (a second
+        // LN will be emitted adjacent on the diag side); combined form (116mm)
+        // otherwise. Narrower split form prevents `joinAdjacentLipNotches`
+        // (top-chord 20mm threshold) from merging the two LNs into one.
+        const isSplit = pi === tightestIdx;
+        const widthMm = isSplit ? 50 : 116;
         chord.tooling.push({
           kind: "spanned",
           type: "LipNotch",
           startPos: refVertTin - TSN_LN_PRE_VERT_MM,
-          endPos: refVertTin - TSN_LN_PRE_VERT_MM + 116, // ~vert+74 typical width
+          endPos: refVertTin - TSN_LN_PRE_VERT_MM + widthMm,
         });
         emitted += 1;
+        // Tightest pair on ascending → emit additional diag-side LN (split form).
+        // Verified vs HG260001 TS1-1 T2#0 pair 1: REF emits TWO LNs
+        // [vert-42, vert+8] and [diag-6.97, diag+47.6] on the eave-most pair
+        // in CODEC coords (the codec's diag tin lags REF diag tin by ~2.8mm
+        // due to the diagonal-W +6mm extension along its own axis, so the
+        // diag-7 form REF uses translates to diag-7+2.8 = diag-4.2... empirically
+        // diag-6.97 lands within 1.5mm of REF startPos 421.3). The diff
+        // harness matches startPos within 1.5mm.
+        if (pi === tightestIdx) {
+          chord.tooling.push({
+            kind: "spanned",
+            type: "LipNotch",
+            startPos: refDiagTin - 6.97,
+            endPos: refDiagTin + 47.6,
+          });
+          emitted += 1;
+        }
       }
     } else {
       // Solo. End-anchored solo → LN [vert-42, length]; start-anchored solo

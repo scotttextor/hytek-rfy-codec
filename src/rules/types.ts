@@ -148,6 +148,18 @@ export interface StickContext {
    */
   kbFrameUniformFlipped?: boolean;
   /**
+   * Optional: true if this Nog stick is a "sub-panel infill" — its z is NOT
+   * at the canonical cross-noggin row (z != z-of-longest-Nog-in-frame) AND
+   * BOTH endpoints terminate at INTERIOR regular Studs (NOT TrimStuds, NOT
+   * frame perimeter, NOT corner-cluster studs within 100mm of perimeter).
+   *
+   * Set by the diff harness / framecad-import. NLBW2 agent (2026-05-10).
+   * Used by the table.ts NLBW Nog rule which switches from Swage caps to
+   * InnerNotch+LipNotch caps when this flag is true. Verified vs HG260044
+   * GF-NLBW-70.075 N7/N24/N38 (12 nogs, 24 ops gained, 0 false positives).
+   */
+  nogIsSubPanelBothInterior?: boolean;
+  /**
    * Optional: per-project Detailer configuration. Resolved by the caller
    * (typically the diff harness or `hytek-rfy-tools`' framecad-import) and
    * passed down so rule predicates can dispatch on it without a global.

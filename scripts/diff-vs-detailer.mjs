@@ -322,6 +322,65 @@ function buildOurProject(xmlText) {
         return false;
       }
 
+      // NLBW2 (2026-05-10): Sub-panel infill Nog detection.
+      // A Nog whose z != canonical (= z of longest nog) AND both endpoints
+      // sit at INTERIOR regular Studs (NOT TrimStud, NOT perimeter, NOT
+      // corner cluster within 100mm of perimeter) is a sub-panel infill —
+      // Detailer caps it with InnerNotch+LipNotch instead of Swage.
+      const _nogSubPanelByName = new Map();
+      {
+        const nogStickList = [];
+        const studStickList = [];
+        for (const s of f.stick ?? []) {
+          const u = String(s["@_usage"] ?? "").toLowerCase();
+          const ps = parseTriple(String(s.start ?? "0,0,0"));
+          const pe = parseTriple(String(s.end ?? "0,0,0"));
+          const L = Math.hypot(pe.x - ps.x, pe.y - ps.y, pe.z - ps.z);
+          if (u === "nog" || u === "noggin") {
+            nogStickList.push({ name: String(s["@_name"]), start: ps, end: pe, length: L });
+          } else if (u === "stud" || u === "trimstud") {
+            studStickList.push({ name: String(s["@_name"]), usage: u, start: ps, end: pe });
+          }
+        }
+        if (nogStickList.length >= 2 && studStickList.length >= 2) {
+          const longestNog = nogStickList.slice().sort((a,b) => b.length - a.length)[0];
+          const canonicalZ = (longestNog.start.z + longestNog.end.z) / 2;
+          const dxL = longestNog.end.x - longestNog.start.x;
+          const dyL = longestNog.end.y - longestNog.start.y;
+          const axis = Math.abs(dxL) > Math.abs(dyL) ? "x" : "y";
+          const studsSorted = studStickList.slice().sort((a,b) =>
+            axis === "x" ? a.start.x - b.start.x : a.start.y - b.start.y);
+          const leftStud = studsSorted[0];
+          const rightStud = studsSorted[studsSorted.length - 1];
+          const leftPos = axis === "x" ? leftStud.start.x : leftStud.start.y;
+          const rightPos = axis === "x" ? rightStud.start.x : rightStud.start.y;
+
+          function studAtPoint(point) {
+            let best = null, bestDist = Infinity;
+            for (const ss of studStickList) {
+              const sp = axis === "x" ? ss.start.x : ss.start.y;
+              const np = axis === "x" ? point.x : point.y;
+              const d = Math.abs(np - sp);
+              if (d < bestDist) { bestDist = d; best = ss; }
+            }
+            if (!best || bestDist > 30) return false;
+            if (best.usage === "trimstud") return false;
+            if (best.name === leftStud.name || best.name === rightStud.name) return false;
+            const sp = axis === "x" ? best.start.x : best.start.y;
+            if (Math.abs(sp - leftPos) <= 100 || Math.abs(sp - rightPos) <= 100) return false;
+            return true;
+          }
+
+          for (const nog of nogStickList) {
+            const myZ = (nog.start.z + nog.end.z) / 2;
+            if (Math.abs(myZ - canonicalZ) <= 5) continue;
+            if (studAtPoint(nog.start) && studAtPoint(nog.end)) {
+              _nogSubPanelByName.set(nog.name, true);
+            }
+          }
+        }
+      }
+
       const sticks = [];
       for (const s of f.stick ?? []) {
         const profile = {
@@ -564,6 +623,7 @@ function buildOurProject(xmlText) {
           stickStartZ,
           frameElevation,
           kbFrameUniformFlipped,
+          nogIsSubPanelBothInterior: _nogSubPanelByName.get(stick.name) === true,
           projectConfig,
         });
         // Kb InnerService at horizontal Service crossings.

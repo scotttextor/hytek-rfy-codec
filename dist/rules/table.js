@@ -104,6 +104,27 @@ function nogEndTakesNotchCap(ctx) {
         return true;
     return false;
 }
+/**
+ * BHSP (2026-05-11): Whether this raised B-plate (Bh role) or H header's
+ * START end takes a `Swage` cap instead of the default `InnerNotch +
+ * LipNotch` cap-stack. Detailer's reference RFY caps the END FACING THE
+ * FRAME ENVELOPE perimeter with Swage on sub-plates above rough openings.
+ * Verified vs HG260044 GF-NLBW-70.075 (12 sticks across N1/N8/N15/N19/N28/
+ * N52) and HG260001 PK1/PK2 GF-NLBW-70.075. Polarity is shared across both
+ * corpora. Predicate gates on NLBW plan-name match and the per-end flag
+ * `bhStartCapIsSwage` set by the diff harness.
+ */
+function bhStartTakesSwageCap(ctx) {
+    if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""))
+        return false;
+    return ctx.bhStartCapIsSwage === true;
+}
+/** BHSP (2026-05-11): same as `bhStartTakesSwageCap` but for the END. */
+function bhEndTakesSwageCap(ctx) {
+    if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? ""))
+        return false;
+    return ctx.bhEndCapIsSwage === true;
+}
 export const RULE_TABLE = [
     // ----------- STUDS on 70S41 (any length) -----------
     {
@@ -509,17 +530,37 @@ export const RULE_TABLE = [
     // "human error" in the reference data. Removed the NLBW slab-anchor sub-rules.
     // Anchors only fire on B-plates sitting at z=0 on the slab — raised B-plates
     // (Bh role, OR z>30) NEVER attach to the slab.
+    //
+    // BHSP (2026-05-11): On NLBW plans, when the Bh's START or END faces the
+    // frame envelope perimeter (within ~10mm along the run axis), Detailer
+    // swaps that end's `InnerNotch + LipNotch` cap-stack for a `Swage` cap.
+    // Verified vs HG260044 GF-NLBW-70.075 (12 affected B/H sticks across
+    // N1/N8/N15/N19/N28/N52) and HG260001 PK1+PK2 GF-NLBW-70.075 (matching
+    // pattern). The diff harness sets `bhStartCapIsSwage` / `bhEndCapIsSwage`
+    // per-stick from envelope geometry. When NEITHER flag is set, the
+    // existing Notch+LipNotch cap-stack stands at both ends.
     {
         rolePattern: /^Bh$/,
         profilePattern: /^70S41$/,
         lengthRange: [0, Infinity],
         rules: [
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "Raised 70mm B: InnerNotch at start clearance" },
-            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: bhStartTakesSwageCap,
+                notes: "BHSP: Raised 70mm B start faces perimeter — Swage replaces Notch+LipNotch" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => !bhStartTakesSwageCap(ctx),
+                notes: "Raised 70mm B: InnerNotch at start clearance" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => !bhStartTakesSwageCap(ctx) },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
-            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: bhEndTakesSwageCap,
+                notes: "BHSP: Raised 70mm B end faces perimeter — Swage replaces Notch+LipNotch" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => !bhEndTakesSwageCap(ctx) },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => !bhEndTakesSwageCap(ctx) },
         ],
     },
     // ----------- SHORT NOGS (length < 200) on 70S41 — SPECIAL 164mm CASE -----------
@@ -643,8 +684,16 @@ export const RULE_TABLE = [
         profilePattern: /^70S41$/,
         lengthRange: [0, Infinity],
         rules: [
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header start cap: InnerNotch" },
-            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header start cap: LipNotch" },
+            // BHSP (2026-05-11): Swage @start replaces Notch+LipNotch when start faces perimeter (NLBW only).
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: bhStartTakesSwageCap,
+                notes: "BHSP: 70mm header start faces perimeter — Swage replaces Notch+LipNotch" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => !bhStartTakesSwageCap(ctx),
+                notes: "70mm header start cap: InnerNotch" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => !bhStartTakesSwageCap(ctx),
+                notes: "70mm header start cap: LipNotch" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high", notes: "Header dimple at 16.5" },
             // Paired dimple @58.5 — LBW headers only.
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 58.5 }, confidence: "high",
@@ -653,8 +702,16 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 58.5 }, confidence: "high",
                 predicate: (ctx) => /(LBW)/i.test(ctx.planName ?? "") && !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header end cap: InnerNotch" },
-            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high", notes: "70mm header end cap: LipNotch" },
+            // BHSP (2026-05-11): Swage @end replaces Notch+LipNotch when end faces perimeter (NLBW only).
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: bhEndTakesSwageCap,
+                notes: "BHSP: 70mm header end faces perimeter — Swage replaces Notch+LipNotch" },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => !bhEndTakesSwageCap(ctx),
+                notes: "70mm header end cap: InnerNotch" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => !bhEndTakesSwageCap(ctx),
+                notes: "70mm header end cap: LipNotch" },
             // Web stiffener holes — evenly distributed along the header. H1/H3
             // (the "main" header) starts at @89; H2 (Box1) starts at @50. Both have
             // the same world-X positions but different stick-local offsets due to

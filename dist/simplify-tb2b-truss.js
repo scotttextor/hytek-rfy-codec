@@ -666,6 +666,123 @@ export function simplifyTb2bTrussFrame(frame, setup) {
         perpWebChordCorrectionOverride: slopedPeerPairChordCorr,
     });
     const { dimplesByKey } = computeBoxDimples(metaSticks, resolvedSetup);
+    // ────────────────────────────────────────────────────────────────────
+    // Agent RF (2026-05-11): per-frame "winning T-chord" pre-computation
+    // ────────────────────────────────────────────────────────────────────
+    //
+    // Detailer emits ONE 35.42mm RightFlange cap at the truss apex per truss
+    // frame, attached to a single T-chord stick. When a frame contains
+    // multiple sloped T-chord candidates (paired same-name OR different
+    // names like T2/T4 forming the apex pair), Detailer picks ONE.
+    //
+    // Empirical cascade (verified across HG260044 PK1-4 + HG260001 PK6-12):
+    //   1. Shorter T-chord wins.
+    //   2. On length-tie: more Box pieces (sub-pieces named "T# (Box#)") wins.
+    //   3. On box-count tie: larger total Box-piece length wins.
+    //   4. On total-box tie: first occurrence in frame.sticks order wins.
+    //
+    // Verified cases:
+    //   HG260044 PK4 TN1-1: T2 (L=6011.8) vs T4 (L=6564.6).
+    //     Shorter T2 wins → ref RF 5976..6011 (apex@OUTPUT-END)
+    //   HG260044 PK4 TN3-1: T2#1 vs T2#2 (both L=6564.6, both 1 box=1600).
+    //     All ties → first occurrence T2#1 wins → ref RF 6529..6564
+    //   HG260044 PK4 TN5-1: T3#1 (2 boxes) vs T3#2 (1 box). T3#1 wins.
+    //   HG260001 PK7 TN20-1: T3#1 (1 box=2431.6) vs T3#2 (1 box=2547.8).
+    //     T3#2 larger box → wins → ref RF 0..35.42
+    //   HG260001 PK10 TN6-1: T3 (L=1303.8, no apex doublet) vs T4 (3 boxes).
+    //     Only T4 has apex doublet → wins → ref RF 0..35.42
+    //   HG260001 PK9 TN11-1: T3 (L=6702.6) vs T6 (L=1579.7). T6 shorter wins.
+    //
+    // Candidate filter: must be a sloped T-chord (zSpan>5, L>2000) AND have a
+    // positionsByKey-provided apex doublet (Web @22.85 + @176.25). The
+    // doublet gate excludes stub T-chords like PK10 TN6-1 T3 (L=1303.8) AND
+    // PK4 TN3-1 T3 (L=1600 ridge stub).
+    let rfWinningStickIdx = -1;
+    let rfWinningApexAtOutputEnd = false;
+    {
+        const candidates = [];
+        const occByName = new Map();
+        for (let k = 0; k < frame.sticks.length; k++) {
+            const ss = frame.sticks[k];
+            if (/\(Box\d+\)/.test(ss.name))
+                continue;
+            if (!/^T\d/.test(ss.name))
+                continue;
+            const occ = occByName.get(ss.name) ?? 0;
+            occByName.set(ss.name, occ + 1);
+            const sm = metaSticks[k];
+            const zSpan = Math.abs(sm.end3D.z - sm.start3D.z);
+            if (zSpan <= 5)
+                continue;
+            const L = Math.hypot(sm.end3D.y - sm.start3D.y, sm.end3D.z - sm.start3D.z);
+            if (L < 2000)
+                continue;
+            const apexAtXmlEnd = sm.end3D.z > sm.start3D.z;
+            const reverse = chordArcReversal(sm);
+            const apexAtOutputEnd = apexAtXmlEnd !== reverse;
+            const stKeyLocal = `${ss.name}#${occ}`;
+            const positions = positionsByKey.get(stKeyLocal) ?? [];
+            const APEX_BOLT_LO = 22.85;
+            const APEX_BOLT_HI = 176.25;
+            const APEX_DOUBLET_TOL = 2.5;
+            const targetLo = apexAtOutputEnd ? L - APEX_BOLT_LO : APEX_BOLT_LO;
+            const targetHi = apexAtOutputEnd ? L - APEX_BOLT_HI : APEX_BOLT_HI;
+            const hasLo = positions.some((p) => Math.abs(p - targetLo) < APEX_DOUBLET_TOL);
+            const hasHi = positions.some((p) => Math.abs(p - targetHi) < APEX_DOUBLET_TOL);
+            if (!hasLo || !hasHi)
+                continue;
+            // Count + sum Box pieces attached to THIS instance via perpendicular-
+            // distance-to-host-line test.
+            let boxCount = 0;
+            let totalBoxLength = 0;
+            for (let k2 = 0; k2 < frame.sticks.length; k2++) {
+                const bb = frame.sticks[k2];
+                const bm = metaSticks[k2];
+                const mm = bb.name.match(/^(T\d+) \(Box\d+\)$/);
+                if (!mm)
+                    continue;
+                if (mm[1] !== ss.name)
+                    continue;
+                const hdy = sm.end3D.y - sm.start3D.y;
+                const hdz = sm.end3D.z - sm.start3D.z;
+                const hostLen = Math.hypot(hdy, hdz);
+                if (hostLen < 1)
+                    continue;
+                const ux = hdy / hostLen, uz = hdz / hostLen;
+                const dx = bm.start3D.y - sm.start3D.y;
+                const dz = bm.start3D.z - sm.start3D.z;
+                const t = dx * ux + dz * uz;
+                const px = sm.start3D.y + t * ux;
+                const pz = sm.start3D.z + t * uz;
+                const perpDist = Math.hypot(bm.start3D.y - px, bm.start3D.z - pz);
+                if (perpDist < 50 && t > -100 && t < hostLen + 100) {
+                    const bL = Math.hypot(bm.end3D.y - bm.start3D.y, bm.end3D.z - bm.start3D.z);
+                    boxCount++;
+                    totalBoxLength += bL;
+                }
+            }
+            candidates.push({
+                stickIdx: k,
+                length: L,
+                boxCount,
+                totalBoxLength,
+                apexAtOutputEnd,
+            });
+        }
+        candidates.sort((a, b) => {
+            if (Math.abs(a.length - b.length) > 0.5)
+                return a.length - b.length;
+            if (a.boxCount !== b.boxCount)
+                return b.boxCount - a.boxCount;
+            if (Math.abs(a.totalBoxLength - b.totalBoxLength) > 0.5)
+                return b.totalBoxLength - a.totalBoxLength;
+            return a.stickIdx - b.stickIdx;
+        });
+        if (candidates.length > 0) {
+            rfWinningStickIdx = candidates[0].stickIdx;
+            rfWinningApexAtOutputEnd = candidates[0].apexAtOutputEnd;
+        }
+    }
     const rewritten = [];
     // Rewrite each truss member stick. Box-piece sticks (e.g. "T4 (Box1)")
     // are NOT touched — their InnerDimple ops are pre-derived by the codec/
@@ -807,6 +924,26 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             stick.tooling.push({ kind: "point", type: "Web", pos: L - RAIL_BOLT_OFFSET });
             stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LEFT_FLANGE_SPAN, endPos: L });
             stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_NOTCH_SPAN, endPos: L });
+        }
+        // ────────────────────────────────────────────────────────────────────
+        // Agent RF (2026-05-11): R-rail extended-cap rule (412.4mm rakes)
+        // ────────────────────────────────────────────────────────────────────
+        // 9-op pattern at both ends (verified vs HG260044 PK4 + HG260001 PK7).
+        const isRakeR412 = /^R\d/.test(stick.name) && meta3DLen > 410 && meta3DLen < 415;
+        if (isRakeR412) {
+            const L = meta3DLen;
+            const RF_SPAN_412 = 13.61;
+            const LN_SPAN_412 = 37.73;
+            const LF_SPAN_412 = 162.11;
+            const RAKE_BOLT_412 = 67.17;
+            stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN_412 });
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LN_SPAN_412 });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN_412 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: RAKE_BOLT_412 });
+            stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((L - RAKE_BOLT_412) * 100) / 100 });
+            stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN_412, endPos: L });
+            stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LN_SPAN_412, endPos: L });
+            stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN_412, endPos: L });
         }
         // H4-header cap-stack rule.
         const isH4Header = /^H4(\b|$)/.test(stick.name) && meta3DLen > 1500;
@@ -1299,6 +1436,36 @@ export function simplifyTb2bTrussFrame(frame, setup) {
                         stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(heelBoltPos_T5 * 100) / 100 });
                     }
                 }
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────
+        // Agent RF (2026-05-11): T-chord apex 35.42mm RightFlange cap emission.
+        // ────────────────────────────────────────────────────────────────────
+        //
+        // Emit a 35.42mm RightFlange span at the apex side of the per-frame
+        // "winning" T-chord (selected pre-loop above by length/box-count
+        // cascade). Verified vs HG260044 PK1-4 + HG260001 PK7/PK9/PK10/PK12.
+        //
+        // The span lands flush against the apex doublet (@22.85+@176.25 pair):
+        //   apex@OUTPUT-START → RightFlange 0..35.42
+        //   apex@OUTPUT-END   → RightFlange (L-35.42)..L
+        if (rfWinningStickIdx === stickIdx && /^T\d/.test(stick.name) && !!meta3D) {
+            const RF_CAP_SPAN_T = 35.42;
+            const apexPos = rfWinningApexAtOutputEnd
+                ? meta3DLen - RF_CAP_SPAN_T
+                : 0;
+            const apexEnd = rfWinningApexAtOutputEnd ? meta3DLen : RF_CAP_SPAN_T;
+            const APPROX_DEDUP_RF = 0.5;
+            const exists = stick.tooling.some((o) => o.kind === "spanned" && o.type === "RightFlange" &&
+                Math.abs(o.startPos - apexPos) < APPROX_DEDUP_RF &&
+                Math.abs(o.endPos - apexEnd) < APPROX_DEDUP_RF);
+            if (!exists) {
+                stick.tooling.push({
+                    kind: "spanned",
+                    type: "RightFlange",
+                    startPos: Math.round(apexPos * 100) / 100,
+                    endPos: Math.round(apexEnd * 100) / 100,
+                });
             }
         }
         // ────────────────────────────────────────────────────────────────────

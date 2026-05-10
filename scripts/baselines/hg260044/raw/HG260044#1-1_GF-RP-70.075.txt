@@ -3,20 +3,20 @@ OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-RP-70
 Setup:    F325iT 70mm
 Frames:   our 20 | ref 20
 
-OPS:      our 1177 | ref 1222
+OPS:      our 1176 | ref 1222
 MATCHED:  857  (70.1% of ref)
 MISSING:  365  (ops Detailer has, we don't)
-EXTRAS:   320   (ops we have, Detailer doesn't)
+EXTRAS:   319   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt           342       154      130   (69% ref-coverage)
-Swage@span               168        80       69   (68% ref-coverage)
-LipNotch@span            165        77       70   (68% ref-coverage)
+InnerDimple@pt           343       153      129   (69% ref-coverage)
+Swage@span               168        80       70   (68% ref-coverage)
+LipNotch@span            164        78       70   (68% ref-coverage)
 InnerNotch@span           39        28       35   (58% ref-coverage)
 Chamfer@end              102         6       11   (94% ref-coverage)
-Chamfer@start             41         8        5   (84% ref-coverage)
+Chamfer@start             41         8        4   (84% ref-coverage)
 Web@pt                     0        12        0   (0% ref-coverage)
 
 FRAMES WITH GAPS:
@@ -98,8 +98,8 @@ FRAMES WITH GAPS:
   R7 (6 sticks with gaps)
     T1       MISSING (7): InnerDimple @966.4 | InnerDimple @1099.0 | InnerDimple @2188.1 | Swage 0.0..66.1 | Swage 917.4..1015.3 ... +2
     T1       EXTRAS  (5): InnerDimple @1096.9 | InnerDimple @2185.0 | LipNotch 0.0..39.0 | LipNotch 1040.8..1107.8 | LipNotch 2156.0..2195.0
-    T2       MISSING (6): InnerDimple @16.5 | InnerDimple @1390.1 | InnerDimple @2210.5 | LipNotch 1341.1..1402.6 | InnerNotch 1377.6..1501.7 ... +1
-    T2       EXTRAS  (5): Chamfer @start | InnerDimple @10.0 | InnerDimple @2217.0 | LipNotch 2188.0..2227.0 | Chamfer @end
+    T2       MISSING (6): InnerDimple @1390.1 | InnerDimple @2210.5 | LipNotch 0.0..39.0 | LipNotch 1341.1..1402.6 | InnerNotch 1377.6..1501.7 ... +1
+    T2       EXTRAS  (4): InnerDimple @2217.0 | Swage 0.0..39.0 | LipNotch 2188.0..2227.0 | Chamfer @end
     S1       MISSING (2): InnerDimple @4005.3 | Swage 3982.8..4021.8
     S1       EXTRAS  (3): InnerDimple @4018.9 | Swage 3962.8..4028.9 | Chamfer @end
     S2       MISSING (4): InnerDimple @3296.6 | InnerDimple @4005.3 | LipNotch 3284.9..3352.8 | Swage 3982.8..4021.8

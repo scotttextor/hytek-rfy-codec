@@ -1063,10 +1063,19 @@ export function generateFrameContextOps(frame, setup) {
         // sit ABOVE the header in wall sections with cripple infill. Verified
         // vs HG260001 PK4 L4/H1: 6 W braces produce 6 crossings (jamb pairs
         // around openings).
+        //
+        // 2026-05-09 (Agent LBW2): track whether any Pass-2 (W-brace) crossing
+        // was added. The presence of W-brace crossings on an H stick is the
+        // discriminator for the WIDE 81mm end-cap LipNotch pattern (vs the
+        // standard 39mm cap when only S cripple-stud crossings are present).
+        // Verified vs HG260044 LBW + HG260001 PK4-PK5 LBW corpora: 38 H sticks
+        // with W-brace crossings have 81mm caps; 11 H sticks with S-only
+        // crossings keep 39mm caps. See ext-cap emission below.
         const headerTopY = Math.max(header.box.yMin, header.box.yMax);
         const headerCenterY = (header.box.yMin + header.box.yMax) / 2;
         // All W role sticks (truss webs + wall braces) — both terminate at H.
         const allWebStyleSticks = layout.filter(sb => sb.role === "W");
+        let hasWebBraceCrossing = false;
         for (const web of allWebStyleSticks) {
             const ws = web.stick.outlineCorners ?? [];
             if (ws.length < 2)
@@ -1094,6 +1103,7 @@ export function generateFrameContextOps(frame, setup) {
                 continue;
             seenPositions.add(q);
             crossings.push(localPos);
+            hasWebBraceCrossing = true;
         }
         // 2026-05-04 — pair-aware LipNotch emission. For pairs of crossings
         // ~50mm apart (JAMB+KING), Detailer emits 2 separate ~50.8mm-wide
@@ -1154,6 +1164,40 @@ export function generateFrameContextOps(frame, setup) {
                 });
                 stickOps.push({ kind: "point", type: "InnerDimple", pos: round(posA) });
             }
+        }
+        // 2026-05-09 (Agent LBW2): emit 42mm "extension" LipNotches adjacent to
+        // the rule-engine's standard 39mm end-cap LipNotches when this H stick
+        // has W-brace crossings on a LBW plan. After mergeStickTooling joins
+        // them with the rule-engine caps (gap=2 for headplate usage), the result
+        // is the 81mm wide end-cap LipNotch Detailer emits on these headers.
+        //
+        // Verified pattern across HG260044 LBW + HG260001 PK4-PK5 LBW corpora:
+        //   panel=true ∧ has-W-brace-crossings ∧ LBW → 81mm cap (38 records)
+        //   panel=true ∧ S-only-crossings → 39mm cap (11 records, untouched)
+        //   panel=false (no crossings) → 39mm cap (untouched)
+        //
+        // The InnerNotch 39mm cap is preserved (Detailer's mismatched widths:
+        // 39mm InnerNotch + 81mm LipNotch).
+        const planNameForHeader = frame.planName ?? "";
+        const isLbwPlan = /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(planNameForHeader)
+            && !/(?:^|[-_/])(?:NLBW|NON-LBW)(?:[-_/]|$)/i.test(planNameForHeader);
+        if (header.role === "H" && hasWebBraceCrossing && isLbwPlan && crossings.length > 0) {
+            const stickLen = header.stick.length;
+            // Start cap extension: rule-engine emits LipNotch [0..39].
+            // Add LipNotch [39..81] so the post-merge result is [0..81].
+            stickOps.push({
+                kind: "spanned", type: "LipNotch",
+                startPos: round(39),
+                endPos: round(81),
+            });
+            // End cap extension: rule-engine emits LipNotch [length-39..length].
+            // Add LipNotch [length-81..length-39] so post-merge result is
+            // [length-81..length].
+            stickOps.push({
+                kind: "spanned", type: "LipNotch",
+                startPos: round(stickLen - 81),
+                endPos: round(stickLen - 39),
+            });
         }
         // Merge LipNotches with gap < 4mm (keep pairs separate, only merge
         // truly-overlapping ones)

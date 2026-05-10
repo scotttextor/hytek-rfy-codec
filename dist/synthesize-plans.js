@@ -659,6 +659,16 @@ function mergeStickTooling(perStickOps, contextOps, stickUsage) {
     if (u === "topchord" || u === "bottomchord") {
         joinAdjacentLipNotches(merged, 20);
     }
+    // 2026-05-09 (Agent LBW2): join HeadPlate LipNotches across the per-stick
+    // and frame-context ops so that the 39mm cap from the rule engine merges
+    // with the 42mm "extension" emitted by frame-context.ts when an H stick
+    // has W-brace crossings on a LBW plan. The extension is anchored to butt
+    // up against the rule-engine cap (startPos=39 against [0..39].endPos);
+    // gap=2 covers floating-point rounding without merging the panel-point
+    // notches (which sit 80+mm away from the caps).
+    if (u === "headplate") {
+        joinAdjacentLipNotches(merged, 2);
+    }
     return merged.slice().sort((a, b) => positionOf(a) - positionOf(b));
 }
 function positionOf(op) {

@@ -34,7 +34,7 @@ import {
 import { generateFrameContextOps } from "./rules/index.js";
 import { joinAdjacentLipNotches } from "./rules/frame-context.js";
 import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
-import { simplifyRpFramesInProject } from "./simplify-rp.js";
+import { simplifyRpFramesInProject, scaleRpDiagonalTplateBodyOps, isRpPlanName } from "./simplify-rp.js";
 import { simplifyTb2bTrussFramesInProject, isTb2bPlanName } from "./simplify-tb2b-truss.js";
 import { simplifyWallServiceInProject } from "./simplify-wall-service.js";
 import { simplifyWallWebInProject } from "./simplify-wall-web.js";
@@ -583,6 +583,52 @@ export function synthesizeRfyFromPlans(
         ) {
           addPairedInnerNotchAtBodyLipNotches(merged);
         }
+
+        // RP DIAGONAL T-plate body-crossing scale (Agent RP2, 2026-05-09).
+        //
+        // For diagonal T-plates in RP plans, frame-context.ts emits stud-
+        // crossing ops at X-axis projected positions. The plate's actual
+        // along-centerline length is longer (by 1/cos(2D-angle)), so every
+        // body crossing is scaled DOWN by xExtent/length plus an additional
+        // 4mm uniform shift from the upstream rake-plate start-trim.
+        // See `scaleRpDiagonalTplateBodyOps` for the full transform.
+        if (
+          isRpPlanName(plan.name)
+          && /^T\d/.test(stick.name)
+          && String(stick.usage ?? "").toLowerCase() === "topplate"
+        ) {
+          // Project endpoints into frame-local 2D, build outline corners
+          // (matches the same logic used in computeFrameContextOps and
+          // buildStickElevationGraphics so the corners we use here line up
+          // exactly with what frame-context already emitted positions for).
+          const startL2 = projectToFrameLocal(stick.start, basis);
+          const endL2 = projectToFrameLocal(stick.end, basis);
+          const dx2 = endL2.x - startL2.x;
+          const dy2 = endL2.y - startL2.y;
+          const len2D = Math.hypot(dx2, dy2);
+          if (len2D > 1e-3) {
+            const dirX2 = dx2 / len2D, dirY2 = dy2 / len2D;
+            const perpX2 = -dirY2, perpY2 = dirX2;
+            const thickness2 = Math.max(stick.profile.lFlange, stick.profile.rFlange);
+            const half2 = thickness2 / 2;
+            const corners = [
+              { x: startL2.x + perpX2 * half2, y: startL2.y + perpY2 * half2 },
+              { x: endL2.x   + perpX2 * half2, y: endL2.y   + perpY2 * half2 },
+              { x: endL2.x   - perpX2 * half2, y: endL2.y   - perpY2 * half2 },
+              { x: startL2.x - perpX2 * half2, y: startL2.y - perpY2 * half2 },
+            ];
+            const len3D = Math.sqrt(
+              (stick.end.x - stick.start.x) ** 2 +
+              (stick.end.y - stick.start.y) ** 2 +
+              (stick.end.z - stick.start.z) ** 2,
+            );
+            scaleRpDiagonalTplateBodyOps(
+              { name: stick.name, length: len3D, outlineCorners: corners, tooling: merged },
+              plan.name,
+            );
+          }
+        }
+
         const stickWithMerged = { ...stick, tooling: merged };
         sticks.push(buildStickXml(stickWithMerged, basis, frame.name, options.lenient ?? false));
       }

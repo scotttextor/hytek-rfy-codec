@@ -72,6 +72,57 @@ export interface ProjectConfig {
      * Default: 0 (no extra shift; preserves the existing -10 baseline).
      */
     kbInnerServiceOffsetExtra?: number;
+    /**
+     * NLBW3 (2026-05-10): How to decide which end of a sub-panel infill Nog
+     * gets InnerNotch+LipNotch caps (instead of the default Swage caps).
+     *
+     *   "interior-notch"     — HG260044 polarity. Detailer caps every endpoint
+     *                          that touches an INTERIOR regular Stud (not
+     *                          TrimStud, not perimeter, not corner-cluster
+     *                          within 100mm of perimeter), gated on a
+     *                          frame-context signal (frame has any tight
+     *                          stud-pair within 200mm OR this nog is part
+     *                          of a >=2-stack of sub-panel nogs sharing the
+     *                          same span studs). Length < 200mm short-
+     *                          circuits to no-Notch (filler nog).
+     *   "tight-cluster-notch" — HG260001 polarity. Detailer caps endpoints
+     *                          that touch a stud with a TIGHT NEIGHBOUR
+     *                          (<200mm centreline distance) sitting OUTSIDE
+     *                          the nog span — i.e. the touched stud is the
+     *                          boundary of a tight stud cluster (jamb /
+     *                          opening edge / corner). Perimeter studs
+     *                          always get Swage.
+     *
+     * Default: "interior-notch" (preserves NLBW2 behaviour).
+     */
+    nogAsymmetricCapMode?: "interior-notch" | "tight-cluster-notch";
+    /**
+     * Bolt B-plate (2026-05-11): Whether to emit slab anchor `Bolt @62` /
+     * `Bolt @length-62` ops on B-plates of UPPER-STORY frames inside a
+     * ground-floor wall plan (LBW/NLBW). Detailer's behaviour here is
+     * project-specific:
+     *
+     *   true  — HG260001 polarity. Upper-floor B-plates inside a "GF-NLBW"
+     *           plan still emit slab anchor bolts (verified vs HG260001
+     *           PK1-GF-NLBW N9/N20/N25/N34 — all elevation 2355mm B1s have
+     *           ANCHOR ops in Detailer's reference RFY).
+     *   false — HG260044 polarity. Upper-floor B-plates inside "GF-NLBW"
+     *           emit Web@8 + InnerDimple + LipNotch but NO slab anchors
+     *           (verified vs HG260044 GF-NLBW N18/N21/N31/N36/N39/N41/N49
+     *           — all elevation 2355mm B1s have BOLT HOLES + INNER DIMPLE
+     *           + LIP NOTCH but NO ANCHOR ops in the reference RFY/CSV).
+     *
+     * "Upper-story" means `frameElevation > 100` — i.e. the frame's Z origin
+     * is well above the slab. Standard ground-floor walls have
+     * `frameElevation = 0` (or very small offsets like -45). The 100mm
+     * threshold matches the existing pattern used elsewhere in table.ts
+     * (see Service @300 / @450 elevation-shift formulas).
+     *
+     * Default: `true` — preserves the existing pre-2026-05-11 behaviour for
+     * HG260001 and any unconfigured project. HG260044 explicitly sets it
+     * `false`.
+     */
+    slabBoltOnUpperFloor?: boolean;
 }
 /** What we know about the stick when applying rules. */
 export interface StickContext {
@@ -154,6 +205,17 @@ export interface StickContext {
      * GF-NLBW-70.075 N7/N24/N38 (12 nogs, 24 ops gained, 0 false positives).
      */
     nogIsSubPanelBothInterior?: boolean;
+    /**
+     * NLBW3 (2026-05-10): true if this Nog stick's START end should get
+     * InnerNotch+LipNotch caps (instead of the default Swage caps). Extends
+     * NLBW2's symmetric flag to support asymmetric sub-panel nogs where ONLY
+     * ONE end takes Notch caps. Computed by the diff harness / framecad-
+     * import based on `projectConfig.nogAsymmetricCapMode`. NLBW plans only.
+     */
+    nogStartCapIsNotch?: boolean;
+    /** NLBW3 (2026-05-10): same as `nogStartCapIsNotch` but for the END
+     *  endpoint. */
+    nogEndCapIsNotch?: boolean;
     /**
      * Optional: per-project Detailer configuration. Resolved by the caller
      * (typically the diff harness or `hytek-rfy-tools`' framecad-import) and

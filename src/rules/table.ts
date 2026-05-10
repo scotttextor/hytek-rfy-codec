@@ -465,8 +465,8 @@ export const RULE_TABLE: RuleGroup[] = [
       // 4 LBW/NLBW plans where Detailer's ref had none.
       { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm wall B plates: Web@8 only on ground-floor PRIMARY B plate (B1 or >=1500mm)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && emitsSlabAnchorBolt(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && emitsSlabAnchorBolt(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       // InnerNotch on B plates is SELECTIVE — same as T (some sticks have it,
@@ -509,8 +509,8 @@ export const RULE_TABLE: RuleGroup[] = [
       // B-plate (B1, or any B-plate >= 1500mm). See 70S41 rule above for context.
       { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm wall B plates: Web@8 only on ground-floor PRIMARY B plate (gauge<1.0)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm anchor bolt — only on ground-floor PRIMARY B plate + gauge<1.0" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm anchor bolt at length-62mm — ground-floor PRIMARY B plate + gauge<1.0 only" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && emitsSlabAnchorBolt(ctx), notes: "89mm anchor bolt — only on ground-floor PRIMARY B plate + gauge<1.0 (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && emitsSlabAnchorBolt(ctx), notes: "89mm anchor bolt at length-62mm — ground-floor PRIMARY B plate + gauge<1.0 only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
     ],
@@ -1009,6 +1009,33 @@ export function isPrimaryBPlate(ctx: { stickName?: string; length: number }): bo
   if (ctx.stickName === "B1" || ctx.stickName === "Bp1") return true;
   if (ctx.length >= 1500) return true;
   return false;
+}
+
+/**
+ * Slab-anchor bolt eligibility (2026-05-11): combines `isPrimaryBPlate` with
+ * a per-project upper-story carve-out.
+ *
+ * Some Detailer projects (HG260044) suppress the slab anchor `Bolt @62` /
+ * `Bolt @length-62` ops on B-plates of UPPER-STORY frames inside a "GF-NLBW"
+ * plan, even though they keep the Web@8 / InnerDimple / LipNotch ops on
+ * those same B-plates. Other projects (HG260001) still emit the bolts on
+ * upper-story B1s. Discriminated by `projectConfig.slabBoltOnUpperFloor`
+ * — see `ProjectConfig` for the full reference-data trace.
+ *
+ * Web@8 still fires on upper-story B-plates in BOTH polarities (verified
+ * vs HG260044 N18-B1: `BOLT HOLES @8` present, `ANCHOR @62` absent),
+ * so this guard is only consulted from the Bolt rule predicates.
+ *
+ * Frame elevation > 100mm = upper story. Standard ground-floor walls have
+ * elevation 0 or small negatives (-45 etc.).
+ */
+export function emitsSlabAnchorBolt(ctx: StickContext): boolean {
+  if (!isPrimaryBPlate(ctx)) return false;
+  const isUpperStory = ctx.frameElevation !== undefined && ctx.frameElevation > 100;
+  if (!isUpperStory) return true;
+  // Upper-story: project config decides. Default = legacy "yes" so unknown
+  // projects keep the pre-2026-05-11 behaviour.
+  return ctx.projectConfig?.slabBoltOnUpperFloor !== false;
 }
 
 /** Look up profile-specific span/dimple offsets.

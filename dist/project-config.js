@@ -37,13 +37,36 @@ const PROJECT_CONFIG_TABLE = [
             kbChamferMode: "uniform-both-ends",
             wChamferAngleThreshold: 14,
             kbInnerServiceOffsetExtra: 19,
+            // NLBW3 (2026-05-10): HG260044 caps every interior-stud-touching end of
+            // a sub-panel infill nog with InnerNotch+LipNotch (gated by frame-
+            // context tight-pair-or-stack signal). Verified vs GF-NLBW-70.075
+            // across all 16 sub-panel-nog frames.
+            nogAsymmetricCapMode: "interior-notch",
+            // Bolt B-plate (2026-05-11): HG260044 suppresses slab anchor bolts on
+            // upper-story B-plates inside GF-NLBW. Verified vs GF-NLBW-70.075
+            // N18/N21/N31/N36/N39/N41/N49 (frameElevation=2355) — all show
+            // BOLT HOLES @8 + INNER DIMPLE + LIP NOTCH, but no ANCHOR ops in
+            // Detailer's reference RFY/CSV. Closes 16 Bolt extras with no
+            // missing-side regressions (NLBW had 0 Bolt missing pre-fix).
+            slabBoltOnUpperFloor: false,
         },
-        basis: "HG260044 LBW: 21/22 frames uniform-flipped Kbs (verified 2026-05-09); W chamfer ref includes 14.6°-26° angles; Kb InnerService offset +19mm vs default",
+        basis: "HG260044 LBW: 21/22 frames uniform-flipped Kbs (verified 2026-05-09); W chamfer ref includes 14.6°-26° angles; Kb InnerService offset +19mm vs default; NLBW3 nog cap mode = interior-notch; upper-story slab Bolt suppressed on NLBW (verified 7 frames 2026-05-11)",
     },
-    // HG260023 + HG260001 keep the default xnor-paired mode + 28° W threshold.
-    // Don't add explicit entries — let the defaults handle them so the per-frame
-    // kbFrameUniformFlipped signal can still kick in for any uniform-Kb frame
-    // that turns up in those corpora (e.g. HG260023 PK6 LBW per the C2 report).
+    {
+        // NLBW3 (2026-05-10): HG260001 caps sub-panel infill nogs only at
+        // endpoints whose touched stud has a tight neighbour (<200mm) sitting
+        // OUTSIDE the nog span. Verified vs PK1+PK2 GF-NLBW
+        // (N10/N18/N21/N22/N23) — the HG260044 "any interior end" rule
+        // over-emits on N18/N23 (both-interior nogs without paired-stud
+        // boundaries).
+        matchJobNum: /^HG260001$/,
+        config: {
+            nogAsymmetricCapMode: "tight-cluster-notch",
+        },
+        basis: "HG260001 NLBW: tight-cluster-notch nog mode (verified vs PK1+PK2 N10/N18/N21/N22/N23, 2026-05-10)",
+    },
+    // HG260023 keeps the default xnor-paired mode + 28° W threshold + the
+    // default "interior-notch" nog mode (preserves NLBW2's behaviour).
 ];
 /**
  * Resolve a `ProjectConfig` from project hints, or `undefined` if no rule

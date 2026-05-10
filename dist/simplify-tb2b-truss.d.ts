@@ -19,33 +19,33 @@ interface MetaStick {
     usage: string;
     flipped: boolean;
 }
-/** Pairwise centerline-intersection rule for TB2B (back-to-back) trusses.
- *  Mirrors `simplify-linear-truss.ts` but works in whichever 2D plane the
- *  truss lies in (TB2B is typically YZ — sticks share a constant X — while
- *  LIN trusses are XZ). For each pair of sticks, project to 2D and find
- *  the intersection's local arc-length on each stick.
- *
- *  TB2B distinguishes W (web) members from chord/rail (T/B/R/H) members:
- *  - W members: emit Web@END_ANCHOR + Web@(len-END_ANCHOR) (fixed 35mm
- *    end-cap offsets where the web butts into the chord), plus mid-stick
- *    Web@pt at every chord/rail crossing more than END_ANCHOR+5mm from
- *    each end. Verified vs HG260001 PK10/TN6-1 ref: W10/W11/W12/W13 have
- *    only the two end-caps; W14 (which crosses R9 mid-stick) has 3 Webs.
- *  - Chord/rail members (T/B/R/H): emit Web@pt at every web/rail
- *    centerline crossing, end-zone filtered.
- *
- *  Per-instance keying: a single TB2B truss frame can contain multiple
- *  sticks with the SAME name (e.g. apex-pair top chords both named `T2`,
- *  heel webs `W7`/`W8` repeated across left/right halves). The 2D
- *  centerline-intersection logic respects each instance's coordinates, so
- *  we key the position map by `name#occurrence_index` (0-based count of
- *  prior MetaSticks with the same name, in the order they appear in
- *  `sticks`). Each chord instance receives only the bolt-pairs at its
- *  OWN geometric web crossings, eliminating the union-emit bug that was
- *  inflating T-chord Web@pt by ~3× on HG260044/HG260023 PK# TB2B plans
- *  (~1340 extras total — see frida-mined-gaps.md Gap #2). Callers must
- *  rebuild the same per-instance key when reading positions back out. */
-export declare function computeTb2bWebPositions(sticks: ReadonlyArray<MetaStick>): Map<string, number[]>;
+/** Optional per-call config for `computeTb2bWebPositions` covering edge-case
+ *  rules that depend on cross-stick state determined outside the function.
+ *  Currently used by Agent T4 (2026-05-09) for the sloped peer-pair B-chord
+ *  PERP-web chord-side correction override. */
+export interface Tb2bWebPositionsOptions {
+    /** Per-chord-instance arc-correction (in chord-arc space) to use for
+     *  chord-Web crossings when the web is perpendicular-ish (|dot| <
+     *  PERP_GATE = 0.5). Keyed by `name#occurrence` matching the function's
+     *  internal `stickKeys`.
+     *
+     *  Detailer's chord-Web bolt position on sloped 15° peer-pair B-chords
+     *  doesn't follow the codec's standard `-CHORD_HALF_DEPTH × dot / 2` rule.
+     *  Empirically (verified vs HG260001 PK10/PK11 ref):
+     *    longer-of-pair  (with cap-stack):  correction = -(WEB_VS_RAIL_OFFSET + lLip + rLip) × tan(slope)
+     *    shorter-of-pair (no cap-stack):    correction = -(WEB_VS_RAIL_OFFSET) × tan(slope)
+     *  At 15°/70S41 these are -9.91mm and -4.02mm respectively, vs the old
+     *  ±4.53mm. The caller (`simplifyTb2bTrussFrame`) computes the right scalar
+     *  per chord and passes it in here.
+     *
+     *  When this Map is supplied and a chord-Web PERP crossing is on a chord
+     *  in the Map, the override replaces the standard correction. The implied
+     *  @22.8/@120.8 fixed end-pair at the centerline-meeting end emerges
+     *  naturally from the W17-W18-style PERP+PAR pair-bolt with the shifted
+     *  PERP position. */
+    perpWebChordCorrectionOverride?: ReadonlyMap<string, number>;
+}
+export declare function computeTb2bWebPositions(sticks: ReadonlyArray<MetaStick>, options?: Tb2bWebPositionsOptions): Map<string, number[]>;
 export interface SimplifyTb2bDecision {
     frame: string;
     decision: "APPLY" | "SKIP";

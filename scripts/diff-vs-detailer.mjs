@@ -1249,12 +1249,13 @@ function buildOurProject(xmlText) {
   return {
     project: { name: String(root["@_name"]), jobNum: "JOB", client: "", date: "2026-04-30", plans },
     setup,
+    projectConfig,
   };
 }
 
 const xmlText = fs.readFileSync(inputXmlPath, "utf8");
-const { project: ourProject, setup } = buildOurProject(xmlText);
-const ourResult = synthesizeRfyFromPlans(ourProject, { machineSetup: setup, lenient: true });
+const { project: ourProject, setup, projectConfig } = buildOurProject(xmlText);
+const ourResult = synthesizeRfyFromPlans(ourProject, { machineSetup: setup, lenient: true, projectConfig });
 const ourDoc = decode(ourResult.rfy);
 
 // Post-decode rule swaps for frame types where the codec's default rules

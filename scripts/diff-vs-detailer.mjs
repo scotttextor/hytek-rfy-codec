@@ -282,6 +282,17 @@ function buildOurProject(xmlText) {
         const isHeader = /^H\d/.test(stickName);
         const isNog = usage === "nog" || usage === "noggin";
         const isJoistWeb = /^V\d/.test(stickName) && usage === "web";
+        // L Sill (lintel/sill plate, role L on 70S41/89S41): 1mm/end trim.
+        // Verified 2026-05-09 vs HG260044 GF-LBW + GF-NLBW corpora: every L1
+        // (Sill) stick's InnerNotch+LipNotch+InnerDimple cluster sits +2mm
+        // from Detailer's. Stick L1 raw XML length 706 → ref cuts to 704
+        // (1mm/end, like H header). Without this trim, EVERY end-anchored op
+        // on every Sill drifts by 2mm (LipNotch span end, InnerNotch span end,
+        // InnerDimple end-pos). This +2mm signature recurs on InnerDimple,
+        // InnerNotch, LipNotch — all three are linked by the same length
+        // input. Same fix applied in hytek-rfy-tools/lib/framecad-import.ts
+        // for production parity.
+        const isSill = usage === "sill";
         // H header: 1mm/end trim (verified 2026-05-02 vs HG260012 L1101/H1
         // input 2782 → ref output 2780). The earlier "no trim" comment was
         // wrong — H IS trimmed, but only 1mm/end vs studs' 2mm/end.
@@ -299,6 +310,7 @@ function buildOurProject(xmlText) {
           : ((isFullStud || isJoistWeb) ? 2.0
             : isNog ? nogTrim
             : isHeader ? 1.0
+            : isSill ? 1.0
             : 0);
         if (T > 0) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
@@ -1115,15 +1127,17 @@ function buildOurProject(xmlText) {
         }
         TB2B_META.set(tb2bFrameKey(plan.name, String(f["@_name"])), { sticks: frameMetaSticks });
       }
-      // Carry serviceActions through to the codec so the wall-service
-      // simplifier (src/simplify-wall-service.ts) can run inside
-      // synthesizeRfyFromPlans. Mirrors hytek-rfy-tools' production importer.
+      // Carry serviceActions + webActions through to the codec so the
+      // wall-service + wall-web simplifiers (src/simplify-wall-service.ts,
+      // src/simplify-wall-web.ts) can run inside synthesizeRfyFromPlans.
+      // Mirrors hytek-rfy-tools' production importer.
       plan.frames.push({
         name: String(f["@_name"]),
         envelope: env,
         sticks,
         type: String(f["@_type"] ?? ""),
         serviceActions: serviceActions.map(svc => ({ start: svc.start, end: svc.end })),
+        webActions: webActions.map(w => ({ start: w.start, end: w.end })),
       });
     }
     plans.push(plan);

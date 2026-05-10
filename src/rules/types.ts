@@ -224,6 +224,18 @@ export interface StickContext {
    *  endpoint. */
   nogEndCapIsNotch?: boolean;
   /**
+   * BHSP (2026-05-11): true if this raised B-plate (Bh role) or H header's
+   * START end faces the frame envelope perimeter (within ~10mm along its
+   * run axis). When true, Detailer caps the perimeter-facing end with
+   * `Swage` (span 39 on 70S41) instead of the default `InnerNotch +
+   * LipNotch` cap-stack. Set by the diff harness / framecad-import. NLBW
+   * plans only — rule predicate short-circuits otherwise.
+   */
+  bhStartCapIsSwage?: boolean;
+  /** BHSP (2026-05-11): same as `bhStartCapIsSwage` but for the END
+   *  endpoint. */
+  bhEndCapIsSwage?: boolean;
+  /**
    * Optional: per-project Detailer configuration. Resolved by the caller
    * (typically the diff harness or `hytek-rfy-tools`' framecad-import) and
    * passed down so rule predicates can dispatch on it without a global.

@@ -424,6 +424,20 @@ export function simplifyRpFrame(frame) {
     for (const stick of frame.sticks) {
         if (!isSstud(stick))
             continue;
+        // RP6 (2026-05-11): short HORIZONTAL cripple studs in multi-T frames
+        // keep standard wall-cap morphology — no rewrite. Verified vs HG260001
+        // R3/R5 (296mm dz=0 studs in tCount=2 frames). Ref leaves them with the
+        // 3-op standard wall cap (ID@16.5 + ID@L-16.5 + Swage|LipNotch L-39..L);
+        // rewriting them as chord-cap or plate-over-plate misses every op AND
+        // wrongly extends the stick by 9.1mm.
+        {
+            const studDzSkip = Math.abs(stick.end.z - stick.start.z);
+            const studLenSkip = computeStickLength(stick);
+            const tplateCountSkip = frame.sticks.filter(isTplate).length;
+            if (studDzSkip <= 5 && studLenSkip < 400 && tplateCountSkip >= 2) {
+                continue;
+            }
+        }
         // Per-stud classification: does this stud's START meet a sloped (rake)
         // bottom plate? If yes → chord-style cap. Else → plate-over-plate cap.
         const isRakeStud = studStartIsOnSlopedBottom(stick, frame);

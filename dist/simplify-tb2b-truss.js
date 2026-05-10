@@ -55,7 +55,15 @@ function chordArcReversal(s) {
  *  inflating T-chord Web@pt by ~3× on HG260044/HG260023 PK# TB2B plans
  *  (~1340 extras total — see frida-mined-gaps.md Gap #2). Callers must
  *  rebuild the same per-instance key when reading positions back out. */
-export function computeTb2bWebPositions(sticks) {
+/** Module-level constant for the web-side bolt-position offset toward the
+ *  web midpoint at chord/rail crossings (mm). Used both inside
+ *  `computeTb2bWebPositions` (where it's locally aliased as
+ *  `WEB_VS_RAIL_OFFSET = 15`) AND in `simplifyTb2bTrussFrame`'s peer-pair
+ *  correction formula (Agent T4, 2026-05-09). Hoisting keeps both sites in
+ *  sync. */
+const WEB_VS_RAIL_OFFSET_FOR_PEER_PAIR = 15;
+export function computeTb2bWebPositions(sticks, options) {
+    const perpCorrOverride = options?.perpWebChordCorrectionOverride ?? new Map();
     // Detect the constant-axis: compute per-axis range across ALL endpoints.
     // The axis with min range (within 1mm) is the "out-of-plane" axis.
     const axes = ["x", "y", "z"];
@@ -206,18 +214,58 @@ export function computeTb2bWebPositions(sticks) {
             const bReversal = needsArcReversal(sB);
             const aFlipSign = aReversal && (sA.usage === "bottomchord" || sA.usage === "rail");
             const bFlipSign = bReversal && (sB.usage === "bottomchord" || sB.usage === "rail");
+            // Override-tier check for sloped peer-pair B-chord PERP webs (Agent T4
+            // 2026-05-09). When the chord is in the override map AND the web is
+            // perpendicular-ish (|dot| < 0.5, matching PERP_GATE in the panel-pair
+            // block below), use the caller-supplied correction directly in arc-
+            // space, bypassing the standard `-CHORD_HALF_DEPTH × dot / 2 × sign`
+            // formula. The override formula is empirical:
+            //   shorter-of-pair (no cap-stack): -(WEB_VS_RAIL_OFFSET) × tan(slope)
+            //   longer-of-pair  (with caps):    -(WEB_VS_RAIL_OFFSET + lLip + rLip) × tan(slope)
+            // At 15°/70S41 these are -4.02mm and -9.91mm respectively, vs the old
+            // ±4.53mm. Verified ±0.1mm vs HG260001 PK10/PK11 ref.
+            // The override is only correct for "true vertical" webs whose dot
+            // with a 15° chord is ±sin(15°) ≈ ±0.259. Other angles (e.g. TN6-1
+            // W11 @0.307, TN11-1 W19 @0.453, TN6-1 W15 @0.169 and W13 @-0.584)
+            // are sloped-but-near-perpendicular webs that need the standard
+            // formula AND function as PAR neighbors for the canonical-PERP
+            // pair-bolt. Gate `|dot|` to a narrow band around 0.259 (= sin(15°))
+            // to catch only canonical PERP. Width 0.05 covers measurement
+            // jitter without bleeding into the 0.169/0.307/0.453/etc cases.
+            const PERP_GATE_LOW = 0.20;
+            const PERP_GATE_HIGH = 0.30;
+            const absDot = Math.abs(dot);
+            const isWebPerpish = absDot >= PERP_GATE_LOW && absDot <= PERP_GATE_HIGH;
+            const aOverride = (aIsChord && sB.usage === "web" && isWebPerpish)
+                ? perpCorrOverride.get(keyA)
+                : undefined;
+            const bOverride = (bIsChord && sA.usage === "web" && isWebPerpish)
+                ? perpCorrOverride.get(keyB)
+                : undefined;
             if (aIsChord) {
-                const corrRaw = bIsChord
-                    ? -CHORD_HALF_DEPTH * aZ / 2
-                    : -CHORD_HALF_DEPTH * dot / 2;
-                const correction = aFlipSign ? -corrRaw : corrRaw;
+                let correction;
+                if (aOverride !== undefined) {
+                    correction = aOverride;
+                }
+                else {
+                    const corrRaw = bIsChord
+                        ? -CHORD_HALF_DEPTH * aZ / 2
+                        : -CHORD_HALF_DEPTH * dot / 2;
+                    correction = aFlipSign ? -corrRaw : corrRaw;
+                }
                 posA = Math.max(0, Math.min(inter.L1, posA_arc + correction));
             }
             if (bIsChord) {
-                const corrRaw = aIsChord
-                    ? -CHORD_HALF_DEPTH * bZ / 2
-                    : -CHORD_HALF_DEPTH * dot / 2;
-                const correction = bFlipSign ? -corrRaw : corrRaw;
+                let correction;
+                if (bOverride !== undefined) {
+                    correction = bOverride;
+                }
+                else {
+                    const corrRaw = aIsChord
+                        ? -CHORD_HALF_DEPTH * bZ / 2
+                        : -CHORD_HALF_DEPTH * dot / 2;
+                    correction = bFlipSign ? -corrRaw : corrRaw;
+                }
                 posB = Math.max(0, Math.min(inter.L2, posB_arc + correction));
             }
             // Web-side bolt-position offset toward web midpoint at horizontal-
@@ -526,7 +574,97 @@ export function simplifyTb2bTrussFrame(frame, setup) {
         (firstStickWeb !== undefined
             ? (getMachineSetupForProfile(firstStickWeb) ?? getDefaultMachineSetup())
             : getDefaultMachineSetup());
-    const positionsByKey = computeTb2bWebPositions(metaSticks);
+    const SHARED_TOL_FOR_PEER = 20.0;
+    const slopedPeerPairChordCorr = new Map();
+    const slopedPeerPairInfo = new Map();
+    {
+        // Build per-instance keys identical to computeTb2bWebPositions's scheme.
+        const occByName = new Map();
+        const keys = [];
+        for (const s of metaSticks) {
+            const occ = occByName.get(s.name) ?? 0;
+            occByName.set(s.name, occ + 1);
+            keys.push(`${s.name}#${occ}`);
+        }
+        for (let i = 0; i < frame.sticks.length; i++) {
+            const stick = frame.sticks[i];
+            if (/\(Box\d+\)/.test(stick.name))
+                continue;
+            if (!/^B\d/.test(stick.name))
+                continue;
+            const meta = metaSticks[i];
+            const zSpan = Math.abs(meta.end3D.z - meta.start3D.z);
+            if (zSpan <= 5)
+                continue; // not sloped
+            const dy = meta.end3D.y - meta.start3D.y;
+            const dz = meta.end3D.z - meta.start3D.z;
+            const slopeAngleRad = Math.atan2(Math.abs(dz), Math.abs(dy));
+            const slopeAngleDeg = slopeAngleRad * 180 / Math.PI;
+            if (slopeAngleDeg <= 5)
+                continue;
+            const myLen = Math.hypot(meta.end3D.y - meta.start3D.y, meta.end3D.z - meta.start3D.z);
+            // Look for peer (another sloped B-chord sharing an endpoint).
+            let peerLen = -1;
+            let xmlStartCenterline = false;
+            let xmlEndCenterline = false;
+            for (let k = 0; k < frame.sticks.length; k++) {
+                if (k === i)
+                    continue;
+                const o = frame.sticks[k];
+                if (!/^B\d/.test(o.name))
+                    continue;
+                if (/\(Box\d+\)/.test(o.name))
+                    continue;
+                const om = metaSticks[k];
+                const oZSpan = Math.abs(om.end3D.z - om.start3D.z);
+                if (oZSpan <= 5)
+                    continue;
+                const oLen = Math.hypot(om.end3D.y - om.start3D.y, om.end3D.z - om.start3D.z);
+                const dStartStart = Math.hypot(om.start3D.y - meta.start3D.y, om.start3D.z - meta.start3D.z);
+                const dStartEnd = Math.hypot(om.end3D.y - meta.start3D.y, om.end3D.z - meta.start3D.z);
+                const dEndStart = Math.hypot(om.start3D.y - meta.end3D.y, om.start3D.z - meta.end3D.z);
+                const dEndEnd = Math.hypot(om.end3D.y - meta.end3D.y, om.end3D.z - meta.end3D.z);
+                const startSharesPeer = dStartStart < SHARED_TOL_FOR_PEER || dStartEnd < SHARED_TOL_FOR_PEER;
+                const endSharesPeer = dEndStart < SHARED_TOL_FOR_PEER || dEndEnd < SHARED_TOL_FOR_PEER;
+                if (startSharesPeer) {
+                    xmlStartCenterline = true;
+                    if (oLen > peerLen)
+                        peerLen = oLen;
+                }
+                if (endSharesPeer) {
+                    xmlEndCenterline = true;
+                    if (oLen > peerLen)
+                        peerLen = oLen;
+                }
+            }
+            if (peerLen <= 0)
+                continue; // no sloped peer
+            // Empirical correction formula (verified vs HG260001 ref @15°):
+            //   isLongerOfPair → -(WEB_VS_RAIL_OFFSET + lLip + rLip) * tan(slope)
+            //   isShorterOfPair → -(WEB_VS_RAIL_OFFSET) * tan(slope)
+            // The "longer" formula's extra `(lLip + rLip)·tan` term equals the
+            // wedge-difference between LONG_TRIM (70·tan) and SHORT_TRIM (48·tan):
+            // (LONG_TRIM - SHORT_TRIM) = (lLip + rLip) · tan(slope).
+            const isLongerOfPair = myLen >= peerLen - 0.5;
+            const lLip = stick.profile?.lLip ?? 11;
+            const rLip = stick.profile?.rLip ?? 11;
+            const tanA = Math.tan(slopeAngleRad);
+            const correction = isLongerOfPair
+                ? -(WEB_VS_RAIL_OFFSET_FOR_PEER_PAIR + lLip + rLip) * tanA
+                : -WEB_VS_RAIL_OFFSET_FOR_PEER_PAIR * tanA;
+            const k = keys[i];
+            slopedPeerPairChordCorr.set(k, correction);
+            slopedPeerPairInfo.set(k, {
+                correction,
+                isLongerOfPair,
+                stickIdx: i,
+                centerlineAtXmlStart: xmlStartCenterline,
+            });
+        }
+    }
+    const positionsByKey = computeTb2bWebPositions(metaSticks, {
+        perpWebChordCorrectionOverride: slopedPeerPairChordCorr,
+    });
     const { dimplesByKey } = computeBoxDimples(metaSticks, resolvedSetup);
     const rewritten = [];
     // Rewrite each truss member stick. Box-piece sticks (e.g. "T4 (Box1)")
@@ -1043,6 +1181,64 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             const exists = stick.tooling.some((o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - apexPos) < APPROX);
             if (!exists)
                 stick.tooling.push({ kind: "point", type: "Web", pos: apexPos });
+        }
+        // Sloped peer-pair LONGER B-chord: post-trim fixed-pair + suppression
+        // (Agent T4, 2026-05-09). Detailer emits a fixed @22.8/@120.8 Web pair
+        // INTO the chord from the centerline-meeting end, and suppresses any
+        // chord-Web crossings within ~150mm of that end (which would normally
+        // arise from W17/W18-style crossings near the chord tip and B-chord/
+        // B-chord chord-chord intersections).
+        //
+        // The centerline-meeting end is the OUTPUT end ON THE OPPOSITE SIDE of
+        // the cap-stack (the cap-stack goes at the cap-end / heel-eaves end on
+        // these chords; the centerline-meeting end is where the two B-chords
+        // meet at the bottom-chord apex).
+        //
+        // Verified vs HG260001 PK10/PK11/PK9 ref TN6-1/TN4-x/TN5-x/TN11-x B2.
+        const slopedInfo = slopedPeerPairInfo.get(stKey);
+        if (slopedInfo && slopedInfo.isLongerOfPair) {
+            const L_post = Math.max(0, meta3DLen - trimAtOutputStart - trimAtOutputEnd);
+            // Determine which OUTPUT end is the centerline-meeting end. The
+            // cap-stack rule above places caps at the OPPOSITE end. Inline the
+            // same `capAtOutputStart` logic as the cap-stack block (line 1230):
+            //   highZAtXmlStart !== isFlipped → caps at OUTPUT-start.
+            // Centerline-meeting end is OPPOSITE to cap-end on these chords.
+            const isFlipped_local = !!meta3D && stick.flipped;
+            const highZAtXmlStart_local = meta3D
+                ? meta3D.start3D.z > meta3D.end3D.z
+                : false;
+            const capAtOutputStart_local = highZAtXmlStart_local !== isFlipped_local;
+            // Centerline-meeting end (where fixed pair goes) = NOT cap-side.
+            const centerlineAtOutputStart = !capAtOutputStart_local;
+            const FIXED_PAIR_A = 22.8;
+            const FIXED_PAIR_B = 120.8;
+            const SUPPRESSION_RANGE = 150;
+            // Suppression zone: 150mm from the centerline-meeting end.
+            const suppressMin = centerlineAtOutputStart ? 0 : L_post - SUPPRESSION_RANGE;
+            const suppressMax = centerlineAtOutputStart ? SUPPRESSION_RANGE : L_post;
+            // Fixed-pair positions at output @22.8/@120.8 from centerline-end.
+            const pairA = centerlineAtOutputStart ? FIXED_PAIR_A : L_post - FIXED_PAIR_A;
+            const pairB = centerlineAtOutputStart ? FIXED_PAIR_B : L_post - FIXED_PAIR_B;
+            // Filter out chord-Web crossings (Web@pt) within suppression zone,
+            // but NOT cap-stack stub-bolts (Web@STUB_BOLT/@L-STUB_BOLT) that the
+            // cap-stack rule legitimately emits at the OPPOSITE (cap) end.
+            stick.tooling = stick.tooling.filter((op) => {
+                if (op.kind !== "point" || op.type !== "Web")
+                    return true;
+                if (op.pos < suppressMin - 0.5 || op.pos > suppressMax + 0.5)
+                    return true;
+                return false; // suppress
+            });
+            // Add fixed pair (with dedup vs nearby existing positions).
+            const APPROX_DEDUP = 2.0;
+            for (const p of [pairA, pairB]) {
+                if (p < 0 || p > L_post)
+                    continue;
+                const exists = stick.tooling.some((o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - p) < APPROX_DEDUP);
+                if (!exists) {
+                    stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(p * 100) / 100 });
+                }
+            }
         }
         // Final sort by position so downstream encoding emits ops in order.
         stick.tooling.sort((a, b) => {

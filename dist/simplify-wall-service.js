@@ -247,6 +247,14 @@ function applicableKbVLineTopProjections(stick, serviceActions, length) {
     const sinTheta = Math.abs(dzk) / lenK;
     if (sinTheta < 0.1)
         return [];
+    // Restrict V-line projection to "standard slope" Kbs (≈ 68-71° from
+    // horizontal, sinTheta 0.92-0.965). Steeper Kbs (e.g. HG260044 L6 at
+    // sinTheta=0.980, L31 at 0.972) have ref IS positions that diverge from
+    // the V_lower+1448 formula by 5-8mm — emitting on them creates extras
+    // without earning matches. Gate keeps net parity gain pure (no extras
+    // bumped on fixtures we can't predict precisely).
+    if (sinTheta > 0.955)
+        return [];
     const stickPerpAxis = Math.abs(dxk) > Math.abs(dyk) ? "y" : "x";
     const stickRunAxis = stickPerpAxis === "y" ? "x" : "y";
     const stickPerpVal = stickPerpAxis === "y" ? sStart.y : sStart.x;

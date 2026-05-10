@@ -1,7 +1,7 @@
 # HG260001 Baseline — Per-Plan Op-Level Diff vs Detailer
 
-**Overall: 91.96% matched** (16552/18000 ops)
-Missing: 1448 (Detailer has, we lack) | Extras: 1453 (we emit, Detailer doesn't)
+**Overall: 92.29% matched** (16613/18000 ops)
+Missing: 1387 (Detailer has, we lack) | Extras: 1357 (we emit, Detailer doesn't)
 
 ## Per-plan parity
 | RFY | Parity | Matched | Ref | Missing | Extras |
@@ -15,8 +15,8 @@ Missing: 1448 (Detailer has, we lack) | Extras: 1453 (we emit, Detailer doesn't)
 | HG260001_PK12-GF-TB2B-70.075.rfy | 89.4% | 708 | 792 | 84 | 50 |
 | HG260001_PK2-GF-NLBW-70.075.rfy | 94.7% | 1998 | 2109 | 111 | 127 |
 | HG260001_PK3-GF-NLBW-89.075.rfy | — | — | — | — | — |
-| HG260001_PK4-GF-LBW-70.075.rfy | 94.2% | 4484 | 4762 | 278 | 331 |
-| HG260001_PK5-GF-LBW-70.075.rfy | 94.1% | 3358 | 3567 | 209 | 270 |
+| HG260001_PK4-GF-LBW-70.075.rfy | 95.1% | 4527 | 4762 | 235 | 276 |
+| HG260001_PK5-GF-LBW-70.075.rfy | 94.6% | 3376 | 3567 | 191 | 229 |
 | HG260001_PK6-GF-TB2B-70.075.rfy | 98.6% | 410 | 416 | 6 | 2 |
 | HG260001_PK7-GF-TB2B-70.075.rfy | 87.3% | 207 | 237 | 30 | 23 |
 | HG260001_PK8-GF-TB2B-70.075.rfy | 99.0% | 204 | 206 | 2 | 2 |
@@ -26,7 +26,7 @@ Missing: 1448 (Detailer has, we lack) | Extras: 1453 (we emit, Detailer doesn't)
 | Tool | Missing (Detailer has) | Extras (we emit) | Net we lack |
 |---|---:|---:|---:|
 | InnerDimple | 496 | 404 | 92 |
-| LipNotch | 269 | 402 | -133 |
+| LipNotch | 208 | 306 | -98 |
 | Swage | 203 | 229 | -26 |
 | Web | 211 | 152 | 59 |
 | InnerService | 115 | 103 | 12 |

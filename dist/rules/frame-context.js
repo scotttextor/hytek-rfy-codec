@@ -1119,6 +1119,10 @@ export function generateFrameContextOps(frame, setup) {
         // All W role sticks (truss webs + wall braces) — both terminate at H.
         const allWebStyleSticks = layout.filter(sb => sb.role === "W");
         let hasWebBraceCrossing = false;
+        // 2026-05-11 (Agent LBW5): track per-crossing W brace angle so we can
+        // apply angle-aware LipNotch widths on H stick body panel-pairs (see
+        // pair-aware emission block below).
+        const crossingAngles = new Map(); // localPos → angleDeg from horizontal
         for (const web of allWebStyleSticks) {
             const ws = web.stick.outlineCorners ?? [];
             if (ws.length < 2)
@@ -1147,6 +1151,17 @@ export function generateFrameContextOps(frame, setup) {
             seenPositions.add(q);
             crossings.push(localPos);
             hasWebBraceCrossing = true;
+            // Compute the brace's angle from horizontal in the frame plane. Used
+            // by Agent LBW5's angle-aware pair-LipNotch emission below.
+            const cl = getCenterlineEndpoints(web.stick);
+            if (cl) {
+                const dx = cl.endL.x - cl.startL.x;
+                const dy = cl.endL.y - cl.startL.y;
+                if (Math.abs(dx) > 1e-6 && Math.abs(dy) > 1e-6) {
+                    const angleDeg = Math.atan2(Math.abs(dy), Math.abs(dx)) * 180 / Math.PI;
+                    crossingAngles.set(q, angleDeg);
+                }
+            }
         }
         // 2026-05-04 — pair-aware LipNotch emission. For pairs of crossings
         // ~50mm apart (JAMB+KING), Detailer emits 2 separate ~50.8mm-wide
@@ -1154,52 +1169,141 @@ export function generateFrameContextOps(frame, setup) {
         //   LipNotch A: [posA - 35.6 .. posA + 15.2]  (extends outward, 50.8 wide)
         //   LipNotch B: [posB - 15.2 .. posB + 35.6]
         // With ~20mm inner gap between them.
+        //
+        // 2026-05-11 (Agent LBW5): the SPLIT-vs-MERGE behaviour and per-side
+        // offsets vary with the W brace angle on H sticks in LBW frames:
+        //   angle ≥ 64° → MERGE: ONE LipNotch [leftDimple-outer .. rightDimple+outer]
+        //   angle < 64° → SPLIT: per-dimple LipNotches with angle-aware offsets
+        // Where (verified vs HG260044 GF-LBW + HG260001 PK4 GF-LBW corpora,
+        // 28 H-stick paired-dimple cases):
+        //   outer = 22.7/sin(α) + 20/tan(α)
+        //   inner = 22.7/sin(α) - 20/tan(α)
+        // (split width = outer + inner = 45.4/sin(α); fit error < 0.2mm)
+        //
+        // The discriminator threshold of 64° is sharp:
+        //   L8/L36 H1 (α=64.31°) MERGE → 120.3mm span
+        //   L36 H2  (α=62.98°)  SPLIT → 50.9mm each
+        //   L19/L20 (α=63.54°)  SPLIT → 50.6mm each
+        //   L33     (α=67.79°)  MERGE → 117.4mm span
+        //
+        // PREDICATE: only fires on H-role sticks in LBW plans where W braces
+        // (not S studs) are the source of the pair crossings. Falls back to the
+        // legacy outer=35/inner=15 constants outside that scope.
+        const planNameForBodyPair = frame.planName ?? "";
+        const isLbwForBodyPair = /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(planNameForBodyPair)
+            && !/(?:^|[-_/])(?:NLBW|NON-LBW)(?:[-_/]|$)/i.test(planNameForBodyPair);
+        const useAngleAwarePair = isLbwForBodyPair && header.role === "H" && hasWebBraceCrossing;
+        const ANGLE_AWARE_K_SIN = 22.7; // outer+inner = 2*K_SIN/sin(α)
+        const ANGLE_AWARE_K_TAN = 20.0; // outer-inner = 2*K_TAN/tan(α)
+        const ANGLE_MERGE_THRESHOLD_DEG = 64;
         crossings.sort((a, b) => a - b);
         const PAIR_THRESHOLD = 70; // pairs are ~50mm apart (jamb+king)
-        const PAIR_NOTCH_OUTER_OFFSET = 35; // outer extent
-        const PAIR_NOTCH_INNER_OFFSET = 15; // inner extent (toward pair midpoint)
+        const PAIR_NOTCH_OUTER_OFFSET = 35; // legacy outer extent (non-LBW / non-W-brace)
+        const PAIR_NOTCH_INNER_OFFSET = 15; // legacy inner extent (toward pair midpoint)
         const SINGLE_NOTCH_SPAN_HALF = 22.5;
+        // 2026-05-11 (Agent LBW5): cluster crossings into groups of consecutive
+        // positions where each adjacent gap is < PAIR_THRESHOLD. Pairs (size 2)
+        // are the common jamb+king case. Triples+ occur when 3+ W braces share a
+        // panel-point cluster on the H header — verified vs HG260001 PK4 L33 H1
+        // (3 dimples at 879/932/984 from W3+W4+W5 inverted-V cluster). Detailer
+        // ALWAYS merges triples into one wide LipNotch regardless of W angle.
         const used = new Set();
         for (let i = 0; i < crossings.length; i++) {
             if (used.has(i))
                 continue;
-            const posA = crossings[i];
-            // Look for a near neighbor
-            let pairIdx = -1;
+            const cluster = [crossings[i]];
+            used.add(i);
+            let lastIdx = i;
             for (let j = i + 1; j < crossings.length; j++) {
                 if (used.has(j))
                     continue;
-                const posB = crossings[j];
-                if (Math.abs(posB - posA) < PAIR_THRESHOLD) {
-                    pairIdx = j;
+                if (crossings[j] - crossings[lastIdx] < PAIR_THRESHOLD) {
+                    cluster.push(crossings[j]);
+                    used.add(j);
+                    lastIdx = j;
+                }
+                else {
                     break;
                 }
             }
-            if (pairIdx >= 0) {
-                const posB = crossings[pairIdx];
-                used.add(i);
-                used.add(pairIdx);
-                // A is the LEFT one, B is the RIGHT one
-                const left = Math.min(posA, posB);
-                const right = Math.max(posA, posB);
-                // LipNotch A: extends OUT to the left (outer offset)
-                stickOps.push({
-                    kind: "spanned", type: "LipNotch",
-                    startPos: round(left - PAIR_NOTCH_OUTER_OFFSET),
-                    endPos: round(left + PAIR_NOTCH_INNER_OFFSET),
-                });
-                // LipNotch B: extends OUT to the right
-                stickOps.push({
-                    kind: "spanned", type: "LipNotch",
-                    startPos: round(right - PAIR_NOTCH_INNER_OFFSET),
-                    endPos: round(right + PAIR_NOTCH_OUTER_OFFSET),
-                });
-                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(left) });
-                stickOps.push({ kind: "point", type: "InnerDimple", pos: round(right) });
+            if (cluster.length >= 2) {
+                const left = cluster[0];
+                const right = cluster[cluster.length - 1];
+                // Angle-aware emission on LBW H sticks. For pairs require ALL
+                // crossings to be W-brace (not S studs); for clusters of 3+, allow
+                // mixed crossings as long as at least 2 have W-brace angles. The
+                // 3-dimple cluster pattern (e.g. HG260001 PK4 L33 H1 879/932/984)
+                // can have one position emitted by both Pass 1 (king stud) and Pass 2
+                // (W brace), but the seenPositions dedupe means only one source ends
+                // up in crossingAngles.
+                const wAnglesInCluster = cluster
+                    .map(p => crossingAngles.get(Math.round(p * 10) / 10))
+                    .filter((a) => a !== undefined);
+                const allFromWBrace = wAnglesInCluster.length === cluster.length;
+                const useAngleForCluster = useAngleAwarePair && (allFromWBrace || (cluster.length >= 3 && wAnglesInCluster.length >= 2));
+                if (useAngleForCluster) {
+                    const avgAngle = wAnglesInCluster.reduce((s, a) => s + a, 0) / wAnglesInCluster.length;
+                    const sin = Math.sin(avgAngle * Math.PI / 180);
+                    const tan = Math.tan(avgAngle * Math.PI / 180);
+                    const outer = ANGLE_AWARE_K_SIN / sin + ANGLE_AWARE_K_TAN / tan;
+                    const inner = ANGLE_AWARE_K_SIN / sin - ANGLE_AWARE_K_TAN / tan;
+                    // Triples (and larger clusters) ALWAYS merge — Detailer never
+                    // splits them. Pairs respect the 64° angle threshold.
+                    if (cluster.length >= 3 || avgAngle >= ANGLE_MERGE_THRESHOLD_DEG) {
+                        // MERGE: single LipNotch spanning the cluster plus outer overhangs
+                        stickOps.push({
+                            kind: "spanned", type: "LipNotch",
+                            startPos: round(left - outer),
+                            endPos: round(right + outer),
+                        });
+                    }
+                    else {
+                        // SPLIT (pair only): per-dimple LipNotches with angle-aware
+                        // outer/inner offsets
+                        stickOps.push({
+                            kind: "spanned", type: "LipNotch",
+                            startPos: round(left - outer),
+                            endPos: round(left + inner),
+                        });
+                        stickOps.push({
+                            kind: "spanned", type: "LipNotch",
+                            startPos: round(right - inner),
+                            endPos: round(right + outer),
+                        });
+                    }
+                }
+                else {
+                    // Legacy emission (non-LBW, S-stud-only pairs, or unknown angle):
+                    // LipNotch A: extends OUT to the left (outer offset)
+                    stickOps.push({
+                        kind: "spanned", type: "LipNotch",
+                        startPos: round(left - PAIR_NOTCH_OUTER_OFFSET),
+                        endPos: round(left + PAIR_NOTCH_INNER_OFFSET),
+                    });
+                    // LipNotch B: extends OUT to the right
+                    stickOps.push({
+                        kind: "spanned", type: "LipNotch",
+                        startPos: round(right - PAIR_NOTCH_INNER_OFFSET),
+                        endPos: round(right + PAIR_NOTCH_OUTER_OFFSET),
+                    });
+                    // Mid-cluster crossings (rare in non-LBW): emit symmetric singles
+                    for (let k = 1; k < cluster.length - 1; k++) {
+                        const p = cluster[k];
+                        stickOps.push({
+                            kind: "spanned", type: "LipNotch",
+                            startPos: round(p - SINGLE_NOTCH_SPAN_HALF),
+                            endPos: round(p + SINGLE_NOTCH_SPAN_HALF),
+                        });
+                    }
+                }
+                // InnerDimples at every cluster position
+                for (const p of cluster) {
+                    stickOps.push({ kind: "point", type: "InnerDimple", pos: round(p) });
+                }
             }
             else {
                 // Single crossing — symmetric notch
-                used.add(i);
+                const posA = cluster[0];
                 stickOps.push({
                     kind: "spanned", type: "LipNotch",
                     startPos: round(posA - SINGLE_NOTCH_SPAN_HALF),

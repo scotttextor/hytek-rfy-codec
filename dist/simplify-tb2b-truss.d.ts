@@ -57,18 +57,6 @@ export interface Tb2bWebPositionsOptions {
      *  the gap WITHOUT changing the rule's defaults (avoids regressing other
      *  bottomchord shapes). Verified on PK6 TT7-1/TT8-1/TT9-1 B1 sticks. */
     forceReverseStickKeys?: ReadonlySet<string>;
-    /** Per-web-instance arc-direction override (Agent T8, 2026-05-11). Keys
-     *  in this set are WEB stick instance keys (`name#occurrence`) whose final
-     *  Web@pt positions should be reversed (L - p).
-     *
-     *  Used by `simplifyTb2bTrussFrame` to handle TB2B trusses where Detailer
-     *  measures the chord-crossing position from the OPPOSITE end of the web
-     *  vs the codec's XML-start-driven natural direction. Specifically affects
-     *  high-y → low-y sloped webs (Δy < -50, Δz > 50) in T/TT/TTI/TN truss
-     *  frames where a chord-crossing falls in the mid-stick zone (not absorbed
-     *  by the W_END_ANCHOR=35 anchor). Verified vs HG260001 PK12 TT2-1 W16,
-     *  TT3-1 W16, TT5-1 W14, TN1-1/TN2-1 W12. */
-    reverseWebStickKeys?: ReadonlySet<string>;
 }
 export declare function computeTb2bWebPositions(sticks: ReadonlyArray<MetaStick>, options?: Tb2bWebPositionsOptions): Map<string, number[]>;
 export interface SimplifyTb2bDecision {

@@ -65,7 +65,6 @@ const WEB_VS_RAIL_OFFSET_FOR_PEER_PAIR = 15;
 export function computeTb2bWebPositions(sticks, options) {
     const perpCorrOverride = options?.perpWebChordCorrectionOverride ?? new Map();
     const forceReverseStickKeys = options?.forceReverseStickKeys ?? new Set();
-    const reverseWebStickKeys = options?.reverseWebStickKeys ?? new Set();
     // Detect the constant-axis: compute per-axis range across ALL endpoints.
     // The axis with min range (within 1mm) is the "out-of-plane" axis.
     const axes = ["x", "y", "z"];
@@ -456,20 +455,7 @@ export function computeTb2bWebPositions(sticks, options) {
                     result.push(p);
             }
             result.sort((a, b) => a - b);
-            // Agent T8 (2026-05-11): per-web arc-reversal override for TB2B
-            // trusses. Detailer measures chord-crossing positions from the
-            // opposite end of the web vs the codec's XML-start-driven natural
-            // direction for high-y → low-y sloped webs (XML flipped=true) in
-            // truss frames. The start/end anchors (W_END_ANCHOR=35 and L-35)
-            // are symmetric under (L - p), so reversing here just mirrors the
-            // mid-stick crossings.
-            if (reverseWebStickKeys.has(key)) {
-                const reversed = result.map((p) => L - p).sort((a, b) => a - b);
-                out.set(key, reversed);
-            }
-            else {
-                out.set(key, result);
-            }
+            out.set(key, result);
         }
         else {
             let filtered = dedup.filter((p) => p >= END_ZONE - 0.5 && p <= L - END_ZONE + 0.5);
@@ -758,71 +744,9 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             t7ForceReverseStickKeys.add(`${stick.name}#${occ}`);
         }
     }
-    // ────────────────────────────────────────────────────────────────────
-    // Agent T8 (2026-05-11): TB2B truss "high-y → low-y" sloped-web reversal.
-    // ────────────────────────────────────────────────────────────────────
-    //
-    // In TB2B trusses, FrameCAD Detailer measures Web@pt positions on a
-    // class of sloped webs from the OPPOSITE end vs the codec's natural
-    // XML-start-driven direction. The geometric signature of this class is
-    // Δy < 0 in the YZ plane (XML emits with high-y at start, low-y at end)
-    // — the same sticks that XML marks `flipped=true`. The diff harness
-    // overrides flipped=false for all W-sticks (Kb diagonal-brace sentinel
-    // at line 547 of `scripts/diff-vs-detailer.mjs`), so we gate on raw
-    // Δy geometry rather than the (unreliable) `meta.flipped`.
-    //
-    // The discrepancy only surfaces on webs whose chord-crossings fall in
-    // the mid-stick zone (otherwise the W_END_ANCHOR=35 anchor absorbs
-    // them and the symmetric anchors hide the reversal).
-    //
-    // Verified mid-stick drifts (HG260001 PK10/PK12):
-    //   TT5-1   W14 (Δy=-1145, Δz=+2223): codec @1867 / ref @634 — L-1867=634
-    //   TT2-1   W16 (Δy=-1219, Δz=+663):  codec @958  / ref @430 — L-958=430
-    //   TT3-1   W16 (≈ TT2-1):            same pattern
-    //   TN1-1   W12 (Δy=-946,  Δz=+1345): codec @952  / ref @692 — L-952=692
-    //   TN2-1   W12 (≈ TN1-1):            same pattern
-    //   TN6-1   W15 (Δy=-532,  Δz=+1155): codec @235  / ref @1036 — L-235=1036
-    //
-    // Predicate (narrow to avoid regression on vertical webs that have no
-    // mid-stick drift to reverse):
-    //   • Frame name starts with T/TT/TTI/TN (truss families)
-    //   • Stick name starts with W (web)
-    //   • Δy < -50mm in the YZ plane (high-y → low-y direction)
-    //   • Δz > 50mm (rules out flat-laying webs)
-    //   • Stick length > 500mm (excludes tiny stub webs)
-    //
-    // The reversal is applied in `computeTb2bWebPositions`'s final output
-    // loop on the WEB-side positions only.
-    const t8ReverseWebStickKeys = new Set();
-    if (/^T/.test(frame.name)) {
-        const occByName = new Map();
-        for (let i = 0; i < frame.sticks.length; i++) {
-            const stick = frame.sticks[i];
-            const occ = occByName.get(stick.name) ?? 0;
-            occByName.set(stick.name, occ + 1);
-            if (/\(Box\d+\)/.test(stick.name))
-                continue;
-            if (!/^W\d/.test(stick.name))
-                continue;
-            const meta = metaSticks[i];
-            if (meta.usage !== "web")
-                continue;
-            const dy = meta.end3D.y - meta.start3D.y;
-            const dz = meta.end3D.z - meta.start3D.z;
-            if (dy >= -50)
-                continue; // not high-y → low-y
-            if (Math.abs(dz) <= 50)
-                continue; // pure horizontal — not a real web
-            const len = Math.hypot(dy, dz);
-            if (len <= 500)
-                continue;
-            t8ReverseWebStickKeys.add(`${stick.name}#${occ}`);
-        }
-    }
     const positionsByKey = computeTb2bWebPositions(metaSticks, {
         perpWebChordCorrectionOverride: slopedPeerPairChordCorr,
         forceReverseStickKeys: t7ForceReverseStickKeys,
-        reverseWebStickKeys: t8ReverseWebStickKeys,
     });
     const { dimplesByKey } = computeBoxDimples(metaSticks, resolvedSetup);
     // ────────────────────────────────────────────────────────────────────

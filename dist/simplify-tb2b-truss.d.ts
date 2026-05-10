@@ -44,6 +44,19 @@ export interface Tb2bWebPositionsOptions {
      *  naturally from the W17-W18-style PERP+PAR pair-bolt with the shifted
      *  PERP position. */
     perpWebChordCorrectionOverride?: ReadonlyMap<string, number>;
+    /** Per-stick-instance arc-direction override (Agent T7, 2026-05-11). Keys
+     *  in this set are stick instance keys (`name#occurrence`) whose final
+     *  arc-positions should be reversed (L - p) IN ADDITION to whatever
+     *  `needsArcReversal` returns for the stick.
+     *
+     *  Used by `simplifyTb2bTrussFrame` to handle the HG260001 PK6/PK12 TT-truss
+     *  flat-horizontal B-chord case: when XML emits B1 with `flipped=false`,
+     *  `start.y < end.y`, and `zSpan ≈ 0`, the codec's natural arc direction is
+     *  opposite to what Detailer measures. The existing rule in `needsArcReversal`
+     *  only catches the symmetric case (`start.y > end.y`); this override fills
+     *  the gap WITHOUT changing the rule's defaults (avoids regressing other
+     *  bottomchord shapes). Verified on PK6 TT7-1/TT8-1/TT9-1 B1 sticks. */
+    forceReverseStickKeys?: ReadonlySet<string>;
 }
 export declare function computeTb2bWebPositions(sticks: ReadonlyArray<MetaStick>, options?: Tb2bWebPositionsOptions): Map<string, number[]>;
 export interface SimplifyTb2bDecision {

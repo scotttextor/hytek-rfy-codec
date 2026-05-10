@@ -129,6 +129,20 @@ export interface Tb2bWebPositionsOptions {
    *  naturally from the W17-W18-style PERP+PAR pair-bolt with the shifted
    *  PERP position. */
   perpWebChordCorrectionOverride?: ReadonlyMap<string, number>;
+
+  /** Per-stick-instance arc-direction override (Agent T7, 2026-05-11). Keys
+   *  in this set are stick instance keys (`name#occurrence`) whose final
+   *  arc-positions should be reversed (L - p) IN ADDITION to whatever
+   *  `needsArcReversal` returns for the stick.
+   *
+   *  Used by `simplifyTb2bTrussFrame` to handle the HG260001 PK6/PK12 TT-truss
+   *  flat-horizontal B-chord case: when XML emits B1 with `flipped=false`,
+   *  `start.y < end.y`, and `zSpan ≈ 0`, the codec's natural arc direction is
+   *  opposite to what Detailer measures. The existing rule in `needsArcReversal`
+   *  only catches the symmetric case (`start.y > end.y`); this override fills
+   *  the gap WITHOUT changing the rule's defaults (avoids regressing other
+   *  bottomchord shapes). Verified on PK6 TT7-1/TT8-1/TT9-1 B1 sticks. */
+  forceReverseStickKeys?: ReadonlySet<string>;
 }
 
 export function computeTb2bWebPositions(
@@ -137,6 +151,8 @@ export function computeTb2bWebPositions(
 ): Map<string, number[]> {
   const perpCorrOverride =
     options?.perpWebChordCorrectionOverride ?? new Map<string, number>();
+  const forceReverseStickKeys =
+    options?.forceReverseStickKeys ?? new Set<string>();
   // Detect the constant-axis: compute per-axis range across ALL endpoints.
   // The axis with min range (within 1mm) is the "out-of-plane" axis.
   const axes = ["x", "y", "z"] as const;
@@ -274,8 +290,11 @@ export function computeTb2bWebPositions(
       const dot = aux * bux + auy * buy;
       const aZ = (v === "z") ? auy : (u === "z") ? aux : 0;
       const bZ = (v === "z") ? buy : (u === "z") ? bux : 0;
-      const aReversal = needsArcReversal(sA);
-      const bReversal = needsArcReversal(sB);
+      // Agent T7 (2026-05-11): merge force-reverse override into the per-stick
+      // reversal flag used for the chord-side correction sign. Same XOR rule
+      // as the final L-p mapping: if both fire, they cancel.
+      const aReversal = needsArcReversal(sA) !== forceReverseStickKeys.has(keyA);
+      const bReversal = needsArcReversal(sB) !== forceReverseStickKeys.has(keyB);
       const aFlipSign = aReversal && (sA.usage === "bottomchord" || sA.usage === "rail");
       const bFlipSign = bReversal && (sB.usage === "bottomchord" || sB.usage === "rail");
       // Override-tier check for sloped peer-pair B-chord PERP webs (Agent T4
@@ -487,7 +506,14 @@ export function computeTb2bWebPositions(
       out.set(key, result);
     } else {
       let filtered = dedup.filter((p) => p >= END_ZONE - 0.5 && p <= L - END_ZONE + 0.5);
-      if (needsArcReversal(stick)) {
+      // Reverse if either the standard rule fires OR the caller-supplied
+      // force-reverse override applies (Agent T7 — TT-truss flat B-chord
+      // direction-flip case). The two paths are XOR-effectively merged: if
+      // both fire, they cancel (no reversal). Currently `forceReverseStickKeys`
+      // only flags sticks where `needsArcReversal` returns false, so in
+      // practice this acts as a pure additive override.
+      const needsRev = needsArcReversal(stick) !== forceReverseStickKeys.has(key);
+      if (needsRev) {
         filtered = filtered.map((p) => L - p).sort((a, b) => a - b);
       }
       out.set(key, filtered);
@@ -743,8 +769,66 @@ export function simplifyTb2bTrussFrame(
     }
   }
 
+  // ────────────────────────────────────────────────────────────────────
+  // Agent T7 (2026-05-11): TT-truss flat-horizontal B-chord arc-reversal
+  // ────────────────────────────────────────────────────────────────────
+  //
+  // HG260001 PK6 has TT7-1/TT8-1/TT9-1 frames whose B1 stick is emitted by
+  // FrameCAD Detailer's XML with `flipped=false`, `start.y < end.y`, and
+  // zSpan ≈ 0 (purely horizontal flat-top truss bottom). All sister TT
+  // frames in the same job (TT2-1/TT3-1/TT4-1/TT5-1/TT6-1 in PK12) are
+  // emitted with `start.y > end.y` — which the existing rule
+  // `needsArcReversal` correctly catches and reverses. The TT7-9 frames are
+  // emitted in the OPPOSITE XML direction; the existing rule misses them,
+  // so codec arc-positions land mirrored relative to Detailer's reference.
+  //
+  // Concrete signature on PK6 TT7-1 B1 (length 10930, 30 webs):
+  //   Codec @ 341.4, 1382.5, 2667.0, 2765.0, …, 10591.2 (from low-y end)
+  //   Ref   @ 338.8, 1121.3, 2144.6, 2242.6, …, 10588.6 (from high-y end)
+  //   Every codec position satisfies (codec ≈ L − ref), confirming that the
+  //   ONLY discrepancy on these sticks is arc-direction.
+  //
+  // Predicate (narrow to avoid regression):
+  //   • frame name starts with `TT` (rules out TN/TTI/TR cases)
+  //   • stick name starts with `B` (bottom chord)
+  //   • stick is not a Box-piece (covered by the simplifier's normal flow)
+  //   • flipped === false
+  //   • zSpan < 5 (horizontal flat truss, not sloped chord)
+  //   • start.y < end.y (the existing rule's mirror case)
+  //   • stick length > 5000 (rules out short stub B2/B3 that happen to share
+  //     this geometry — TT B1 mains are 6275-10930mm; HG260001 stub B-chords
+  //     are ≤2600mm)
+  //
+  // The override is added to `forceReverseStickKeys` and consumed inside
+  // `computeTb2bWebPositions` (XOR'd with `needsArcReversal`'s default).
+  // No other call site is affected.
+  const t7ForceReverseStickKeys = new Set<string>();
+  if (/^TT/.test(frame.name)) {
+    const occByName = new Map<string, number>();
+    for (let i = 0; i < frame.sticks.length; i++) {
+      const stick = frame.sticks[i]!;
+      const occ = occByName.get(stick.name) ?? 0;
+      occByName.set(stick.name, occ + 1);
+      if (/\(Box\d+\)/.test(stick.name)) continue;
+      if (!/^B\d/.test(stick.name)) continue;
+      const meta = metaSticks[i]!;
+      if (meta.usage !== "bottomchord") continue;
+      if (meta.flipped) continue;
+      const zSpan = Math.abs(meta.end3D.z - meta.start3D.z);
+      if (zSpan >= 5) continue;
+      if (meta.start3D.y >= meta.end3D.y) continue;
+      const len = Math.hypot(
+        meta.end3D.y - meta.start3D.y,
+        meta.end3D.z - meta.start3D.z,
+      );
+      if (len <= 5000) continue;
+      t7ForceReverseStickKeys.add(`${stick.name}#${occ}`);
+    }
+  }
+
   const positionsByKey = computeTb2bWebPositions(metaSticks, {
     perpWebChordCorrectionOverride: slopedPeerPairChordCorr,
+    forceReverseStickKeys: t7ForceReverseStickKeys,
   });
   const { dimplesByKey } = computeBoxDimples(metaSticks, resolvedSetup);
 

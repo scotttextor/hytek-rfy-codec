@@ -3,15 +3,15 @@ OP-LEVEL DIFF — HG260023 LOT 1165 (69) ATTENBOROUGH DRIVE BANYA-GF-TB2B-70.075
 Setup:    F325iT 70mm
 Frames:   our 24 | ref 5
 
-OPS:      our 441 | ref 470
+OPS:      our 436 | ref 470
 MATCHED:  344  (73.2% of ref)
 MISSING:  126  (ops Detailer has, we don't)
-EXTRAS:   97   (ops we have, Detailer doesn't)
+EXTRAS:   92   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Web@pt                   274        98       93   (74% ref-coverage)
+Web@pt                   274        98       88   (74% ref-coverage)
 LipNotch@span              7         8        2   (47% ref-coverage)
 LeftFlange@span            7         8        2   (47% ref-coverage)
 RightFlange@span           5         8        0   (38% ref-coverage)
@@ -33,7 +33,6 @@ FRAMES WITH GAPS:
     W20      MISSING (1): Web @803.6
     W20      EXTRAS  (1): Web @819.2
     H9       MISSING (4): Web @2582.0 | LeftFlange 2485.3..2666.3 | LipNotch 2611.4..2666.3 | RightFlange 2633.8..2666.3
-    H9       EXTRAS  (1): Web @2649.7
     W21      MISSING (1): Web @771.0
     W21      EXTRAS  (1): Web @786.0
     W22      MISSING (2): Web @771.0 | Web @905.1
@@ -74,7 +73,6 @@ FRAMES WITH GAPS:
     W18      MISSING (1): Web @536.1
     W18      EXTRAS  (1): Web @511.6
     H8       MISSING (6): Web @31.3 | Web @396.8 | Web @2307.1 | LeftFlange 2210.4..2391.5 | LipNotch 2336.6..2391.5 ... +1
-    H8       EXTRAS  (1): Web @2374.8
     W19      MISSING (2): Web @312.0 | Web @446.1
     W19      EXTRAS  (2): Web @327.0 | Web @439.1
     W20      MISSING (2): Web @35.0 | Web @784.1
@@ -89,7 +87,6 @@ FRAMES WITH GAPS:
     B1       MISSING (3): Web @3333.0 | Web @5325.9 | Web @6392.0
     B1       EXTRAS  (2): Web @5343.3 | Web @6409.4
     H5       MISSING (4): Web @84.3 | RightFlange 0.0..32.5 | LipNotch 0.0..54.9 | LeftFlange 0.0..181.1
-    H5       EXTRAS  (1): Web @16.7
     W13      MISSING (2): InnerDimple @1000.0 | InnerDimple @1100.0
 
   TT12-1 (4 sticks with gaps)
@@ -98,5 +95,4 @@ FRAMES WITH GAPS:
     B1       MISSING (2): Web @4540.7 | Web @6392.0
     B1       EXTRAS  (2): Web @4528.3 | Web @6404.5
     H5       MISSING (4): Web @84.3 | RightFlange 0.0..32.5 | LipNotch 0.0..54.9 | LeftFlange 0.0..181.1
-    H5       EXTRAS  (1): Web @16.7
     W15      MISSING (2): InnerDimple @1040.0 | InnerDimple @1140.0

@@ -70,24 +70,51 @@ export function isTinPcFrameName(frameName: string): boolean {
 }
 
 /** Compute end-Swage span for a TIN diagonal W-stick at the given angle from
- *  vertical (degrees). Mirrors the production wall-W formula
- *  (`wallWEndSwageSpan` in src/rules/table.ts) — `39/cos + 8·tan²` capped at
- *  92mm. Verified vs HG260044 GF-TIN-70.075 PC/TGI corpus (29 paired Swage
- *  drift records): predicts ref span within 1-2mm at angles ≤20° and within
- *  2-4mm at angles 25-60°, vs the harness's `45/cos` which over-emits by
- *  5-7mm at low angles (the dominant TIN failure mode).
+ *  vertical (degrees).
  *
- *  A closer fit (`39/cos^1.2`) was tried but rejected in favour of mirroring
- *  the existing tested production formula — sharing the same span function
- *  across wall-W and TIN-W keeps maintenance simple and prevents two
- *  formulae drifting independently. */
+ *  Formula: `min(39/cos + 8·tan², 45/cos)`, capped at 100mm safety bound.
+ *  Both `39/cos + 8·tan²` (the production wall-W formula) and `45/cos`
+ *  describe valid Detailer behaviour in different angle regimes:
+ *
+ *    angle ≤ ~52°: `39/cos + 8·tan²` is smaller and matches ref (≤ 1mm).
+ *    angle ≥ ~52°: `45/cos`           is smaller and matches ref (≤ 1mm).
+ *
+ *  The crossover happens at ~52° where the two curves equal. Below it the
+ *  quadratic-in-tan low-formula dominates; above it the linear-in-sec
+ *  high-formula dominates. Taking the elementwise minimum produces a
+ *  smooth, monotonic curve that respects both regimes with no
+ *  discontinuity and no need to hard-code a transition zone.
+ *
+ *  Empirical residuals (combined 23-point HG260044 + HG260001 PC/TGI corpus,
+ *  spanning angles 2.7°–60°; RMS = 0.47mm, max = 0.95mm — every point well
+ *  inside the 1.5mm match tolerance):
+ *
+ *    a=2.71°  ref=39.0  fit=39.06  Δ=-0.06
+ *    a=19.44° ref=41.4  fit=42.35  Δ=-0.95
+ *    a=37.80° ref=54.4  fit=54.17  Δ=+0.23   (HG260044 0.095 PC1-1 W5)
+ *    a=40.91° ref=57.6  fit=57.61  Δ=-0.01   (HG260044 0.095 PC6-1 W4)
+ *    a=50.34° ref=70.0  fit=70.51  Δ=-0.51
+ *    a=55.73° ref=80.0  fit=79.92  Δ=+0.08   (HG260044 0.095 PC6-1 W5)
+ *    a=57.44° ref=84.0  fit=83.61  Δ=+0.39
+ *    a=59.85° ref=90.0  fit=89.59  Δ=+0.41
+ *
+ *  History: original Agent TIN (2026-05-09) used `39/cos + 8·tan²` cap=92
+ *  with no high-angle fallback — fit HG260044's low-angle TGI cohort (≤20°)
+ *  but over-emitted by 3–8mm on HG260001 PC1/PC3 (50–57°), regressing
+ *  HG260001 GF-TIN by ~1pp. An interim piecewise blend (linear interp in
+ *  25°–45° transition) was rejected because the blended values miss the
+ *  ~38° and ~41° HG260044 0.095 reference points by 1.5mm. The
+ *  elementwise-min form below preserves all wins and adds none of the
+ *  drawbacks. 2026-05-10 (Agent TIN2 v2). */
 function tinDiagonalEndSwageSpan(angleFromVerticalDeg: number): number {
   const a = Math.max(0, angleFromVerticalDeg);
   const rad = (a * Math.PI) / 180;
   const cos = Math.cos(rad);
-  if (cos < 0.05) return 92;
+  if (cos < 0.05) return 100;
   const tan = Math.sin(rad) / cos;
-  return Math.min(39 / cos + 8 * tan * tan, 92);
+  const lowFit = 39 / cos + 8 * tan * tan;
+  const highFit = 45 / cos;
+  return Math.min(lowFit, highFit, 100);
 }
 
 /** Compute the per-end InnerDimple offset (mm from each end) for a TIN
@@ -663,7 +690,17 @@ export function simplifyTinTrussFramesInProject(
       // production wall-W formula (`39/cos + 8·tan²`). Reduces per-diagonal
       // end-Swage drift from ~6mm at 13° to <1mm. See `fixTinDiagonalEndSwage`
       // for gates + verification.
-      if (isTinPcFrameName(frame.name)) {
+      //
+      // 2026-05-10 (Agent TIN2 v2): extended the same fix to HN/TN/TS/TI
+      // truss-style frames. The diagonal-W drift pattern is identical there:
+      // the codec emits the wall-rule's `45/cos` span which over-emits at
+      // low angles by 5–6mm. Verified on HG260001 GF-TIN-70.075 (HN12-1 /
+      // TS1-1 / TN8-1 diagonal Ws): start-dimple @10→@offset and end-Swage
+      // span re-spanning eliminate ~30 missing/extras pairs without
+      // regressing any of the truss-style frames whose vertical-W rule is
+      // independent (verticals are filtered out by the per-stick gate via
+      // horiz<1).
+      if (isTinPcFrameName(frame.name) || isTinTrussFrameName(frame.name)) {
         for (const stick of frame.sticks) {
           fixTinDiagonalEndSwage(stick);
           fixTinDiagonalDimplePosition(stick);

@@ -635,7 +635,34 @@ export function generateFrameContextOps(
     // are 10mm apart (one panel-point's V + neighboring W). Verified vs HG260012
     // JB1210-1/T4 ref: V6@311 + W8@260.6 with edges 290.5/331.5 + 232.9/275.8
     // (gap ~15mm) emit single LipNotch [230.7..333.5].
-    const CHORD_CLUSTER_GAP = 15;
+    //
+    // LBW7 (2026-05-11): on LBW T-plates >= 4000mm long with W-braces, bump
+    // gap 15 -> 22 to merge adjacent panel-pair W-clusters. Detailer emits
+    // ONE wide LipNotch covering both W's at a panel point on long plates
+    // (e.g. HG260001 PK4 L19/T1 4040mm: ref LipNotch 832.81..953.19 covers
+    // centerlines 867.62 + 918.38 (gap 20.5mm); L33/T1 4192mm: ref
+    // LipNotch 1405.25..1519.05 covers centerlines 1438.59 + 1488.36 (gap
+    // 17.2mm)). Our prior gap=15 left these as two separate spans with the
+    // second appearing as a pure extra.
+    //
+    // Scope gated tightly to LBW plans, T-plates, frames with W-braces,
+    // and plates >= 4000mm long. Shorter plates with similar gaps (L4/T2
+    // 1888mm, L8/T1 2000mm, L15/T1 3712mm in HG260044, L24/T1 3622mm) are
+    // EXCLUDED because Detailer's merge behavior on them is inconsistent:
+    // some merge, some keep separate, and the discriminator isn't gap-
+    // alone. Applied at the W-cluster build step (not the post-pass
+    // `joinAdjacentLipNotches`) to avoid over-merging unrelated adjacent
+    // stud-LipNotches that share the gap range. Verified 2026-05-11:
+    // eliminates 6 LipNotch extras (3 L19 + 3 L33) on HG260001 PK4
+    // without regressing matches anywhere.
+    const planNameForLbw7 = (frame as { planName?: string }).planName ?? "";
+    const isLbwFrame_lbw7 = /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(planNameForLbw7);
+    const plateIsT_lbw7 = plate.stick.name.startsWith("T");
+    const isLongPlate_lbw7 = plate.stick.length >= 4000;
+    const isLbwLongTWithWBraces =
+      isLbwFrame_lbw7 && plateIsT_lbw7 && isLongPlate_lbw7 &&
+      wallWBraces.length > 0;
+    const CHORD_CLUSTER_GAP = isLbwLongTWithWBraces ? 22 : 15;
     for (const wc of webCrossings) {
       const wcStart = wc.localPosLo - wc.offset;
       const wcEnd = wc.localPosHi + wc.offset;

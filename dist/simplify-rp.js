@@ -573,10 +573,31 @@ function detectRpBplateEaveOverhang(stick, frame) {
         return "end";
     }
     // Branch B: single-sloped-T-plate frame (shed-style RP).
+    //
+    // Skillion-roof exclusion: in HG260001 R8/R9/R14/R15, the panel has a
+    // SHORT B-plate at floor level + a high T-plate sloped over studs that
+    // go far past T-plate length. These get standard 4mm/end trim (bucket=-8),
+    // not the 1.5mm/end subordinate trim. Detect by maxStudLen / tLen > 1.0
+    // (same predicate as RP5's frameSingleTplateRakeDirection). Verified vs
+    // HG260001 R8 (S1=6096mm > T1=2994mm → skip), HG260001 R2 (S6=1736mm <
+    // T1=2255mm → fires correctly).
     const tPlates = frame.sticks.filter(isTplate);
     if (tPlates.length === 1) {
         const t = tPlates[0];
         const tDz = Math.abs(t.end.z - t.start.z);
+        const tLen = Math.sqrt((t.end.x - t.start.x) ** 2 + (t.end.y - t.start.y) ** 2 + (t.end.z - t.start.z) ** 2);
+        let maxStudLen = 0;
+        for (const s of frame.sticks) {
+            if (!isSstud(s))
+                continue;
+            const sl = Math.sqrt((s.end.x - s.start.x) ** 2 + (s.end.y - s.start.y) ** 2 + (s.end.z - s.start.z) ** 2);
+            if (sl > maxStudLen)
+                maxStudLen = sl;
+        }
+        if (tLen > 0 && maxStudLen / tLen > 1.0) {
+            // Skillion roof — skip Branch B, use standard trim.
+            return null;
+        }
         if (tDz >= RP_BPLATE_TPLATE_SLOPED_DZ_MM) {
             const tLow = t.start.z < t.end.z ? t.start : t.end;
             const dStartSq = (tLow.x - stick.start.x) ** 2 + (tLow.y - stick.start.y) ** 2;

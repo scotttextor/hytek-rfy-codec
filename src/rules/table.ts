@@ -162,6 +162,45 @@ function bhEndTakesSwageCap(ctx: StickContext): boolean {
   return ctx.bhEndCapIsSwage === true;
 }
 
+/**
+ * Agent LBW4 (2026-05-11): angle-dependent "long" Kb Swage cap span.
+ * Verified vs HG260001 PK4 LBW Kb1 (angle 68.3°) ref Swage span = 122.6mm
+ * ≈ 45/cos(68.3°) = 121.6mm. Capped at 230mm for very-shallow Kbs.
+ */
+function kbLongSpan(ctx: StickContext): number {
+  const angleFromVert = ctx.angleFromVertical ?? 0;
+  const angleFromHoriz = 90 - angleFromVert;
+  const c = Math.cos(angleFromHoriz * Math.PI / 180);
+  if (c < 0.05) return 43;
+  return Math.min(45 / c, 230);
+}
+
+/**
+ * Agent LBW4 (2026-05-11): whether the Kb's "long" Swage cap is at the
+ * START end (orientation flipped) vs the END end (default orientation).
+ *
+ * Detailer places the long, angle-scaled Swage cap at the PLATE-ATTACHED
+ * end of each Kb. The "uniform vs xnor" mode determines which end of our
+ * normalized stick that maps to:
+ *   • "uniform-both-ends" (HG260044): long@start iff kbTopAttached
+ *   • "xnor-paired"      (HG260001): long@start iff inputFlipped !== kbTopAttached (XOR)
+ *
+ * Verified 2026-05-11: HG260044 LBW 46/46 + HG260001 PK4 14/14 + PK5 16/16.
+ * Mode resolution mirrors the Kb @end Chamfer rule.
+ */
+function kbHasLongAtStart(ctx: StickContext): boolean {
+  if (ctx.role !== "Kb") return false;
+  if (ctx.kbTopAttached === undefined) return false;
+  const mode = ctx.projectConfig?.kbChamferMode
+    ?? (ctx.kbFrameUniformFlipped === true ? "uniform-both-ends"
+      : ctx.kbFrameUniformFlipped === false ? "xnor-paired"
+      : undefined)
+    ?? "xnor-paired";
+  if (mode === "uniform-both-ends") return ctx.kbTopAttached;
+  if (ctx.inputFlipped === undefined) return false;
+  return ctx.inputFlipped !== ctx.kbTopAttached;
+}
+
 export const RULE_TABLE: RuleGroup[] = [
   // ----------- STUDS on 70S41 (any length) -----------
   {
@@ -330,29 +369,32 @@ export const RULE_TABLE: RuleGroup[] = [
             && ctx.inputFlipped === ctx.kbTopAttached;
         },
         notes: "Kb end Chamfer: xnor-paired (default) or uniform-both-ends (config-driven)" },
-      // Start Swage: ~42mm at the mid-wall end (cap perpendicular to Kb axis).
-      // Verified 2026-05-04 vs HG260001 PK4 LBW Kb1: ref Swage 0..42.4 (span 42).
+      // Kb Swage caps — Agent LBW4 (2026-05-11): orientation depends on
+      // which end is plate-attached. See `kbHasLongAtStart` helper above.
+      // Short cap: fixed 42mm. Long cap: angle-dependent kbLongSpan().
+      // Short@start (default — long goes to END):
       { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 42, confidence: "high",
-        predicate: (ctx) => ctx.role === "Kb",
-        notes: "Kb start Swage: ~42mm cap at mid-wall end" },
+        predicate: (ctx) => ctx.role === "Kb" && !kbHasLongAtStart(ctx),
+        notes: "Kb start Swage: short 42mm (default orientation)" },
+      // Long@start (HG260044 + paired-XOR HG260001 frames):
+      { toolType: "Swage", kind: "spanned",
+        anchor: { kind: "startAnchored", offset: 0 },
+        spanLengthFn: (ctx) => kbLongSpan(ctx),
+        confidence: "high",
+        predicate: (ctx) => ctx.role === "Kb" && kbHasLongAtStart(ctx),
+        notes: "Kb start Swage: angle-dependent long cap (orientation-flipped)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: 10 }, confidence: "high", notes: "Kb dimple at 10mm (not 16.5mm)" },
-      // End Swage: angle-dependent span = 45/cos(angle from horizontal).
-      // For steep Kbs (~68° from horizontal) this is ~120mm — covers the
-      // Kb's plate-attached angled cut. Verified 2026-05-04 vs HG260001 PK4
-      // LBW Kb1 (angle 68.3°): ref Swage 1354..1476.6 (span 122.6 ≈ 45/cos(68.3°)
-      // = 121.6).
+      // Long@end (default orientation):
       { toolType: "Swage", kind: "spanned",
         anchor: { kind: "endAnchored", offset: 0 },
-        spanLengthFn: (ctx) => {
-          const angleFromVert = ctx.angleFromVertical ?? 0;
-          const angleFromHoriz = 90 - angleFromVert;
-          const c = Math.cos(angleFromHoriz * Math.PI / 180);
-          if (c < 0.05) return 43;  // near-horizontal Kb
-          return Math.min(45 / c, 200);  // cap at 200mm
-        },
+        spanLengthFn: (ctx) => kbLongSpan(ctx),
         confidence: "medium",
-        predicate: (ctx) => ctx.role === "Kb",
-        notes: "Kb end Swage: angle-dependent span (45/cos(angle from horizontal))" },
+        predicate: (ctx) => ctx.role === "Kb" && !kbHasLongAtStart(ctx),
+        notes: "Kb end Swage: angle-dependent (default orientation)" },
+      // Short@end (orientation-flipped):
+      { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 42 }, spanLength: 42, confidence: "high",
+        predicate: (ctx) => ctx.role === "Kb" && kbHasLongAtStart(ctx),
+        notes: "Kb end Swage: short 42mm (orientation-flipped)" },
       // For H sticks (cripple role but not Kb), keep simpler 43mm span.
       { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: 43 }, spanLength: 43, confidence: "medium",
         predicate: (ctx) => ctx.role !== "Kb",

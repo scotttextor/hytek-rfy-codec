@@ -533,11 +533,24 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
         ],
     },
-    // ----------- SHORT NOGS on 89S41 -----------
+    // ----------- 89S41 NOG rules MIRRORED from 70S41 (2026-05-10) -----------
+    // The earlier 89mm short-nog rule (length < 200) emitted InnerNotch+LipNotch
+    // caps unconditionally. Verified vs HG260044 GF-NLBW-89.075 frame N28
+    // (N1/N2 at length 107mm): Detailer emits Swage @start + Swage @end, NOT
+    // notch caps. The same family of mistake Agent T corrected on 70S41
+    // (commit 2026-05-05) — short nogs are cross-noggins and want Swage caps,
+    // EXCEPT the 162-168mm "door-head cripple" sub-case which is treated as a
+    // header sub-piece and gets InnerNotch+LipNotch. Mirroring the 70mm rule
+    // structure: explicit [162, 168] header-cripple band first, then the
+    // catch-all [0, Infinity] Swage rule.
+    //
+    // Limited corpus evidence on 89mm so far:
+    //   HG260044 GF-NLBW-89.075 N28: 4 sticks at 107mm, all want Swage caps
+    // The 162-168mm header-cripple case is preserved by analogy to 70mm.
     {
         rolePattern: NOG_ROLES,
         profilePattern: /^89S41$/,
-        lengthRange: [0, 200],
+        lengthRange: [162, 168],
         rules: [
             { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
@@ -547,11 +560,14 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
         ],
     },
-    // ----------- LONG NOGS on 89S41 -----------
+    // ----------- ALL OTHER NOGS on 89S41 (cross-noggins, both short and long) -----------
+    // Length range starts at 0 — short nogs <162mm and >=168mm match here too.
+    // 2026-05-10: same two-rule structure as 70S41 (which Agent T verified
+    // 91/91 short nogs (excluding 164mm cripples) get Swage caps).
     {
         rolePattern: NOG_ROLES,
         profilePattern: /^89S41$/,
-        lengthRange: [200, Infinity],
+        lengthRange: [0, Infinity],
         rules: [
             { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "medium" },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },

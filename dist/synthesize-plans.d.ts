@@ -51,6 +51,24 @@ export interface ServiceAction {
     start: Vec3;
     end: Vec3;
 }
+/**
+ * Web tool-action — derived from `<tool_action name="Web">` in the input XML.
+ * Used by `simplify-wall-web.ts` to emit per-stud Web ops on wall plans.
+ *
+ * Two geometric kinds Detailer emits:
+ *   - **Horizontal segment:** start.z==end.z, varying x or y. Marks a
+ *     bolt-hole row crossing two adjacent studs (king/trim or stud/stud).
+ *     Consumed for wall-stud Web ops.
+ *   - **Vertical drop:** start.x==end.x && start.y==end.y, varying z. Marks
+ *     a single bolt hole through a top/bottom plate's web (already handled
+ *     by the diff harness for plates/chords).
+ *
+ * Coordinates are world-3D (same frame as `ParsedStick.start/end`).
+ */
+export interface WebAction {
+    start: Vec3;
+    end: Vec3;
+}
 export interface ParsedFrame {
     name: string;
     envelope: [Vec3, Vec3, Vec3, Vec3];
@@ -74,6 +92,19 @@ export interface ParsedFrame {
      * stud → empty result is the correct answer).
      */
     serviceActions?: ServiceAction[];
+    /**
+     * Parsed `<tool_action name="Web">` segments for this frame, in world-3D.
+     * Populated by upstream importers (diff harness + hytek-rfy-tools'
+     * `framecad-import.ts`). Consumed by `simplifyWallWebInProject` to emit
+     * per-stud Web ops on vertical wall studs of LBW/NLBW plans. Optional —
+     * when absent or empty, the wall-web simplifier is a no-op.
+     *
+     * Detailer emits a Web tool_action for every transverse bolt-hole through
+     * a stud's web at a specific elevation Z, typically at king-stud + trim-
+     * stud bolt connections (~80mm + ~260mm in from each end of a short jamb
+     * stud, with mirrored holes on the long king stud at L-258/L-78).
+     */
+    webActions?: WebAction[];
     /** Optional frame length (mm). */
     length?: number;
     /** Optional frame built height (mm). */

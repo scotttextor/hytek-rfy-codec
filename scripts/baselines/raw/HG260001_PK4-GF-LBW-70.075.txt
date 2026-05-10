@@ -3,16 +3,16 @@ OP-LEVEL DIFF — HG260001 LOT 289 COORA CRESCENT CURRIMUNDI 4551-GF-LBW-70.075.
 Setup:    F325iT 70mm
 Frames:   our 44 | ref 26
 
-OPS:      our 4836 | ref 4762
+OPS:      our 4830 | ref 4762
 MATCHED:  4560  (95.8% of ref)
 MISSING:  202  (ops Detailer has, we don't)
-EXTRAS:   276   (ops we have, Detailer doesn't)
+EXTRAS:   270   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
 InnerDimple@pt          1875        66       62   (97% ref-coverage)
-LipNotch@span            756        30       77   (96% ref-coverage)
+LipNotch@span            756        30       71   (96% ref-coverage)
 Swage@span               873        40       45   (96% ref-coverage)
 InnerService@pt          450        28       47   (94% ref-coverage)
 InnerNotch@span          218        16       23   (93% ref-coverage)
@@ -94,7 +94,7 @@ FRAMES WITH GAPS:
     Kb2      EXTRAS  (3): Chamfer @start | InnerService @298.5 | InnerService @458.6
 
   L19 (9 sticks with gaps)
-    T1       EXTRAS  (4): LipNotch 903.3..953.2 | LipNotch 1359.3..1409.2 | LipNotch 3640.0..3688.5 | LipNotch 3993.0..4032.0
+    T1       EXTRAS  (1): LipNotch 3993.0..4032.0
     B1       EXTRAS  (1): LipNotch 353.0..392.0
     B3       EXTRAS  (1): LipNotch 36.0..81.0
     B4       MISSING (2): Bolt @782.0 | Swage 805.0..844.0
@@ -121,8 +121,7 @@ FRAMES WITH GAPS:
     Kb1      MISSING (1): InnerService @874.7
     Kb2      MISSING (3): InnerService @716.1 | InnerService @903.2 | InnerService @1065.6
 
-  L33 (11 sticks with gaps)
-    T1       EXTRAS  (3): LipNotch 1471.5..1519.1 | LipNotch 2060.7..2109.7 | LipNotch 2646.8..2695.1
+  L33 (10 sticks with gaps)
     H2       MISSING (3): InnerDimple @89.0 | InnerDimple @1252.0 | InnerDimple @2415.0
     H2       EXTRAS  (2): InnerDimple @58.5 | InnerDimple @2445.5
     L1       MISSING (3): InnerDimple @89.0 | InnerDimple @1252.0 | InnerDimple @2415.0
@@ -134,6 +133,7 @@ FRAMES WITH GAPS:
     S3       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
     S4       EXTRAS  (2): Swage 243.0..288.0 | Swage 2155.0..2200.0
     S9       EXTRAS  (2): Swage 243.0..288.0 | Swage 2155.0..2200.0
+    S10      EXTRAS  (2): InnerService @296.0 | InnerService @446.0
 
   L34 (6 sticks with gaps)
     T1       EXTRAS  (1): LipNotch 851.0..890.0

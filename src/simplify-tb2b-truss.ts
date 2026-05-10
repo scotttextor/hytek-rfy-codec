@@ -288,13 +288,18 @@ export function computeTb2bWebPositions(
       //   longer-of-pair  (with caps):    -(WEB_VS_RAIL_OFFSET + lLip + rLip) × tan(slope)
       // At 15°/70S41 these are -4.02mm and -9.91mm respectively, vs the old
       // ±4.53mm. Verified ±0.1mm vs HG260001 PK10/PK11 ref.
-      // Tighter gate (0.30) than the panel-pair PERP_GATE (0.5): the override
-      // is only correct for "true vertical" webs whose dot with a 15° chord
-      // is ±sin(15°) ≈ ±0.259. Sloped-PAR webs with |dot| in [0.30, 0.5]
-      // (e.g. TN6-1 W11 @0.307, TN11-1 W19 @0.453) need the standard formula
-      // and ARE PAR neighbors for their adjacent PERP web's pair-bolt.
-      const PERP_GATE_FOR_OVERRIDE = 0.30;
-      const isWebPerpish = Math.abs(dot) < PERP_GATE_FOR_OVERRIDE;
+      // The override is only correct for "true vertical" webs whose dot
+      // with a 15° chord is ±sin(15°) ≈ ±0.259. Other angles (e.g. TN6-1
+      // W11 @0.307, TN11-1 W19 @0.453, TN6-1 W15 @0.169 and W13 @-0.584)
+      // are sloped-but-near-perpendicular webs that need the standard
+      // formula AND function as PAR neighbors for the canonical-PERP
+      // pair-bolt. Gate `|dot|` to a narrow band around 0.259 (= sin(15°))
+      // to catch only canonical PERP. Width 0.05 covers measurement
+      // jitter without bleeding into the 0.169/0.307/0.453/etc cases.
+      const PERP_GATE_LOW = 0.20;
+      const PERP_GATE_HIGH = 0.30;
+      const absDot = Math.abs(dot);
+      const isWebPerpish = absDot >= PERP_GATE_LOW && absDot <= PERP_GATE_HIGH;
       const aOverride = (aIsChord && sB.usage === "web" && isWebPerpish)
         ? perpCorrOverride.get(keyA)
         : undefined;
@@ -1255,6 +1260,64 @@ export function simplifyTb2bTrussFrame(
         (o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - apexPos) < APPROX,
       );
       if (!exists) stick.tooling.push({ kind: "point", type: "Web", pos: apexPos });
+    }
+
+    // Sloped peer-pair LONGER B-chord: post-trim fixed-pair + suppression
+    // (Agent T4, 2026-05-09). Detailer emits a fixed @22.8/@120.8 Web pair
+    // INTO the chord from the centerline-meeting end, and suppresses any
+    // chord-Web crossings within ~150mm of that end (which would normally
+    // arise from W17/W18-style crossings near the chord tip and B-chord/
+    // B-chord chord-chord intersections).
+    //
+    // The centerline-meeting end is the OUTPUT end ON THE OPPOSITE SIDE of
+    // the cap-stack (the cap-stack goes at the cap-end / heel-eaves end on
+    // these chords; the centerline-meeting end is where the two B-chords
+    // meet at the bottom-chord apex).
+    //
+    // Verified vs HG260001 PK10/PK11/PK9 ref TN6-1/TN4-x/TN5-x/TN11-x B2.
+    const slopedInfo = slopedPeerPairInfo.get(stKey);
+    if (slopedInfo && slopedInfo.isLongerOfPair) {
+      const L_post = Math.max(0, meta3DLen - trimAtOutputStart - trimAtOutputEnd);
+      // Determine which OUTPUT end is the centerline-meeting end. The
+      // cap-stack rule above places caps at the OPPOSITE end. Inline the
+      // same `capAtOutputStart` logic as the cap-stack block (line 1230):
+      //   highZAtXmlStart !== isFlipped → caps at OUTPUT-start.
+      // Centerline-meeting end is OPPOSITE to cap-end on these chords.
+      const isFlipped_local = !!meta3D && stick.flipped;
+      const highZAtXmlStart_local = meta3D
+        ? meta3D.start3D.z > meta3D.end3D.z
+        : false;
+      const capAtOutputStart_local = highZAtXmlStart_local !== isFlipped_local;
+      // Centerline-meeting end (where fixed pair goes) = NOT cap-side.
+      const centerlineAtOutputStart = !capAtOutputStart_local;
+      const FIXED_PAIR_A = 22.8;
+      const FIXED_PAIR_B = 120.8;
+      const SUPPRESSION_RANGE = 150;
+      // Suppression zone: 150mm from the centerline-meeting end.
+      const suppressMin = centerlineAtOutputStart ? 0 : L_post - SUPPRESSION_RANGE;
+      const suppressMax = centerlineAtOutputStart ? SUPPRESSION_RANGE : L_post;
+      // Fixed-pair positions at output @22.8/@120.8 from centerline-end.
+      const pairA = centerlineAtOutputStart ? FIXED_PAIR_A : L_post - FIXED_PAIR_A;
+      const pairB = centerlineAtOutputStart ? FIXED_PAIR_B : L_post - FIXED_PAIR_B;
+      // Filter out chord-Web crossings (Web@pt) within suppression zone,
+      // but NOT cap-stack stub-bolts (Web@STUB_BOLT/@L-STUB_BOLT) that the
+      // cap-stack rule legitimately emits at the OPPOSITE (cap) end.
+      stick.tooling = stick.tooling.filter((op): boolean => {
+        if (op.kind !== "point" || op.type !== "Web") return true;
+        if (op.pos < suppressMin - 0.5 || op.pos > suppressMax + 0.5) return true;
+        return false;  // suppress
+      });
+      // Add fixed pair (with dedup vs nearby existing positions).
+      const APPROX_DEDUP = 2.0;
+      for (const p of [pairA, pairB]) {
+        if (p < 0 || p > L_post) continue;
+        const exists = stick.tooling.some(
+          (o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - p) < APPROX_DEDUP,
+        );
+        if (!exists) {
+          stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(p * 100) / 100 });
+        }
+      }
     }
 
     // Final sort by position so downstream encoding emits ops in order.

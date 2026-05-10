@@ -1050,15 +1050,117 @@ export function simplifyTb2bTrussFrame(
 
     // H7-header start-cap-stack with WIDER caps + dual bolts; end side gets
     // just Web @(L-35) (W_END_ANCHOR).
+    //
+    // Agent T6 (2026-05-11): coexists with new T6 H-header rule below. The
+    // T6 rule decides cap polarity from frame topology (T-chord junctions).
+    // When the T6 rule emits caps for this stick, the existing H7Header
+    // rule is suppressed to avoid double-emit / wrong-end emission.
     const isH7Header = /^H7(\b|$)/.test(stick.name) && meta3DLen > 1500;
+    // (deferred — see end of T6 H-header rule block below)
+
+    // ────────────────────────────────────────────────────────────────────
+    // Agent T6 (2026-05-11): TT/TTI H-header cap-stack rule.
+    // ────────────────────────────────────────────────────────────────────
+    //
+    // For horizontal H5/H6/H7 sticks in TT/TTI frames in TB2B plans, the
+    // H-header receives a cap-stack (RF + LN + LF) + Web bolt @84.3 from
+    // the cap-end on EACH end where a T-chord meets the H-header at exactly
+    // LF-span distance (~174mm). The cap-end is the END OPPOSITE the
+    // T-chord junction in 3D space.
+    //
+    // Coordinate-system note: empirically verified (HG260044 PK1) — our
+    // codec emits Web@chord-crossing positions that match Detailer ref's
+    // numerically (Web @35 ↔ @35, Web @1117.5 ↔ @1117.5, etc.) even when
+    // `stick.flipped` differs between ours and ref. The output coordinate
+    // is therefore canonical (independent of `flipped` flag) and for these
+    // top-chord H-headers maps:
+    //   capAtXmlStart → cap at OUTPUT-END (=L)
+    //   capAtXmlEnd   → cap at OUTPUT-START (=0)
+    //
+    // Verified vs HG260044 PK1 ref: TT1-1 H5, TT2-1 H5 (cap@end), TT3-1 H6,
+    // TT3-1 H7, TT4-1 H6 (cap@start), TTI1-1 H7 (cap@end). Suppression
+    // also verified: TT2-1 H6, TT9-1 H5, TT12-1 H5/H7, TT14-1 H5
+    // (T-chord at neither end → no cap, matches Detailer).
+    //
+    // Two-end cases (TT5-1 H5, TT6-1 H5, TT13-1 H5 — HG260044 PK3) emit
+    // caps at BOTH ends (T-chord at both ends).
+    //
+    // Cap variant: LARGE (RF=32.55 / LF=181.06) for wall-plate-level
+    // H-headers (low z), NARROW (RF=30.78 / LF=179.28) for interior
+    // H-headers (high z). Discriminator: headerZ ≤ 3300 → LARGE.
+    // Verified: TT1-1 H5 z=3270 → LARGE, TT4-1 H6 z=3220 → LARGE,
+    //           TT2-1 H5 z=4152 / TT3-1 H6 z=3779 → NARROW.
+    let t6CapAtOutputStart = false;
+    let t6CapAtOutputEnd = false;
+    const isPk1HHeader = /^H[567](\b|$)/.test(stick.name) &&
+      /^TTI?\d/.test(frame.name) &&
+      meta3DLen > 500 &&
+      !!meta3D;
+    if (isPk1HHeader) {
+      const dz_h = Math.abs(meta3D.end3D.z - meta3D.start3D.z);
+      if (dz_h < 5) {
+        const T_LF_OFFSET = 174.13;
+        const T_TOL = 5.0;
+        const xmlStart = meta3D.start3D;
+        const xmlEnd = meta3D.end3D;
+        let tAtXmlStart = false;
+        let tAtXmlEnd = false;
+        for (let k = 0; k < frame.sticks.length; k++) {
+          if (k === stickIdx) continue;
+          const o = frame.sticks[k]!;
+          if (!/^T\d/.test(o.name)) continue;
+          const om = metaSticks[k]!;
+          const dStartStart = Math.hypot(om.start3D.x - xmlStart.x, om.start3D.y - xmlStart.y, om.start3D.z - xmlStart.z);
+          const dStartEnd = Math.hypot(om.end3D.x - xmlStart.x, om.end3D.y - xmlStart.y, om.end3D.z - xmlStart.z);
+          const dEndStart = Math.hypot(om.start3D.x - xmlEnd.x, om.start3D.y - xmlEnd.y, om.start3D.z - xmlEnd.z);
+          const dEndEnd = Math.hypot(om.end3D.x - xmlEnd.x, om.end3D.y - xmlEnd.y, om.end3D.z - xmlEnd.z);
+          if (Math.abs(Math.min(dStartStart, dStartEnd) - T_LF_OFFSET) < T_TOL) tAtXmlStart = true;
+          if (Math.abs(Math.min(dEndStart, dEndEnd) - T_LF_OFFSET) < T_TOL) tAtXmlEnd = true;
+        }
+        const capAtXmlStart = tAtXmlEnd && !tAtXmlStart;
+        const capAtXmlEnd = tAtXmlStart && !tAtXmlEnd;
+        const capBothEnds = tAtXmlStart && tAtXmlEnd;
+        // XML→OUTPUT mapping (REFLECTED for top-chord H-headers): see comment.
+        t6CapAtOutputStart = capAtXmlEnd || capBothEnds;
+        t6CapAtOutputEnd = capAtXmlStart || capBothEnds;
+        const L = meta3DLen;
+        // Cap variant: wall-plate-level H-header gets LARGE caps,
+        // interior H-header gets NARROW.
+        const headerZ = Math.min(meta3D.start3D.z, meta3D.end3D.z);
+        const isLargeVariant = headerZ <= 3300;
+        const RF_SPAN = isLargeVariant ? 32.55 : 30.78;
+        const LN_SPAN = 54.90;
+        const LF_SPAN = isLargeVariant ? 181.06 : 179.28;
+        const BOLT_OFFSET = 84.3;
+        if (t6CapAtOutputStart) {
+          stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN });
+          stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LN_SPAN });
+          stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN });
+          stick.tooling.push({ kind: "point", type: "Web", pos: BOLT_OFFSET });
+        }
+        if (t6CapAtOutputEnd) {
+          stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN, endPos: L });
+          stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LN_SPAN, endPos: L });
+          stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN, endPos: L });
+          stick.tooling.push({ kind: "point", type: "Web", pos: L - BOLT_OFFSET });
+        }
+      }
+    }
+
+    // Existing H7Header rule (preserved for HG260001 PK6-12 / HG260044 PK4
+    // where the cap@start WIDE pattern is correct). Skip if T6 rule already
+    // emitted any cap (would otherwise double-emit / emit wrong-end).
     if (isH7Header) {
-      const L = meta3DLen;
-      stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: 43.72 });
-      stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 65.72 });
-      stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: 179.28 });
-      stick.tooling.push({ kind: "point", type: "Web", pos: 84.33 });
-      stick.tooling.push({ kind: "point", type: "Web", pos: 91.70 });
-      stick.tooling.push({ kind: "point", type: "Web", pos: L - 35 });
+      const t6Took = isPk1HHeader && (t6CapAtOutputStart || t6CapAtOutputEnd);
+      if (!t6Took) {
+        const L = meta3DLen;
+        stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: 43.72 });
+        stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: 65.72 });
+        stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: 179.28 });
+        stick.tooling.push({ kind: "point", type: "Web", pos: 84.33 });
+        stick.tooling.push({ kind: "point", type: "Web", pos: 91.70 });
+        stick.tooling.push({ kind: "point", type: "Web", pos: L - 35 });
+      }
     }
 
     // B-chord cap-stack rule (refined 2026-05-09).

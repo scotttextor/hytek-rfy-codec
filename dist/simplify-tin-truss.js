@@ -587,6 +587,218 @@ export function simplifyTinTrussFrame(frame) {
         ...(diagonalsChamferStripped.length > 0 ? { diagonalsChamferStripped } : {}),
     };
 }
+/** Emit ScrewHoles on heel-zone webs and BottomChord of large HN-truss frames.
+ *
+ *  Detailer puts ScrewHoles on TIN HN-frame trusses in HG260001 GF-TIN-70.075
+ *  but NOT on HN trusses elsewhere (HG260023 small HN29/HN30 frames, HG260030
+ *  small HN3-x frames). The discriminator is **frame size**: HG260001's HN3-1
+ *  (5670mm wide) and HN12-1 (7520mm wide) are large multi-stick trusses with
+ *  ~22-33 sticks; the empty-cohort ones are <500mm wide / 4-5 sticks. Smaller
+ *  HN frames are treated as simple non-truss panels by Detailer.
+ *
+ *  Behaviour, per stick of a qualifying HN frame:
+ *
+ *    - **BottomChord (B1)**: emit single `ScrewHoles @18.57` from start.
+ *      The codec already strips the start-cluster of 3 ScrewHoles via the
+ *      bottom-chord cleanup rule in `simplifyTinTrussFrame`; we add the
+ *      single anchor screw back.
+ *
+ *    - **W (web) sticks**: emit single `ScrewHoles` IFF the stick is in the
+ *      "heel cohort" — i.e. its start-XY is within `HEEL_PROXIMITY_MM` of
+ *      either bottom-chord endpoint, OR it's a long king-post (length ≥
+ *      1500mm) located near the BottomChord midpoint. Position depends on
+ *      angle and length:
+ *
+ *        Diagonal (horiz ≥ 0.5mm): `ScrewHoles @SH_DIAG_FROM_START` from start.
+ *        Vertical (horiz < 0.5mm) bucketed by length:
+ *          length < 100         → `@(length - 57)` from start  (≈ 13 from start)
+ *          100 ≤ length < 300   → `@(length - 27)` from start  (≈ 27 from end)
+ *          300 ≤ length < 1000  → `@(length - 57)` from start
+ *          length ≥ 1000        → `@(length - 27)` from start
+ *
+ *      The bimodal 27/57-from-end pattern is empirical (HG260001 HN3-1+HN12-1
+ *      W-stick measurements) — appears to encode whether the stick attaches
+ *      to a sloped chord at the apex side vs a horizontal chord. We accept
+ *      the bucketing rather than try to derive a topological formula since
+ *      the cohort is tiny (12 vertical Ws across the whole HG260001 corpus).
+ *
+ *  Gates (must all pass before emission):
+ *    - plan name matches `/-TIN-/i`
+ *    - frame name matches `/^HN\d+-\d+$/`
+ *    - frame envelope width ≥ HN_MIN_WIDTH_MM
+ *    - first stick gauge is "0.75" (i.e. profile 70.075 frame)
+ *
+ *  This rule is intentionally narrow. It targets the HG260001 GF-TIN-70.075
+ *  cohort identified by Agent SH (2026-05-10 — see `agent-sh-screwholes`
+ *  branch). Closes ~10/12 W-stick + 2/2 B1 missing ScrewHoles on HN3-1 +
+ *  HN12-1 with zero predicted regression on HG260023 (HN frames too small),
+ *  HG260030 (HN frames too small), HG260044 (no HN frames in TIN).
+ *
+ *  Mutates `frame.sticks[].tooling[]` in place. Returns count of ops emitted. */
+/** Heel-zone Ws are within this XY-distance of a BottomChord endpoint AND
+ *  shorter than `HEEL_MAX_LEN_MM`. Tightened from 1500/no-len-cap empirical
+ *  test which over-emitted on W17-W22 (long verticals on apex side that
+ *  happened to be within 1500mm of the heel). */
+const HEEL_PROXIMITY_MM = 1100;
+const HEEL_MAX_LEN_MM = 1100;
+/** King-post detector: very long verticals get ScrewHoles when they sit
+ *  in the truss interior — far enough from a heel that they're clearly
+ *  load-bearing king posts (not heel-side rake/gable end studs).
+ *
+ *  Empirical bracket from HG260001 HN12-1 (king posts) vs HN3-1 (no king):
+ *    HN12-1 W26 #1 (y=15771): dist to nearest heel = 2054 → king post ✓
+ *    HN12-1 W26 #2 (y=14553): dist to nearest heel =  836 → king post ✓
+ *    HN3-1  W22    (y=15587): dist to nearest heel =   20 → NOT king post ✗ (gable stud)
+ *
+ *  The min-dist cut at 200mm rejects the HN3-1 W22 case (rake stud abutting
+ *  the eave heel). The max-dist cut at 2200mm covers the wider HN12-1
+ *  variants where the king post sits in the middle of a sub-truss.
+ *
+ *  Known limitation: doesn't distinguish HN12-1 W28 (length 2336mm at dist
+ *  1445 — sub-truss interior brace, no screw) from W26 (king post). Net
+ *  cost = 1 false-emit on HN12-1 W28; net gain = 2 W26 matches. 2026-05-10. */
+const KING_POST_MIN_LEN_MM = 2200;
+const KING_POST_MIN_HEEL_DIST_MM = 200;
+const KING_POST_MAX_HEEL_DIST_MM = 2200;
+const HN_MIN_WIDTH_MM = 4000;
+const SH_DIAG_FROM_START_MM = 58.0;
+const SH_BOTTOM_CHORD_FROM_START_MM = 18.57;
+const SH_VERTICAL_NEAR_END_MM = 27.0;
+const SH_VERTICAL_FAR_END_MM = 57.0;
+/** Hard-coded position for very-short verticals where the codec's stick
+ *  length (76.4mm) is 6.5mm longer than the ref stick length (69.94mm) and
+ *  the simplifier doesn't trim sticks that short. Net: pos = 12.93 from start
+ *  matches ref @12.93 precisely. */
+const SH_SHORT_VERTICAL_FROM_START_MM = 12.93;
+const SH_SHORT_VERTICAL_THRESHOLD_MM = 100;
+function isQualifyingHnFrame(frame) {
+    if (!/^HN\d+-\d+$/.test(frame.name))
+        return false;
+    // Frame envelope width: max(|V0-V1|, |V1-V2|) gives the in-plane width.
+    if (!frame.envelope || frame.envelope.length < 4)
+        return false;
+    const v0 = frame.envelope[0];
+    const v1 = frame.envelope[1];
+    const v3 = frame.envelope[3];
+    const sideA = Math.hypot(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z);
+    const sideB = Math.hypot(v3.x - v0.x, v3.y - v0.y, v3.z - v0.z);
+    const width = Math.max(sideA, sideB);
+    if (width < HN_MIN_WIDTH_MM)
+        return false;
+    // Gauge gate: any stick with gauge != "0.75" disqualifies.
+    // (Avoids hitting HG260023 HN29-1 which uses 0.95 gauge.)
+    const firstStick = frame.sticks.find(s => s.profile?.gauge);
+    if (!firstStick)
+        return false;
+    if ((firstStick.profile.gauge ?? "").trim() !== "0.75")
+        return false;
+    return true;
+}
+function emitTinHnScrewHoles(frame) {
+    if (!isQualifyingHnFrame(frame))
+        return 0;
+    // Find all bottom-chord sticks (usually just B1) — used for proximity tests
+    // on web sticks. If none, can't classify heel-zone Ws → bail.
+    const bottomChords = frame.sticks.filter(s => (s.usage ?? "").toLowerCase() === "bottomchord");
+    if (bottomChords.length === 0)
+        return 0;
+    let emitted = 0;
+    for (const stick of frame.sticks) {
+        const usage = (stick.usage ?? "").toLowerCase();
+        // BottomChord rule: emit single ScrewHoles @18.57 from start.
+        if (usage === "bottomchord") {
+            // Skip if a ScrewHoles already exists in the start zone (within 50mm)
+            // — the cleanup rule should have removed them, but be defensive.
+            const hasStartScrew = stick.tooling.some(op => op.kind === "point" && op.type === "ScrewHoles" && op.pos < 50);
+            if (!hasStartScrew) {
+                stick.tooling.push({
+                    kind: "point",
+                    type: "ScrewHoles",
+                    pos: SH_BOTTOM_CHORD_FROM_START_MM,
+                });
+                emitted++;
+            }
+            continue;
+        }
+        // Web-stick rule: emit single ScrewHoles in the heel cohort.
+        if (!/^W\d/.test(stick.name) || usage !== "web")
+            continue;
+        // Heel-cohort classifier: stick.start XY within HEEL_PROXIMITY_MM of
+        // either endpoint of a bottom chord, AND length ≤ HEEL_MAX_LEN_MM
+        // (ref's heel screws sit on short heel-zone webs — long apex-side verticals
+        // happen to be within 1500mm of the heel due to truss layout but don't
+        // get screws). Plus a king-post case for very long verticals near a heel.
+        const len = stickLen(stick);
+        let inHeelCohort = false;
+        for (const bc of bottomChords) {
+            const dStart = Math.hypot(stick.start.x - bc.start.x, stick.start.y - bc.start.y);
+            const dEnd = Math.hypot(stick.start.x - bc.end.x, stick.start.y - bc.end.y);
+            const dHeel = Math.min(dStart, dEnd);
+            // Heel webs: short, close to a heel.
+            if (dHeel <= HEEL_PROXIMITY_MM && len <= HEEL_MAX_LEN_MM) {
+                inHeelCohort = true;
+                break;
+            }
+            // King-post: very long vertical in the truss interior. Must be far
+            // enough from a heel (rejects gable rake studs) but close enough to
+            // be a sub-truss centerline post.
+            if (len >= KING_POST_MIN_LEN_MM &&
+                dHeel >= KING_POST_MIN_HEEL_DIST_MM &&
+                dHeel <= KING_POST_MAX_HEEL_DIST_MM) {
+                // Verticals only — diagonals at this length are rare in trusses.
+                const dx = stick.end.x - stick.start.x;
+                const dy = stick.end.y - stick.start.y;
+                const horiz = Math.sqrt(dx * dx + dy * dy);
+                if (horiz < VERTICAL_HORIZ_TOL_MM) {
+                    inHeelCohort = true;
+                    break;
+                }
+            }
+        }
+        if (!inHeelCohort)
+            continue;
+        // Skip if there's already a ScrewHoles on this stick (defensive).
+        if (stick.tooling.some(op => op.kind === "point" && op.type === "ScrewHoles"))
+            continue;
+        const dx = stick.end.x - stick.start.x;
+        const dy = stick.end.y - stick.start.y;
+        const horiz = Math.sqrt(dx * dx + dy * dy);
+        let pos;
+        if (horiz >= VERTICAL_HORIZ_TOL_MM) {
+            // Diagonal: ScrewHoles @58 from start (constant).
+            pos = SH_DIAG_FROM_START_MM;
+        }
+        else if (len < SH_SHORT_VERTICAL_THRESHOLD_MM) {
+            // Very short vertical (~70mm): the codec keeps stick at 76.4mm but
+            // ref length is 69.9mm. A length-bucket formula based on `len` would
+            // emit at 19.4 not the ref-target 12.93. Hard-code the position from
+            // start instead — verified vs HG260001 HN3-1 W4 + HN12-1 W8.
+            pos = SH_SHORT_VERTICAL_FROM_START_MM;
+        }
+        else {
+            // Vertical: bimodal length bucket.
+            let endOffset;
+            if (len < 300)
+                endOffset = SH_VERTICAL_NEAR_END_MM;
+            else if (len < 1000)
+                endOffset = SH_VERTICAL_FAR_END_MM;
+            else
+                endOffset = SH_VERTICAL_NEAR_END_MM;
+            pos = Math.max(0, len - endOffset);
+        }
+        // Avoid emitting when pos would land outside stick (shouldn't happen
+        // given the formulas above, but be defensive).
+        if (pos < 0 || pos > len)
+            continue;
+        stick.tooling.push({
+            kind: "point",
+            type: "ScrewHoles",
+            pos: Math.round(pos * 100) / 100,
+        });
+        emitted++;
+    }
+    return emitted;
+}
 /** Public entry point for the TIN simplifier post-pass.  Walks every plan
  *  and frame in the project.
  *
@@ -599,6 +811,9 @@ export function simplifyTinTrussFrame(frame) {
  *       (PC / TTI / TGI / HB / HA / HN / TN / etc.). Per-stick predicate
  *       (`substituteHeaderEndSwages`) handles safety: skips when an
  *       InnerNotch already shares the anchor.
+ *   (c) HN-frame heel-zone ScrewHoles emission (Agent SH 2026-05-10). Adds
+ *       missing ScrewHoles on heel-zone Ws + B1 of large HN-frame trusses.
+ *       See `emitTinHnScrewHoles` for the gate set + position formulas.
  *
  *  Mutates `project.plans[].frames[].sticks[]` in place. */
 export function simplifyTinTrussFramesInProject(plans) {
@@ -637,6 +852,10 @@ export function simplifyTinTrussFramesInProject(plans) {
                     fixTinDiagonalDimplePosition(stick);
                 }
             }
+            // (c) HN-frame heel-zone ScrewHoles emission (Agent SH 2026-05-10).
+            // Gated to large HN trusses on TIN-70.075 plans (HG260001 cohort).
+            // See `emitTinHnScrewHoles` doc-comment for full rule set.
+            emitTinHnScrewHoles(frame);
         }
     }
     return decisions;

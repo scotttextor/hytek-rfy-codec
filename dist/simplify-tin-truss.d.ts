@@ -39,6 +39,9 @@ export declare function simplifyTinTrussFrame(frame: ParsedFrame): SimplifyTinDe
  *       (PC / TTI / TGI / HB / HA / HN / TN / etc.). Per-stick predicate
  *       (`substituteHeaderEndSwages`) handles safety: skips when an
  *       InnerNotch already shares the anchor.
+ *   (c) HN-frame heel-zone ScrewHoles emission (Agent SH 2026-05-10). Adds
+ *       missing ScrewHoles on heel-zone Ws + B1 of large HN-frame trusses.
+ *       See `emitTinHnScrewHoles` for the gate set + position formulas.
  *
  *  Mutates `project.plans[].frames[].sticks[]` in place. */
 export declare function simplifyTinTrussFramesInProject(plans: ReadonlyArray<{

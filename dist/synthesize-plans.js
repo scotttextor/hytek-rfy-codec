@@ -29,7 +29,7 @@ import { getMachineSetupForProfile, getDefaultMachineSetup, } from "./machine-se
 import { generateFrameContextOps } from "./rules/index.js";
 import { joinAdjacentLipNotches } from "./rules/frame-context.js";
 import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
-import { simplifyRpFramesInProject, scaleRpDiagonalTplateBodyOps, isRpPlanName, rpRakeDirectionForFrame, applyRpSingleTplateRakeCap } from "./simplify-rp.js";
+import { simplifyRpFramesInProject, scaleRpDiagonalTplateBodyOps, isRpPlanName, rpRakeDirectionForFrame, applyRpSingleTplateRakeCap, rpSlopedTplateBodyShiftDirection, applyRpSlopedTplateBodyShift } from "./simplify-rp.js";
 import { simplifyTb2bTrussFramesInProject, isTb2bPlanName } from "./simplify-tb2b-truss.js";
 import { simplifyWallServiceInProject } from "./simplify-wall-service.js";
 import { simplifyWallWebInProject } from "./simplify-wall-web.js";
@@ -426,6 +426,19 @@ export function synthesizeRfyFromPlans(project, options = {}) {
                             (stick.end.y - stick.start.y) ** 2 +
                             (stick.end.z - stick.start.z) ** 2);
                         applyRpSingleTplateRakeCap(merged, lenRake, rakeDir);
+                    }
+                }
+                // RP sloped-T-plate body LipNotch shift (Agent RP6, 2026-05-11) —
+                // Pattern 3: covers frames RP5 doesn't (skillion / multi-T / short-T).
+                if ((typeof process === "undefined" || process.env?.CODEC_DISABLE_RP_BODY_SHIFT !== "1")
+                    && /^T\d/.test(stick.name)
+                    && String(stick.usage ?? "").toLowerCase() === "topplate") {
+                    const bodyDir = rpSlopedTplateBodyShiftDirection(frame, stick, plan.name);
+                    if (bodyDir !== null) {
+                        const lenSlope = Math.sqrt((stick.end.x - stick.start.x) ** 2 +
+                            (stick.end.y - stick.start.y) ** 2 +
+                            (stick.end.z - stick.start.z) ** 2);
+                        applyRpSlopedTplateBodyShift(merged, lenSlope, bodyDir);
                     }
                 }
                 const stickWithMerged = { ...stick, tooling: merged };

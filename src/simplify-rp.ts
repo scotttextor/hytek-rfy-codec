@@ -908,3 +908,89 @@ export function rpRakeDirectionForFrame(frame: ParsedFrame, planName: string): R
   if (!isRpPlanName(planName)) return null;
   return frameSingleTplateRakeDirection(frame);
 }
+
+// ---------------------------------------------------------------------------
+// RP sloped T-plate body LipNotch shift (Agent RP6, 2026-05-11) — Pattern 3
+// ---------------------------------------------------------------------------
+//
+// PATTERN: ref Detailer places body-crossing LipNotch ops on sloped RP T-plates
+// 22.6mm CLOSER to the eave than the codec emits them. RP5 already does this
+// shift for the narrow cohort it covers (single T-plate, non-skillion, T-len ≥
+// 2000), but several frame topologies bypass RP5 and still need the same
+// shift:
+//   * Skillion roofs (max stud len > T1 len) — RP5 explicitly skips these.
+//   * Multi-T-plate frames (R1/R4 in HG260044, R2-R6 in HG260001) — RP5
+//     requires tCount === 1.
+//   * Short single-T frames (R8/T1 in HG260044, len 1453 < 2000mm).
+//
+// EVIDENCE (HG260044 + HG260001 GF-RP-70.075, 2026-05-11):
+//   - 40 body LipNotch op pairs match the +/-22.6 shift expectation
+//     (24 in HG260044, 16 in HG260001).
+//   - Direction follows the same ASC/DESC rule as RP5: ASC (start at eave) →
+//     -22.6, DESC (end at eave) → +22.6.
+//
+// SCOPE: only RP plans, only T-prefix TopPlate sticks, only when
+//   * |dz| ≥ RP_RAKE_T_DZ_MIN_MM, AND
+//   * RP5 (`frameSingleTplateRakeDirection`) does NOT fire on this frame, AND
+//   * Op width is in the canonical body-crossing range (60–70mm).
+// Body zone: same as RP5 (start > 150, end < L - 50 for ASC; symmetric for DESC).
+//
+// Width filter prevents touching start-cap LipNotches (39mm) or chord-cap
+// LipNotches (61.4mm) that may appear in body-zone positions on rare frames.
+
+/** Apply a +/-22.6mm body LipNotch shift on a sloped RP T-plate stick whose
+ *  frame is NOT covered by RP5. Returns the number of ops shifted. */
+export function applyRpSlopedTplateBodyShift(
+  tooling: RfyToolingOp[],
+  stickLen: number,
+  direction: RpRakeDirection,
+): number {
+  const bodyLo = 150;
+  const bodyHi = direction === "asc" ? stickLen - 50 : stickLen - 150;
+  const shift = direction === "asc" ? -RP_RAKE_BODY_SHIFT_MM : +RP_RAKE_BODY_SHIFT_MM;
+  let shifted = 0;
+  for (const op of tooling) {
+    if (op.kind !== "spanned" || op.type !== "LipNotch") continue;
+    if (op.startPos <= bodyLo) continue;
+    if (op.endPos >= bodyHi) continue;
+    const width = op.endPos - op.startPos;
+    // Only canonical body-crossing widths (the LipNotch rule that matches
+    // stud crossings emits 67–68mm wide notches; cap LipNotches are 39mm or
+    // 61.4mm and must be left alone).
+    if (width < 60 || width > 70) continue;
+    op.startPos += shift;
+    op.endPos += shift;
+    shifted++;
+  }
+  return shifted;
+}
+
+/** Decide direction (asc/desc) for a sloped RP T-plate stick that is NOT
+ *  covered by RP5's `frameSingleTplateRakeDirection`. Returns null if:
+ *   - Not an RP plan, or stick is not a T-prefix TopPlate, or
+ *   - Stick is not sloped (|dz| < RP_RAKE_T_DZ_MIN_MM), or
+ *   - The stick's FRAME would be handled by RP5 (this stick is RP5's T1),
+ *     in which case the body shift is already applied by RP5 — applying it
+ *     again here would double-shift.
+ *
+ *  Note: RP5 ONLY shifts T1. So in a single-T frame where RP5 fires, ONLY T1
+ *  is the same stick. In a multi-T frame, RP5 doesn't fire (tCount !== 1) so
+ *  this function may apply to T1, T2, etc.
+ */
+export function rpSlopedTplateBodyShiftDirection(
+  frame: ParsedFrame,
+  stick: ParsedStick,
+  planName: string,
+): RpRakeDirection | null {
+  if (!isRpPlanName(planName)) return null;
+  if (!isTplate(stick)) return null;
+  if (String((stick as { usage?: string }).usage ?? "").toLowerCase() !== "topplate") return null;
+  const dz = stick.end.z - stick.start.z;
+  if (Math.abs(dz) < RP_RAKE_T_DZ_MIN_MM) return null;
+  // If RP5 fires on this frame AND this stick is the one RP5 transforms (T1),
+  // skip — RP5 already shifted body LipNotches. RP5 only operates on T1.
+  const rp5Dir = frameSingleTplateRakeDirection(frame);
+  if (rp5Dir !== null && stick.name === "T1") return null;
+  if (dz >= RP_RAKE_T_DZ_MIN_MM) return "asc";
+  return "desc";
+}

@@ -895,6 +895,27 @@ export function simplifyTb2bTrussFrame(
       stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LIP_NOTCH_SPAN, endPos: L });
     }
 
+    // ────────────────────────────────────────────────────────────────────
+    // Agent RF (2026-05-11): R-rail extended-cap rule (412.4mm rakes)
+    // ────────────────────────────────────────────────────────────────────
+    // 9-op pattern at both ends (verified vs HG260044 PK4 + HG260001 PK7).
+    const isRakeR412 = /^R\d/.test(stick.name) && meta3DLen > 410 && meta3DLen < 415;
+    if (isRakeR412) {
+      const L = meta3DLen;
+      const RF_SPAN_412 = 13.61;
+      const LN_SPAN_412 = 37.73;
+      const LF_SPAN_412 = 162.11;
+      const RAKE_BOLT_412 = 67.17;
+      stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: 0, endPos: RF_SPAN_412 });
+      stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: 0, endPos: LN_SPAN_412 });
+      stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: 0, endPos: LF_SPAN_412 });
+      stick.tooling.push({ kind: "point", type: "Web", pos: RAKE_BOLT_412 });
+      stick.tooling.push({ kind: "point", type: "Web", pos: Math.round((L - RAKE_BOLT_412) * 100) / 100 });
+      stick.tooling.push({ kind: "spanned", type: "LeftFlange", startPos: L - LF_SPAN_412, endPos: L });
+      stick.tooling.push({ kind: "spanned", type: "LipNotch", startPos: L - LN_SPAN_412, endPos: L });
+      stick.tooling.push({ kind: "spanned", type: "RightFlange", startPos: L - RF_SPAN_412, endPos: L });
+    }
+
     // H4-header cap-stack rule.
     const isH4Header = /^H4(\b|$)/.test(stick.name) && meta3DLen > 1500;
     if (isH4Header) {

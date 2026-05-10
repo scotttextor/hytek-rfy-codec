@@ -1117,12 +1117,24 @@ export function simplifyTb2bTrussFrame(
           if (Math.abs(Math.min(dStartStart, dStartEnd) - T_LF_OFFSET) < T_TOL) tAtXmlStart = true;
           if (Math.abs(Math.min(dEndStart, dEndEnd) - T_LF_OFFSET) < T_TOL) tAtXmlEnd = true;
         }
-        const capAtXmlStart = tAtXmlEnd && !tAtXmlStart;
-        const capAtXmlEnd = tAtXmlStart && !tAtXmlEnd;
-        const capBothEnds = tAtXmlStart && tAtXmlEnd;
-        // XML→OUTPUT mapping (REFLECTED for top-chord H-headers): see comment.
-        t6CapAtOutputStart = capAtXmlEnd || capBothEnds;
-        t6CapAtOutputEnd = capAtXmlStart || capBothEnds;
+        // Map XML→OUTPUT via the codec's chordArcReversal convention:
+        //   flipped=false → output-start = XML-start (no reversal)
+        //   flipped=true  → output-start = XML-end   (reversal — see
+        //                                              chordArcReversal())
+        // Cap-stack covers the LF-span area where the T-chord meets the
+        // H-header (the cap is at the SAME END as the T-chord junction).
+        // Verified vs:
+        //   HG260044 PK1 TT1-1 H5 (flipped=false): T@XML-end, cap@output-end ✓
+        //   HG260044 PK1 TT3-1 H6 (flipped=false): T@XML-start, cap@output-start ✓
+        //   HG260001 PK12 TT2-1 H7 (flipped=true): T@XML-end, cap@output-start ✓
+        //   HG260001 PK12 TT3-1 H7 (flipped=true): T@XML-end, cap@output-start ✓
+        const flipped = !!stick.flipped;
+        const tAtOutputStart = flipped ? tAtXmlEnd : tAtXmlStart;
+        const tAtOutputEnd = flipped ? tAtXmlStart : tAtXmlEnd;
+        const capBothEnds = tAtOutputStart && tAtOutputEnd;
+        // Cap is at the SAME OUTPUT-END as the T-chord junction.
+        t6CapAtOutputStart = tAtOutputStart || capBothEnds;
+        t6CapAtOutputEnd = tAtOutputEnd || capBothEnds;
         const L = meta3DLen;
         // Cap variant: wall-plate-level H-header gets LARGE caps,
         // interior H-header gets NARROW.

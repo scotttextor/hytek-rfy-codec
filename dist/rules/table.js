@@ -202,24 +202,51 @@ export const RULE_TABLE = [
         lengthRange: [0, Infinity],
         rules: [
             { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high", notes: "Kb/H sticks: Chamfer at START" },
-            // Kb sticks get Chamfer at END when the lip-orientation (inputFlipped)
-            // matches the plate-attachment direction (kbTopAttached). The
-            // discriminator is `inputFlipped === kbTopAttached` (XNOR):
-            //   - top-attached + flipped=true   → chamfer (plate cuts the lip side)
-            //   - bottom-attached + flipped=false → chamfer
-            //   - opposite combinations → no chamfer
-            // Verified 2026-05-09 (agent-p-lbw) vs HG260001 PK4 LBW
-            // L1/L18/L21/L28/L30/L43/L46 (every Kb classified correctly) and
-            // HG260044 LBW (~80 Kbs). Supersedes the simpler "every Kb gets @end"
-            // rule from 2026-05-08, which over-emitted on flipped/non-attached Kbs.
+            // Kb sticks get Chamfer at END.
+            //
+            // Two project-level emission modes (Agent CFG, 2026-05-09):
+            //
+            //   1. "xnor-paired" mode (default — HG260001 + HG260023 mixed-flipped):
+            //      Fires when (inputFlipped === kbTopAttached) — plate cuts the
+            //      lip-attached side. Emits 1 Chamfer per Kb. Verified vs HG260001
+            //      PK4 LBW (every Kb classified correctly) and HG260044 LBW
+            //      (~80 Kbs).
+            //
+            //   2. "uniform-both-ends" mode (HG260044 LBW + NLBW + HG260023 PK6 LBW):
+            //      Fires unconditionally on every Kb regardless of flipped /
+            //      topAttached state. Emits Chamfer at BOTH ends (start unconditional
+            //      rule above + this end rule). Verified 2026-05-09 vs HG260044
+            //      LBW: net +145 missing Chamfers closed, 0 spurious extras.
+            //
+            // Mode resolution priority:
+            //   a. `projectConfig.kbChamferMode` (caller override — production
+            //      uses this from the per-project ProjectConfig)
+            //   b. `kbFrameUniformFlipped` flag (auto-derived per frame from
+            //      counting distinct `flipped` values among the frame's Kb sticks)
+            //   c. Fall back to xnor-paired (default — preserves all 12 HG260001
+            //      mixed-flipped frame's classifications + HG260023 mixed frames)
+            //
             // H sticks (header cripples) NEVER receive Chamfer @end — verified
             // 0/23 LBW + 0/7 NLBW H sticks have Chamfer @end gaps.
             { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
-                predicate: (ctx) => ctx.role === "Kb"
-                    && ctx.inputFlipped !== undefined
-                    && ctx.kbTopAttached !== undefined
-                    && ctx.inputFlipped === ctx.kbTopAttached,
-                notes: "Kb end Chamfer (inputFlipped XNOR topAttached): plate-attached angled cut" },
+                predicate: (ctx) => {
+                    if (ctx.role !== "Kb")
+                        return false;
+                    // Resolve effective mode: explicit projectConfig wins; otherwise
+                    // auto-derive from kbFrameUniformFlipped.
+                    const mode = ctx.projectConfig?.kbChamferMode
+                        ?? (ctx.kbFrameUniformFlipped === true ? "uniform-both-ends"
+                            : ctx.kbFrameUniformFlipped === false ? "xnor-paired"
+                                : undefined)
+                        ?? "xnor-paired";
+                    if (mode === "uniform-both-ends")
+                        return true;
+                    // xnor-paired: need both inputFlipped + kbTopAttached known
+                    return ctx.inputFlipped !== undefined
+                        && ctx.kbTopAttached !== undefined
+                        && ctx.inputFlipped === ctx.kbTopAttached;
+                },
+                notes: "Kb end Chamfer: xnor-paired (default) or uniform-both-ends (config-driven)" },
             // Start Swage: ~42mm at the mid-wall end (cap perpendicular to Kb axis).
             // Verified 2026-05-04 vs HG260001 PK4 LBW Kb1: ref Swage 0..42.4 (span 42).
             { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 42, confidence: "high",
@@ -643,8 +670,9 @@ export const RULE_TABLE = [
             // Verified 2026-05-04: ref transition between L27/W6 @25.48° (no
             // chamfer) and L27/W2 @29.31° (chamfer). 28° threshold catches both.
             { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high",
-                predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
-                notes: "Wall brace W: Chamfer @start (diagonal cut, angle>=28°)" },
+                predicate: (ctx) => isWallPlan(ctx)
+                    && (ctx.angleFromVertical ?? 0) >= (ctx.projectConfig?.wChamferAngleThreshold ?? 28),
+                notes: "Wall brace W: Chamfer @start (angle >= projectConfig threshold; default 28°)" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: 41, confidence: "high",
                 predicate: (ctx) => isWallPlan(ctx),
                 notes: "Wall brace W: Swage span 41 at start" },
@@ -660,8 +688,9 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high",
                 predicate: (ctx) => isWallPlan(ctx) },
             { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
-                predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
-                notes: "Wall brace W: Chamfer @end (diagonal cut, angle>=28°)" },
+                predicate: (ctx) => isWallPlan(ctx)
+                    && (ctx.angleFromVertical ?? 0) >= (ctx.projectConfig?.wChamferAngleThreshold ?? 28),
+                notes: "Wall brace W: Chamfer @end (angle >= projectConfig threshold; default 28°)" },
         ],
     },
     // ----------- TRUSS WEBS / FJ JOIST WEBS / WALL BRACES (W) on 89S41 -----------
@@ -699,8 +728,9 @@ export const RULE_TABLE = [
             // ref span 46.6 ≈ 39/cos(28°)+8*tan²(28°) = 46.4).
             // Dimple at @10. Chamfer at angle >= 28° from vertical.
             { toolType: "Chamfer", kind: "start", anchor: { kind: "startAnchored", offset: 0 }, confidence: "high",
-                predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
-                notes: "89mm wall brace W: Chamfer @start (diagonal cut, angle>=28°)" },
+                predicate: (ctx) => isWallPlan(ctx)
+                    && (ctx.angleFromVertical ?? 0) >= (ctx.projectConfig?.wChamferAngleThreshold ?? 28),
+                notes: "89mm wall brace W: Chamfer @start (angle >= projectConfig threshold; default 28°)" },
             { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_89, confidence: "high",
                 predicate: (ctx) => isWallPlan(ctx),
                 notes: "89mm wall brace W: Swage span 39 at start" },
@@ -716,8 +746,9 @@ export const RULE_TABLE = [
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: 10 }, confidence: "high",
                 predicate: (ctx) => isWallPlan(ctx) },
             { toolType: "Chamfer", kind: "end", anchor: { kind: "endAnchored", offset: 0 }, confidence: "high",
-                predicate: (ctx) => isWallPlan(ctx) && (ctx.angleFromVertical ?? 0) >= 28,
-                notes: "89mm wall brace W: Chamfer @end (diagonal cut, angle>=28°)" },
+                predicate: (ctx) => isWallPlan(ctx)
+                    && (ctx.angleFromVertical ?? 0) >= (ctx.projectConfig?.wChamferAngleThreshold ?? 28),
+                notes: "89mm wall brace W: Chamfer @end (angle >= projectConfig threshold; default 28°)" },
         ],
     },
     // ----------- 89mm SILLS (L) -----------

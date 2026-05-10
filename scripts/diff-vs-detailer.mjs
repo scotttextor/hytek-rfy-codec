@@ -37,6 +37,7 @@ import {
   deriveFrameBasis,
   coerceEnvelopeToRect,
   projectToFrameLocal,
+  resolveProjectConfigFromHints,
 } from "../dist/index.js";
 
 // Strip --include-clean flag from argv before positional destructure.
@@ -114,6 +115,13 @@ function buildOurProject(xmlText) {
   const root = parser.parse(xmlText).framecad_import;
   const firstStick = root.plan?.[0]?.frame?.[0]?.stick?.[0];
   const setup = getMachineSetupForProfile(Number(firstStick?.profile?.["@_web"] ?? 70));
+
+  // Project-level Detailer config (Agent CFG, 2026-05-09).
+  const jobNumRaw = typeof root.jobnum === "object" ? root.jobnum["#text"] : root.jobnum;
+  const projectConfig = resolveProjectConfigFromHints({
+    jobNum: typeof jobNumRaw === "string" ? jobNumRaw : undefined,
+    projectName: typeof root["@_name"] === "string" ? root["@_name"] : undefined,
+  });
 
   const plans = [];
   for (const p of root.plan ?? []) {
@@ -249,6 +257,17 @@ function buildOurProject(xmlText) {
         if (n === "H1") _h1Stick = s;
         else if (/^H[23]$/.test(n)) _hxSticks.push(s);
       }
+
+      // Per-frame Kb uniform-flipped detection (Agent CFG, 2026-05-09).
+      const _kbFlippedValues = new Set();
+      for (const s of f.stick ?? []) {
+        if (!/^Kb\d/.test(String(s["@_name"] ?? ""))) continue;
+        _kbFlippedValues.add(String(s.flipped ?? "").trim().toLowerCase());
+      }
+      const kbFrameUniformFlipped = _kbFlippedValues.size === 0
+        ? undefined
+        : _kbFlippedValues.size === 1;
+
       let framePairedHeader = false;
       if (_h1Stick && _hxSticks.length > 0) {
         const h1s = parseTriple(String(_h1Stick.start ?? "0,0,0"));
@@ -471,6 +490,8 @@ function buildOurProject(xmlText) {
           kbTopAttached,
           stickStartZ,
           frameElevation,
+          kbFrameUniformFlipped,
+          projectConfig,
         });
         // Kb InnerService at horizontal Service crossings.
         //
@@ -507,6 +528,8 @@ function buildOurProject(xmlText) {
           // isTopKb: end (plate-attached) is at the top plate (high z).
           const isTopKb = end.z > start.z;
           const isPatternA = (inputFlipped && isTopKb) || (!inputFlipped && !isTopKb);
+          // Project-config Kb InnerService offset (Agent CFG, 2026-05-09).
+          const kbISExtra = projectConfig?.kbInnerServiceOffsetExtra ?? 0;
           if (isPatternA && sinTheta > 0.1) {
             const zMin = Math.min(start.z, end.z);
             const zMax = Math.max(start.z, end.z);
@@ -530,8 +553,8 @@ function buildOurProject(xmlText) {
               if (Math.abs(svcPerp - stickPerpVal) > 5) continue;
               const zh = svc.start.z;
               if (zh < zMin || zh > zMax) continue;
-              // Pattern A formula: pos = (z_h - z_plate)/sin(angle) - 10
-              const pos = Math.abs(zh - end.z) / sinTheta - 10;
+              // Pattern A formula: pos = (z_h - z_plate)/sin(angle) - 10 + extra
+              const pos = Math.abs(zh - end.z) / sinTheta - 10 + kbISExtra;
               if (pos < 30 || pos > length - 30) continue;
               // Avoid duplicate
               const rounded = Math.round(pos * 10) / 10;

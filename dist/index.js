@@ -11,6 +11,7 @@ export { simplifyWallServiceFrame, simplifyWallServiceInProject, isWallServicePl
 export { simplifyWallWebFrame, simplifyWallWebInProject, isWallWebPlanName, applicableWebPositionsForStud, } from "./simplify-wall-web.js";
 export { MACHINE_SETUPS, SETUP_BY_PROFILE_WEB, getMachineSetupForProfile, getDefaultMachineSetup, findSectionSetup, findTool, endClearanceSpan, dimpleEndOffset, lipNotchToolLength, } from "./machine-setups.js";
 export { generateTooling, generateToolingWithTrace, applyRule, applyRules, findGroup, RULE_TABLE, profileOffsets, generateFrameContextOps, layoutFrame, computeBox, roleFromName, } from "./rules/index.js";
+export { resolveProjectConfigFromHints } from "./project-config.js";
 export { STICK_TYPES, TOOL_TYPES, } from "./format.js";
 export { simplifyLinearTrussRfy, isLinearTruss, assertRfyVersion, RfyVersionMismatch, DEFAULT_PROFILE_GATE, } from "./simplify-linear-truss.js";
 export { simplifyTinTrussFrame, simplifyTinTrussFramesInProject, isTinPlanName, isTinTrussFrameName, } from "./simplify-tin-truss.js";

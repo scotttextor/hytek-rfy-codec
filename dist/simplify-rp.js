@@ -511,3 +511,186 @@ export function simplifyRpFramesInProject(plans) {
     }
     return decisions;
 }
+// ---------------------------------------------------------------------------
+// RP Diagonal T-plate body-crossing position scaling (Agent RP2, 2026-05-09)
+// ---------------------------------------------------------------------------
+//
+// PROBLEM: For DIAGONAL T-plates in RP frames (sloped + projected as a 2D
+// diagonal in frame-local coords), `frame-context.ts` computes stud-crossing
+// positions as `crossingX - plate.box.xMin`. This is the X-AXIS projection of
+// the crossing, not the along-centerline distance. Because the diagonal
+// plate's 2D x-extent is shorter than its 3D length (xExtent ≈ length × cos
+// of the 2D-plate angle), every body-crossing op emitted by frame-context
+// lands at a position that's a uniform fraction (xExtent / length) of where
+// Detailer puts it, with an additional ~4mm shift from the upstream start-trim.
+//
+// EXAMPLE: HG260044 GF-RP R5/T1 (length 4006.3, 2D centerline x-span ≈ 2690):
+//   OURS body dimples (X-axis projected): 319, 670, 1347, 2025
+//   REF  body dimples (along-stick):      457, 979, 1988, 2997
+//   Apply transform `(p - centerlineOffset + 4) × scale`:
+//     scale = 4006 / 2690 = 1.489
+//     centerlineOffset (cls.x - xMin) = 15.2 (perpendicular thickness corner)
+//     (319 - 15.2 + 4) × 1.489 = 458.7  vs ref 456.7 (drift +2)
+//     (670 - 15.2 + 4) × 1.489 = 981.3  vs ref 979.3 (drift +2)
+//     (1347 - 15.2 + 4) × 1.489 = 1989.9  vs ref 1988 (drift +2)
+//     (2025 - 15.2 + 4) × 1.489 = 2998.6  vs ref 2996.6 (drift +2)
+//   Cross-frame drift uniform within 1-2mm of ref.
+//
+// FIX: After frame-context emits ops on a diagonal RP T-plate, transform
+// every BODY position (not start-cap @0..50, not end-cap @L-50..L) using
+//   correctedPos = (oldPos - offsetFromXmin + START_TRIM_OFFSET) × scale
+// where:
+//   offsetFromXmin = centerlineStart.x - xMin (thickness-perpendicular corner)
+//   scale = stick.length / (centerlineEnd.x - centerlineStart.x)
+//   START_TRIM_OFFSET = endClearance (4mm for 70mm setup) — undoes the
+//     upstream start-trim that Detailer doesn't apply on rake plates.
+// Strip body ops whose corrected position falls outside [5, L-5] (these
+// would land in start/end-cap territory and double-emit with the per-stick
+// rule's caps).
+//
+// SCOPE: only RP plans. Only T-prefix plates. Only diagonal 2D outline
+// (both x-extent and y-extent > MIN_2D_EXTENT_MM). Only when scale > 1.02
+// (i.e. plate is significantly diagonal — axis-aligned plates skip).
+//
+// EVIDENCE (HG260044 GF-RP-70.075 corpus, 2026-05-09):
+//   Before: matched 719/1222 (58.84%)
+//   After:  matched 760/1222 (62.19%) — +41 ops, +3.35pp
+// Other plans unchanged: scope-gated to RP plans + T-prefix + diagonal.
+/** Tolerance (mm) for "diagonal" classification. A T-plate's 2D outline is
+ *  considered diagonal iff BOTH x-extent and y-extent exceed this value. */
+const RP_DIAGONAL_MIN_EXTENT_MM = 50;
+/** Body-zone exclusion: ops whose position is within this distance of either
+ *  end of the stick are NOT scaled (they're start/end-anchored caps). */
+const RP_BODY_END_ZONE_MM = 50;
+/** Minimum scale factor before applying. Below this (≈ 1.0), the plate is
+ *  effectively axis-aligned and scaling is a no-op. */
+const RP_SCALE_MIN = 1.02;
+/** Empirical start-trim offset for diagonal RP T-plates, in mm.
+ *
+ *  After along-centerline correction, every body crossing on diagonal
+ *  T-plates lands ~4-5mm SHORT of the ref position, uniformly across stick
+ *  lengths. This is the 4mm/end start-trim applied by the upstream input
+ *  pipeline (in framecad-import.ts and the diff harness), which Detailer
+ *  doesn't apply on rake plates. The same effect is corrected for axis-Y
+ *  rake plates in frame-context.ts via `startTrimCompensation = endClearance`
+ *  (line 354).
+ *
+ *  For 70mm setup endClearance = 4mm. The empirical drift is 4-5mm,
+ *  closer to 4mm. Use 4mm for consistency with existing axis-Y compensation. */
+const RP_DIAGONAL_START_TRIM_OFFSET_MM = 4;
+/** Position helper: the position of a tooling op (point pos, span midpoint,
+ *  or undefined for start/end edge ops). */
+function opPosForScaling(op) {
+    if (op.kind === "point")
+        return op.pos;
+    if (op.kind === "spanned")
+        return (op.startPos + op.endPos) / 2;
+    return null;
+}
+/**
+ * Scale body-crossing op positions on diagonal RP T-plate sticks.
+ *
+ * Operates on a single (RP T-plate) stick's already-merged tooling list.
+ * Returns scale stats or null if not applicable.
+ *
+ * Algorithm:
+ *   1. Compute outline bbox (xMin/xMax/yMin/yMax) and centerline endpoints
+ *      (cls = midpoint of c[0]/c[3], cle = midpoint of c[1]/c[2]) from the
+ *      4-corner outline rectangle.
+ *   2. Skip if x-extent < 50mm (bbox-degenerate) or y-extent < 50mm
+ *      (axis-aligned plate — already correct).
+ *   3. Compute scale = stick.length / (cle.x - cls.x). If |scale| < 1.02,
+ *      skip (axis-aligned).
+ *   4. For each body-zone op (position in [50, L-50]), apply transform
+ *      `correctedPos = (pos - (cls.x - xMin) + 4) × scale`.
+ *   5. Drop ops whose corrected position falls outside [5, L-5].
+ */
+export function scaleRpDiagonalTplateBodyOps(stick, planName) {
+    if (!isRpPlanName(planName))
+        return null;
+    if (!/^T\d/.test(stick.name))
+        return null;
+    if (!stick.outlineCorners || stick.outlineCorners.length !== 4)
+        return null;
+    const c = stick.outlineCorners;
+    const xs = c.map(p => p.x);
+    const ys = c.map(p => p.y);
+    const xMin = Math.min(...xs);
+    const xMax = Math.max(...xs);
+    const yMin = Math.min(...ys);
+    const yMax = Math.max(...ys);
+    const xExtent = xMax - xMin;
+    const yExtent = yMax - yMin;
+    if (xExtent < RP_DIAGONAL_MIN_EXTENT_MM)
+        return null;
+    if (yExtent < RP_DIAGONAL_MIN_EXTENT_MM)
+        return null; // horizontal plate, skip
+    // Centerline endpoints from the 4-point outline rectangle:
+    //   start = midpoint of (c[0], c[3])  [corners on the start short edge]
+    //   end   = midpoint of (c[1], c[2])  [corners on the end short edge]
+    const cls = { x: (c[0].x + c[3].x) / 2, y: (c[0].y + c[3].y) / 2 };
+    const cle = { x: (c[1].x + c[2].x) / 2, y: (c[1].y + c[2].y) / 2 };
+    const dx = cle.x - cls.x;
+    if (Math.abs(dx) < 1e-3)
+        return null; // vertical plate (axis-Y) — different code path
+    const scale = stick.length / dx;
+    if (Math.abs(scale) < RP_SCALE_MIN)
+        return null;
+    // Per-frame-local x offset between centerline start and bbox xMin (this is
+    // the perpendicular-thickness corner offset). The codec emits crossings
+    // as `cx - xMin`, so to get the centerline-parametric position we need to
+    // subtract this offset.
+    const offsetFromXmin = cls.x - xMin;
+    const stickLen = stick.length;
+    const bodyLo = RP_BODY_END_ZONE_MM;
+    const bodyHi = stickLen - RP_BODY_END_ZONE_MM;
+    let scaledCount = 0;
+    let dropped = 0;
+    // Walk the tooling array; build the new list (drop any scaled-out ops)
+    const newTooling = [];
+    for (const op of stick.tooling) {
+        const pos = opPosForScaling(op);
+        if (pos === null) {
+            newTooling.push(op);
+            continue;
+        }
+        if (pos < bodyLo || pos > bodyHi) {
+            // Start-cap or end-cap zone — keep as-is
+            newTooling.push(op);
+            continue;
+        }
+        // Body op — apply transform: newPos = (oldPos - offsetFromXmin + startTrimOffset) × scale
+        // The startTrimOffset compensates the upstream 4mm start-trim, which
+        // Detailer doesn't apply on rake plates (same logic as axis-Y rake comp
+        // in frame-context.ts line 354).
+        const transform = (p) => (p - offsetFromXmin + RP_DIAGONAL_START_TRIM_OFFSET_MM) * scale;
+        const cloned = { ...op };
+        if (cloned.kind === "point") {
+            cloned.pos = transform(cloned.pos);
+        }
+        else if (cloned.kind === "spanned") {
+            const newStart = transform(cloned.startPos);
+            const newEnd = transform(cloned.endPos);
+            // If scale negative (descending diagonal), transformed start/end may swap
+            cloned.startPos = Math.min(newStart, newEnd);
+            cloned.endPos = Math.max(newStart, newEnd);
+        }
+        const newPos = opPosForScaling(cloned);
+        if (newPos === null) {
+            newTooling.push(cloned);
+            scaledCount++;
+            continue;
+        }
+        if (newPos > stickLen - 5 || newPos < 5) {
+            // Scaled out of bounds — drop (duplicates end-cap or pre-start zone).
+            dropped++;
+            continue;
+        }
+        newTooling.push(cloned);
+        scaledCount++;
+    }
+    // Mutate in place
+    stick.tooling.length = 0;
+    stick.tooling.push(...newTooling);
+    return { scaled: scaledCount, dropped, scaleFactor: scale, offsetMm: offsetFromXmin };
+}

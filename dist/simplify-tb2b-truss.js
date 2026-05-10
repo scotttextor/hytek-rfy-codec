@@ -743,16 +743,149 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             isLongestB = isLongest;
         }
         if (isLongestB) {
-            const L = meta3DLen;
             const isSloped = meta3DZSpan > 5;
-            // Cap-stack span dimensions: standard for horizontal; larger sloped
-            // dimensions deferred — would require accurate B-chord trim handling
-            // first since cap positions are anchored to chord ends and our stick
-            // length differs from ref by ~12-18mm on sloped B-chords (deferred,
-            // see TODO).
-            const RF_SPAN = 8.19;
-            const LIP_SPAN = 32.32;
-            const LF_SPAN = 156.70;
+            // ────────────────────────────────────────────────────────────────────
+            // Sloped B-chord per-end trim (Agent T3, 2026-05-09).
+            //
+            // Detailer trims sloped B-chords at the heel-meeting end by a wedge
+            // depth of `webMinusLips × tan(slopeAngle)` for the "shorter-side"
+            // wedge cut and `webDepth × tan(slopeAngle)` for the "longer-side"
+            // wedge. For 70S41 profile @15°: 48·tan(15°) = 12.86mm and
+            // 70·tan(15°) = 18.76mm. The centerline-meeting end (where two B-
+            // chords meet at the bottom-chord peak) is NOT trimmed.
+            //
+            // Verified vs HG260001 PK11 TN4-1/TN5-1/TN5-2 B2 (single-trim 12.83mm),
+            // PK10 TN6-1..TN6-6 B2 (12.82mm), PK9 TN11-1/TN11-2 B1 (12.82mm) +
+            // B2 (18.76mm — peer-pair-shorter case).
+            //
+            // Cap-stack spans on sloped trimmed chords differ from horizontal:
+            //   sloped: LF=419, LN=90, RF=26  (verified vs ref TN4-1 B2 @4136.7)
+            //   horiz:  LF=156.7, LN=32.32, RF=8.19  (preserved unchanged)
+            //
+            // Per-end joint classification:
+            //   - Heel-meeting end: end-point coordinates NOT shared (within
+            //     SHARED_TOL) with another sloped B-chord's endpoint in the
+            //     same frame. Gets the wedge trim.
+            //   - Centerline-meeting end: end-point coordinates shared with
+            //     another sloped B-chord's endpoint (peak join). NO trim.
+            //
+            // SHORT vs LONG wedge selection: when this chord has a centerline
+            // peer-pair AND this chord is shorter than the peer, use LONG_TRIM
+            // (70·tan); otherwise use SHORT_TRIM (48·tan). Verified TN11-1
+            // B1=4149 (LONG) → 12.82, B2=2969 (SHORT) → 18.76.
+            // ────────────────────────────────────────────────────────────────────
+            let trimAtOutputStart = 0;
+            let trimAtOutputEnd = 0;
+            if (isSloped && meta3DLen > 1000) {
+                const dy = meta3D.end3D.y - meta3D.start3D.y;
+                const dz = meta3D.end3D.z - meta3D.start3D.z;
+                const slopeAngleRad = Math.atan2(Math.abs(dz), Math.abs(dy));
+                const slopeAngleDeg = slopeAngleRad * 180 / Math.PI;
+                if (slopeAngleDeg > 5) {
+                    const webProf = stick.profile?.web ?? 70;
+                    const lLip = stick.profile?.lLip ?? 11;
+                    const rLip = stick.profile?.rLip ?? 11;
+                    const webMinusLips = webProf - lLip - rLip;
+                    const tanA = Math.tan(slopeAngleRad);
+                    const SHORT_TRIM = webMinusLips * tanA;
+                    const LONG_TRIM = webProf * tanA;
+                    const SHARED_TOL = 20.0;
+                    const xmlStart = meta3D.start3D;
+                    const xmlEnd = meta3D.end3D;
+                    let xmlStartCenterlineMeeting = false;
+                    let xmlEndCenterlineMeeting = false;
+                    let peerLen = -1;
+                    for (let k = 0; k < frame.sticks.length; k++) {
+                        if (k === stickIdx)
+                            continue;
+                        const o = frame.sticks[k];
+                        if (!/^B\d/.test(o.name))
+                            continue;
+                        if (/\(Box\d+\)/.test(o.name))
+                            continue;
+                        const om = metaSticks[k];
+                        const oZSpan = Math.abs(om.end3D.z - om.start3D.z);
+                        if (oZSpan <= 5)
+                            continue;
+                        const oLen = Math.hypot(om.end3D.y - om.start3D.y, om.end3D.z - om.start3D.z);
+                        const dStartStart = Math.hypot(om.start3D.y - xmlStart.y, om.start3D.z - xmlStart.z);
+                        const dStartEnd = Math.hypot(om.end3D.y - xmlStart.y, om.end3D.z - xmlStart.z);
+                        const dEndStart = Math.hypot(om.start3D.y - xmlEnd.y, om.start3D.z - xmlEnd.z);
+                        const dEndEnd = Math.hypot(om.end3D.y - xmlEnd.y, om.end3D.z - xmlEnd.z);
+                        if (dStartStart < SHARED_TOL || dStartEnd < SHARED_TOL) {
+                            xmlStartCenterlineMeeting = true;
+                            if (oLen > peerLen)
+                                peerLen = oLen;
+                        }
+                        if (dEndStart < SHARED_TOL || dEndEnd < SHARED_TOL) {
+                            xmlEndCenterlineMeeting = true;
+                            if (oLen > peerLen)
+                                peerLen = oLen;
+                        }
+                    }
+                    const isLongerOfPair = peerLen < 0 || meta3DLen >= peerLen - 0.5;
+                    const heelTrim = isLongerOfPair ? SHORT_TRIM : LONG_TRIM;
+                    const xmlStartTrim = xmlStartCenterlineMeeting ? 0 : heelTrim;
+                    const xmlEndTrim = xmlEndCenterlineMeeting ? 0 : heelTrim;
+                    if (stick.flipped) {
+                        trimAtOutputStart = xmlEndTrim;
+                        trimAtOutputEnd = xmlStartTrim;
+                    }
+                    else {
+                        trimAtOutputStart = xmlStartTrim;
+                        trimAtOutputEnd = xmlEndTrim;
+                    }
+                    const totalTrim = trimAtOutputStart + trimAtOutputEnd;
+                    if (totalTrim > 0.001) {
+                        const sx = stick.start.x, syy = stick.start.y, szz = stick.start.z;
+                        const ex = stick.end.x, eyy = stick.end.y, ezz = stick.end.z;
+                        const sdx = ex - sx, sdy = eyy - syy, sdz = ezz - szz;
+                        const sLen = Math.sqrt(sdx * sdx + sdy * sdy + sdz * sdz);
+                        if (sLen > 1) {
+                            const ux = sdx / sLen, uy = sdy / sLen, uz = sdz / sLen;
+                            stick.start = {
+                                x: sx + ux * trimAtOutputStart,
+                                y: syy + uy * trimAtOutputStart,
+                                z: szz + uz * trimAtOutputStart,
+                            };
+                            stick.end = {
+                                x: ex - ux * trimAtOutputEnd,
+                                y: eyy - uy * trimAtOutputEnd,
+                                z: ezz - uz * trimAtOutputEnd,
+                            };
+                        }
+                        const newL = sLen - totalTrim;
+                        stick.tooling = stick.tooling.flatMap((op) => {
+                            if (op.kind === "point") {
+                                const newPos = op.pos - trimAtOutputStart;
+                                if (newPos < -0.5 || newPos > newL + 0.5)
+                                    return [];
+                                return [{ ...op, pos: Math.round(Math.max(0, Math.min(newL, newPos)) * 100) / 100 }];
+                            }
+                            if (op.kind === "spanned") {
+                                const newStart = op.startPos - trimAtOutputStart;
+                                const newEnd = op.endPos - trimAtOutputStart;
+                                if (newEnd < 0 || newStart > newL)
+                                    return [];
+                                const clampedStart = Math.max(0, newStart);
+                                const clampedEnd = Math.min(newL, newEnd);
+                                return [{ ...op, startPos: clampedStart, endPos: clampedEnd }];
+                            }
+                            return [op];
+                        });
+                    }
+                }
+            }
+            const L = isSloped
+                ? Math.max(0, meta3DLen - trimAtOutputStart - trimAtOutputEnd)
+                : meta3DLen;
+            // Cap-stack span dimensions: sloped trimmed chords use larger spans
+            // (LF=419 / LN=90 / RF=26) verified vs HG260001 PK11 TN4-1 B2 ref
+            // (LeftFlange 3717.7..4136.7, LipNotch 4046.7..4136.7, RightFlange
+            // 4110.5..4136.7). Horizontal preserved at original values.
+            const RF_SPAN = isSloped ? 26.2 : 8.19;
+            const LIP_SPAN = isSloped ? 90.0 : 32.32;
+            const LF_SPAN = isSloped ? 419.0 : 156.70;
             const STUB_BOLT = 59.98;
             // Stub-end (Type C/D) cap-stack: 2-op only — RF=156.70 + LN=32.32, NO LF.
             // Used on multi-B-chord TT/TTI frames where the longest B-chord

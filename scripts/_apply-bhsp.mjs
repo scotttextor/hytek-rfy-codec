@@ -111,7 +111,81 @@ const hEndNew = `      { toolType: "InnerDimple", kind: "point", anchor: { kind:
         notes: "70mm header end cap: LipNotch" },
 `;
 
+// types.ts: per-end Swage cap flags
+const typesOld = `  nogStartCapIsNotch?: boolean;
+  /** NLBW3 (2026-05-10): same as \`nogStartCapIsNotch\` but for the END
+   *  endpoint. */
+  nogEndCapIsNotch?: boolean;
+  /**
+   * Optional: per-project Detailer configuration. Resolved by the caller`;
+
+const typesNew = `  nogStartCapIsNotch?: boolean;
+  /** NLBW3 (2026-05-10): same as \`nogStartCapIsNotch\` but for the END
+   *  endpoint. */
+  nogEndCapIsNotch?: boolean;
+  /**
+   * BHSP (2026-05-11): true if this raised B-plate (Bh role) or H header's
+   * START end faces the frame envelope perimeter (within ~10mm along its
+   * run axis). When true, Detailer caps the perimeter-facing end with
+   * \`Swage\` (span 39 on 70S41) instead of the default \`InnerNotch +
+   * LipNotch\` cap-stack. Set by the diff harness / framecad-import. NLBW
+   * plans only — rule predicate short-circuits otherwise.
+   */
+  bhStartCapIsSwage?: boolean;
+  /** BHSP (2026-05-11): same as \`bhStartCapIsSwage\` but for the END
+   *  endpoint. */
+  bhEndCapIsSwage?: boolean;
+  /**
+   * Optional: per-project Detailer configuration. Resolved by the caller`;
+
+// table.ts: helper functions for BHSP predicate
+const helpersOld = `/** NLBW3 (2026-05-10): same as \`nogStartTakesNotchCap\` but for the END. */
+function nogEndTakesNotchCap(ctx: StickContext): boolean {
+  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
+  if (ctx.nogEndCapIsNotch === true) return true;
+  if (ctx.nogEndCapIsNotch === undefined && ctx.nogIsSubPanelBothInterior === true) return true;
+  return false;
+}
+
+export const RULE_TABLE: RuleGroup[] = [`;
+
+const helpersNew = `/** NLBW3 (2026-05-10): same as \`nogStartTakesNotchCap\` but for the END. */
+function nogEndTakesNotchCap(ctx: StickContext): boolean {
+  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
+  if (ctx.nogEndCapIsNotch === true) return true;
+  if (ctx.nogEndCapIsNotch === undefined && ctx.nogIsSubPanelBothInterior === true) return true;
+  return false;
+}
+
+/**
+ * BHSP (2026-05-11): Whether this raised B-plate (Bh role) or H header's
+ * START end takes a \`Swage\` cap instead of the default \`InnerNotch +
+ * LipNotch\` cap-stack. Detailer's reference RFY caps the END FACING THE
+ * FRAME ENVELOPE perimeter with Swage on sub-plates above rough openings.
+ * Verified vs HG260044 GF-NLBW-70.075 (12 sticks across N1/N8/N15/N19/N28/
+ * N52) and HG260001 PK1/PK2 GF-NLBW-70.075. Polarity is shared across both
+ * corpora. Predicate gates on NLBW plan-name match and the per-end flag
+ * \`bhStartCapIsSwage\` set by the diff harness.
+ */
+function bhStartTakesSwageCap(ctx: StickContext): boolean {
+  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
+  return ctx.bhStartCapIsSwage === true;
+}
+
+/** BHSP (2026-05-11): same as \`bhStartTakesSwageCap\` but for the END. */
+function bhEndTakesSwageCap(ctx: StickContext): boolean {
+  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
+  return ctx.bhEndCapIsSwage === true;
+}
+
+export const RULE_TABLE: RuleGroup[] = [`;
+
+patchFile('src/rules/types.ts', [
+  [typesOld, typesNew],
+]);
+
 patchFile('src/rules/table.ts', [
+  [helpersOld, helpersNew],
   [bhOld, bhNew],
   [hOld, hNew],
   [hEndOld, hEndNew],

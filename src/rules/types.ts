@@ -100,6 +100,34 @@ export interface ProjectConfig {
    * Default: "interior-notch" (preserves NLBW2 behaviour).
    */
   nogAsymmetricCapMode?: "interior-notch" | "tight-cluster-notch";
+
+  /**
+   * Bolt B-plate (2026-05-11): Whether to emit slab anchor `Bolt @62` /
+   * `Bolt @length-62` ops on B-plates of UPPER-STORY frames inside a
+   * ground-floor wall plan (LBW/NLBW). Detailer's behaviour here is
+   * project-specific:
+   *
+   *   true  — HG260001 polarity. Upper-floor B-plates inside a "GF-NLBW"
+   *           plan still emit slab anchor bolts (verified vs HG260001
+   *           PK1-GF-NLBW N9/N20/N25/N34 — all elevation 2355mm B1s have
+   *           ANCHOR ops in Detailer's reference RFY).
+   *   false — HG260044 polarity. Upper-floor B-plates inside "GF-NLBW"
+   *           emit Web@8 + InnerDimple + LipNotch but NO slab anchors
+   *           (verified vs HG260044 GF-NLBW N18/N21/N31/N36/N39/N41/N49
+   *           — all elevation 2355mm B1s have BOLT HOLES + INNER DIMPLE
+   *           + LIP NOTCH but NO ANCHOR ops in the reference RFY/CSV).
+   *
+   * "Upper-story" means `frameElevation > 100` — i.e. the frame's Z origin
+   * is well above the slab. Standard ground-floor walls have
+   * `frameElevation = 0` (or very small offsets like -45). The 100mm
+   * threshold matches the existing pattern used elsewhere in table.ts
+   * (see Service @300 / @450 elevation-shift formulas).
+   *
+   * Default: `true` — preserves the existing pre-2026-05-11 behaviour for
+   * HG260001 and any unconfigured project. HG260044 explicitly sets it
+   * `false`.
+   */
+  slabBoltOnUpperFloor?: boolean;
 }
 
 /** What we know about the stick when applying rules. */
@@ -195,6 +223,18 @@ export interface StickContext {
   /** NLBW3 (2026-05-10): same as `nogStartCapIsNotch` but for the END
    *  endpoint. */
   nogEndCapIsNotch?: boolean;
+  /**
+   * BHSP (2026-05-11): true if this raised B-plate (Bh role) or H header's
+   * START end faces the frame envelope perimeter (within ~10mm along its
+   * run axis). When true, Detailer caps the perimeter-facing end with
+   * `Swage` (span 39 on 70S41) instead of the default `InnerNotch +
+   * LipNotch` cap-stack. Set by the diff harness / framecad-import. NLBW
+   * plans only — rule predicate short-circuits otherwise.
+   */
+  bhStartCapIsSwage?: boolean;
+  /** BHSP (2026-05-11): same as `bhStartCapIsSwage` but for the END
+   *  endpoint. */
+  bhEndCapIsSwage?: boolean;
   /**
    * Optional: per-project Detailer configuration. Resolved by the caller
    * (typically the diff harness or `hytek-rfy-tools`' framecad-import) and

@@ -141,6 +141,27 @@ function nogEndTakesNotchCap(ctx: StickContext): boolean {
   return false;
 }
 
+/**
+ * BHSP (2026-05-11): Whether this raised B-plate (Bh role) or H header's
+ * START end takes a `Swage` cap instead of the default `InnerNotch +
+ * LipNotch` cap-stack. Detailer's reference RFY caps the END FACING THE
+ * FRAME ENVELOPE perimeter with Swage on sub-plates above rough openings.
+ * Verified vs HG260044 GF-NLBW-70.075 (12 sticks across N1/N8/N15/N19/N28/
+ * N52) and HG260001 PK1/PK2 GF-NLBW-70.075. Polarity is shared across both
+ * corpora. Predicate gates on NLBW plan-name match and the per-end flag
+ * `bhStartCapIsSwage` set by the diff harness.
+ */
+function bhStartTakesSwageCap(ctx: StickContext): boolean {
+  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
+  return ctx.bhStartCapIsSwage === true;
+}
+
+/** BHSP (2026-05-11): same as `bhStartTakesSwageCap` but for the END. */
+function bhEndTakesSwageCap(ctx: StickContext): boolean {
+  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
+  return ctx.bhEndCapIsSwage === true;
+}
+
 export const RULE_TABLE: RuleGroup[] = [
   // ----------- STUDS on 70S41 (any length) -----------
   {
@@ -465,8 +486,8 @@ export const RULE_TABLE: RuleGroup[] = [
       // 4 LBW/NLBW plans where Detailer's ref had none.
       { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "high", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm wall B plates: Web@8 only on ground-floor PRIMARY B plate (B1 or >=1500mm)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && isPrimaryBPlate(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && emitsSlabAnchorBolt(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: BOLT_OFFSET_70 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && emitsSlabAnchorBolt(ctx), notes: "70mm anchor bolt — ground-floor PRIMARY B plate only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       // InnerNotch on B plates is SELECTIVE — same as T (some sticks have it,
@@ -509,8 +530,8 @@ export const RULE_TABLE: RuleGroup[] = [
       // B-plate (B1, or any B-plate >= 1500mm). See 70S41 rule above for context.
       { toolType: "Web", kind: "point", anchor: { kind: "startAnchored", offset: 8 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm wall B plates: Web@8 only on ground-floor PRIMARY B plate (gauge<1.0)" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm anchor bolt — only on ground-floor PRIMARY B plate + gauge<1.0" },
-      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && isPrimaryBPlate(ctx), notes: "89mm anchor bolt at length-62mm — ground-floor PRIMARY B plate + gauge<1.0 only" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "startAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && emitsSlabAnchorBolt(ctx), notes: "89mm anchor bolt — only on ground-floor PRIMARY B plate + gauge<1.0 (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
+      { toolType: "Bolt", kind: "point", anchor: { kind: "endAnchored", offset: 62 }, confidence: "medium", predicate: (ctx) => ctx.usage?.toLowerCase() !== "bottomchord" && isGroundFloor(ctx) && parseFloat(ctx.gauge) < 1.0 && emitsSlabAnchorBolt(ctx), notes: "89mm anchor bolt at length-62mm — ground-floor PRIMARY B plate + gauge<1.0 only (per-project upper-story carve-out via slabBoltOnUpperFloor)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_89 }, spanLength: SPAN_89, confidence: "medium" },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_89 }, confidence: "medium" },
     ],

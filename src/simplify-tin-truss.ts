@@ -1376,13 +1376,12 @@ function emitHnBoxPairRegularGrid(frame: ParsedFrame): number {
  *   T2 descending (z(start)>z(end)): eave at high tin → ID @vert+7.71 (eave),
  *                                    ID @vert-43.54 (peak)
  *
- * Harness drift compensation:
- *   By the time this rule runs, the wall-rule has extended every vertical
- *   web by +11mm in z. The vertical web's projected tin on the chord
- *   centerline therefore shifts by 11·(chord_dz / chord_len) along the chord.
- *   To recover the XML/REF tin (the reference RFY's coordinate space), we
- *   subtract this drift from the codec vert-tin before applying the
- *   ±7.71/43.54 offsets.
+ * Chord-trim drift compensation:
+ *   When the chord is DESCENDING (peak at chord.start in codec coords), the
+ *   codec has shortened the chord by ~5.85mm at its start. Web-projection
+ *   tins on a descending chord therefore lag the REF tin by ~6.5mm; we add
+ *   that back before applying the ±7.71/43.54 offsets. ASCENDING chords
+ *   need no correction. Magnitude is empirical from TS1-1 T2#1.
  *
  * Verified vs HG260001 GF-TIN-70.075:
  *   - TS1-1 T2 #0 (ascending): 4 paired panels match position to <0.5mm
@@ -1430,11 +1429,13 @@ const TSN_PANELPOINT_MAX_PAIR_DELTA_MM = 60;
  *  as sloped (vs flat/horizontal). Below this we skip — flat-chord trusses
  *  (TI prefix) need a different pattern. */
 const TSN_SLOPED_CHORD_MIN_DZ_MM = 100;
-/** Wall-rule z-extension applied to vertical Ws by the harness (mm). The
- *  vertical-web tin projection on the chord centerline gains an additional
- *  HARNESS_VERTICAL_W_LIFT_MM × (chord_dz/chord_len) along the chord direction
- *  vs the XML/REF tin. We subtract this from the vert tin before emitting. */
-const TSN_HARNESS_VERTICAL_W_LIFT_MM = 11;
+/** Codec chord-trim drift on DESCENDING chords (peak at chord.start in codec
+ *  coords). The codec shortens the chord by ~5.85mm at its start, which
+ *  shifts every web-projection tin by -6.5mm relative to REF tin space.
+ *  Adding +6.5mm back to the vert tin recovers REF tin space. ASCENDING
+ *  chords (eave at chord.start) need no correction (codec_tin ≈ ref_tin
+ *  within 1mm). Empirical from HG260001 GF-TIN TS1-1 T2#1. 2026-05-11. */
+const TSN_DESCENDING_CHORD_TRIM_MM = 6.5;
 
 /** True iff the frame name is a TS/TN-prefix linear truss (gated to TIN plans
  *  by caller). TI-prefix is excluded — flat-chord pattern is different. */
@@ -1558,16 +1559,9 @@ function emitTsnTopChordPanelPattern(chord: ParsedStick, webs: ParsedStick[]): n
   // Mark to suppress frame-context merge.
   (chord as unknown as Record<string, unknown>)[HN_PANELPOINT_APPLIED_KEY] = true;
 
-  // Harness drift: vertical-W +11mm z extension shifts projected tin on the
-  // chord by 11·(chord_dz/chord_len) along the chord direction. Subtract to
-  // recover XML/REF tin space (which the ref RFY's dimple positions live in).
-  const chordLen = Math.hypot(
-    chord.end.x - chord.start.x,
-    chord.end.y - chord.start.y,
-    chord.end.z - chord.start.z,
-  );
-  const dzUnit = chordLen > 0 ? (chord.end.z - chord.start.z) / chordLen : 0;
-  const driftAlongChord = TSN_HARNESS_VERTICAL_W_LIFT_MM * dzUnit;
+  // Codec chord-trim drift: descending chords (peak at chord.start) lag REF
+  // tin by ~6.5mm; ascending chords match REF within 1mm. See constant doc.
+  const driftAlongChord = eaveSign === 1 ? -TSN_DESCENDING_CHORD_TRIM_MM : 0;
 
   const eaveOff = eaveSign * TSN_PANELPOINT_DIMPLE_OFFSET_EAVE;
   const peakOff = -eaveSign * TSN_PANELPOINT_DIMPLE_OFFSET_PEAK;

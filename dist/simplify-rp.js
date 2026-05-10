@@ -140,9 +140,61 @@ function extendStickEnd(stick, mmToAdd) {
 /** Length extension applied to RP studs in horizontal-bottom frames.
  *  Verified vs HG260044 corpus: 58 of 68 horizontal-mode S-stud delta=9.1mm. */
 const RP_HORIZONTAL_STUD_EXTENSION_MM = 9.1;
+/** Body-crossing position compensation for RP horizontal-mode S studs.
+ *
+ *  Detailer's reference RFY shows body-crossing ops (LipNotch/Swage spans
+ *  + InnerDimples emitted by the rules engine when a horizontal member
+ *  crosses the stud) at positions +2mm relative to the codec's emitted
+ *  positions. The codec applies a 2mm trim to studs at start AND end
+ *  (4mm total), shifting box.yMin up by 2mm and making studLocalPosition
+ *  return positions 2mm SMALLER than ref.
+ *
+ *  Verified vs HG260044 R1/R3/R5/R7/R9/R11/R14/R15/R17/R18/R19 GF-RP:
+ *  every horizontal-mode S stud with lenDelta≈0 shows -2mm drift on
+ *  body-crossing LipNotch+Swage span starts AND on body InnerDimple
+ *  pos. Same pattern as Agent D's Sill 1mm/end fix, scaled to 2mm/end.
+ *
+ *  Cohort: only NON-RAKE (horizontal-mode) studs in RP plans. Rake studs
+ *  have varied length deltas and the per-stud start has different geometry
+ *  — applying this shift to them creates false positives.
+ *
+ *  Bounds: only shift body-crossing ops (positions in (50, length-50)).
+ *  Start-anchored caps (≤ 50mm from start) and end-anchored caps
+ *  (≤ 50mm from end) are explicit/known and don't need this shift. */
+const RP_STUD_BODY_CROSSING_SHIFT_MM = 2.0;
 /** Decide if a stick is an RP S-stud — name starts with "S" followed by digit. */
 function isSstud(stick) {
     return /^S\d/.test(stick.name);
+}
+/** Shift body-crossing ops on a stud's tooling list by `mm`. Body ops are
+ *  defined as: spanned ops whose start AND end sit strictly between
+ *  endZoneMm and (stickLen - endZoneMm), and point ops in that same body
+ *  zone. Start/end-anchored caps are NOT shifted (they're rewritten by
+ *  caller).
+ *
+ *  Returns the number of ops shifted. */
+function shiftBodyCrossingOps(tooling, stickLen, mm, endZoneMm) {
+    let shifted = 0;
+    const lo = endZoneMm;
+    const hi = stickLen - endZoneMm;
+    for (const op of tooling) {
+        if (op.kind === "spanned") {
+            // Body-only: both endpoints inside the body zone. (45mm-wide notches
+            // typically; we use endZone=50mm to safely exclude end caps.)
+            if (op.startPos > lo && op.endPos < hi) {
+                op.startPos += mm;
+                op.endPos += mm;
+                shifted++;
+            }
+        }
+        else if (op.kind === "point") {
+            if (op.pos > lo && op.pos < hi) {
+                op.pos += mm;
+                shifted++;
+            }
+        }
+    }
+    return shifted;
 }
 /** Decide if a stick is a B-prefix bottom plate. */
 function isBplate(stick) {
@@ -380,6 +432,11 @@ export function simplifyRpFrame(frame) {
         const origLen = computeStickLength(stick);
         stripStandardStartCap(stick.tooling);
         stripStandardEndCap(stick.tooling, origLen);
+        // (Body-crossing shift for RP horizontal-mode studs is applied INSIDE
+        // src/rules/frame-context.ts where the crossing positions are computed —
+        // see `studShiftFor`. Done there because frame-context.ts runs AFTER
+        // simplify-rp.ts in the pipeline; the body-crossing ops don't exist yet
+        // when this function executes.)
         // Length extension: ref Detailer's RP studs are ~9.1mm longer than raw
         // XML centerline. Apply ONLY on horizontal-mode studs (the dominant
         // delta=9.1 cohort, 58/68). Rake studs have varied deltas (7.1/9.1/11.2/

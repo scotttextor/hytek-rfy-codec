@@ -700,6 +700,60 @@ export function generateFrameContextOps(
   const otherHorizontal = layout.filter(sb =>
     !NOG_ROLES.has(sb.role) && !STUD_ROLES.has(sb.role) && !ALL_PLATE_ROLES.has(sb.role) && sb.horizontal
   );
+
+  // NLBW5 (2026-05-11): NLBW plan detection — used for both sub-panel-nog
+  // detection (below) and the post-stud-loop adjacent-span merge. Computed
+  // once here near the nog layout so both consumers share the source.
+  const _planNameForNlbw = (frame as { planName?: string }).planName ?? "";
+  const isNlbwFrame =
+    /(?:^|[-_/])(?:NLBW|NON-LBW)(?:[-_/]|$)/i.test(_planNameForNlbw);
+
+  // NLBW5 (2026-05-11): Sub-panel-nog detection. In NLBW plans Detailer
+  // groups "sub-panel infill" nogs (close-spaced stacks, e.g. 4 nogs at 42mm
+  // spacing between two studs) and emits ONE merged body-crossing span on
+  // their crossed studs (handled by joinAdjacentSpannedOps at end of stud
+  // loop). The remaining question is **what type** (Swage vs LipNotch) to
+  // emit. Detailer's rule (verified vs HG260044 GF-NLBW N19/N22/N45/N38 +
+  // HG260001 PK1/PK2 NLBW):
+  //
+  //   - Regular Studs inside the sub-panel zone → Swage
+  //   - Wall-end Studs (leftmost/rightmost full-height) → LipNotch
+  //   - TrimStuds AT the sub-panel-zone boundary → LipNotch (acts as anchor)
+  //   - TrimStuds INTERIOR to the sub-panel zone → Swage
+  //
+  // The third bullet (TrimStud-at-boundary) is the discriminator that breaks
+  // the simpler "TrimStud → always LipNotch" override. Verified vs HG260044
+  // N19 (S6 TrimStud at sub-panel-end, gets LipNotch) vs N22 (S6/S8 TrimStuds
+  // INSIDE sub-panel zone, get Swage).
+  //
+  // We collect the set of sub-panel nog names + their endpoint stud-positions
+  // here once per frame; the per-crossing logic below consults it.
+  const subPanelNogNames = new Set<string>();
+  // Map from nog stick name → [endpoint_x_at_start, endpoint_x_at_end] (frame-
+  // local X coords on the horizontal axis the nog runs along). Used to test
+  // whether a stud lies AT one of the nog endpoints (= boundary) or merely
+  // BETWEEN them (= interior).
+  const subPanelNogEndpoints = new Map<string, [number, number]>();
+  if (isNlbwFrame && nogs.length >= 2) {
+    // Canonical Z = Z of the LONGEST nog (matches the diff harness's
+    // nogIsSubPanelBothInterior detection in scripts/diff-vs-detailer.mjs).
+    let longestNog: StickWithBox | null = null;
+    let longestLen = -1;
+    for (const n of nogs) {
+      const len = Math.max(n.box.xMax - n.box.xMin, n.box.yMax - n.box.yMin);
+      if (len > longestLen) { longestLen = len; longestNog = n; }
+    }
+    if (longestNog) {
+      const canonicalCy = longestNog.box.cy;
+      for (const n of nogs) {
+        if (Math.abs(n.box.cy - canonicalCy) <= 5) continue;  // canonical-row
+        subPanelNogNames.add(n.stick.name);
+        // Store the nog's run-axis extent (xMin..xMax in frame-local; the
+        // nog runs horizontally so this is the X range the nog spans).
+        subPanelNogEndpoints.set(n.stick.name, [n.box.xMin, n.box.xMax]);
+      }
+    }
+  }
   // Raised bottom-plate sub-plates: B sticks at z > 30 (sill plates above
   // window/door openings — distinct from the main B at z=20.5). When a
   // TRIMSTUD passes through such a raised B-plate, Detailer adds a paired
@@ -829,6 +883,13 @@ export function generateFrameContextOps(
   const isRpFrame = /(?:^|-)RP(?:-|$|\d)/i.test(planNameForStuds);
   const STUD_BODY_SHIFT_MM = 2.0;
   const studShift = isRpFrame ? STUD_BODY_SHIFT_MM : 0;
+  // `isNlbwFrame` is computed earlier (just after `nogs` is declared) so both
+  // the sub-panel-nog detector and the post-stud-loop adjacent-span merge
+  // share the same flag. The merge fixes ~70 extras on HG260044 GF-NLBW by
+  // collapsing per-nog body crossings into one continuous span (sub-panel
+  // stacks of 4 nogs at 42mm spacing → single Swage/LipNotch). Verified
+  // vs Detailer reference on HG260044 N19 S3 (4 nogs at z=737/779/821/863 →
+  // Swage 711..882) and N45 S1-S5 (same pattern).
 
   for (const stud of studs) {
     const stickOps = result.get(stud.stick.name)!;
@@ -929,8 +990,35 @@ export function generateFrameContextOps(
       // narrower discriminator (NOT continuous-nog detection — likely the
       // specific structural-role of the nog at that height vs. other nog
       // rows). Reverted. See docs/lbw-gap-research.md for details.
+      // NLBW5 (2026-05-11): TrimStud-INTERIOR-to-sub-panel-zone override.
+      // For sub-panel nog crossings on TrimStuds, Detailer emits LipNotch
+      // ONLY when the TrimStud is at the boundary of the sub-panel zone
+      // (within ~30mm of the nog's run-axis endpoint). TrimStuds deep
+      // inside the sub-panel zone get Swage (same as regular Studs).
+      //
+      // Verified vs HG260044 GF-NLBW-70.075:
+      //   - N19/S6 (TrimStud at x=60778, sub-panel nog ends at 60796 → 18mm
+      //     → BOUNDARY): LipNotch  ✓ (matches existing TrimStud→LipNotch)
+      //   - N22/S6 (TrimStud at y=11358, sub-panel nog starts at 11131 →
+      //     227mm → INTERIOR): Swage  ✓ (override fires)
+      //   - N22/S8 (TrimStud at y=12099, sub-panel nog ends at 12198 → 99mm
+      //     → INTERIOR): Swage  ✓ (override fires)
+      let isInteriorSubPanelTrimStud = false;
+      if (isTrimStud && subPanelNogNames.has(nog.stick.name)) {
+        const endpoints = subPanelNogEndpoints.get(nog.stick.name);
+        if (endpoints) {
+          const [eMin, eMax] = endpoints;
+          const studCenterOnNogAxis = stud.box.cx;
+          const distToStart = Math.abs(studCenterOnNogAxis - eMin);
+          const distToEnd = Math.abs(studCenterOnNogAxis - eMax);
+          const BOUNDARY_TOL = 30;  // 30mm tolerance; N19/S6 is 18mm, N22/S8 is 99mm
+          if (distToStart > BOUNDARY_TOL && distToEnd > BOUNDARY_TOL) {
+            isInteriorSubPanelTrimStud = true;
+          }
+        }
+      }
       const useSwage =
-        !isTrimStud && (
+        (!isTrimStud || isInteriorSubPanelTrimStud) && (
           lipNeighbor ||
           (!isWallEndStud) ||
           (isContinuousNog && !isWallEndStud)
@@ -1099,6 +1187,40 @@ export function generateFrameContextOps(
         ? startPos + 9
         : endPos - 9;
       stickOps.push({ kind: "point", type: "InnerDimple", pos: round(dimplePos) });
+    }
+
+    // NLBW5 (2026-05-11): merge adjacent body-crossing spans on this stud.
+    //
+    // Detailer fuses sub-panel-nog body crossings into a single continuous
+    // Swage / LipNotch span rather than emitting one per nog. The gap
+    // between crossings on a tight sub-panel stack (4 nogs at 42mm spacing
+    // → Swage spans of width 45 overlap or near-touch) is ≤ ~3mm; the gap
+    // between separate "structural" crossings (e.g. canonical N1 at z=1329
+    // vs an end-cap at z=2700) is ≥ 1000mm. A 20mm merge gap reliably catches
+    // sub-panel-stack overlaps without merging unrelated crossings.
+    //
+    // Verified vs HG260044 GF-NLBW-70.075:
+    //   - N19 S3 (Stud): 4 Swages at 713..758/755..800/797..842/839..884
+    //     → 1 Swage at 711..882 (matches Detailer's `Swage 711..882`).
+    //   - N19 S6 (TrimStud): 4 LipNotches at same positions → 1 LipNotch
+    //     711..882 (matches Detailer's `LipNotch 711..882`).
+    //   - N7 S4 (Stud): 6 sub-panel Swages + 1 canonical Swage at 1303..1348.
+    //     Detailer merges sub-panel nog 1287.937 + canonical 1325.5 (gap
+    //     ~38mm) into Swage 1261.437..1348. Our 20mm gap correctly merges
+    //     these two specifically (the 6 sub-panel nogs at 150-200mm spacing
+    //     don't trigger merging — they stay separate, matching Detailer).
+    //
+    // Scope: NLBW plans only. LBW plans don't have the tight sub-panel-nog
+    // stacks at the same scale and use a different per-end notch polarity
+    // (NLBW2/NLBW3 specific). Restricting to NLBW prevents accidental
+    // regression on LBW corpora.
+    //
+    // Cross-references HG260001 NLBW (PK1+PK2): same sub-panel-stack
+    // pattern observed (S1/S2/S7/S8/S10/S12 in PK1 N14, S4/S5 in PK2 N9
+    // etc.) — fix benefits both corpora.
+    if (isNlbwFrame) {
+      joinAdjacentSpannedOps(stickOps, "Swage", 20);
+      joinAdjacentSpannedOps(stickOps, "LipNotch", 20);
     }
   }
 
@@ -1646,21 +1768,37 @@ function round(n: number): number { return Math.round(n * 10000) / 10000; }
  * Other op types (Dimple, Swage, etc.) are untouched.
  */
 export function joinAdjacentLipNotches(stickOps: RfyToolingOp[], gap: number): void {
-  // Pull out LipNotches, sort by startPos, merge runs.
-  const lipNotches: { idx: number; startPos: number; endPos: number }[] = [];
+  joinAdjacentSpannedOps(stickOps, "LipNotch", gap);
+}
+
+/**
+ * NLBW5 (2026-05-11): merge adjacent spanned-ops of a given type whose gap is
+ * within `gap` mm. Generalises `joinAdjacentLipNotches` to other span types
+ * (specifically Swage on NLBW studs, where Detailer fuses sub-panel-nog body
+ * crossings — 3-4 nogs at 42mm spacing — into one continuous span).
+ *
+ * Mutates `stickOps` in-place.
+ */
+export function joinAdjacentSpannedOps(
+  stickOps: RfyToolingOp[],
+  opType: "Swage" | "LipNotch" | "InnerNotch",
+  gap: number,
+): void {
+  // Pull out spans of this type, sort by startPos, merge runs.
+  const spans: { idx: number; startPos: number; endPos: number }[] = [];
   for (let i = 0; i < stickOps.length; i++) {
     const op = stickOps[i];
-    if (op && op.kind === "spanned" && op.type === "LipNotch") {
-      lipNotches.push({ idx: i, startPos: op.startPos, endPos: op.endPos });
+    if (op && op.kind === "spanned" && op.type === opType) {
+      spans.push({ idx: i, startPos: op.startPos, endPos: op.endPos });
     }
   }
-  if (lipNotches.length < 2) return;
+  if (spans.length < 2) return;
 
-  lipNotches.sort((a, b) => a.startPos - b.startPos);
+  spans.sort((a, b) => a.startPos - b.startPos);
 
   // Build merged ranges
   const merged: { startPos: number; endPos: number }[] = [];
-  for (const ln of lipNotches) {
+  for (const ln of spans) {
     const last = merged[merged.length - 1];
     if (last && ln.startPos <= last.endPos + gap) {
       last.endPos = Math.max(last.endPos, ln.endPos);
@@ -1669,17 +1807,17 @@ export function joinAdjacentLipNotches(stickOps: RfyToolingOp[], gap: number): v
     }
   }
 
-  // If no actual merging happened (every notch separate), bail
-  if (merged.length === lipNotches.length) return;
+  // If no actual merging happened (every span separate), bail
+  if (merged.length === spans.length) return;
 
-  // Remove all original LipNotches (highest index first to preserve lower indices)
-  const indices = lipNotches.map(ln => ln.idx).sort((a, b) => b - a);
+  // Remove all original spans (highest index first to preserve lower indices)
+  const indices = spans.map(ln => ln.idx).sort((a, b) => b - a);
   for (const i of indices) stickOps.splice(i, 1);
 
-  // Append merged notches
+  // Append merged spans
   for (const m of merged) {
     stickOps.push({
-      kind: "spanned", type: "LipNotch",
+      kind: "spanned", type: opType,
       startPos: round(m.startPos), endPos: round(m.endPos),
     });
   }

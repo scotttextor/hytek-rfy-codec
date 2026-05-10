@@ -69,3 +69,12 @@ export declare function mergeActionDefsOps(legacyOps: RfyToolingOp[], addOps: Rf
  * Other op types (Dimple, Swage, etc.) are untouched.
  */
 export declare function joinAdjacentLipNotches(stickOps: RfyToolingOp[], gap: number): void;
+/**
+ * NLBW5 (2026-05-11): merge adjacent spanned-ops of a given type whose gap is
+ * within `gap` mm. Generalises `joinAdjacentLipNotches` to other span types
+ * (specifically Swage on NLBW studs, where Detailer fuses sub-panel-nog body
+ * crossings — 3-4 nogs at 42mm spacing — into one continuous span).
+ *
+ * Mutates `stickOps` in-place.
+ */
+export declare function joinAdjacentSpannedOps(stickOps: RfyToolingOp[], opType: "Swage" | "LipNotch" | "InnerNotch", gap: number): void;

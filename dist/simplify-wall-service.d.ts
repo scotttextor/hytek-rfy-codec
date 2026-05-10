@@ -1,4 +1,5 @@
 import type { ParsedFrame, ParsedStick, ServiceAction } from "./synthesize-plans.js";
+import type { ProjectConfig } from "./rules/types.js";
 /** True iff the plan is a wall plan whose vertical wall studs participate in
  *  the dynamic InnerService rule. Matches `-LBW-` and `-NLBW-` plan suffixes
  *  case-insensitively. Other plan types (TIN/RP/TB2B/FJ/etc.) are no-ops. */
@@ -28,13 +29,23 @@ export declare function applicableZLinePositions(stick: ParsedStick, serviceActi
  *  `frame.sticks[].tooling` in place. No-op for frames without
  *  serviceActions populated AND without any wall stud — but stripping
  *  proceeds whether `serviceActions` is empty or not (no z-lines covering
- *  this stud is itself the correct answer). */
-export declare function simplifyWallServiceFrame(frame: ParsedFrame): void;
+ *  this stud is itself the correct answer).
+ *
+ *  Kb sticks (added 2026-05-09): when `projectConfig.kbInnerServiceOffsetExtra`
+ *  is set (HG260044 corpus), Pattern-A H-Service projection runs on every
+ *  Kb (regardless of Kb1/Kb2 flipped state) and the V_lower+1448 rule fires
+ *  on top-attached Kbs. Other corpora keep existing harness-side behaviour
+ *  (no-op here for Kbs). */
+export declare function simplifyWallServiceFrame(frame: ParsedFrame, projectConfig?: ProjectConfig): void;
 /** Public entry point for the wall-service simplifier post-pass. Walks every
  *  plan and frame in the project; for each plan whose name matches the wall
  *  predicate, runs `simplifyWallServiceFrame` on every frame. Mutates
- *  `project.plans[].frames[].sticks[]` in place. */
+ *  `project.plans[].frames[].sticks[]` in place.
+ *
+ *  When `projectConfig` is supplied, Kb-stick InnerService rules also fire
+ *  (HG260044 corpus). Without it, only vertical wall-stud rules run
+ *  (preserves pre-2026-05-09 behaviour for HG260001/HG260023). */
 export declare function simplifyWallServiceInProject(plans: ReadonlyArray<{
     name: string;
     frames: ParsedFrame[];
-}>): void;
+}>, projectConfig?: ProjectConfig): void;

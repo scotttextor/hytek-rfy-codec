@@ -288,7 +288,17 @@ export function generateFrameContextOps(frame, setup) {
         const we = plate.stick.worldEnd;
         const isSlopedPlate = !!(ws && we && Math.abs(we.z - ws.z) > 1);
         const isRakePlate = isSlopedPlate && plateAxisIsY;
-        const startTrimCompensation = isRakePlate ? resolvedSetup.endClearance : 0;
+        // RP top-plate no-trim (Agent RP3, 2026-05-09). When the upstream pipeline
+        // skips the 4mm/end trim for RP TopPlate sticks (which it now does — see
+        // diff-vs-detailer.mjs / framecad-import.ts RP-TopPlate gate), the
+        // box.yMin already reflects the un-trimmed start position (4mm earlier
+        // in frame-local coords), so the +endClearance compensation we used to
+        // recover the un-trimmed start is no longer needed.
+        const planNameForRpTrim = frame.planName ?? "";
+        const isRpPlanFrame = /(?:^|-)RP(?:-|$|\d)/i.test(planNameForRpTrim);
+        const plateIsTopPlate = String(plate.stick.usage ?? "").toLowerCase() === "topplate";
+        const isRpTopPlate = isRpPlanFrame && plateIsTopPlate;
+        const startTrimCompensation = (isRakePlate && !isRpTopPlate) ? resolvedSetup.endClearance : 0;
         // Long-axis range used for "is this crossing inside the plate body?"
         const plateLongLo = (plateAxisIsY ? plate.box.yMin : plate.box.xMin) - startTrimCompensation;
         const plateLongHi = plateAxisIsY ? plate.box.yMax : plate.box.xMax;

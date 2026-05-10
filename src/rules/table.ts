@@ -31,7 +31,7 @@
  * (web=70mm, flange=41mm). For other profiles (89S41, 150S41, etc.) the
  * offsets scale with profile width (≈ flange/2 + small fixed offset).
  */
-import type { RuleGroup } from "./types.js";
+import type { RuleGroup, StickContext } from "./types.js";
 import {
   MACHINE_SETUPS,
   endClearanceSpan,
@@ -114,6 +114,31 @@ function wallWEndSwageSpan(angleFromVerticalDeg: number): number {
   if (cos < 0.05) return 92;  // safety cap for near-horizontal W (shouldn't happen)
   const tan = Math.sin(rad) / cos;
   return Math.min(39 / cos + 8 * tan * tan, 92);
+}
+
+/**
+ * NLBW3 (2026-05-10): Whether this nog stick's START end takes Notch caps
+ * (instead of Swage caps). Combines:
+ *   - The new per-end flag `nogStartCapIsNotch` (set by the diff harness or
+ *     framecad-import based on geometry + projectConfig polarity).
+ *   - Backward compatibility with NLBW2's symmetric flag
+ *     `nogIsSubPanelBothInterior` — when set without per-end flags, both
+ *     ends default to Notch.
+ * Predicate also gates on NLBW plan-name match.
+ */
+function nogStartTakesNotchCap(ctx: StickContext): boolean {
+  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
+  if (ctx.nogStartCapIsNotch === true) return true;
+  if (ctx.nogStartCapIsNotch === undefined && ctx.nogIsSubPanelBothInterior === true) return true;
+  return false;
+}
+
+/** NLBW3 (2026-05-10): same as `nogStartTakesNotchCap` but for the END. */
+function nogEndTakesNotchCap(ctx: StickContext): boolean {
+  if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
+  if (ctx.nogEndCapIsNotch === true) return true;
+  if (ctx.nogEndCapIsNotch === undefined && ctx.nogIsSubPanelBothInterior === true) return true;
+  return false;
 }
 
 export const RULE_TABLE: RuleGroup[] = [
@@ -582,24 +607,23 @@ export const RULE_TABLE: RuleGroup[] = [
     profilePattern: /^70S41$/,
     lengthRange: [0, Infinity],
     rules: [
-      // Swage caps: gated OFF on NLBW sub-panel infill (where Notch caps fire instead).
+      // NLBW3 (2026-05-10): per-end Notch caps via projectConfig polarity.
       { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
-        predicate: (ctx) => ctx.nogIsSubPanelBothInterior !== true || !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
+        predicate: (ctx) => !nogStartTakesNotchCap(ctx) },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
       { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
-        predicate: (ctx) => ctx.nogIsSubPanelBothInterior !== true || !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
+        predicate: (ctx) => !nogEndTakesNotchCap(ctx) },
       { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-      // Sub-panel infill caps (NLBW only, only when flag is set): InnerNotch+LipNotch at both ends.
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
-        predicate: (ctx) => ctx.nogIsSubPanelBothInterior === true && /(NLBW|NON-LBW)/i.test(ctx.planName ?? ""),
+        predicate: nogStartTakesNotchCap,
         notes: "NLBW sub-panel infill nog: InnerNotch @start (replaces Swage)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
-        predicate: (ctx) => ctx.nogIsSubPanelBothInterior === true && /(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
+        predicate: nogStartTakesNotchCap },
       { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
-        predicate: (ctx) => ctx.nogIsSubPanelBothInterior === true && /(NLBW|NON-LBW)/i.test(ctx.planName ?? ""),
+        predicate: nogEndTakesNotchCap,
         notes: "NLBW sub-panel infill nog: InnerNotch @end (replaces Swage)" },
       { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
-        predicate: (ctx) => ctx.nogIsSubPanelBothInterior === true && /(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
+        predicate: nogEndTakesNotchCap },
     ],
   },
 

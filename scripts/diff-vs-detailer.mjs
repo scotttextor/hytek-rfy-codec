@@ -288,6 +288,40 @@ function buildOurProject(xmlText) {
         }
       }
 
+      // RP T-plate peak detection (Agent RP3, 2026-05-09).
+      // Detailer's reference plate length on RP TopPlate sticks is typically
+      // raw XML length (no trim) for sticks that are EITHER sloped OR meet
+      // another T-plate at one of their endpoints (a "peak" join). Standalone
+      // horizontal RP T-plates (e.g. HG260044 R7/T2 — apex stiffener) DO get
+      // the standard 4mm/end trim. The peak-join discriminator is required
+      // for horizontal T-plates that meet a sloped neighbour at the apex
+      // (e.g. R4/T1 horizontal at z=4206 meeting T2 sloped down).
+      const isRpPlanForPeak = /(?:^|-)RP(?:-|$|\d)/i.test(plan.name);
+      const tPlatesWorld = [];
+      if (isRpPlanForPeak) {
+        for (const s of f.stick ?? []) {
+          const u = String(s["@_usage"] ?? "").toLowerCase();
+          const n = String(s["@_name"] ?? "");
+          if (u !== "topplate" || !/^T\d/.test(n)) continue;
+          const ps = parseTriple(String(s.start ?? "0,0,0"));
+          const pe = parseTriple(String(s.end ?? "0,0,0"));
+          tPlatesWorld.push({ name: n, start: ps, end: pe });
+        }
+      }
+      function tplateMeetsPeak(stickName, start, end) {
+        if (!isRpPlanForPeak) return false;
+        const TOL = 30;  // mm — tolerance for peak-join detection
+        for (const t of tPlatesWorld) {
+          if (t.name === stickName) continue;
+          const ee = Math.hypot(end.x - t.end.x, end.y - t.end.y, end.z - t.end.z);
+          const es = Math.hypot(end.x - t.start.x, end.y - t.start.y, end.z - t.start.z);
+          const se = Math.hypot(start.x - t.end.x, start.y - t.end.y, start.z - t.end.z);
+          const ss = Math.hypot(start.x - t.start.x, start.y - t.start.y, start.z - t.start.z);
+          if (ee < TOL || es < TOL || se < TOL || ss < TOL) return true;
+        }
+        return false;
+      }
+
       const sticks = [];
       for (const s of f.stick ?? []) {
         const profile = {
@@ -333,8 +367,29 @@ function buildOurProject(xmlText) {
         // 1303.8 = raw XML 1303.8.
         const isLINPlanForTrim = /-LIN-/i.test(plan.name);
         const isTB2BPlanForTrim = /-TB2B-/i.test(plan.name);
+        const isRpPlanForTrim = /(?:^|-)RP(?:-|$|\d)/i.test(plan.name);
         const isTrussChord = (isLINPlanForTrim || isTB2BPlanForTrim) && (usage === "topchord" || usage === "bottomchord");
-        if (!isRaised89B && !isTrussChord && (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord")) {
+        // RP top-plate no-trim (Agent RP3, 2026-05-09).
+        // Detailer's reference plate length on RP TopPlate sticks is
+        // essentially the raw XML centerline length (mean delta refLen-rawLen
+        // = +1.5mm across ~45 T-sticks in HG260044 + HG260001 GF-RP), not
+        // the 8mm-trimmed length we currently apply via EndClearance.
+        //
+        // SCOPE: SLOPED T-plates (|Δz| > 5mm) OR horizontal T-plates that
+        // meet another T-plate at one of their endpoints (a "peak" join —
+        // e.g. HG260044 R4/T1 horizontal at z=4206 meeting T2 sloped down).
+        // STANDALONE horizontal RP T-plates (e.g. HG260044 R7/T2 — apex
+        // stiffener with no T-plate neighbours) DO get the standard 4mm/end
+        // trim. Verified vs both HG260044 + HG260001 GF-RP corpora.
+        //
+        // Bottom plates on RP frames keep the 4mm/end trim (verified vs
+        // HG260044 R1/B1 ref length 1972.40 = raw 1980.40 - 8mm).
+        const stickIsSloped = Math.abs(end.z - start.z) > 5;
+        const stickMeetsPeak = isRpPlanForTrim && usage === "topplate" && /^T\d/.test(stickName)
+          && tplateMeetsPeak(stickName, start, end);
+        const isRpNoTrimTopPlate = isRpPlanForTrim && usage === "topplate"
+          && (stickIsSloped || stickMeetsPeak);
+        if (!isRaised89B && !isTrussChord && !isRpNoTrimTopPlate && (usage === "topplate" || usage === "bottomplate" || usage === "topchord" || usage === "bottomchord")) {
           const dx=end.x-start.x,dy=end.y-start.y,dz=end.z-start.z;
           const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
           const ec = setup?.endClearance ?? 4;
@@ -1249,12 +1304,13 @@ function buildOurProject(xmlText) {
   return {
     project: { name: String(root["@_name"]), jobNum: "JOB", client: "", date: "2026-04-30", plans },
     setup,
+    projectConfig,
   };
 }
 
 const xmlText = fs.readFileSync(inputXmlPath, "utf8");
-const { project: ourProject, setup } = buildOurProject(xmlText);
-const ourResult = synthesizeRfyFromPlans(ourProject, { machineSetup: setup, lenient: true });
+const { project: ourProject, setup, projectConfig } = buildOurProject(xmlText);
+const ourResult = synthesizeRfyFromPlans(ourProject, { machineSetup: setup, lenient: true, projectConfig });
 const ourDoc = decode(ourResult.rfy);
 
 // Post-decode rule swaps for frame types where the codec's default rules

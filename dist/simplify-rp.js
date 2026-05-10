@@ -567,17 +567,16 @@ const RP_BODY_END_ZONE_MM = 50;
 const RP_SCALE_MIN = 1.02;
 /** Empirical start-trim offset for diagonal RP T-plates, in mm.
  *
- *  After along-centerline correction, every body crossing on diagonal
- *  T-plates lands ~4-5mm SHORT of the ref position, uniformly across stick
- *  lengths. This is the 4mm/end start-trim applied by the upstream input
- *  pipeline (in framecad-import.ts and the diff harness), which Detailer
- *  doesn't apply on rake plates. The same effect is corrected for axis-Y
- *  rake plates in frame-context.ts via `startTrimCompensation = endClearance`
- *  (line 354).
+ *  PRE Agent RP3 (was 4mm): the upstream input pipeline trimmed 4mm/end on
+ *  every plate including RP T-plates, leaving body crossings ~4mm SHORT of
+ *  ref. This constant compensated for that.
  *
- *  For 70mm setup endClearance = 4mm. The empirical drift is 4-5mm,
- *  closer to 4mm. Use 4mm for consistency with existing axis-Y compensation. */
-const RP_DIAGONAL_START_TRIM_OFFSET_MM = 4;
+ *  CURRENT (Agent RP3, 2026-05-09): the upstream pipeline now SKIPS the
+ *  4mm/end trim on RP TopPlate sticks. Combined with frame-context.ts
+ *  setting startTrimCompensation = 0 for RP top plates, the body crossings
+ *  arrive at this scaler with no upstream offset, so the compensation must
+ *  be 0. */
+const RP_DIAGONAL_START_TRIM_OFFSET_MM = 0;
 /** Position helper: the position of a tooling op (point pos, span midpoint,
  *  or undefined for start/end edge ops). */
 function opPosForScaling(op) {

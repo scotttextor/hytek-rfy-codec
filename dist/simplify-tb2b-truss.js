@@ -1182,6 +1182,157 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             if (!exists)
                 stick.tooling.push({ kind: "point", type: "Web", pos: apexPos });
         }
+        // ────────────────────────────────────────────────────────────────────
+        // Agent T5 (2026-05-09): TT/TN-frame T-chord apex-extras + heel-bolt fix
+        // ────────────────────────────────────────────────────────────────────
+        //
+        // PK6/PK7/PK12 contain TT-frames AND certain TN-frames where sloped
+        // T-chords have a sub-pattern not handled by the existing simplifier:
+        //
+        //   • TT-only: chord-chord apex pair-bolt rule (line 376-413, +153.4
+        //     spacing) emits a "+153.4 pair partner" at the apex-side. For
+        //     TT-frames where the @91.21 APEX_BOLT rule (line 1247-1263) ALSO
+        //     fires, this produces an EXTRA at output ≈ APEX_BOLT + 75.06 (e.g.
+        //     @166.27 or @L-166.27 = @5725.84) that Detailer suppresses.
+        //
+        //   • TT and TN: Detailer emits a HEEL-SIDE FIXED BOLT at output 715.93
+        //     from heel (i.e., at output-position 715.93 if heel is at output-
+        //     start, or at L-715.93 if heel is at output-end). The codec doesn't
+        //     currently emit this heel-bolt on TT/TN-frame T-chords.
+        //
+        // Verified vs HG260001 PK6 ref:
+        //   TT6-1 T2 first  ref: 715.92, 1023.53, …, 5662.51, 5800.89
+        //   TT6-1 T2 second ref: 91.21, 229.60, …, 4861.53, 5176.18 (= L-715.92)
+        //   TN16-1 T2 ref:        715.93, 969.73, …, 5046.71
+        //   TN17-1 T3 first ref:  715.92, 969.72, …, 6526.30, 6679.70
+        //
+        // Predicate: T-chord with slope > 5° AND heel-end (LOW-Z) shares an
+        // endpoint with another T-chord (heel-tip diagonal partner) AND
+        // heel-tip partner length ∈ [1900, 2200] (the @715.93 case). Apex-extras
+        // suppression ONLY applies to TT-frames (where @91.21 fires).
+        //
+        // EXCLUSIONS:
+        //   - PK10/PK11 TN6-1 T4 / TN5/TN4 use heel-tip partners ≥ 2200mm and
+        //     a different bolt @815.18, NOT @715.93 — gate excludes them.
+        const isTHeelCap_T5 = /^T\d/.test(stick.name) && !!meta3D &&
+            Math.abs(meta3D.end3D.z - meta3D.start3D.z) > 5;
+        if (isTHeelCap_T5 && meta3D) {
+            const APEX_BOLT_T5 = 91.21;
+            const APEX_EXTRA_OFFSET_T5 = 75.06;
+            const HEEL_BOLT_T5 = 715.93;
+            const SUPPRESS_TOL_T5 = 5.0;
+            const apexAtXmlEnd_T5 = meta3D.end3D.z > meta3D.start3D.z;
+            const reverse_T5 = chordArcReversal(meta3D);
+            const apexAtOutputEnd_T5 = apexAtXmlEnd_T5 !== reverse_T5;
+            const heelXY_T5 = apexAtXmlEnd_T5 ? meta3D.start3D : meta3D.end3D;
+            let hasHeelTipPartner_T5 = false;
+            let heelTipLen_T5 = 0;
+            const HEEL_SHARE_TOL_T5 = 5.0;
+            for (let k = 0; k < frame.sticks.length; k++) {
+                if (k === stickIdx)
+                    continue;
+                const o = frame.sticks[k];
+                if (!/^T\d/.test(o.name))
+                    continue;
+                if (/\(Box\d+\)/.test(o.name))
+                    continue;
+                const om = metaSticks[k];
+                const dStart = Math.hypot(om.start3D.y - heelXY_T5.y, om.start3D.z - heelXY_T5.z);
+                const dEnd = Math.hypot(om.end3D.y - heelXY_T5.y, om.end3D.z - heelXY_T5.z);
+                if (dStart < HEEL_SHARE_TOL_T5 || dEnd < HEEL_SHARE_TOL_T5) {
+                    const oLen = Math.hypot(om.end3D.y - om.start3D.y, om.end3D.z - om.start3D.z);
+                    if (oLen > heelTipLen_T5)
+                        heelTipLen_T5 = oLen;
+                    hasHeelTipPartner_T5 = true;
+                }
+            }
+            // Discriminator: check if there's a HORIZONTAL B-chord near the heel
+            // (within HEEL_REGION_TOL_T5 mm horizontally). Verified vs HG260001:
+            //   • Horizontal B-chord at heel → @715.93 fires
+            //     (TT6-1 / TN16-1 / TN17-1 occ0)
+            //   • Sloped B-chord at heel → @815.18 fires (NOT @715.93)
+            //     (TN5-1 / TN6-1 / TN20-1 / TN17-1 occ1)
+            // Without this gate, the @715.93 bolt would incorrectly fire on
+            // sloped-B frames and produce an EXTRA at @L-715.93 = @5986.67 (the
+            // PK11 regression case).
+            let hasHorizontalBChordAtHeel_T5 = false;
+            const HEEL_REGION_TOL_T5 = 1500;
+            for (let k = 0; k < frame.sticks.length; k++) {
+                const o = frame.sticks[k];
+                if (!/^B\d/.test(o.name))
+                    continue;
+                if (/\(Box\d+\)/.test(o.name))
+                    continue;
+                const om = metaSticks[k];
+                const oZSpan = Math.abs(om.end3D.z - om.start3D.z);
+                if (oZSpan > 5)
+                    continue; // skip sloped B-chord
+                const dStart = Math.abs(om.start3D.y - heelXY_T5.y);
+                const dEnd = Math.abs(om.end3D.y - heelXY_T5.y);
+                if (dStart < HEEL_REGION_TOL_T5 || dEnd < HEEL_REGION_TOL_T5) {
+                    hasHorizontalBChordAtHeel_T5 = true;
+                    break;
+                }
+            }
+            if (hasHeelTipPartner_T5 && heelTipLen_T5 >= 1900 && heelTipLen_T5 <= 2200 && hasHorizontalBChordAtHeel_T5) {
+                // Apex-extras suppression: ONLY on TT-frames where @91.21 APEX_BOLT
+                // rule fires. TN-frames use @22.85+@176.25 doublet (correct) so
+                // skip the suppression for them.
+                if (isTTFrame) {
+                    const apexExtraPos_T5 = apexAtOutputEnd_T5
+                        ? meta3DLen - APEX_BOLT_T5 - APEX_EXTRA_OFFSET_T5
+                        : APEX_BOLT_T5 + APEX_EXTRA_OFFSET_T5;
+                    stick.tooling = stick.tooling.filter((op) => {
+                        if (op.kind !== "point" || op.type !== "Web")
+                            return true;
+                        if (Math.abs(op.pos - apexExtraPos_T5) < SUPPRESS_TOL_T5)
+                            return false;
+                        return true;
+                    });
+                }
+                // Add heel-side fixed bolt @HEEL_BOLT_T5 from heel-end. (Both TT and TN)
+                const heelBoltPos_T5 = apexAtOutputEnd_T5 ? HEEL_BOLT_T5 : meta3DLen - HEEL_BOLT_T5;
+                if (heelBoltPos_T5 > 0 && heelBoltPos_T5 < meta3DLen) {
+                    const APPROX_DEDUP_T5 = 3.0;
+                    const exists2_T5 = stick.tooling.some((o) => o.kind === "point" && o.type === "Web" && Math.abs(o.pos - heelBoltPos_T5) < APPROX_DEDUP_T5);
+                    if (!exists2_T5) {
+                        stick.tooling.push({ kind: "point", type: "Web", pos: Math.round(heelBoltPos_T5 * 100) / 100 });
+                    }
+                }
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────
+        // Agent T5 (2026-05-09): H-header chord-chord crossing suppression.
+        // ────────────────────────────────────────────────────────────────────
+        //
+        // H-headers (H4, H7) in TT-frames are horizontal chords spanning between
+        // two T-chord apexes. The codec's chord-chord rule emits Web@pt at the
+        // T-chord meeting points (@16.68 from each end). Detailer suppresses
+        // these — its header pattern is ONLY cap-stack + chord-Web crossings.
+        //
+        // Verified vs HG260001 PK6 ref TT6-1 H4 (no 16.68 / 1744.95 ops).
+        const isHHeader_T5 = /^H\d/.test(stick.name) && meta3DLen > 1500;
+        if (isHHeader_T5 && isTTFrame) {
+            const HEADER_SUPPRESS_RANGE_T5 = 30;
+            const HEADER_KEEP_TOL_T5 = 5.0;
+            const headerCapPositions_T5 = [
+                84.3, 84.33, 84.34, 91.70,
+                meta3DLen - 84.3, meta3DLen - 84.33, meta3DLen - 84.34,
+                meta3DLen - 35,
+            ];
+            stick.tooling = stick.tooling.filter((op) => {
+                if (op.kind !== "point" || op.type !== "Web")
+                    return true;
+                const inEndZone = op.pos < HEADER_SUPPRESS_RANGE_T5 || op.pos > meta3DLen - HEADER_SUPPRESS_RANGE_T5;
+                if (!inEndZone)
+                    return true;
+                for (const cap of headerCapPositions_T5) {
+                    if (Math.abs(op.pos - cap) < HEADER_KEEP_TOL_T5)
+                        return true;
+                }
+                return false;
+            });
+        }
         // Sloped peer-pair LONGER B-chord: post-trim fixed-pair + suppression
         // (Agent T4, 2026-05-09). Detailer emits a fixed @22.8/@120.8 Web pair
         // INTO the chord from the centerline-meeting end, and suppresses any

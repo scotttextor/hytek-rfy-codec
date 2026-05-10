@@ -34,7 +34,7 @@ import {
 import { generateFrameContextOps } from "./rules/index.js";
 import { joinAdjacentLipNotches } from "./rules/frame-context.js";
 import { simplifyTinTrussFramesInProject } from "./simplify-tin-truss.js";
-import { simplifyRpFramesInProject, scaleRpDiagonalTplateBodyOps, isRpPlanName } from "./simplify-rp.js";
+import { simplifyRpFramesInProject, scaleRpDiagonalTplateBodyOps, isRpPlanName, rpRakeDirectionForFrame, applyRpSingleTplateRakeCap } from "./simplify-rp.js";
 import { simplifyTb2bTrussFramesInProject, isTb2bPlanName } from "./simplify-tb2b-truss.js";
 import { simplifyWallServiceInProject } from "./simplify-wall-service.js";
 import { simplifyWallWebInProject } from "./simplify-wall-web.js";
@@ -648,6 +648,24 @@ export function synthesizeRfyFromPlans(
               { name: stick.name, length: len3D, outlineCorners: corners, tooling: merged },
               plan.name,
             );
+          }
+        }
+
+        // RP single-T-plate rake cap rewrite (Agent RP5, 2026-05-10).
+        if (
+          (typeof process === "undefined" || process.env?.CODEC_DISABLE_RP_ASC !== "1")
+          && stick.name === "T1"
+          && /^T\d/.test(stick.name)
+          && String(stick.usage ?? "").toLowerCase() === "topplate"
+        ) {
+          const rakeDir = rpRakeDirectionForFrame(frame, plan.name);
+          if (rakeDir !== null) {
+            const lenRake = Math.sqrt(
+              (stick.end.x - stick.start.x) ** 2 +
+              (stick.end.y - stick.start.y) ** 2 +
+              (stick.end.z - stick.start.z) ** 2,
+            );
+            applyRpSingleTplateRakeCap(merged, lenRake, rakeDir);
           }
         }
 

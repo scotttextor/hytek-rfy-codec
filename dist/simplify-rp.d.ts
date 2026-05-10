@@ -57,3 +57,13 @@ export declare function scaleRpDiagonalTplateBodyOps(stick: {
     scaleFactor: number;
     offsetMm: number;
 } | null;
+export type RpRakeDirection = "asc" | "desc";
+export interface RpRakeTransformStats {
+    stripped: number;
+    added: number;
+    shifted: number;
+    endCapReplaced: number;
+    direction: RpRakeDirection;
+}
+export declare function applyRpSingleTplateRakeCap(tooling: RfyToolingOp[], stickLen: number, direction: RpRakeDirection): RpRakeTransformStats;
+export declare function rpRakeDirectionForFrame(frame: ParsedFrame, planName: string): RpRakeDirection | null;

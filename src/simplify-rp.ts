@@ -768,3 +768,143 @@ export function scaleRpDiagonalTplateBodyOps(
   stick.tooling.push(...newTooling);
   return { scaled: scaledCount, dropped, scaleFactor: scale, offsetMm: offsetFromXmin };
 }
+
+// ---------------------------------------------------------------------------
+// RP single-T-plate rake start/end-cap rewrite (Agent RP5, 2026-05-10)
+// ---------------------------------------------------------------------------
+// PATTERN: single-T-plate sloped RP frames need a chord-style cap on the
+// EAVE (low-z) end of T1. The codec emits standard wall-style caps, missing
+// the chord morphology and producing 22.6mm body LipNotch drift.
+// ASC : T1.start.z < T1.end.z  -> eave at start -> chord cap at start
+// DESC: T1.start.z > T1.end.z  -> eave at end   -> chord cap at end
+
+const RP_RAKE_T_LEN_MIN_MM = 2000;
+const RP_RAKE_T_DZ_MIN_MM = 5;
+const RP_RAKE_BODY_SHIFT_MM = 22.6;
+const RP_CHORD_CAP_DIMPLE_OFFSET_MM = 90.0;
+const RP_CHORD_CAP_LIPNOTCH_LO_MM = 77.5;
+const RP_CHORD_CAP_LIPNOTCH_HI_MM = 138.9;
+const RP_ASC_PEAK_END_LIPNOTCH_SPAN_MM = 66.1;
+
+export type RpRakeDirection = "asc" | "desc";
+
+function frameSingleTplateRakeDirection(frame: ParsedFrame): RpRakeDirection | null {
+  let tCount = 0;
+  let nCount = 0;
+  let t1: ParsedStick | null = null;
+  let maxStudLen = 0;
+  for (const s of frame.sticks) {
+    if (isTplate(s)) {
+      tCount++;
+      if (s.name === "T1") t1 = s;
+    }
+    if (isNog(s)) nCount++;
+    if (isSstud(s)) {
+      const sl = computeStickLength(s);
+      if (sl > maxStudLen) maxStudLen = sl;
+    }
+  }
+  if (tCount !== 1) return null;
+  if (nCount > 1) return null;
+  if (!t1) return null;
+  const dz = t1.end.z - t1.start.z;
+  const len = computeStickLength(t1);
+  if (len < RP_RAKE_T_LEN_MIN_MM) return null;
+  // Skillion-roof exclusion (HG260044 R15: studs run from a horizontal floor
+  // up to a rake T-plate, making them longer than T1 itself; ratio > 1).
+  if (maxStudLen / len > 1.0) return null;
+  if (dz >= RP_RAKE_T_DZ_MIN_MM) return "asc";
+  if (dz <= -RP_RAKE_T_DZ_MIN_MM) return "desc";
+  return null;
+}
+
+export interface RpRakeTransformStats {
+  stripped: number;
+  added: number;
+  shifted: number;
+  endCapReplaced: number;
+  direction: RpRakeDirection;
+}
+
+export function applyRpSingleTplateRakeCap(
+  tooling: RfyToolingOp[],
+  stickLen: number,
+  direction: RpRakeDirection,
+): RpRakeTransformStats {
+  let stripped = 0;
+  let added = 0;
+  let shifted = 0;
+  let endCapReplaced = 0;
+  if (direction === "asc") {
+    for (let i = tooling.length - 1; i >= 0; i--) {
+      const op = tooling[i]!;
+      if (op.kind === "start" && op.type === "Chamfer") { tooling.splice(i, 1); stripped++; continue; }
+      if (op.kind === "point" && op.type === "InnerDimple"
+          && Math.abs(op.pos - 10.0) < POINT_ANCHOR_TOL_MM) {
+        tooling.splice(i, 1); stripped++; continue;
+      }
+      if (op.kind === "spanned" && op.type === "LipNotch"
+          && Math.abs(op.startPos - 0) < END_ANCHOR_TOL_MM
+          && Math.abs(op.endPos - 39.0) < 2.0) {
+        tooling.splice(i, 1); stripped++; continue;
+      }
+    }
+    const bodyLo = 150;
+    const bodyHi = stickLen - 50;
+    for (const op of tooling) {
+      if (op.kind === "spanned" && op.type === "LipNotch"
+          && op.startPos > bodyLo && op.endPos < bodyHi) {
+        op.startPos -= RP_RAKE_BODY_SHIFT_MM;
+        op.endPos -= RP_RAKE_BODY_SHIFT_MM;
+        shifted++;
+      }
+    }
+    for (const op of tooling) {
+      if (op.kind === "spanned" && op.type === "LipNotch"
+          && Math.abs(op.endPos - stickLen) < END_ANCHOR_TOL_MM
+          && Math.abs((op.endPos - op.startPos) - 39.0) < 2.0) {
+        op.startPos = stickLen - RP_ASC_PEAK_END_LIPNOTCH_SPAN_MM;
+        endCapReplaced++;
+      }
+    }
+    tooling.push({ kind: "point", type: "InnerDimple", pos: RP_CHORD_CAP_DIMPLE_OFFSET_MM });
+    tooling.push({ kind: "spanned", type: "LipNotch",
+      startPos: RP_CHORD_CAP_LIPNOTCH_LO_MM, endPos: RP_CHORD_CAP_LIPNOTCH_HI_MM });
+    added += 2;
+  } else {
+    for (let i = tooling.length - 1; i >= 0; i--) {
+      const op = tooling[i]!;
+      if (op.kind === "end" && op.type === "Chamfer") { tooling.splice(i, 1); stripped++; continue; }
+      if (op.kind === "point" && op.type === "InnerDimple"
+          && Math.abs(op.pos - (stickLen - 10.0)) < POINT_ANCHOR_TOL_MM) {
+        tooling.splice(i, 1); stripped++; continue;
+      }
+      if (op.kind === "spanned" && op.type === "LipNotch"
+          && Math.abs(op.endPos - stickLen) < END_ANCHOR_TOL_MM
+          && Math.abs((op.endPos - op.startPos) - 39.0) < 2.0) {
+        tooling.splice(i, 1); stripped++; continue;
+      }
+    }
+    const bodyLo = 150;
+    const bodyHi = stickLen - 150;
+    for (const op of tooling) {
+      if (op.kind === "spanned" && op.type === "LipNotch"
+          && op.startPos > bodyLo && op.endPos < bodyHi) {
+        op.startPos += RP_RAKE_BODY_SHIFT_MM;
+        op.endPos += RP_RAKE_BODY_SHIFT_MM;
+        shifted++;
+      }
+    }
+    tooling.push({ kind: "point", type: "InnerDimple", pos: stickLen - RP_CHORD_CAP_DIMPLE_OFFSET_MM });
+    tooling.push({ kind: "spanned", type: "LipNotch",
+      startPos: stickLen - RP_CHORD_CAP_LIPNOTCH_HI_MM,
+      endPos: stickLen - RP_CHORD_CAP_LIPNOTCH_LO_MM });
+    added += 2;
+  }
+  return { stripped, added, shifted, endCapReplaced, direction };
+}
+
+export function rpRakeDirectionForFrame(frame: ParsedFrame, planName: string): RpRakeDirection | null {
+  if (!isRpPlanName(planName)) return null;
+  return frameSingleTplateRakeDirection(frame);
+}

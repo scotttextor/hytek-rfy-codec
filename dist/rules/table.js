@@ -522,15 +522,38 @@ export const RULE_TABLE = [
     // Length range starts at 0 — short nogs <162mm and >=168mm match here too.
     // Verified across all 3 corpora 2026-05-05: 91/91 short nogs (excluding
     // 164mm header-cripples) get Swage @start + Swage @end like long nogs.
+    //
+    // 2026-05-10 (NLBW2 agent): Sub-panel infill nogs (a Nog whose z != the
+    // canonical cross-noggin row z, AND both endpoints terminate at INTERIOR
+    // regular Studs — NOT TrimStuds, NOT perimeter, NOT corner cluster) get
+    // InnerNotch+LipNotch caps instead of Swage caps. NLBW plans only —
+    // verified vs HG260044 GF-NLBW-70.075 N7/N24/N38 (12 nogs, 24 ops gained,
+    // 0 false positives). The flag `nogIsSubPanelBothInterior` is set by the
+    // diff harness (and framecad-import for production). When unset (default),
+    // behaviour is unchanged (Swage caps fire).
     {
         rolePattern: NOG_ROLES,
         profilePattern: /^70S41$/,
         lengthRange: [0, Infinity],
         rules: [
-            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high" },
+            // Swage caps: gated OFF on NLBW sub-panel infill (where Notch caps fire instead).
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => ctx.nogIsSubPanelBothInterior !== true || !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "startAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
-            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high" },
+            { toolType: "Swage", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => ctx.nogIsSubPanelBothInterior !== true || !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
             { toolType: "InnerDimple", kind: "point", anchor: { kind: "endAnchored", offset: DIMPLE_OFFSET_70 }, confidence: "high" },
+            // Sub-panel infill caps (NLBW only, only when flag is set): InnerNotch+LipNotch at both ends.
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => ctx.nogIsSubPanelBothInterior === true && /(NLBW|NON-LBW)/i.test(ctx.planName ?? ""),
+                notes: "NLBW sub-panel infill nog: InnerNotch @start (replaces Swage)" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "startAnchored", offset: 0 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => ctx.nogIsSubPanelBothInterior === true && /(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
+            { toolType: "InnerNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => ctx.nogIsSubPanelBothInterior === true && /(NLBW|NON-LBW)/i.test(ctx.planName ?? ""),
+                notes: "NLBW sub-panel infill nog: InnerNotch @end (replaces Swage)" },
+            { toolType: "LipNotch", kind: "spanned", anchor: { kind: "endAnchored", offset: SPAN_70 }, spanLength: SPAN_70, confidence: "high",
+                predicate: (ctx) => ctx.nogIsSubPanelBothInterior === true && /(NLBW|NON-LBW)/i.test(ctx.planName ?? "") },
         ],
     },
     // ----------- 89S41 NOG rules MIRRORED from 70S41 (2026-05-10) -----------

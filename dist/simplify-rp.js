@@ -310,6 +310,41 @@ function isTplate(stick) {
 function isNog(stick) {
     return /^N\d/.test(stick.name);
 }
+/** Tolerance (mm) for "stud end near B-plate" classification.
+ *  If the stud's END is within this distance of any horizontal B-plate's
+ *  centerline, the stud meets a B-plate at its top and should NOT receive
+ *  the standard RP end-cap (Swage L-66.1..L + ID@L-10 + Chamfer@end).
+ *  Verified vs HG260001 R2/S4-S6 and R4/S1-S3 (stud end ≈ B-plate centroid
+ *  within 30mm). */
+const STUD_END_TO_BPLATE_TOL_MM = 50;
+/** Return true if the stud's END world-coordinate is within tolerance of any
+ *  HORIZONTAL B-plate in the frame that is ELEVATED above the stud's start.
+ *  Elevated horizontal B-plates (e.g. B2/B3) act as intermediate plates
+ *  dividing the panel; studs that terminate at one should get a body-crossing
+ *  from that plate instead of a standard end-cap (Swage L-66.1..L + ID@L-10
+ *  + Chamfer@end). Suppressing the end-cap avoids the spurious EXTRAS.
+ *
+ *  "Elevated" = B-plate center Z is more than 100mm above the stud's start Z.
+ *  This excludes the slab B-plate that the stud STARTS at (B1 at z≈0). */
+function studEndNearHorizontalBplate(stud, frame) {
+    const studStartZ = stud.start.z;
+    for (const stick of frame.sticks) {
+        if (!isBplate(stick))
+            continue;
+        const isHoriz = Math.abs(stick.end.z - stick.start.z) < HORIZONTAL_BOTTOM_TOL_MM;
+        if (!isHoriz)
+            continue;
+        // Only consider B-plates that are elevated above the stud's base.
+        const bCenterZ = (stick.start.z + stick.end.z) / 2;
+        if (bCenterZ <= studStartZ + 100)
+            continue;
+        // Check if the stud's END is geometrically close to this B-plate.
+        if (stickToPointDistance(stick.start, stick.end, stud.end) < STUD_END_TO_BPLATE_TOL_MM) {
+            return true;
+        }
+    }
+    return false;
+}
 /** Add Chamfer @start and @end to a stick if not already present. Returns
  *  number of chamfers added.
  *
@@ -445,6 +480,10 @@ function dist3D(a, b) {
  *  sloped T-plate. Returns the side that was chamfered (or null if no
  *  matching T-plate found within tolerance). */
 const PLATE_CONNECT_TOL_MM = 100;
+/** Tolerance (mm) for "stick endpoint near T-plate centerline" — used for
+ *  N-sticks (nogs) whose endpoints may be mid-span on a sloped T-plate rather
+ *  than coincident with a T-plate endpoint. Point-to-segment distance. */
+const NOG_TO_TPLATE_CENTERLINE_TOL_MM = 50;
 function chamferBottomAtTConnection(stick, frame) {
     // Find T-plates and check which end of `stick` they connect to.
     for (const t of frame.sticks) {
@@ -454,9 +493,18 @@ function chamferBottomAtTConnection(stick, frame) {
         const tdz = Math.abs(t.end.z - t.start.z);
         if (tdz < HORIZONTAL_BOTTOM_TOL_MM)
             continue;
-        // Check if any T endpoint is close to stick's start
-        if (dist3D(t.start, stick.start) < PLATE_CONNECT_TOL_MM
-            || dist3D(t.end, stick.start) < PLATE_CONNECT_TOL_MM) {
+        // For B-plates: use endpoint-to-endpoint distance (original logic).
+        // For N-sticks: use point-to-segment distance so the nog's endpoint
+        // being anywhere along the T-plate's length (not just at T endpoints)
+        // still fires. N-sticks sit at intermediate heights on sloped T-plates.
+        const startDist = isNog(stick)
+            ? stickToPointDistance(t.start, t.end, stick.start)
+            : Math.min(dist3D(t.start, stick.start), dist3D(t.end, stick.start));
+        const endDist = isNog(stick)
+            ? stickToPointDistance(t.start, t.end, stick.end)
+            : Math.min(dist3D(t.start, stick.end), dist3D(t.end, stick.end));
+        const tol = isNog(stick) ? NOG_TO_TPLATE_CENTERLINE_TOL_MM : PLATE_CONNECT_TOL_MM;
+        if (startDist < tol) {
             // Connection at stick's start
             let hasStart = false;
             for (const op of stick.tooling) {
@@ -471,8 +519,7 @@ function chamferBottomAtTConnection(stick, frame) {
             }
             return null;
         }
-        if (dist3D(t.start, stick.end) < PLATE_CONNECT_TOL_MM
-            || dist3D(t.end, stick.end) < PLATE_CONNECT_TOL_MM) {
+        if (endDist < tol) {
             // Connection at stick's end
             let hasEnd = false;
             for (const op of stick.tooling) {
@@ -792,6 +839,14 @@ export function simplifyRpFrame(frame) {
     // the T-plate connection point. Only fire on HORIZONTAL B/N sticks, since
     // sloped B-plates (R4 B1, R12 B1) follow a different chamfer convention
     // and would receive false-positives.
+    //
+    // RP9 (2026-05-11): For N-sticks (nogs), after adding the Chamfer also
+    // rewrite the InnerDimple on the chamfered side from the standard wall
+    // offset (16.5mm) to the chord-style offset (10mm). Verified vs HG260001
+    // R2/N1, R6/N1, R6/N2, R15/N1, R16/N1 and HG260044 R1/N1, R4/N1, R5/N1,
+    // R17/N1, R17/N3, R19/N1: every horizontal N-stick that gets a Chamfer
+    // from this pass also has its paired InnerDimple at 10mm (not 16.5mm).
+    // B-plates are excluded from the ID replacement (handled by RP8 instead).
     for (const stick of frame.sticks) {
         if (!isBplate(stick) && !isNog(stick))
             continue;
@@ -799,8 +854,24 @@ export function simplifyRpFrame(frame) {
         if (!isHorizontal)
             continue;
         const side = chamferBottomAtTConnection(stick, frame);
-        if (side)
+        if (side) {
             platesChamfered.push(stick.name + "@" + side);
+            // RP9: N-sticks only — replace the chamfered-side InnerDimple 16.5→10.0.
+            // The chamfered side is where the nog meets a sloped T-plate; ref uses
+            // chord-style cap geometry (10mm offset) at that connection.
+            if (isNog(stick)) {
+                const stickLen = computeStickLength(stick);
+                const refOffset16 = side === "start" ? STD_DIMPLE_OFFSET_MM : (stickLen - STD_DIMPLE_OFFSET_MM);
+                const newOffset10 = side === "start" ? RP_RAKE_STUD_START_DIMPLE_OFFSET_MM : (stickLen - RP_RAKE_STUD_START_DIMPLE_OFFSET_MM);
+                for (const op of stick.tooling) {
+                    if (op.kind === "point" && op.type === "InnerDimple"
+                        && Math.abs(op.pos - refOffset16) < POINT_ANCHOR_TOL_MM) {
+                        op.pos = newOffset10;
+                        break; // only one start (or end) dimple to replace
+                    }
+                }
+            }
+        }
     }
     // RP8 (2026-05-11): subordinate-B-plate eave extension + chord cap.
     // For each horizontal RP B-plate flagged as subordinate (Branch A overhang
@@ -867,18 +938,29 @@ export function simplifyRpFrame(frame) {
         }
         // Recompute length AFTER potential extension.
         const stickLen = computeStickLength(stick);
-        // Re-emit end dimple at L-10 (chord-style end).
-        // Verified vs HG260044 corpus (75 ref ID at L-10 vs 7 at L-16.5).
-        stick.tooling.push({ kind: "point", type: "InnerDimple", pos: stickLen - RP_RAKE_STUD_START_DIMPLE_OFFSET_MM });
-        // Re-emit end Swage at L-66.1..L (RP variable span, 67 of 82 ref end-
-        // Swages use this span). The codec's body-crossing pass may have emitted
-        // a duplicate Swage at the panel-point position close to L-66 — we keep
-        // that and add this end-anchored span. Slight chance of double-emit if
-        // they happen to overlap exactly.
-        stick.tooling.push({
-            kind: "spanned", type: "Swage",
-            startPos: stickLen - 66.1, endPos: stickLen,
-        });
+        // RP9 (2026-05-11): detect if the stud's END sits at a horizontal B-plate
+        // (an intermediate plate dividing the panel above the stud's base).
+        // When true, the ref emits a body-crossing from the B-plate at that
+        // position instead of a standard end-cap. We suppress the end-cap Swage +
+        // end-cap ID + Chamfer@end for these studs to avoid EXTRAS.
+        // Verified vs HG260001 R2/S4-S6 (three studs, each gained 3 ops).
+        // The body-crossing itself is not yet emitted by this simplifier — that
+        // is tracked separately.
+        const endNearBplate = studEndNearHorizontalBplate(stick, frame);
+        if (!endNearBplate) {
+            // Re-emit end dimple at L-10 (chord-style end).
+            // Verified vs HG260044 corpus (75 ref ID at L-10 vs 7 at L-16.5).
+            stick.tooling.push({ kind: "point", type: "InnerDimple", pos: stickLen - RP_RAKE_STUD_START_DIMPLE_OFFSET_MM });
+            // Re-emit end Swage at L-66.1..L (RP variable span, 67 of 82 ref end-
+            // Swages use this span). The codec's body-crossing pass may have emitted
+            // a duplicate Swage at the panel-point position close to L-66 — we keep
+            // that and add this end-anchored span. Slight chance of double-emit if
+            // they happen to overlap exactly.
+            stick.tooling.push({
+                kind: "spanned", type: "Swage",
+                startPos: stickLen - 66.1, endPos: stickLen,
+            });
+        }
         if (isRakeStud) {
             // Rake stud: meets a sloped chord at its start. Ref Detailer emits
             // chord-style start cap (Chamfer @start + ID@10 + Swage 0..66.1).
@@ -893,16 +975,20 @@ export function simplifyRpFrame(frame) {
         // Chamfer @end on every stud (verified — ref has it on most RP studs;
         // small false-positive count on R3/R7 long studs in mixed-T frames is
         // outweighed by the wins).
-        let hasEndChamfer = false;
-        for (const op of stick.tooling) {
-            if (op.kind === "end" && op.type === "Chamfer") {
-                hasEndChamfer = true;
-                break;
+        // RP9: suppress Chamfer@end when stud's end terminates at a B-plate
+        // (those studs get a body-crossing from the plate, not an end-cap chamfer).
+        if (!endNearBplate) {
+            let hasEndChamfer = false;
+            for (const op of stick.tooling) {
+                if (op.kind === "end" && op.type === "Chamfer") {
+                    hasEndChamfer = true;
+                    break;
+                }
             }
-        }
-        if (!hasEndChamfer) {
-            stick.tooling.push({ kind: "end", type: "Chamfer" });
-            studEndsChamfered.push(stick.name);
+            if (!hasEndChamfer) {
+                stick.tooling.push({ kind: "end", type: "Chamfer" });
+                studEndsChamfered.push(stick.name);
+            }
         }
     }
     if (studStartsRewritten.length === 0 && studEndsChamfered.length === 0) {

@@ -3,16 +3,16 @@ OP-LEVEL DIFF — HG260001 LOT 289 COORA CRESCENT CURRIMUNDI 4551-GF-LBW-70.075.
 Setup:    F325iT 70mm
 Frames:   our 44 | ref 26
 
-OPS:      our 4608 | ref 4762
-MATCHED:  4367  (91.7% of ref)
-MISSING:  395  (ops Detailer has, we don't)
-EXTRAS:   241   (ops we have, Detailer doesn't)
+OPS:      our 4841 | ref 4762
+MATCHED:  4588  (96.3% of ref)
+MISSING:  174  (ops Detailer has, we don't)
+EXTRAS:   253   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-InnerDimple@pt          1754       187       62   (90% ref-coverage)
-LipNotch@span            667       119       51   (85% ref-coverage)
+InnerDimple@pt          1875        66       62   (97% ref-coverage)
+LipNotch@span            767        19       63   (98% ref-coverage)
 InnerService@pt          450        28       47   (94% ref-coverage)
 Swage@span               881        32       34   (96% ref-coverage)
 InnerNotch@span          227         7       25   (97% ref-coverage)
@@ -23,8 +23,7 @@ Bolt@pt                   94         1        0   (99% ref-coverage)
 
 FRAMES WITH GAPS:
 
-  L1 (3 sticks with gaps)
-    B1       MISSING (24): InnerDimple @96.5 | InnerDimple @406.0 | InnerDimple @966.5 | InnerDimple @1296.5 | InnerDimple @1896.5 ... +19
+  L1 (2 sticks with gaps)
     Kb1      MISSING (1): InnerService @603.1
     Kb1      EXTRAS  (1): Chamfer @start
     Kb2      MISSING (1): InnerService @658.4
@@ -37,22 +36,16 @@ FRAMES WITH GAPS:
     T3       EXTRAS  (6): InnerDimple @55.5 | InnerDimple @62.5 | InnerDimple @104.5 | LipNotch 33.0..78.0 | InnerNotch 82.0..121.0 ... +1
     T4       MISSING (3): InnerService @105.3 | InnerDimple @107.5 | InnerNotch 85.0..124.0
     T4       EXTRAS  (7): InnerDimple @58.5 | InnerDimple @62.5 | InnerDimple @104.5 | InnerNotch 0.0..39.0 | LipNotch 39.7..84.7 ... +2
-    B1       MISSING (10): InnerDimple @62.2 | InnerDimple @107.5 | InnerDimple @194.0 | InnerDimple @236.0 | InnerDimple @288.0 ... +5
-    B1       EXTRAS  (1): LipNotch 557.0..596.0
-    B3       MISSING (1): InnerDimple @58.5
+    B1       EXTRAS  (2): LipNotch 39.7..130.0 | LipNotch 557.0..596.0
+    B3       EXTRAS  (1): LipNotch 36.0..81.0
     N1       EXTRAS  (8): InnerDimple @62.2 | InnerDimple @236.0 | InnerNotch 39.7..84.7 | LipNotch 39.7..84.7 | InnerNotch 85.0..130.0 ... +3
     S1       MISSING (2): InnerDimple @2365.5 | Swage 2343.0..2388.0
     S2       MISSING (2): InnerDimple @2590.5 | Swage 2568.0..2613.0
     S3       MISSING (2): InnerDimple @2590.5 | Swage 2568.0..2613.0
 
-  L5 (1 sticks with gaps)
-    B1       MISSING (16): InnerDimple @596.0 | InnerDimple @1105.5 | InnerDimple @1705.5 | InnerDimple @2305.5 | InnerDimple @2939.7 ... +11
-
-  L8 (9 sticks with gaps)
+  L8 (8 sticks with gaps)
     T1       EXTRAS  (1): LipNotch 1953.0..1992.0
-    B1       MISSING (2): InnerDimple @596.0 | LipNotch 573.5..618.5
-    B3       MISSING (1): InnerDimple @57.5
-    B3       EXTRAS  (1): LipNotch 93.0..132.0
+    B3       EXTRAS  (2): LipNotch 35.0..80.0 | LipNotch 93.0..132.0
     N1       MISSING (2): InnerNotch 573.5..612.5 | LipNotch 573.5..612.5
     N1       EXTRAS  (1): Swage 573.5..612.5
     N2       MISSING (2): InnerNotch 573.5..612.5 | LipNotch 573.5..612.5
@@ -64,10 +57,9 @@ FRAMES WITH GAPS:
     S8       MISSING (1): Swage 1303.0..1348.0
     S8       EXTRAS  (3): InnerService @296.0 | InnerService @446.0 | LipNotch 1303.0..1348.0
 
-  L16 (5 sticks with gaps)
+  L16 (4 sticks with gaps)
     T1       MISSING (6): InnerDimple @11.6 | InnerService @296.1 | InnerDimple @569.6 | InnerDimple @652.5 | LipNotch 540.8..587.6 ... +1
     T1       EXTRAS  (7): InnerDimple @16.5 | InnerService @280.8 | InnerDimple @555.6 | InnerDimple @647.8 | LipNotch 533.1..578.1 ... +2
-    B1       MISSING (2): InnerDimple @555.5 | LipNotch 533.0..578.0
     S1       MISSING (2): InnerDimple @3098.3 | Swage 3080.5..3109.9
     S1       EXTRAS  (2): InnerDimple @3093.4 | Swage 3070.9..3109.9
     S2       MISSING (1): InnerDimple @3242.8
@@ -75,10 +67,9 @@ FRAMES WITH GAPS:
     S3       MISSING (1): InnerDimple @3264.3
     S3       EXTRAS  (1): InnerDimple @3259.4
 
-  L17 (5 sticks with gaps)
+  L17 (4 sticks with gaps)
     T1       MISSING (6): InnerDimple @11.6 | InnerDimple @94.4 | InnerService @367.9 | InnerDimple @652.5 | LipNotch 76.4..123.2 ... +1
     T1       EXTRAS  (7): Chamfer @start | InnerDimple @16.5 | InnerDimple @96.6 | InnerService @360.8 | InnerDimple @647.8 ... +2
-    B1       MISSING (2): InnerDimple @96.5 | LipNotch 74.0..119.0
     S1       MISSING (1): InnerDimple @3264.3
     S1       EXTRAS  (1): InnerDimple @3259.4
     S2       MISSING (1): InnerDimple @3242.8
@@ -86,8 +77,7 @@ FRAMES WITH GAPS:
     S3       MISSING (2): InnerDimple @3098.3 | Swage 3080.5..3109.9
     S3       EXTRAS  (2): InnerDimple @3093.4 | Swage 3070.9..3109.9
 
-  L18 (3 sticks with gaps)
-    B1       MISSING (7): InnerDimple @264.9 | InnerDimple @306.9 | InnerDimple @368.7 | InnerDimple @835.5 | LipNotch 242.4..329.4 ... +2
+  L18 (2 sticks with gaps)
     Kb1      MISSING (1): InnerService @572.0
     Kb1      EXTRAS  (1): Chamfer @start
     Kb2      MISSING (3): InnerService @300.8 | InnerService @461.0 | InnerService @642.1
@@ -95,9 +85,8 @@ FRAMES WITH GAPS:
 
   L19 (9 sticks with gaps)
     T1       EXTRAS  (1): LipNotch 3993.0..4032.0
-    B1       MISSING (2): InnerDimple @333.5 | LipNotch 311.0..392.0
     B1       EXTRAS  (1): LipNotch 353.0..392.0
-    B3       MISSING (7): InnerDimple @58.5 | InnerDimple @658.5 | InnerDimple @765.5 | InnerDimple @896.5 | LipNotch 636.0..681.0 ... +2
+    B3       EXTRAS  (1): LipNotch 36.0..81.0
     B4       MISSING (2): Bolt @782.0 | Swage 805.0..844.0
     B4       EXTRAS  (2): InnerNotch 805.0..844.0 | LipNotch 805.0..844.0
     B5       EXTRAS  (2): InnerDimple @16.5 | LipNotch 0.0..33.0
@@ -108,10 +97,9 @@ FRAMES WITH GAPS:
     S13      MISSING (2): InnerDimple @57.5 | LipNotch 35.0..80.0
     S13      EXTRAS  (1): Swage 0.0..39.0
 
-  L20 (5 sticks with gaps)
+  L20 (4 sticks with gaps)
     T1       MISSING (6): InnerDimple @10.0 | InnerService @182.0 | InnerDimple @373.1 | InnerDimple @461.3 | LipNotch 357.4..407.5 ... +1
     T1       EXTRAS  (6): Chamfer @start | InnerDimple @16.5 | InnerDimple @345.9 | InnerDimple @453.0 | LipNotch 323.4..368.4 ... +1
-    B1       MISSING (2): InnerDimple @345.5 | LipNotch 323.0..368.0
     S1       MISSING (2): InnerDimple @2773.8 | Swage 2739.4..2783.8
     S1       EXTRAS  (2): InnerDimple @2766.2 | Swage 2743.7..2782.7
     S2       MISSING (2): InnerDimple @2620.3 | Swage 2585.9..2630.3
@@ -119,13 +107,11 @@ FRAMES WITH GAPS:
     S3       MISSING (2): InnerDimple @2582.9 | Swage 2567.7..2592.9
     S3       EXTRAS  (2): InnerDimple @2575.3 | Swage 2552.8..2591.8
 
-  L30 (3 sticks with gaps)
-    B1       MISSING (6): InnerDimple @534.2 | InnerDimple @596.0 | InnerDimple @810.5 | LipNotch 501.3..550.4 | LipNotch 573.5..618.5 ... +1
+  L30 (2 sticks with gaps)
     Kb1      MISSING (1): InnerService @874.7
     Kb2      MISSING (3): InnerService @716.1 | InnerService @903.2 | InnerService @1065.6
 
-  L33 (11 sticks with gaps)
-    B1       MISSING (18): InnerDimple @525.5 | InnerDimple @773.5 | InnerDimple @815.5 | InnerDimple @1309.7 | InnerDimple @1803.9 ... +13
+  L33 (10 sticks with gaps)
     H2       MISSING (3): InnerDimple @89.0 | InnerDimple @1252.0 | InnerDimple @2415.0
     H2       EXTRAS  (2): InnerDimple @58.5 | InnerDimple @2445.5
     L1       MISSING (3): InnerDimple @89.0 | InnerDimple @1252.0 | InnerDimple @2415.0
@@ -137,20 +123,20 @@ FRAMES WITH GAPS:
     S3       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
     S4       EXTRAS  (2): Swage 243.0..288.0 | Swage 2155.0..2200.0
     S9       EXTRAS  (2): Swage 243.0..288.0 | Swage 2155.0..2200.0
+    S10      EXTRAS  (2): InnerService @296.0 | InnerService @446.0
 
   L34 (6 sticks with gaps)
     T1       EXTRAS  (1): LipNotch 851.0..890.0
     T2       MISSING (2): InnerDimple @88.5 | LipNotch 66.0..105.0
     T2       EXTRAS  (6): InnerDimple @43.5 | InnerDimple @58.5 | InnerDimple @85.5 | Web @94.5 | InnerNotch 63.0..102.0 ... +1
-    B1       MISSING (8): InnerDimple @95.5 | InnerDimple @431.0 | InnerDimple @766.5 | InnerDimple @809.5 | InnerDimple @873.5 ... +3
+    B1       EXTRAS  (1): LipNotch 851.0..896.0
     N2       EXTRAS  (2): InnerNotch 101.0..146.0 | LipNotch 101.0..146.0
     S6       EXTRAS  (9): InnerService @453.0 | InnerService @663.1 | InnerService @963.1 | InnerService @1263.1 | InnerService @1450.5 ... +4
     S7       MISSING (2): InnerDimple @2435.5 | Swage 2413.0..2458.0
 
-  L37 (5 sticks with gaps)
+  L37 (4 sticks with gaps)
     T1       MISSING (5): InnerDimple @10.0 | InnerService @289.4 | InnerDimple @461.3 | LipNotch 63.9..113.9 | LipNotch 426.9..471.3
     T1       EXTRAS  (5): InnerDimple @16.5 | InnerDimple @453.0 | LipNotch 74.4..119.4 | LipNotch 430.5..469.5 | Chamfer @end
-    B1       MISSING (2): InnerDimple @96.5 | LipNotch 74.0..119.0
     S1       MISSING (2): InnerDimple @2537.9 | Swage 2522.7..2547.9
     S1       EXTRAS  (2): InnerDimple @2530.3 | Swage 2507.8..2546.8
     S2       MISSING (2): InnerDimple @2575.3 | Swage 2540.9..2585.3
@@ -159,9 +145,8 @@ FRAMES WITH GAPS:
     S3       EXTRAS  (2): InnerDimple @2721.2 | Swage 2698.7..2737.7
 
   L40 (7 sticks with gaps)
-    B1       MISSING (4): InnerDimple @96.5 | InnerDimple @200.5 | LipNotch 74.0..119.0 | LipNotch 178.0..259.0
     B1       EXTRAS  (1): LipNotch 220.0..259.0
-    B3       MISSING (1): InnerDimple @58.5
+    B3       EXTRAS  (1): LipNotch 36.0..81.0
     H2       MISSING (4): InnerDimple @89.0 | InnerDimple @1252.0 | InnerDimple @2415.0 | InnerDimple @3578.0
     H2       EXTRAS  (2): InnerDimple @58.5 | InnerDimple @3608.5
     S3       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
@@ -172,9 +157,8 @@ FRAMES WITH GAPS:
   L41 (11 sticks with gaps)
     T2       MISSING (2): InnerDimple @68.0 | InnerNotch 45.5..84.5
     T2       EXTRAS  (6): InnerDimple @23.0 | InnerDimple @58.5 | InnerDimple @65.0 | InnerNotch 0.0..39.0 | InnerNotch 42.5..81.5 ... +1
-    B1       MISSING (3): InnerDimple @68.0 | InnerDimple @200.5 | LipNotch 178.0..259.0
-    B1       EXTRAS  (1): LipNotch 220.0..259.0
-    B3       MISSING (4): InnerDimple @58.5 | InnerDimple @115.5 | InnerDimple @185.5 | LipNotch 163.0..208.0
+    B1       EXTRAS  (2): LipNotch 45.5..90.5 | LipNotch 220.0..259.0
+    B3       EXTRAS  (1): LipNotch 36.0..138.0
     H2       MISSING (4): InnerDimple @97.1 | InnerDimple @1255.7 | InnerDimple @2414.3 | InnerDimple @3572.8
     H2       EXTRAS  (2): InnerDimple @58.5 | InnerDimple @3608.5
     N1       EXTRAS  (2): InnerNotch 45.5..90.5 | LipNotch 45.5..90.5
@@ -184,15 +168,11 @@ FRAMES WITH GAPS:
     S5       EXTRAS  (1): Swage 2425.0..2470.0
     S8       EXTRAS  (1): Swage 2425.0..2470.0
 
-  L42 (1 sticks with gaps)
-    B1       MISSING (4): InnerDimple @196.5 | InnerDimple @575.5 | LipNotch 174.0..219.0 | LipNotch 553.0..598.0
-
   L43 (13 sticks with gaps)
     T2       MISSING (2): InnerDimple @68.0 | InnerNotch 45.5..84.5
     T2       EXTRAS  (6): InnerDimple @23.0 | InnerDimple @58.5 | InnerDimple @65.0 | InnerNotch 0.0..39.0 | InnerNotch 42.5..81.5 ... +1
-    B1       MISSING (7): InnerDimple @68.0 | InnerDimple @606.2 | InnerDimple @668.0 | InnerDimple @913.5 | LipNotch 572.9..622.2 ... +2
-    B1       EXTRAS  (1): LipNotch 933.0..972.0
-    B3       MISSING (1): InnerDimple @58.5
+    B1       EXTRAS  (2): LipNotch 45.5..90.5 | LipNotch 933.0..972.0
+    B3       EXTRAS  (1): LipNotch 36.0..81.0
     H2       MISSING (4): InnerDimple @89.0 | InnerDimple @952.0 | InnerDimple @1815.0 | InnerDimple @2678.0
     H2       EXTRAS  (2): InnerDimple @58.5 | InnerDimple @2708.5
     N1       EXTRAS  (2): InnerNotch 45.5..90.5 | LipNotch 45.5..90.5
@@ -203,21 +183,18 @@ FRAMES WITH GAPS:
     S9       EXTRAS  (1): Swage 2425.0..2470.0
 
   L44 (5 sticks with gaps)
-    B1       MISSING (2): InnerDimple @460.5 | LipNotch 438.0..519.0
     B1       EXTRAS  (1): LipNotch 480.0..519.0
-    B3       MISSING (5): InnerDimple @58.5 | InnerDimple @658.5 | InnerDimple @875.5 | LipNotch 636.0..681.0 | LipNotch 853.0..898.0
+    B3       EXTRAS  (1): LipNotch 36.0..81.0
     W1       MISSING (1): Web @25.7
     S2       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
     S7       EXTRAS  (2): InnerService @296.0 | InnerService @446.0
 
-  L45 (2 sticks with gaps)
-    B1       MISSING (6): InnerDimple @196.5 | InnerDimple @445.5 | InnerDimple @576.5 | LipNotch 174.0..219.0 | LipNotch 423.0..468.0 ... +1
+  L45 (1 sticks with gaps)
     N1       EXTRAS  (1): InnerService @103.9
 
-  L46 (9 sticks with gaps)
+  L46 (8 sticks with gaps)
     T2       MISSING (2): InnerDimple @88.5 | LipNotch 66.0..105.0
     T2       EXTRAS  (5): InnerDimple @43.5 | InnerDimple @58.5 | InnerDimple @85.5 | InnerNotch 63.0..102.0 | LipNotch 63.0..102.0
-    B1       MISSING (24): InnerDimple @534.2 | InnerDimple @596.0 | InnerDimple @746.0 | InnerDimple @1386.5 | InnerDimple @1986.5 ... +19
     S10      MISSING (2): InnerDimple @2435.5 | Swage 2413.0..2458.0
     Kb1      MISSING (1): InnerService @874.7
     Kb2      MISSING (3): InnerService @716.1 | InnerService @903.2 | InnerService @1065.6
@@ -230,10 +207,9 @@ FRAMES WITH GAPS:
     Kb6      MISSING (1): InnerService @658.4
     Kb6      EXTRAS  (1): Chamfer @start
 
-  L47 (6 sticks with gaps)
+  L47 (5 sticks with gaps)
     T1       MISSING (4): InnerDimple @11.6 | InnerService @296.1 | InnerDimple @569.6 | LipNotch 540.8..581.2
     T1       EXTRAS  (5): InnerDimple @16.5 | InnerService @280.8 | InnerDimple @565.0 | LipNotch 542.5..581.5 | Chamfer @end
-    B1       MISSING (2): InnerDimple @555.5 | LipNotch 533.0..578.0
     N1       MISSING (1): LipNotch 613.0..652.0
     N1       EXTRAS  (1): Swage 613.0..652.0
     S1       MISSING (2): InnerDimple @3098.3 | Swage 3080.5..3109.9
@@ -243,8 +219,7 @@ FRAMES WITH GAPS:
     S3       MISSING (1): LipNotch 1303.0..1348.0
     S3       EXTRAS  (1): Swage 1303.0..1348.0
 
-  L7 (4 sticks with gaps)
-    B1       MISSING (16): InnerDimple @87.5 | InnerDimple @227.9 | InnerDimple @605.5 | InnerDimple @736.5 | InnerDimple @829.6 ... +11
+  L7 (3 sticks with gaps)
     N2       EXTRAS  (1): InnerNotch 0.0..39.0
     S1       MISSING (2): Swage 1303.0..1348.0 | Swage 2718.0..2763.0
     S1       EXTRAS  (2): LipNotch 1303.0..1348.0 | LipNotch 2718.0..2763.0
@@ -253,19 +228,17 @@ FRAMES WITH GAPS:
 
   L12 (6 sticks with gaps)
     T1       EXTRAS  (1): LipNotch 1254.0..1299.0
-    B1       MISSING (20): InnerDimple @112.9 | InnerDimple @676.4 | InnerDimple @718.4 | InnerDimple @1145.5 | InnerDimple @1215.5 ... +15
+    B1       EXTRAS  (1): LipNotch 1254.0..1299.0
     N1       EXTRAS  (2): InnerNotch 1254.0..1299.0 | LipNotch 1254.0..1299.0
     N2       EXTRAS  (2): InnerNotch 1254.0..1299.0 | LipNotch 1254.0..1299.0
     N3       EXTRAS  (2): InnerNotch 1254.0..1299.0 | LipNotch 1254.0..1299.0
     N4       EXTRAS  (1): InnerService @143.0
 
-  L48 (2 sticks with gaps)
-    B1       MISSING (10): InnerDimple @96.5 | InnerDimple @166.5 | InnerDimple @386.5 | InnerDimple @986.5 | InnerDimple @1385.5 ... +5
+  L48 (1 sticks with gaps)
     N4       MISSING (2): InnerNotch 0.0..39.0 | LipNotch 0.0..39.0
     N4       EXTRAS  (1): Swage 0.0..39.0
 
-  L49 (12 sticks with gaps)
-    B3       MISSING (2): InnerDimple @154.5 | LipNotch 132.0..177.0
+  L49 (11 sticks with gaps)
     H1       MISSING (4): Web @128.0 | Web @377.3 | Web @626.7 | Web @876.0
     H1       EXTRAS  (6): InnerDimple @58.5 | Web @89.0 | Web @364.3 | Web @639.7 | Web @915.0 ... +1
     H2       MISSING (10): InnerDimple @104.5 | Web @128.0 | Web @377.3 | InnerDimple @476.5 | InnerDimple @527.5 ... +5
@@ -282,3 +255,5 @@ FRAMES WITH GAPS:
     W4       EXTRAS  (1): Swage 560.2..601.4
     S2       MISSING (1): Swage 3773.0..3818.0
     S2       EXTRAS  (2): Swage 2994.0..3039.0 | LipNotch 3773.0..3818.0
+    S6       MISSING (1): Swage 3773.0..3818.0
+    S6       EXTRAS  (2): Swage 2994.0..3039.0 | LipNotch 3773.0..3818.0

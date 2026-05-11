@@ -878,12 +878,36 @@ export function simplifyRpFrame(frame: ParsedFrame): SimplifyRpDecision {
   // the T-plate connection point. Only fire on HORIZONTAL B/N sticks, since
   // sloped B-plates (R4 B1, R12 B1) follow a different chamfer convention
   // and would receive false-positives.
+  //
+  // RP9 (2026-05-11): After adding the Chamfer, also rewrite the InnerDimple
+  // on the chamfered side from the standard wall offset (16.5mm) to the
+  // chord-style offset (10mm). Verified vs HG260001 R2/N1, R6/N1, R6/N2,
+  // R15/N1, R16/N1 and HG260044 R1/N1, R4/N1, R4/B1, R5/N1, R12/N1, R17/N1,
+  // R19/N1: every horizontal B/N stick that gets a Chamfer@start (or @end)
+  // also has its paired InnerDimple at 10mm (not 16.5mm). The standard wall
+  // rules engine emits ID@16.5; replacing it here fixes the EXTRAS/MISSING
+  // swap in one pass.
   for (const stick of frame.sticks) {
     if (!isBplate(stick) && !isNog(stick)) continue;
     const isHorizontal = Math.abs(stick.end.z - stick.start.z) < HORIZONTAL_BOTTOM_TOL_MM;
     if (!isHorizontal) continue;
     const side = chamferBottomAtTConnection(stick, frame);
-    if (side) platesChamfered.push(stick.name + "@" + side);
+    if (side) {
+      platesChamfered.push(stick.name + "@" + side);
+      // RP9: replace the start/end-side InnerDimple from 16.5 → 10.0 on the
+      // chamfered end. The 16.5 value is the standard wall cap dimple offset;
+      // chord-style caps (used where a stick meets a sloped T-plate) use 10mm.
+      const stickLen = computeStickLength(stick);
+      const refOffset16 = side === "start" ? STD_DIMPLE_OFFSET_MM : (stickLen - STD_DIMPLE_OFFSET_MM);
+      const newOffset10 = side === "start" ? RP_RAKE_STUD_START_DIMPLE_OFFSET_MM : (stickLen - RP_RAKE_STUD_START_DIMPLE_OFFSET_MM);
+      for (const op of stick.tooling) {
+        if (op.kind === "point" && op.type === "InnerDimple"
+            && Math.abs(op.pos - refOffset16) < POINT_ANCHOR_TOL_MM) {
+          op.pos = newOffset10;
+          break; // only one start (or end) dimple to replace
+        }
+      }
+    }
   }
 
   // RP8 (2026-05-11): subordinate-B-plate eave extension + chord cap.

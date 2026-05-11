@@ -347,6 +347,9 @@ function buildOurProject(xmlText) {
       //     NLBW (N10/N18/N21/N22/N23).
       const _nogStartCapByName = new Map();
       const _nogEndCapByName = new Map();
+      // LBW8 (2026-05-11): cripple-companion overlay maps (LBW-only).
+      const _nogStartCapIsCripCompByName = new Map();
+      const _nogEndCapIsCripCompByName = new Map();
       {
         const _capMode = projectConfig?.nogAsymmetricCapMode ?? "interior-notch";
         const nogStickList = [];
@@ -360,6 +363,58 @@ function buildOurProject(xmlText) {
             nogStickList.push({ name: String(s["@_name"]), start: ps, end: pe, length: L });
           } else if (u === "stud" || u === "trimstud") {
             studStickList.push({ name: String(s["@_name"]), usage: u, start: ps, end: pe });
+          }
+        }
+        // LBW8 cripple-companion overlay — runs whenever we have ≥1 nog AND ≥2
+        // studs. Verified ends: HG260001 PK4 L10/N1 START, L34/N2 END,
+        // L46/N1 END, L7/N4 START, L8/N3 END.
+        if (nogStickList.length >= 1 && studStickList.length >= 2) {
+          let _axisProbe = nogStickList[0];
+          for (const n of nogStickList) if (n.length > _axisProbe.length) _axisProbe = n;
+          const _dxA = _axisProbe.end.x - _axisProbe.start.x;
+          const _dyA = _axisProbe.end.y - _axisProbe.start.y;
+          const _axisLbw8 = Math.abs(_dxA) > Math.abs(_dyA) ? "x" : "y";
+          function _studAtLbw8(point) {
+            let best = null, bestDist = Infinity;
+            for (const ss of studStickList) {
+              const sp = _axisLbw8 === "x" ? ss.start.x : ss.start.y;
+              const np = _axisLbw8 === "x" ? point.x : point.y;
+              const d = Math.abs(np - sp);
+              if (d < bestDist) { bestDist = d; best = ss; }
+            }
+            return (best && bestDist <= 30) ? best : null;
+          }
+          function _hasCripCompLbw8(stud) {
+            if (!stud) return false;
+            const sp = _axisLbw8 === "x" ? stud.start.x : stud.start.y;
+            const sLen = Math.hypot(
+              stud.end.x - stud.start.x,
+              stud.end.y - stud.start.y,
+              stud.end.z - stud.start.z,
+            );
+            for (const ss of studStickList) {
+              if (ss.name === stud.name) continue;
+              const np = _axisLbw8 === "x" ? ss.start.x : ss.start.y;
+              if (Math.abs(np - sp) > 5) continue;
+              const ssLen = Math.hypot(
+                ss.end.x - ss.start.x,
+                ss.end.y - ss.start.y,
+                ss.end.z - ss.start.z,
+              );
+              if (ssLen >= sLen) continue;
+              return true;
+            }
+            return false;
+          }
+          const _isLbwPlanLbw8 = /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(plan.name ?? "") &&
+            !/(NLBW|NON-LBW)/i.test(plan.name ?? "");
+          if (_isLbwPlanLbw8) {
+            for (const nog of nogStickList) {
+              const sS = _studAtLbw8(nog.start);
+              const sE = _studAtLbw8(nog.end);
+              if (_hasCripCompLbw8(sS)) _nogStartCapIsCripCompByName.set(nog.name, true);
+              if (_hasCripCompLbw8(sE)) _nogEndCapIsCripCompByName.set(nog.name, true);
+            }
           }
         }
         if (nogStickList.length >= 2 && studStickList.length >= 2) {
@@ -779,6 +834,9 @@ function buildOurProject(xmlText) {
           kbFrameUniformFlipped,
           nogStartCapIsNotch: _nogStartCapByName.get(stick.name) === true,
           nogEndCapIsNotch: _nogEndCapByName.get(stick.name) === true,
+          // LBW8 (2026-05-11): per-end cripple-companion overlay (LBW-only).
+          nogStartCapIsCripComp: _nogStartCapIsCripCompByName.get(stick.name) === true,
+          nogEndCapIsCripComp: _nogEndCapIsCripCompByName.get(stick.name) === true,
           bhStartCapIsSwage: _bhStartCapByName.get(stick.name) === true,
           bhEndCapIsSwage: _bhEndCapByName.get(stick.name) === true,
           projectConfig,

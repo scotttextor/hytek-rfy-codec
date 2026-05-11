@@ -127,14 +127,22 @@ function wallWEndSwageSpan(angleFromVerticalDeg: number): number {
  * Predicate also gates on NLBW plan-name match.
  */
 function nogStartTakesNotchCap(ctx: StickContext): boolean {
+  // LBW8 (2026-05-11): LBW cripple-companion overlay (separate flag from NLBW3).
+  if (ctx.nogStartCapIsCripComp === true &&
+      /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(ctx.planName ?? "") &&
+      !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return true;
   if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
   if (ctx.nogStartCapIsNotch === true) return true;
   if (ctx.nogStartCapIsNotch === undefined && ctx.nogIsSubPanelBothInterior === true) return true;
   return false;
 }
 
-/** NLBW3 (2026-05-10): same as `nogStartTakesNotchCap` but for the END. */
+/** NLBW3 (2026-05-10): same as `nogStartTakesNotchCap` but for the END.
+ * LBW8 (2026-05-11): LBW cripple-companion overlay (see start). */
 function nogEndTakesNotchCap(ctx: StickContext): boolean {
+  if (ctx.nogEndCapIsCripComp === true &&
+      /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(ctx.planName ?? "") &&
+      !/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return true;
   if (!/(NLBW|NON-LBW)/i.test(ctx.planName ?? "")) return false;
   if (ctx.nogEndCapIsNotch === true) return true;
   if (ctx.nogEndCapIsNotch === undefined && ctx.nogIsSubPanelBothInterior === true) return true;

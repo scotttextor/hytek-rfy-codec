@@ -949,6 +949,49 @@ export function generateFrameContextOps(
       if (s.box.cx < leftmostX) { leftmostX = s.box.cx; leftmostStudName = s.stick.name; }
       if (s.box.cx > rightmostX) { rightmostX = s.box.cx; rightmostStudName = s.stick.name; }
     }
+    // LBW8 (2026-05-11): interior-full-height-stud demotion.
+    // A leftmost/rightmost full-height stud is only a true wall-end stud if
+    // NO other stud (any length / usage) sits further outside AND reaches the
+    // upper-quarter of wall height (yMax > 75% of plateYMax). Short
+    // outboards (sill helpers, low cripples) don't disqualify a wall-end.
+    // Verified vs HG260001 PK4-GF-LBW L4/S1, L34/S7, L41/S1, L43/S1, L46/S10:
+    // each is the LFH/RFH but a shorter step-junction stud exists further
+    // outside reaching ≥87% of plateYMax. Demotion → useSwage fires →
+    // matches ref Swage at z=1325 nog crossing. L10/S3 (true wall-end with
+    // distL=21mm, no outboards) keeps LipNotch. L7/S1 (RFH with sill-helper
+    // S10 at 54% height NOT qualifying) keeps wall-end status. LBW only.
+    const _planLbw8A = (frame as { planName?: string }).planName ?? "";
+    const _isLbwLbw8A = /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(_planLbw8A) &&
+      !/(NLBW|NON-LBW)/i.test(_planLbw8A);
+    if (_isLbwLbw8A) {
+      const _DEMOTE_MARGIN = 5;
+      const _OUTBOARD_HT = plateYMin + 0.75 * (plateYMax - plateYMin);
+      const _qual = (o: StickWithBox): boolean => o.box.yMax > _OUTBOARD_HT;
+      if (leftmostStudName !== null) {
+        const cand = studs.find(s => s.stick.name === leftmostStudName);
+        if (cand !== undefined) {
+          for (const o of studs) {
+            if (o.stick.name === cand.stick.name) continue;
+            if (o.box.cx < cand.box.cx - _DEMOTE_MARGIN && _qual(o)) {
+              leftmostStudName = null;
+              break;
+            }
+          }
+        }
+      }
+      if (rightmostStudName !== null) {
+        const cand = studs.find(s => s.stick.name === rightmostStudName);
+        if (cand !== undefined) {
+          for (const o of studs) {
+            if (o.stick.name === cand.stick.name) continue;
+            if (o.box.cx > cand.box.cx + _DEMOTE_MARGIN && _qual(o)) {
+              rightmostStudName = null;
+              break;
+            }
+          }
+        }
+      }
+    }
   }
 
   // RP stud-trim compensation. Identical pattern to plate-side rake-trim
@@ -1100,9 +1143,19 @@ export function generateFrameContextOps(
           }
         }
       }
+      // LBW8 (2026-05-11): wall-end S studs with a same-axis cripple-companion
+      // box-stud partner behave as if they had a lip neighbour at body-nog
+      // crossings — the box-stud pair pins the lip the same way an adjacent
+      // stud does. Verified vs HG260001 PK4 L10/S1 (RFH wall-end with
+      // cripple-companion S2 — ref emits Swage at z=1325.5 LipNotch).
+      // LBW only — TrimStud handling stays separate above.
+      const _lbw8CcPin = crippleCompanionByStudName.has(stud.stick.name) &&
+        /(?:^|[-_/])LBW(?:[-_/]|$)/i.test(planNameForStuds) &&
+        !/(NLBW|NON-LBW)/i.test(planNameForStuds);
       const useSwage =
         (!isTrimStud || isInteriorSubPanelTrimStud) && (
           lipNeighbor ||
+          _lbw8CcPin ||
           (!isWallEndStud) ||
           (isContinuousNog && !isWallEndStud)
         );

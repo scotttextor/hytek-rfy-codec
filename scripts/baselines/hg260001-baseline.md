@@ -1,13 +1,13 @@
 # HG260001 Baseline — Per-Plan Op-Level Diff vs Detailer
 
-**Overall: 93.46% matched** (16823/18000 ops)
-Missing: 1177 (Detailer has, we lack) | Extras: 1162 (we emit, Detailer doesn't)
+**Overall: 93.61% matched** (16849/18000 ops)
+Missing: 1151 (Detailer has, we lack) | Extras: 1133 (we emit, Detailer doesn't)
 
 ## Per-plan parity
 | RFY | Parity | Matched | Ref | Missing | Extras |
 |---|---:|---:|---:|---:|---:|
 | HG260001_GF-RP-70.075.rfy | 77.5% | 773 | 997 | 224 | 230 |
-| HG260001_GF-TIN-70.075.rfy | 83.5% | 843 | 1009 | 166 | 104 |
+| HG260001_GF-TIN-70.075.rfy | 86.1% | 869 | 1009 | 140 | 75 |
 | HG260001_GF-TIN-70.095.rfy | 100.0% | 88 | 88 | 0 | 0 |
 | HG260001_PK1-GF-NLBW-70.075.rfy | 94.6% | 2509 | 2652 | 143 | 101 |
 | HG260001_PK10-GF-TB2B-70.075.rfy | 96.0% | 576 | 600 | 24 | 24 |
@@ -25,13 +25,13 @@ Missing: 1177 (Detailer has, we lack) | Extras: 1162 (we emit, Detailer doesn't)
 ## Aggregate divergence by tool
 | Tool | Missing (Detailer has) | Extras (we emit) | Net we lack |
 |---|---:|---:|---:|
-| InnerDimple | 391 | 344 | 47 |
+| InnerDimple | 369 | 322 | 47 |
 | LipNotch | 180 | 244 | -64 |
-| Swage | 179 | 190 | -11 |
 | Web | 188 | 130 | 58 |
+| Swage | 175 | 186 | -11 |
 | InnerService | 115 | 103 | 12 |
 | InnerNotch | 44 | 81 | -37 |
-| Chamfer | 27 | 50 | -23 |
+| Chamfer | 27 | 47 | -20 |
 | RightFlange | 17 | 11 | 6 |
 | ScrewHoles | 13 | 4 | 9 |
 | LeftFlange | 12 | 2 | 10 |

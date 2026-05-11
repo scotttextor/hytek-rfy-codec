@@ -480,6 +480,10 @@ function dist3D(a, b) {
  *  sloped T-plate. Returns the side that was chamfered (or null if no
  *  matching T-plate found within tolerance). */
 const PLATE_CONNECT_TOL_MM = 100;
+/** Tolerance (mm) for "stick endpoint near T-plate centerline" — used for
+ *  N-sticks (nogs) whose endpoints may be mid-span on a sloped T-plate rather
+ *  than coincident with a T-plate endpoint. Point-to-segment distance. */
+const NOG_TO_TPLATE_CENTERLINE_TOL_MM = 50;
 function chamferBottomAtTConnection(stick, frame) {
     // Find T-plates and check which end of `stick` they connect to.
     for (const t of frame.sticks) {
@@ -489,9 +493,18 @@ function chamferBottomAtTConnection(stick, frame) {
         const tdz = Math.abs(t.end.z - t.start.z);
         if (tdz < HORIZONTAL_BOTTOM_TOL_MM)
             continue;
-        // Check if any T endpoint is close to stick's start
-        if (dist3D(t.start, stick.start) < PLATE_CONNECT_TOL_MM
-            || dist3D(t.end, stick.start) < PLATE_CONNECT_TOL_MM) {
+        // For B-plates: use endpoint-to-endpoint distance (original logic).
+        // For N-sticks: use point-to-segment distance so the nog's endpoint
+        // being anywhere along the T-plate's length (not just at T endpoints)
+        // still fires. N-sticks sit at intermediate heights on sloped T-plates.
+        const startDist = isNog(stick)
+            ? stickToPointDistance(t.start, t.end, stick.start)
+            : Math.min(dist3D(t.start, stick.start), dist3D(t.end, stick.start));
+        const endDist = isNog(stick)
+            ? stickToPointDistance(t.start, t.end, stick.end)
+            : Math.min(dist3D(t.start, stick.end), dist3D(t.end, stick.end));
+        const tol = isNog(stick) ? NOG_TO_TPLATE_CENTERLINE_TOL_MM : PLATE_CONNECT_TOL_MM;
+        if (startDist < tol) {
             // Connection at stick's start
             let hasStart = false;
             for (const op of stick.tooling) {
@@ -506,8 +519,7 @@ function chamferBottomAtTConnection(stick, frame) {
             }
             return null;
         }
-        if (dist3D(t.start, stick.end) < PLATE_CONNECT_TOL_MM
-            || dist3D(t.end, stick.end) < PLATE_CONNECT_TOL_MM) {
+        if (endDist < tol) {
             // Connection at stick's end
             let hasEnd = false;
             for (const op of stick.tooling) {
@@ -828,14 +840,13 @@ export function simplifyRpFrame(frame) {
     // sloped B-plates (R4 B1, R12 B1) follow a different chamfer convention
     // and would receive false-positives.
     //
-    // RP9 (2026-05-11): After adding the Chamfer, also rewrite the InnerDimple
-    // on the chamfered side from the standard wall offset (16.5mm) to the
-    // chord-style offset (10mm). Verified vs HG260001 R2/N1, R6/N1, R6/N2,
-    // R15/N1, R16/N1 and HG260044 R1/N1, R4/N1, R4/B1, R5/N1, R12/N1, R17/N1,
-    // R19/N1: every horizontal B/N stick that gets a Chamfer@start (or @end)
-    // also has its paired InnerDimple at 10mm (not 16.5mm). The standard wall
-    // rules engine emits ID@16.5; replacing it here fixes the EXTRAS/MISSING
-    // swap in one pass.
+    // RP9 (2026-05-11): For N-sticks (nogs), after adding the Chamfer also
+    // rewrite the InnerDimple on the chamfered side from the standard wall
+    // offset (16.5mm) to the chord-style offset (10mm). Verified vs HG260001
+    // R2/N1, R6/N1, R6/N2, R15/N1, R16/N1 and HG260044 R1/N1, R4/N1, R5/N1,
+    // R17/N1, R17/N3, R19/N1: every horizontal N-stick that gets a Chamfer
+    // from this pass also has its paired InnerDimple at 10mm (not 16.5mm).
+    // B-plates are excluded from the ID replacement (handled by RP8 instead).
     for (const stick of frame.sticks) {
         if (!isBplate(stick) && !isNog(stick))
             continue;
@@ -845,17 +856,19 @@ export function simplifyRpFrame(frame) {
         const side = chamferBottomAtTConnection(stick, frame);
         if (side) {
             platesChamfered.push(stick.name + "@" + side);
-            // RP9: replace the start/end-side InnerDimple from 16.5 → 10.0 on the
-            // chamfered end. The 16.5 value is the standard wall cap dimple offset;
-            // chord-style caps (used where a stick meets a sloped T-plate) use 10mm.
-            const stickLen = computeStickLength(stick);
-            const refOffset16 = side === "start" ? STD_DIMPLE_OFFSET_MM : (stickLen - STD_DIMPLE_OFFSET_MM);
-            const newOffset10 = side === "start" ? RP_RAKE_STUD_START_DIMPLE_OFFSET_MM : (stickLen - RP_RAKE_STUD_START_DIMPLE_OFFSET_MM);
-            for (const op of stick.tooling) {
-                if (op.kind === "point" && op.type === "InnerDimple"
-                    && Math.abs(op.pos - refOffset16) < POINT_ANCHOR_TOL_MM) {
-                    op.pos = newOffset10;
-                    break; // only one start (or end) dimple to replace
+            // RP9: N-sticks only — replace the chamfered-side InnerDimple 16.5→10.0.
+            // The chamfered side is where the nog meets a sloped T-plate; ref uses
+            // chord-style cap geometry (10mm offset) at that connection.
+            if (isNog(stick)) {
+                const stickLen = computeStickLength(stick);
+                const refOffset16 = side === "start" ? STD_DIMPLE_OFFSET_MM : (stickLen - STD_DIMPLE_OFFSET_MM);
+                const newOffset10 = side === "start" ? RP_RAKE_STUD_START_DIMPLE_OFFSET_MM : (stickLen - RP_RAKE_STUD_START_DIMPLE_OFFSET_MM);
+                for (const op of stick.tooling) {
+                    if (op.kind === "point" && op.type === "InnerDimple"
+                        && Math.abs(op.pos - refOffset16) < POINT_ANCHOR_TOL_MM) {
+                        op.pos = newOffset10;
+                        break; // only one start (or end) dimple to replace
+                    }
                 }
             }
         }

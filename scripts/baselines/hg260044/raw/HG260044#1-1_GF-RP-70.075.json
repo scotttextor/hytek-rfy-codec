@@ -1,17 +1,17 @@
 {
   "inputXml": "C:\\Users\\Scott/OneDrive - Textor Metal Industries/CLAUDE DATA FILE/memory/reference_data/HG260044/HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-RP-70.075.xml",
   "reference": "C:\\Users\\Scott/OneDrive - Textor Metal Industries/CLAUDE DATA FILE/memory/reference_data/HG260044/HG260044#1-1_GF-RP-70.075.rfy",
-  "generated": "2026-05-11T00:27:59.822Z",
+  "generated": "2026-05-11T00:47:19.799Z",
   "setup": {
     "id": "2",
     "name": "F325iT 70mm"
   },
   "totals": {
-    "ours": 1176,
+    "ours": 1188,
     "ref": 1222,
-    "matched": 942,
-    "missing": 280,
-    "extras": 234
+    "matched": 939,
+    "missing": 283,
+    "extras": 249
   },
   "byFrame": [
     {
@@ -83,11 +83,14 @@
           "name": "B1",
           "oursLength": 2252,
           "refLength": 2252.00007508427,
-          "matchedCount": 13,
+          "matchedCount": 12,
           "extras": [
-            "Chamfer @start"
+            "Chamfer @start",
+            "InnerDimple @10.0"
           ],
-          "missing": []
+          "missing": [
+            "InnerDimple @16.5"
+          ]
         },
         {
           "name": "N1",
@@ -201,6 +204,7 @@
           "refLength": 1099.17023112263,
           "matchedCount": 7,
           "extras": [
+            "InnerDimple @1084.2",
             "InnerNotch 543.2..588.2"
           ],
           "missing": []
@@ -443,12 +447,14 @@
           "name": "B2",
           "oursLength": 2251.378,
           "refLength": 2251.29106485834,
-          "matchedCount": 13,
+          "matchedCount": 12,
           "extras": [
+            "InnerDimple @2241.4",
             "Chamfer @end"
           ],
           "missing": [
-            "Chamfer @start"
+            "Chamfer @start",
+            "InnerDimple @2234.8"
           ]
         },
         {
@@ -649,6 +655,16 @@
           ]
         },
         {
+          "name": "B1",
+          "oursLength": 2655.88,
+          "refLength": 2655.79377867074,
+          "matchedCount": 17,
+          "extras": [
+            "InnerDimple @15.0"
+          ],
+          "missing": []
+        },
+        {
           "name": "N1",
           "oursLength": 1282.098,
           "refLength": 1281.01064458162,
@@ -666,6 +682,21 @@
             "InnerNotch 564.7..609.7",
             "LipNotch 564.7..609.7"
           ]
+        }
+      ]
+    },
+    {
+      "name": "R6",
+      "sticks": [
+        {
+          "name": "B1",
+          "oursLength": 1679.879,
+          "refLength": 1679.79266228281,
+          "matchedCount": 11,
+          "extras": [
+            "InnerDimple @1664.9"
+          ],
+          "missing": []
         }
       ]
     },
@@ -795,6 +826,7 @@
           "refLength": 990.170220384516,
           "matchedCount": 7,
           "extras": [
+            "InnerDimple @15.0",
             "InnerNotch 456.5..501.5"
           ],
           "missing": []
@@ -852,6 +884,16 @@
           ]
         },
         {
+          "name": "B1",
+          "oursLength": 2655.88,
+          "refLength": 2655.7937516011,
+          "matchedCount": 17,
+          "extras": [
+            "InnerDimple @2640.9"
+          ],
+          "missing": []
+        },
+        {
           "name": "N1",
           "oursLength": 1279.098,
           "refLength": 1281.01007288356,
@@ -869,6 +911,21 @@
       ]
     },
     {
+      "name": "R10",
+      "sticks": [
+        {
+          "name": "B1",
+          "oursLength": 1679.879,
+          "refLength": 1679.79265845193,
+          "matchedCount": 11,
+          "extras": [
+            "InnerDimple @15.0"
+          ],
+          "missing": []
+        }
+      ]
+    },
+    {
       "name": "R11",
       "sticks": [
         {
@@ -881,6 +938,16 @@
             "InnerDimple @1639.0",
             "LipNotch 1590.0..1651.4"
           ]
+        },
+        {
+          "name": "B1",
+          "oursLength": 2585.88,
+          "refLength": 2585.79374749265,
+          "matchedCount": 14,
+          "extras": [
+            "InnerDimple @2570.9"
+          ],
+          "missing": []
         },
         {
           "name": "N1",
@@ -972,9 +1039,10 @@
           "name": "N1",
           "oursLength": 1701.873,
           "refLength": 1700.78404961804,
-          "matchedCount": 2,
+          "matchedCount": 1,
           "extras": [
             "Chamfer @start",
+            "InnerDimple @10.0",
             "InnerDimple @777.6",
             "InnerDimple @1535.6",
             "InnerDimple @1685.4",
@@ -985,6 +1053,7 @@
             "Swage 1662.9..1701.9"
           ],
           "missing": [
+            "InnerDimple @16.5",
             "InnerDimple @774.6",
             "InnerDimple @1532.6",
             "InnerDimple @1690.8",
@@ -1053,6 +1122,21 @@
       ]
     },
     {
+      "name": "R13",
+      "sticks": [
+        {
+          "name": "B1",
+          "oursLength": 1665.879,
+          "refLength": 1665.79265224169,
+          "matchedCount": 11,
+          "extras": [
+            "InnerDimple @15.0"
+          ],
+          "missing": []
+        }
+      ]
+    },
+    {
       "name": "R14",
       "sticks": [
         {
@@ -1065,6 +1149,16 @@
             "InnerDimple @1721.3",
             "LipNotch 1672.3..1733.7"
           ]
+        },
+        {
+          "name": "B1",
+          "oursLength": 2625.88,
+          "refLength": 2625.79443737876,
+          "matchedCount": 14,
+          "extras": [
+            "InnerDimple @2610.9"
+          ],
+          "missing": []
         },
         {
           "name": "N1",
@@ -1117,6 +1211,21 @@
           "missing": [
             "Swage 2980.8..3001.7"
           ]
+        }
+      ]
+    },
+    {
+      "name": "R16",
+      "sticks": [
+        {
+          "name": "B1",
+          "oursLength": 1665.38,
+          "refLength": 1665.29624758615,
+          "matchedCount": 11,
+          "extras": [
+            "InnerDimple @15.0"
+          ],
+          "missing": []
         }
       ]
     },
@@ -1289,6 +1398,16 @@
           ]
         },
         {
+          "name": "B1",
+          "oursLength": 2625.88,
+          "refLength": 2625.79351475272,
+          "matchedCount": 14,
+          "extras": [
+            "InnerDimple @15.0"
+          ],
+          "missing": []
+        },
+        {
           "name": "N1",
           "oursLength": 1173.788,
           "refLength": 1175.6991682561,
@@ -1310,6 +1429,21 @@
             "LipNotch 243.6..288.6",
             "Swage 1136.7..1175.7"
           ]
+        }
+      ]
+    },
+    {
+      "name": "R20",
+      "sticks": [
+        {
+          "name": "B1",
+          "oursLength": 1665.38,
+          "refLength": 1665.29628073502,
+          "matchedCount": 11,
+          "extras": [
+            "InnerDimple @1650.4"
+          ],
+          "missing": []
         }
       ]
     }

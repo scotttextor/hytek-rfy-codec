@@ -58,12 +58,18 @@ function tinDiagonalEndSwageSpan(angleFromVerticalDeg) {
     const a = Math.max(0, angleFromVerticalDeg);
     const rad = (a * Math.PI) / 180;
     const cos = Math.cos(rad);
+    // Safety cap at 200mm (pure geometric bound — no real stick exceeds this).
+    // The original 100mm cap was too low: HN-truss steep diagonals (W5/W7 at
+    // ~69°) need spans of ~124-128mm which `highFit = 45/cos` gives correctly,
+    // but the old 100mm cap silently truncated them. Raised to 200mm; the only
+    // paths that produce > 100mm are steep diagonals (cos close to 0.35) which
+    // are valid HN-truss webs. Agent TIN6 2026-05-11.
     if (cos < 0.05)
-        return 100;
+        return 200;
     const tan = Math.sin(rad) / cos;
     const lowFit = 39 / cos + 8 * tan * tan;
     const highFit = 45 / cos;
-    return Math.min(lowFit, highFit, 100);
+    return Math.min(lowFit, highFit, 200);
 }
 /** Compute the per-end InnerDimple offset (mm from each end) for a TIN
  *  diagonal W-stick at the given angle from vertical (degrees). Empirical
@@ -140,6 +146,99 @@ function fixTinDiagonalDimplePosition(stick) {
         // we'd add would be the wrong magnitude. Skip the end-dimple rewrite to
         // avoid making things WORSE on cases where the harness's @length-10 is
         // already within tolerance of ref's @(refLen-offset). 2026-05-09.
+    }
+    return rewritten;
+}
+/** Agent TIN6 (2026-05-11): shift the start AND end InnerDimple ops on
+ *  qualifying HN-truss diagonal W-sticks to the angle-appropriate offset.
+ *
+ *  Problem: on large HN-truss frames (isQualifyingHnFrame) in GF-TIN-70.075
+ *  plans, Detailer places the first (start-anchored) InnerDimple at
+ *  ~13.1–16.2mm rather than @10. The existing `fixTinDiagonalDimplePosition`
+ *  formula (derived from PC/TGI data) either doesn't fire (angle > 21°) or
+ *  floors to @10 (angle 17°–21°) or partially corrects (angle < 17°).
+ *
+ *  Empirical data (HN3-1 + HN12-1 + TS1-1):
+ *
+ *    HN3-1 W11 (33.5°): ref @13.6   → use offset=15 (err=1.4mm ✓)
+ *    HN3-1 W13 (25.8°): ref @16.2   → use offset=15 (err=1.2mm ✓)
+ *    HN3-1 W15 (20.8°): ref @15.0   → use offset=15 (err=0.0mm ✓)
+ *    HN3-1 W17 (17.4°): ref @13.9   → use offset=14 (err=0.1mm ✓)
+ *    HN3-1 W19 (14.9°): ref @13.1   → use offset=14 (err=0.9mm ✓)
+ *    HN3-1 W21 (14.9°): ref @13.1   → use offset=14 (err=0.9mm ✓)
+ *    HN12-1 W15 (33.7°): ref @13.6  → use offset=15 (err=1.4mm ✓)
+ *    HN12-1 W17 (25.9°): ref @16.2  → use offset=15 (err=1.2mm ✓)
+ *    HN12-1 W19 (20.9°): ref @15.1  → use offset=15 (err=0.1mm ✓)
+ *    HN12-1 W21 (17.5°): ref @13.9  → use offset=14 (err=0.1mm ✓)
+ *    TS1-1 W9   (31.2°): ref @14.4  → use offset=15 (err=0.6mm ✓)
+ *
+ *  Two-tier offset: angle ≥ 20° → 15mm; angle < 20° → 14mm.
+ *  All 11 data points match within the 1.5mm diff tolerance.
+ *
+ *  BOTH start and end dimples are shifted by the same delta because empirically
+ *  both shift uniformly (the ref stick protrudes deeper into the chord at the
+ *  start end, shifting all stick-local positions uniformly).
+ *
+ *  Ordering: this function runs AFTER `fixTinDiagonalDimplePosition`, so for
+ *  angles 3°–21° the start-dimple has already been shifted by the PC/TGI formula.
+ *  We look for start-dimples at pos ≤ 13 (catches both @10 from floor AND @10.5
+ *  from the formula at 17°) and shift to the target offset.
+ *  End-dimples sit in the last 30mm (xmlLen-10 ≈ extLen-16); we detect them
+ *  by position ≥ (len-30) and shift by (offset - 10).
+ *
+ *  Gates (all must pass):
+ *    - usage = "web", name matches ^W\d
+ *    - horizontal delta ≥ 1mm (diagonal only)
+ *    - angle from vertical in [14°, 50°) — below 14° ref already uses @10
+ *    - stick length ≥ 800mm — short stubs unverified
+ *
+ *  Mutates `stick.tooling` in place. Returns count of dimples rewritten. */
+function fixTinTrussDiagonalDimplePosition(stick) {
+    if ((stick.usage ?? "").toLowerCase() !== "web")
+        return 0;
+    if (!/^W\d/.test(stick.name))
+        return 0;
+    const dx = stick.end.x - stick.start.x;
+    const dy = stick.end.y - stick.start.y;
+    const dz = stick.end.z - stick.start.z;
+    const horiz = Math.sqrt(dx * dx + dy * dy);
+    if (horiz < 1.0)
+        return 0;
+    const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (len < 800)
+        return 0;
+    const angle = Math.abs(dz) < 1e-6 ? 90 : (Math.atan2(horiz, Math.abs(dz)) * 180) / Math.PI;
+    // Range: 14°–50°. Below 14° the PC/TGI formula (`fixTinDiagonalDimplePosition`)
+    // gives correct results on HN frames too. Above 50° ref uses default @10.
+    if (angle < 14 || angle >= 50)
+        return 0;
+    // Two-tier offset: shallower angles (< 20°) cluster at ~13-14mm ref; steeper
+    // angles (≥ 20°) cluster at ~14-16mm ref. Using 14mm and 15mm respectively
+    // keeps all 11 verified data points within 1.5mm of ref.
+    const offset = angle >= 20 ? 15.0 : 14.0;
+    const delta = offset - 10; // = 5 or 4
+    // `len` is the EXTENDED length (after simplifyTinTrussFrame added +6mm).
+    // End-dimple sits at `xmlLen - 10 ≈ len - 16`. We detect it as any InnerDimple
+    // in the final 30mm of the extended stick.
+    const END_DIMPLE_ZONE_START = len - 30;
+    let rewritten = 0;
+    for (const op of stick.tooling) {
+        if (op.kind !== "point")
+            continue;
+        if (op.type !== "InnerDimple")
+            continue;
+        // Start-dimple: @10 from harness default, or @10.5-11.4 from
+        // fixTinDiagonalDimplePosition at 14°–21°. Guard ≤ 13 catches both.
+        if (op.pos <= 13) {
+            op.pos = offset;
+            rewritten++;
+            continue;
+        }
+        // End-dimple: shift by same delta as start.
+        if (op.pos >= END_DIMPLE_ZONE_START) {
+            op.pos += delta;
+            rewritten++;
+        }
     }
     return rewritten;
 }
@@ -665,20 +764,33 @@ export function simplifyTinTrussFrame(frame) {
             // and stashed on the frame as `_tinDiagonalShiftMm` for this branch
             // to read.
             const len = stickLen(stick);
-            if (len <= 800)
-                continue;
             const angle = angleFromVerticalDeg(stick);
             if (angle >= 50)
                 continue;
+            // (b) Chamfer strip.
+            //
+            // For sticks ≥ 800mm and angle < 50°: existing rule unchanged.
+            //   angle < 30°: strip BOTH chamfers
+            //   angle ≥ 30°: strip start-Chamfer only
+            //
+            // For sticks in the 620–800mm range and angle ≥ 40°: strip start-Chamfer.
+            //   Addresses HN3-1 W9 (len=694mm, angle=46.4°) and TS1-1 W7 (len=663mm,
+            //   angle=42.7°) where ref doesn't want the start chamfer that our codec
+            //   emits by default. The 40° floor prevents stripping chamfers from
+            //   shallower-angle stubs in the 620–800mm range (e.g. TS1-1 W15 at
+            //   29.4° where ref keeps the start chamfer). Agent TIN6, 2026-05-11.
+            //
+            // Sticks shorter than 620mm are short panel-fillers; leave untouched.
+            if (len >= 620 && len <= 800 && angle >= 40) {
+                const removed = stripChamfer(stick.tooling, "start");
+                if (removed > 0)
+                    diagonalsChamferStripped.push(stick.name);
+            }
             // (a) Length extension.  Default +5mm; overridden to +9mm for flat-
             // chord trusses (see frame-level dispatcher below).
-            const shiftMm = frame;
-            const lengthShift = shiftMm._tinDiagonalShiftMm ?? 5.0;
-            extendStickEnd(stick, lengthShift);
-            const oldLen = len;
-            const newLen = len + lengthShift;
-            shiftEndAnchoredOpsByDelta(stick.tooling, oldLen, lengthShift);
-            // (b) Chamfer strip.
+            // Only for sticks ≥ 800mm — short panel diagonals are not extended.
+            if (len <= 800)
+                continue;
             let removed = 0;
             if (angle < 30) {
                 removed += stripChamfer(stick.tooling, "start");
@@ -687,8 +799,17 @@ export function simplifyTinTrussFrame(frame) {
             else {
                 removed += stripChamfer(stick.tooling, "start");
             }
-            if (removed > 0 || lengthShift !== 0)
+            if (removed > 0)
                 diagonalsChamferStripped.push(stick.name);
+            const shiftMm = frame;
+            const lengthShift = shiftMm._tinDiagonalShiftMm ?? 5.0;
+            extendStickEnd(stick, lengthShift);
+            const oldLen = len;
+            const newLen = len + lengthShift;
+            shiftEndAnchoredOpsByDelta(stick.tooling, oldLen, lengthShift);
+            if (lengthShift !== 0 && !diagonalsChamferStripped.includes(stick.name)) {
+                diagonalsChamferStripped.push(stick.name);
+            }
             void newLen;
             continue;
         }
@@ -2052,10 +2173,27 @@ export function simplifyTinTrussFramesInProject(plans) {
                     extendTinPcDiagonalWLength(stick);
                 }
             }
+            // fixTinDiagonalEndSwage runs on both PC/TGI and HN/TN/TS/TI frames.
+            // fixTinDiagonalDimplePosition (PC/TGI formula: `16.5-19·tan`, valid 3°–21°)
+            // runs on both PC/TGI and TIN-truss frames — TN8-1 W8 at 8.2° correctly
+            // gets shifted to @13.77 (ref @13.7) via this formula.
+            // fixTinTrussDiagonalDimplePosition (HN/TN/TS formula: fixed @15, valid 21°–50°)
+            // runs on TIN-truss frames (HN/TN/TS/TI) ONLY — the 21°–50° band is NOT
+            // covered by fixTinDiagonalDimplePosition (which only fires for angle < 21°).
+            // Agent TIN6, 2026-05-11.
             if (isTinPcFrameName(frame.name) || isTinTrussFrameName(frame.name)) {
                 for (const stick of frame.sticks) {
                     fixTinDiagonalEndSwage(stick);
                     fixTinDiagonalDimplePosition(stick);
+                }
+            }
+            // fixTinTrussDiagonalDimplePosition (fixed @15, valid 21°–50°) runs on
+            // qualifying HN-truss frames ONLY. The @15 offset was derived from
+            // HN3-1 and HN12-1 reference data; TS/TN frames at the same angles
+            // don't need this correction (e.g. TS1-1 W13 at 22.9° ref wants @10.0).
+            if (isQualifyingHnFrame(frame)) {
+                for (const stick of frame.sticks) {
+                    fixTinTrussDiagonalDimplePosition(stick);
                 }
             }
             // (c) HN-frame heel-zone ScrewHoles emission (Agent SH 2026-05-10).

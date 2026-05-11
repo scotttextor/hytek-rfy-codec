@@ -824,6 +824,69 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             t9ReverseWebStickKeys.add(`${stick.name}#${occ}`);
         }
     }
+    // ────────────────────────────────────────────────────────────────────
+    // Agent W2 (2026-05-11): B2B twin T-chord arc-reversal suppression.
+    // ────────────────────────────────────────────────────────────────────
+    //
+    // In TT-frame trusses, sloped T-chords appear as physically co-located B2B
+    // pairs: one flipped=false (e.g. T4) and one flipped=true (e.g. T3). Both
+    // share the same world coordinates. Detailer emits IDENTICAL Web bolt positions
+    // on both — measured from the same (apex) end.
+    //
+    // Problem: `needsArcReversal` returns true for flipped=true topchords, causing
+    // the flipped twin's positions to be reflected (L-p). This produces a mirrored
+    // set: if non-flipped T4 emits @91.2, flipped T3 emits @L-91.2 (WRONG).
+    //
+    // Fix: detect B2B twin pairs (same start/end coords ±2mm, opposite flipped) and
+    // add the flipped=true twin's key to `forceReverseStickKeys` (XOR with
+    // `needsArcReversal(=true)` gives false = no reversal). Both twins then emit
+    // the same bolt positions. Verified HG260044 PK1 TT1-1/TT4-1 T3.
+    {
+        const B2B_TOL = 2.0; // mm — coordinate match tolerance
+        // Use the same occurrence counter scheme as the per-stick loop (stickOccByName):
+        // skip Box pieces and non-TBWRH sticks before counting.
+        const occByName = new Map();
+        for (let i = 0; i < frame.sticks.length; i++) {
+            const stick = frame.sticks[i];
+            if (/\(Box\d+\)/.test(stick.name))
+                continue;
+            if (!/^[TBWRH]\d/.test(stick.name))
+                continue;
+            const occ = occByName.get(stick.name) ?? 0;
+            occByName.set(stick.name, occ + 1);
+            if (!/^T\d/.test(stick.name))
+                continue;
+            const meta = metaSticks[i];
+            if (meta.usage !== "topchord")
+                continue;
+            if (!stick.flipped)
+                continue;
+            const zSpan = Math.abs(meta.end3D.z - meta.start3D.z);
+            if (zSpan <= 5)
+                continue; // horizontal stubs don't trigger needsArcReversal
+            for (let k = 0; k < frame.sticks.length; k++) {
+                if (k === i)
+                    continue;
+                const o = frame.sticks[k];
+                if (o.flipped)
+                    continue;
+                if (!/^T\d/.test(o.name))
+                    continue;
+                if (/\(Box\d+\)/.test(o.name))
+                    continue;
+                const om = metaSticks[k];
+                if (om.usage !== "topchord")
+                    continue;
+                const dStart = Math.hypot(om.start3D.y - meta.start3D.y, om.start3D.z - meta.start3D.z);
+                const dEnd = Math.hypot(om.end3D.y - meta.end3D.y, om.end3D.z - meta.end3D.z);
+                if (dStart < B2B_TOL && dEnd < B2B_TOL) {
+                    // Suppress arc-reversal for this flipped=true B2B twin.
+                    t7ForceReverseStickKeys.add(`${stick.name}#${occ}`);
+                    break;
+                }
+            }
+        }
+    }
     const positionsByKey = computeTb2bWebPositions(metaSticks, {
         perpWebChordCorrectionOverride: slopedPeerPairChordCorr,
         forceReverseStickKeys: t7ForceReverseStickKeys,
@@ -1596,8 +1659,12 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             Math.abs(meta3D.end3D.z - meta3D.start3D.z) > 5;
         if (isTChordCap && meta3D) {
             const apexAtXmlEnd = meta3D.end3D.z > meta3D.start3D.z;
-            const reverse = chordArcReversal(meta3D);
-            const apexAtOutputEnd = apexAtXmlEnd !== reverse;
+            // B2B twin suppression (Agent W2, 2026-05-11): if this T-chord's stKey is in
+            // t7ForceReverseStickKeys as a B2B twin, suppress the arc-reversal so the
+            // flipped=true twin emits the same apex bolt position as its non-flipped partner.
+            const isTwinSuppressed = t7ForceReverseStickKeys.has(stKey);
+            const reverseForApex = isTwinSuppressed ? false : chordArcReversal(meta3D);
+            const apexAtOutputEnd = apexAtXmlEnd !== reverseForApex;
             const APEX_BOLT = 91.21;
             const APPROX = 2.0;
             const apexPos = apexAtOutputEnd
@@ -1647,7 +1714,9 @@ export function simplifyTb2bTrussFrame(frame, setup) {
             const HEEL_BOLT_T5 = 715.93;
             const SUPPRESS_TOL_T5 = 5.0;
             const apexAtXmlEnd_T5 = meta3D.end3D.z > meta3D.start3D.z;
-            const reverse_T5 = chordArcReversal(meta3D);
+            // B2B twin suppression (Agent W2): flipped=true twins use same apex direction.
+            const isTwinSuppressed_T5 = t7ForceReverseStickKeys.has(stKey);
+            const reverse_T5 = isTwinSuppressed_T5 ? false : chordArcReversal(meta3D);
             const apexAtOutputEnd_T5 = apexAtXmlEnd_T5 !== reverse_T5;
             const heelXY_T5 = apexAtXmlEnd_T5 ? meta3D.start3D : meta3D.end3D;
             let hasHeelTipPartner_T5 = false;

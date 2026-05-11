@@ -3,15 +3,15 @@ OP-LEVEL DIFF — HG260044 LOT 1810 (14) ELDERBERRY ST UPPER CABOOLTURE-GF-TB2B-
 Setup:    F325iT 70mm
 Frames:   our 26 | ref 5
 
-OPS:      our 373 | ref 373
-MATCHED:  344  (92.2% of ref)
-MISSING:  29  (ops Detailer has, we don't)
-EXTRAS:   29   (ops we have, Detailer doesn't)
+OPS:      our 371 | ref 373
+MATCHED:  345  (92.5% of ref)
+MISSING:  28  (ops Detailer has, we don't)
+EXTRAS:   26   (ops we have, Detailer doesn't)
 
 BY OP TYPE:
 Op                  Matched   Missing   Extras
 --------------------------------------------------
-Web@pt                   283        29       28   (91% ref-coverage)
+Web@pt                   284        28       25   (91% ref-coverage)
 InnerDimple@pt            33         0        1   (100% ref-coverage)
 LeftFlange@span            6         0        0   (100% ref-coverage)
 LipNotch@span             11         0        0   (100% ref-coverage)
@@ -20,15 +20,16 @@ RightFlange@span          11         0        0   (100% ref-coverage)
 FRAMES WITH GAPS:
 
   TT1-1 (2 sticks with gaps)
-    H5       MISSING (2): Web @3674.5 | Web @4855.0
-    H5       EXTRAS  (2): Web @3607.4 | Web @4787.9
+    H5       MISSING (1): Web @3478.5
     T3       MISSING (1): Web @1203.3
     T3       EXTRAS  (2): Web @166.3 | InnerDimple @628.6
 
-  TT2-1 (6 sticks with gaps)
+  TT2-1 (7 sticks with gaps)
     H5       MISSING (1): Web @3044.4
     W7       MISSING (1): Web @711.0
     W7       EXTRAS  (1): Web @681.0
+    H6       MISSING (1): Web @813.5
+    H6       EXTRAS  (1): Web @815.7
     B2       MISSING (1): Web @4273.1
     W9       MISSING (1): Web @1357.0
     W9       EXTRAS  (1): Web @1347.0
@@ -57,21 +58,20 @@ FRAMES WITH GAPS:
     B1       MISSING (1): Web @7072.0
     B1       EXTRAS  (1): Web @7076.5
     H6       MISSING (1): Web @3456.6
-    H6       EXTRAS  (1): Web @3426.0
+    H6       EXTRAS  (1): Web @3453.8
     T5       MISSING (1): Web @31.9
     T5       EXTRAS  (2): Web @14.9 | Web @3485.4
     W15      MISSING (1): Web @559.1
     W15      EXTRAS  (1): Web @552.1
     W23      MISSING (1): Web @949.9
     W23      EXTRAS  (1): Web @980.1
-    H8       MISSING (2): Web @28.8 | Web @875.0
-    H8       EXTRAS  (2): Web @11.2 | Web @879.5
+    H8       MISSING (1): Web @875.0
+    H8       EXTRAS  (1): Web @879.5
 
   TTI1-1 (5 sticks with gaps)
     T3       MISSING (1): Web @424.6
     T3       EXTRAS  (2): Web @91.2 | Web @441.5
-    H7       MISSING (1): Web @4261.9
-    H7       EXTRAS  (1): Web @4224.5
+    H7       MISSING (1): Web @4065.9
     W10      MISSING (1): Web @1029.1
     W10      EXTRAS  (1): Web @1022.1
     B2       MISSING (1): Web @5263.8

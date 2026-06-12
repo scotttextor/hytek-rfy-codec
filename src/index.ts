@@ -110,5 +110,14 @@ export {
   isRpPlanName,
   type SimplifyRpDecision,
 } from "./simplify-rp.js";
+export {
+  scoreOps,
+  classifyGaps,
+  type ScoreOptions,
+  type OpDiffResult,
+  type MatchedPair,
+  type GapItem,
+  type GapKind,
+} from "./validation/op-diff.js";
 
 export const VERSION = "0.1.0";

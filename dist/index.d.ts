@@ -16,4 +16,5 @@ export { STICK_TYPES, TOOL_TYPES, type StickType, type ToolType, type RfyPointTo
 export { simplifyLinearTrussRfy, isLinearTruss, assertRfyVersion, RfyVersionMismatch, DEFAULT_PROFILE_GATE, type SimplifyLinearTrussOptions, type SimplifyDecision, type SimplifyResult, type ProfileGate, type Junction, type JunctionMate, type StickJunctions, } from "./simplify-linear-truss.js";
 export { simplifyTinTrussFrame, simplifyTinTrussFramesInProject, isTinPlanName, isTinTrussFrameName, type SimplifyTinDecision, } from "./simplify-tin-truss.js";
 export { simplifyRpFrame, simplifyRpFramesInProject, isRpPlanName, type SimplifyRpDecision, } from "./simplify-rp.js";
+export { scoreOps, classifyGaps, type ScoreOptions, type OpDiffResult, type MatchedPair, type GapItem, type GapKind, } from "./validation/op-diff.js";
 export declare const VERSION = "0.1.0";

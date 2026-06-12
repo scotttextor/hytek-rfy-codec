@@ -1,0 +1,8 @@
+{
+  "_comment": "Detailer-parity corpus split. 'score' jobs are HELD OUT — never tune rules on them; they exist only to measure generalisation. 'derive' jobs may be used to build/tune rules. 'tainted' lists jobs the legacy empirical engine was already hand-fit to (their high parity does not prove generalisation). See docs/superpowers/specs/2026-06-12-detailer-ruleset-extraction-design.md section 9b.",
+  "version": 1,
+  "score": ["HG260001"],
+  "derive": ["HG260044", "HG260023"],
+  "tainted": ["HG260001", "HG260044", "HG260023"],
+  "referenceRoot": "C:/Users/scott.TEXTOR/OneDrive - Textor Metal Industries/CLAUDE DATA FILE/memory/reference_data"
+}
